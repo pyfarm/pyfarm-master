@@ -1,0 +1,13 @@
+*sql*
+*.db
+*.log*
+*.pyc
+*.pyo
+*.swp
+*~
+*egg*
+.coverage
+.profile
+.idea
+build
+dist
