@@ -23,13 +23,13 @@ from pyfarm.core.warning import ConfigurationWarning
 
 # determine the database url to use
 if "SQLALCHEMY_DATABASE_URI" in os.environ:
-    dburi = os.environ["SQLALCHEMY_DATABASE_URI"]
+    DBURI = os.environ["SQLALCHEMY_DATABASE_URI"]
 
 else:
-    dburi = "sqlite://:memory:"
+    DBURI = "sqlite://:memory:"
     warn("sqlite is for development purposes only", ConfigurationWarning)
 
 app = Flask("PyFarm")
-app.config["SQLALCHEMY_DATABASE_URI"] = dburi
+app.config["SQLALCHEMY_DATABASE_URI"] = DBURI
 app.secret_key = str(uuid.uuid4())  # TODO: this needs a config or extern lookup
 db = SQLAlchemy(app)
