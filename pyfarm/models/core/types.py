@@ -34,9 +34,8 @@ except ImportError:
 
 from sqlalchemy.types import TypeDecorator, CHAR, String, BigInteger, Unicode
 from sqlalchemy.dialects.postgresql import UUID as PGUuid
-
-from pyfarm.flaskapp import db
-from pyfarm.ext.jobtypes.core import Job
+from pyfarm.models.core.app import db
+# from pyfarm.ext.jobtypes.core import Job
 
 JSON_NONE = dumps(None)
 NoneType = type(None)  # from stdlib types module

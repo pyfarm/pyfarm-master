@@ -18,10 +18,7 @@
 .. include:: ../include/references.rst
 """
 
-import os
 import inspect
-import importlib
-from UserDict import UserDict
 
 try:
     import pwd
@@ -33,26 +30,19 @@ try:
 except ImportError:
     import simplejson as json
 
-try:
-    property.setter
-except AttributeError:
-    from pyfarm.backports import _property as property
-
 from textwrap import dedent
 from sqlalchemy import event
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
-
-from pyfarm.flaskapp import db
-from pyfarm.config.enum import WorkState
+from pyfarm.core.config import cfg
+from pyfarm.models.core.app import db
+from pyfarm.core.enums import WorkState
 from pyfarm.models.core.functions import WorkColumns
 from pyfarm.models.core.types import (
     IDColumn, IDType, JobType, JSONDict, JSONList)
 from pyfarm.models.core.cfg import (
-    DBCFG, TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE)
-
+    TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE)
 from pyfarm.models.mixins import WorkValidationMixin, StateChangedMixin
-from pyfarm.ext.jobtypes.core import Job
 
 
 class JobTagsModel(db.Model):
@@ -117,13 +107,13 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
     are kept track of by |TaskModel|
     """
     __tablename__ = TABLE_JOB
-    STATE_ENUM = WorkState()
+    STATE_ENUM = WorkState
 
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
         WorkColumns(STATE_ENUM.QUEUED, "job.priority")
 
-    user = db.Column(db.String(DBCFG.get("job.max_username_length")),
+    user = db.Column(db.String(cfg.get("job.max_username_length")),
                      doc=dedent("""
                      The user this job should execute as.  The agent
                      process will have to be running as root on platforms
@@ -171,7 +161,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                    The number of frames to count by between `start` and
                    `end`.  This column may also sometimes be referred to
                    as 'step' by other software."""))
-    batch = db.Column(db.Integer, default=DBCFG.get("job.batch"),
+    batch = db.Column(db.Integer, default=cfg.get("job.batch"),
                       doc=dedent("""
                       Number of tasks to run on a single agent at once.
                       Depending on the capabilities of the software being run
@@ -179,7 +169,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                       the agent or multiple processes on after the other.
 
                       **configured by**: `job.batch`"""))
-    requeue = db.Column(db.Integer, default=DBCFG.get("job.requeue"),
+    requeue = db.Column(db.Integer, default=cfg.get("job.requeue"),
                         doc=dedent("""
                         Number of times to requeue failed tasks
 
@@ -191,7 +181,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                             -1, requeue failed tasks indefinitely
 
                         **configured by**: `job.requeue`"""))
-    cpus = db.Column(db.Integer, default=DBCFG.get("job.cpus"),
+    cpus = db.Column(db.Integer, default=cfg.get("job.cpus"),
                      doc=dedent("""
                      Number of cpus or threads each task should consume on
                      each agent.  Depending on the job type being executed
@@ -207,7 +197,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                         -1, agent cpu is exclusive for a task from this job
 
                      **configured by**: `job.cpus`"""))
-    ram = db.Column(db.Integer, default=DBCFG.get("job.ram"),
+    ram = db.Column(db.Integer, default=cfg.get("job.ram"),
                     doc=dedent("""
                     Amount of ram a task from this job will require to be
                     free in order to run.  A task exceeding this value will
@@ -335,8 +325,8 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
         if value is None:
             return value
 
-        min_value = DBCFG.get("agent.min_%s" % key)
-        max_value = DBCFG.get("agent.max_%s" % key)
+        min_value = cfg.get("agent.min_%s" % key)
+        max_value = cfg.get("agent.max_%s" % key)
 
         # quick sanity check of the incoming config
         assert isinstance(min_value, int), "db.min_%s must be an integer" % key

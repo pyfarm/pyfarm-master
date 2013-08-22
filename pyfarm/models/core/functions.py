@@ -23,9 +23,9 @@ Contains core functions and data for use by :mod:`pyfarm.models`
 
 from datetime import datetime
 from textwrap import dedent
-from pyfarm.flaskapp import db
-from pyfarm.ext.config.enum import WorkState
-from pyfarm.models.core.cfg import DBCFG
+from pyfarm.models.core.app import db
+from pyfarm.core.enums import WorkState
+from pyfarm.core.config import cfg
 from pyfarm.models.core.types import IDColumn
 
 
@@ -34,7 +34,7 @@ def modelfor(model, table):
     Returns True if the given `model` object is for the
     expected `table`.
 
-    >>> from pyfarm.models.constants import TABLE_AGENT
+    >>> from pyfarm.models.core.cfg import TABLE_AGENT
     >>> from pyfarm.models import Agent
     >>> modelfor(Agent("foo", "10.56.0.0", "255.0.0.0"), TABLE_AGENT)
     True
@@ -61,7 +61,7 @@ def WorkColumns(state_default, priority_default):
                   :class:`.WorkState`""")),
 
         # priority
-        db.Column(db.Integer, default=DBCFG.get(priority_default),
+        db.Column(db.Integer, default=cfg.get(priority_default),
                   doc=dedent("""
                   The priority of the job relative to others in the
                   queue.  This is not the same as task priority.

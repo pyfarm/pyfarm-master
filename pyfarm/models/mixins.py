@@ -21,7 +21,7 @@ Module containing mixins which can be used by multiple models.
 from warnings import warn
 from datetime import datetime
 from sqlalchemy.orm import validates
-from pyfarm.warning import ColumnStateChangeWarning
+from pyfarm.core.warning import ColumnStateChangeWarning
 
 
 class WorkValidationMixin(object):

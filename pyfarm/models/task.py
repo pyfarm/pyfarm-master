@@ -16,8 +16,8 @@
 
 from textwrap import dedent
 from sqlalchemy import event
-from pyfarm.flaskapp import db
-from pyfarm.config.enum import WorkState
+from pyfarm.models.core.app import db
+from pyfarm.core.enums import WorkState
 from pyfarm.models.core.functions import WorkColumns, modelfor
 from pyfarm.models.core.cfg import TABLE_JOB, TABLE_TASK, TABLE_AGENT
 from pyfarm.models.mixins import WorkValidationMixin, StateChangedMixin
@@ -29,7 +29,7 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin):
     rows which contain the individual work unit(s) for a job.
     """
     __tablename__ = TABLE_TASK
-    STATE_ENUM = WorkState()
+    STATE_ENUM = WorkState
     STATE_DEFAULT = STATE_ENUM.QUEUED
 
     # shared work columns
