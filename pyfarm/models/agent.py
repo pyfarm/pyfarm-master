@@ -20,14 +20,15 @@ from textwrap import dedent
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
 
-from pyfarm.flaskapp import db
-from pyfarm.ext.config.core.loader import Loader
-from pyfarm.ext.config.enum import AgentState
-from pyfarm.ext.system.network import IP_NONNETWORK
+try:
+    from pyfarm.models
+
+from pyfarm.core.enums import AgentState
+from pyfarm.core.config import cfg
 from pyfarm.models.mixins import WorkValidationMixin
 from pyfarm.models.core.types import IDColumn, IDType, IPv4Address
 from pyfarm.models.core.cfg import (
-    DBCFG, TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE)
+    TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE)
 
 
 REGEX_HOSTNAME = re.compile("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*"
@@ -197,7 +198,7 @@ class AgentModel(db.Model, WorkValidationMixin):
     # allocation.  For `cpu_allocation` 100% allocation typically means
     # one task per cpu.
     ram_allocation = db.Column(db.Float, nullable=False,
-                               default=DBCFG.get("agent.ram_allocation", .8),
+                               default=cfg.get("agent.ram_allocation", .8),
                                doc=dedent("""
                                The amount of ram the agent is allowed to
                                allocate towards work.  A value of `1.0` would
@@ -206,7 +207,7 @@ class AgentModel(db.Model, WorkValidationMixin):
 
                                **configured by**: `agent.ram_allocation`"""))
     cpu_allocation = db.Column(db.Float, nullable=False,
-                               default=DBCFG.get("agent.cpu_allocation", 1.0),
+                               default=cfg.get("agent.cpu_allocation", 1.0),
                                doc=dedent("""
                                The total amount of cpu space an agent is
                                allowed to process work in.  A value of `1.0`
@@ -302,8 +303,8 @@ class AgentModel(db.Model, WorkValidationMixin):
         if value is None:
             return value
 
-        min_value = DBCFG.get("agent.min_%s" % key)
-        max_value = DBCFG.get("agent.max_%s" % key)
+        min_value = cfg.get("agent.min_%s" % key)
+        max_value = cfg.get("agent.max_%s" % key)
 
         # quick sanity check of the incoming config
         assert isinstance(min_value, int), "db.min_%s must be an integer" % key
