@@ -45,11 +45,7 @@ Stores basic configuration data related to tables and models.
     Stores the name of the table for job tasks
 """
 
-from pyfarm.ext.config.core.loader import Loader
-
-DBCFG = Loader("dbdata.yml")
-
-TABLE_PREFIX = DBCFG.get("tables.prefix")
+TABLE_PREFIX = "pyfarm_"
 TABLE_AGENT = "%sagent" % TABLE_PREFIX
 TABLE_AGENT_TAGS = "%s_tags" % TABLE_AGENT
 TABLE_AGENT_SOFTWARE = "%s_software" % TABLE_AGENT
