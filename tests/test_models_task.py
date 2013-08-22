@@ -16,8 +16,7 @@
 
 from uuid import UUID
 
-from utcore import ModelTestCase
-from pyfarm.flaskapp import db
+from utcore import ModelTestCase, db
 from pyfarm.models.task import Task, TaskModel
 
 

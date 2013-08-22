@@ -17,26 +17,23 @@
 from __future__ import with_statement
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
-from utcore import ModelTestCase
-from pyfarm.ext.config.core.loader import Loader
-from pyfarm.ext.config.enum import AgentState
-from pyfarm.flaskapp import db
+from utcore import ModelTestCase, db
+from pyfarm.core.enums import AgentState
+from pyfarm.core.config import cfg
 from pyfarm.models.agent import Agent, AgentSoftware, AgentTag
 
 try:
     from itertools import product
 except ImportError:
-    from pyfarm.backports import product
+    from pyfarm.core.backports import product
 
 STATE_ENUM = AgentState()
-DBCFG = Loader("dbdata.yml")
-
 
 class AgentTestCase(ModelTestCase):
     hostnamebase = "foobar"
-    ports = (DBCFG.get("agent.min_port"), DBCFG.get("agent.max_port"))
-    cpus = (DBCFG.get("agent.min_cpus"), DBCFG.get("agent.max_cpus"))
-    ram = (DBCFG.get("agent.min_ram"), DBCFG.get("agent.max_ram"))
+    ports = (cfg.get("agent.min_port"), cfg.get("agent.max_port"))
+    cpus = (cfg.get("agent.min_cpus"), cfg.get("agent.max_cpus"))
+    ram = (cfg.get("agent.min_ram"), cfg.get("agent.max_ram"))
     states = STATE_ENUM.values()
 
     # static test values
@@ -221,7 +218,7 @@ class TestAgentModel(AgentTestCase):
             db.session.commit()
 
             # port value test
-            if port == DBCFG.get("agent.min_port"):
+            if port == cfg.get("agent.min_port"):
                 with self.assertRaises(ValueError):
                     Agent(hostname, ip, subnet, port-1, cpus, ram)
             else:
@@ -229,7 +226,7 @@ class TestAgentModel(AgentTestCase):
                     Agent(hostname, ip, subnet, port+1, cpus, ram)
 
             # cpu value test
-            if cpus == DBCFG.get("agent.min_cpus"):
+            if cpus == cfg.get("agent.min_cpus"):
                 with self.assertRaises(ValueError):
                     Agent(hostname, ip, subnet, port, cpus-1, ram)
             else:
@@ -237,7 +234,7 @@ class TestAgentModel(AgentTestCase):
                     Agent(hostname, ip, subnet, port, cpus+1, ram)
 
             # ram value test
-            if ram == DBCFG.get("agent.min_ram"):
+            if ram == cfg.get("agent.min_ram"):
                 with self.assertRaises(ValueError):
                     Agent(hostname, ip, subnet, port, cpus, ram-1)
             else:
