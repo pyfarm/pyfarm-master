@@ -37,23 +37,10 @@ try:
 except ImportError:
     import simplejson as json
 
-from flask import Flask
-from flask.ext.sqlalchemy import SQLAlchemy
 from nose.plugins.skip import SkipTest
+from pyfarm.models.core.app import db
 from pyfarm.core.config import cfg
 from pyfarm.core.utility import randstr
-
-# determine the database url to use
-if "SQLALCHEMY_DATABASE_URI" in os.environ:
-    dburi = os.environ["SQLALCHEMY_DATABASE_URI"]
-
-else:
-    dburi = "sqlite://:memory:"
-
-app = Flask("PyFarm")
-app.config["SQLALCHEMY_DATABASE_URI"] = dburi
-app.secret_key = str(uuid.uuid4())  # TODO: this needs a config or extern lookup
-db = SQLAlchemy(app)
 
 TEST_CONFIG = {
     "agent.min_port": 1025, "agent.max_port": 65535,
