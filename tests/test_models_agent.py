@@ -27,14 +27,14 @@ try:
 except ImportError:
     from pyfarm.core.backports import product
 
-STATE_ENUM = AgentState()
+STATE_ENUM = AgentState
 
 class AgentTestCase(ModelTestCase):
     hostnamebase = "foobar"
     ports = (cfg.get("agent.min_port"), cfg.get("agent.max_port"))
     cpus = (cfg.get("agent.min_cpus"), cfg.get("agent.max_cpus"))
     ram = (cfg.get("agent.min_ram"), cfg.get("agent.max_ram"))
-    states = STATE_ENUM.values()
+    states = STATE_ENUM
 
     # static test values
     _port = ports[-1]

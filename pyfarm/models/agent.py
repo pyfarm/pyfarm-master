@@ -131,7 +131,7 @@ class AgentModel(db.Model, WorkValidationMixin):
     """
     __tablename__ = TABLE_AGENT
     __table_args__ = (UniqueConstraint("hostname", "ip", "subnet", "port"), )
-    STATE_ENUM = AgentState()
+    STATE_ENUM = AgentState
     STATE_DEFAULT = STATE_ENUM.ONLINE
     id = IDColumn()
 

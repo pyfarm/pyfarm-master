@@ -28,7 +28,7 @@ if "SQLALCHEMY_DATABASE_URI" in os.environ:
     cfg.setdefault("db.uri", os.environ["SQLALCHEMY_DATABASE_URI"])
 
 else:
-    uri = cfg.setdefault("db.uri", "sqlite://:memory:")
+    uri = cfg.setdefault("db.uri", "sqlite:///:memory:")
 
     # if using sqlite, produce a warning
     if uri.startswith("sqlite"):
