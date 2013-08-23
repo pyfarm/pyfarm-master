@@ -30,6 +30,7 @@ install_requires = [
 
 if sys.version_info[0:2] < (2, 7):
     install_requires.append("simplejson")
+    install_requires.append("importlib")
 
 if isfile("README.rst"):
     with open("README.rst", "r") as readme:
