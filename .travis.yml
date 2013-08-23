@@ -9,8 +9,8 @@ environ:
   - TRAVIS_DATABASE=mysql SQLALCHEMY_DATABASE_URI='mysql://travis:@127.0.0.1/pyfarm'
 
 before_script:
-  - if [[ $TRAVIS_DATABASE == 'postgres' ]]; psql -c 'create database pyfarm;' -U postgres ; fi
-  - if [[ $TRAVIS_DATABASE == 'mysql' ]]; mysql -e 'create database pyfarm;' ; fi
+  - if [[ $TRAVIS_DATABASE == 'postgres' ]]; psql -c 'create database pyfarm\;' -U postgres ; fi
+  - if [[ $TRAVIS_DATABASE == 'mysql' ]]; mysql -e 'create database pyfarm\;' ; fi
 
 install:
   - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then pip install unittest2 simplejson --use-mirrors ; fi
