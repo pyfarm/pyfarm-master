@@ -24,7 +24,10 @@ from textwrap import dedent
 from setuptools import find_packages
 from distutils.core import setup
 
-install_requires = ["sqlalchemy", "netaddr", "pyfarm.core"]
+install_requires = [
+    "pyfarm.core", "sqlalchemy", "netaddr",
+    "flask"]
+
 if sys.version_info[0:2] < (2, 7):
     install_requires.append("simplejson")
 
