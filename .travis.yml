@@ -4,19 +4,18 @@ python:
   - 2.7
 
 env:
-  - TRAVIS_DATABASE=sqlite SQLALCHEMY_DATABASE_URI="sqlite://:memory:"
-  - TRAVIS_DATABASE=postgres SQLALCHEMY_DATABASE_URI="postgresql://postgres:@127.0.0.1/pyfarm"
-  - TRAVIS_DATABASE=mysql SQLALCHEMY_DATABASE_URI="mysql://travis:@127.0.0.1/pyfarm"
+  - TDB_TYPE=sqlite SQLALCHEMY_DATABASE_URI="sqlite://:memory:"
+  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 SQLALCHEMY_DATABASE_URI="postgresql://postgres:@127.0.0.1/pyfarm"
+  - TDB_TYPE=mysql TDB_DRIVER=python-mysql SQLALCHEMY_DATABASE_URI="mysql://travis:@127.0.0.1/pyfarm"
 
 
 before_script:
-  - if [[ $TRAVIS_DATABASE == "postgres" ]]; then psql -c "create database pyfarm;" -U postgres; fi
-  - if [[ $TRAVIS_DATABASE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
+  - if [[ $TDB_TYPE == "postgres" ]]; then psql -c "create database pyfarm;" -U postgres; fi
+  - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
 
 install:
   - if [[ $TRAVIS_PYTHON_VERSION != "2.7" ]]; then pip install unittest2 simplejson --use-mirrors; fi
-  - if [[ $TRAVIS_DATABASE == "postgres" ]]; then pip intall psycopg2; fi
-  - if [[ $TRAVIS_DATABASE == "mysql" ]]; then pip intall mysql-python; fi
+  - if [[ $TDB_DRIVER != "" ]]; then pip install $TDB_DRIVER; fi
   - pip install . --use-mirrors
 
 script:
