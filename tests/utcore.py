@@ -21,7 +21,6 @@ used by the unittests.
 
 import os
 import sys
-import uuid
 import shutil
 import tempfile
 from random import randint
@@ -38,16 +37,20 @@ except ImportError:
     import simplejson as json
 
 from nose.plugins.skip import SkipTest
-from pyfarm.models.core.app import db
 from pyfarm.core.config import cfg
-from pyfarm.core.utility import randstr
 
 TEST_CONFIG = {
     "agent.min_port": 1025, "agent.max_port": 65535,
     "agent.min_cpus": 1, "agent.max_cpus": 2147483647,
-    "agent.min_ram": 32, "agent.max_ram": 2147483647}
+    "agent.min_ram": 32, "agent.max_ram": 2147483647,
+    "job.priority": 500, "job.max_username_length": 254,
+    "job.batch": 1, "job.requeue": True, "job.cpus": 4,
+    "job.ram": 0,}
 
 cfg.update(TEST_CONFIG)
+
+from pyfarm.models.core.app import db
+from pyfarm.core.utility import randstr
 
 
 def skip_on_ci(func):
