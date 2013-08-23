@@ -26,7 +26,7 @@ from distutils.core import setup
 
 install_requires = [
     "pyfarm.core", "sqlalchemy", "netaddr",
-    "flask"]
+    "flask", "flask-sqlalchemy"]
 
 if sys.version_info[0:2] < (2, 7):
     install_requires.append("simplejson")
