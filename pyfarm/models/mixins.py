@@ -35,15 +35,8 @@ class WorkValidationMixin(object):
         Validates the `value` being provided for `state` is within
         the range provided by `STATE_ENUM`
         """
-        if value not in self.STATE_ENUM.values():
-            # string which represents what states are valid
-            valid_states = ", ".join(
-                "%s (%s)" % (value, self.STATE_ENUM.get(value))
-                for value in sorted(self.STATE_ENUM.values()))
-
-            msg = "%s is not a valid state, valid states " % value
-            msg += "are %s" % valid_states
-            raise ValueError(msg)
+        if value not in self.STATE_ENUM:
+            raise ValueError("%s is not a valid state" % value)
 
         return value
 
