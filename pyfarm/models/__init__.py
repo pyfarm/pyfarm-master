@@ -19,6 +19,26 @@ Contains all the models used for database communication and object
 relational management.
 """
 
+# set the database uri
+import os
+from pyfarm.core.config import cfg
+
+# determine the database url to use
+if "SQLALCHEMY_DATABASE_URI" in os.environ:
+    cfg.setdefault("db.uri", os.environ["SQLALCHEMY_DATABASE_URI"])
+
+else:
+    uri = cfg.setdefault("db.uri", "sqlite://:memory:")
+
+    # if using sqlite, produce a warning
+    if uri.startswith("sqlite"):
+        from warnings import warn
+        from pyfarm.core.warning import ConfigurationWarning
+        warn("sqlite is for development purposes only", ConfigurationWarning)
+
+    del uri  # uri should not be present on __init__.py
+
+
 # NOTE: All models must be loaded here so the mapper
 #       can create the relationships on startup
 from pyfarm.models.job import JobTagsModel, JobSoftwareModel, JobModel
