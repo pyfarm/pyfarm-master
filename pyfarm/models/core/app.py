@@ -14,22 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import uuid
-from warnings import warn
 from flask import Flask
+from pyfarm.core.config import cfg
 from flask.ext.sqlalchemy import SQLAlchemy
-from pyfarm.core.warning import ConfigurationWarning
-
-# determine the database url to use
-if "SQLALCHEMY_DATABASE_URI" in os.environ:
-    DBURI = os.environ["SQLALCHEMY_DATABASE_URI"]
-
-else:
-    DBURI = "sqlite://:memory:"
-    warn("sqlite is for development purposes only", ConfigurationWarning)
 
 app = Flask("PyFarm")
-app.config["SQLALCHEMY_DATABASE_URI"] = DBURI
+app.config["SQLALCHEMY_DATABASE_URI"] = cfg.get("db.uri")
 app.secret_key = str(uuid.uuid4())  # TODO: this needs a config or extern lookup
 db = SQLAlchemy(app)
