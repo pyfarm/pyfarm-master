@@ -4,9 +4,9 @@ python:
   - 2.7
 
 env:
-  - TDB_TYPE=sqlite SQLALCHEMY_DATABASE_URI="sqlite://:memory:"
-  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 SQLALCHEMY_DATABASE_URI="postgresql://postgres:@127.0.0.1/pyfarm"
-  - TDB_TYPE=mysql TDB_DRIVER=python-mysql SQLALCHEMY_DATABASE_URI="mysql://travis:@127.0.0.1/pyfarm"
+  - TDB_TYPE=sqlite SQLALCHEMY_DATABASE_URI="sqlite:///:memory:"
+  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm"
+  - TDB_TYPE=mysql TDB_DRIVER=mysql-python SQLALCHEMY_DATABASE_URI="mysql+MySQLdb://travis:@127.0.0.1/pyfarm"
 
 
 before_script:
