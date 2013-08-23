@@ -3,7 +3,7 @@ python:
   - 2.6
   - 2.7
 
-environ:
+env:
   - TRAVIS_DATABASE=sqlite SQLALCHEMY_DATABASE_URI="sqlite://:memory:"
   - TRAVIS_DATABASE=postgres SQLALCHEMY_DATABASE_URI="postgresql://postgres:@127.0.0.1/pyfarm"
   - TRAVIS_DATABASE=mysql SQLALCHEMY_DATABASE_URI="mysql://travis:@127.0.0.1/pyfarm"
