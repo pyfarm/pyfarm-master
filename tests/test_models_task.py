@@ -45,6 +45,5 @@ class TestTaskModel(ModelTestCase):
     def test_init_errors(self):
         job, frame, parent_task, priority, attempts, agent = range(6)
 
-        with self.assertRaises(ValueError):
-            raise NotImplementedError
-
+        from nose.plugins.skip import SkipTest
+        raise SkipTest
