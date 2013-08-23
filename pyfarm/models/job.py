@@ -263,7 +263,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                         applied to the session."""))
 
     # relationships
-    _parentjob = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_JOB))
+    _parentjob = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_JOB))
 
     siblings = db.relationship("JobModel",
                                backref=db.backref("parent", remote_side=[id]),
