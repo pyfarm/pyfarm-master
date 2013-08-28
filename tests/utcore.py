@@ -45,7 +45,7 @@ TEST_CONFIG = {
     "agent.min_ram": 32, "agent.max_ram": 2147483647,
     "job.priority": 500, "job.max_username_length": 254,
     "job.batch": 1, "job.requeue": True, "job.cpus": 4,
-    "job.ram": 0,}
+    "job.ram": 0}
 
 cfg.update(TEST_CONFIG)
 
