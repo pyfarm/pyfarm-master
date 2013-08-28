@@ -16,7 +16,14 @@
 
 from __future__ import with_statement
 from uuid import UUID
+from nose.plugins.skip import SkipTest
 from sqlalchemy.exc import IntegrityError
+
+try:
+    from pg8000 import ProgrammingError
+except ImportError:
+    ProgrammingError = None
+
 from utcore import ModelTestCase, db
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
@@ -26,7 +33,6 @@ try:
     from itertools import product
 except ImportError:
     from pyfarm.core.backports import product
-
 
 class AgentTestCase(ModelTestCase):
     hostnamebase = "foobar"
@@ -162,15 +168,17 @@ class TestAgentModel(AgentTestCase):
         db.session.add(modelA)
         db.session.add(modelB)
 
-        with self.assertRaises(IntegrityError):
-            db.session.commit()
+        exception_classes = [IntegrityError]
+        if ProgrammingError is not None:
+            exception_classes.append(ProgrammingError)
 
-        db.session.rollback()
-        modelB = Agent(self._host, self._ip, self._subnet, self._port-1,
-                       self._cpus, self._ram)
-        db.session.add(modelA)
-        db.session.add(modelB)
-        db.session.commit()
+        try:
+            db.session.commit()
+            self.fail("commit success, expected failure")
+        except exception_classes:
+            return
+        except Exception, e:
+            raise SkipTest("unknown exception: %s" % e)
 
     def test_hostname_validation(self):
         with self.assertRaises(ValueError):
