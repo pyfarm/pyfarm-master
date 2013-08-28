@@ -18,6 +18,7 @@
 Special column types used by PyFarm's models.
 """
 
+import re
 from textwrap import dedent
 from uuid import uuid4, UUID
 from UserDict import UserDict
@@ -38,8 +39,19 @@ from pyfarm.models.core.app import db
 # from pyfarm.ext.jobtypes.core import Job
 
 JSON_NONE = dumps(None)
+RESUB_GUID_CHARS = re.compile("[{}-]")
 NoneType = type(None)  # from stdlib types module
 
+
+def short_guid(func):
+    """decorator which shortens guids by replacing {, }, and - with ''"""
+    def wrapper(*args, **kwargs):
+        value = func(*args, **kwargs)
+        if isinstance(value, basestring):
+            value = RESUB_GUID_CHARS.sub("", value)
+
+        return value
+    return wrapper
 
 class GUID(TypeDecorator):
     """
@@ -49,16 +61,22 @@ class GUID(TypeDecorator):
     CHAR(32), storing as stringified hex values.
 
     .. note::
-        This code is copied from sqlalchemy's standard documentation
+        This code is copied from sqlalchemy's standard documentation with
+        some minor modifications
     """
     impl = CHAR
 
     def load_dialect_impl(self, dialect):
-        if dialect.name == "postgresql":
+        # Currently, pg8000 does not support the PGUuid type.  This is
+        # backed up both by tests and from sqlalchemy's docs. Unfortunately,
+        # there's not really much information about other drivers so we'll
+        # only use the proper type where we know it should work (for now).
+        if dialect.name == "postgresql" and dialect.driver == "psycopg2":
             return dialect.type_descriptor(PGUuid())
         else:
             return dialect.type_descriptor(CHAR(32))
 
+    @short_guid
     def process_bind_param(self, value, dialect):
         if value is None:
             return value
