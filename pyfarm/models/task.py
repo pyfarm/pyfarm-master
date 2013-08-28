@@ -14,12 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from uuid import UUID
 from textwrap import dedent
 from sqlalchemy import event
 from pyfarm.models.core.app import db
 from pyfarm.core.enums import WorkState
 from pyfarm.models.core.types import IDType
-from pyfarm.models.core.functions import WorkColumns, modelfor
+from pyfarm.models.core.functions import WorkColumns, modelfor, getuuid
 from pyfarm.models.core.cfg import TABLE_JOB, TABLE_TASK, TABLE_AGENT
 from pyfarm.models.mixins import WorkValidationMixin, StateChangedMixin
 
@@ -82,48 +83,10 @@ class Task(TaskModel):
     """
     def __init__(self, job, frame, parent_task=None, state=None,
                  priority=None, attempts=None, agent=None):
-        # build parent job id
-        if modelfor(job, TABLE_JOB):
-            jobid = job.jobid
-            if jobid is None:
-                raise ValueError("`job` with null id provided")
-        elif isinstance(job, int):
-            jobid = job
-        else:
-            raise ValueError("failed to determine job id")
-
-        # build parent task id
-        if parent_task is None:
-            parent_taskid = None
-        elif modelfor(parent_task, TABLE_TASK):
-            parent_taskid = parent_task.id
-            if parent_taskid is None:
-                raise ValueError("`parent_task` with null id provided")
-        elif isinstance(parent_task, int):
-            parent_taskid = parent_task
-        else:
-            raise ValueError("failed to determine parent task id")
-
-        # build agent id
-        if agent is None:
-            agentid = None
-        elif modelfor(agent, TABLE_AGENT):
-            agentid = agent.id
-            if agentid is None:
-                raise ValueError("`agent` with null id provided")
-        elif isinstance(agent, int):
-            agentid = agent
-        else:
-            raise ValueError("failed to determine agent id")
-
-        self._jobid = jobid
+        self._jobid = getuuid(job, TABLE_JOB, "jobid", "parent job")
+        self._parenttask = getuuid(parent_task, TABLE_TASK, "id", "parent task")
+        self._agentid = getuuid(agent, TABLE_AGENT, "id", "agent id")
         self.frame = frame
-
-        if parent_taskid is not None:
-            self._parenttask = parent_taskid
-
-        if agentid is not None:
-            self._agentid = agentid
 
         if state is not None:
             self.state = state
