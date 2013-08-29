@@ -21,7 +21,6 @@ assert sys.version_info[0:2] >= (2, 6), "Python 2.6 or higher is required"
 
 from os.path import isfile
 from textwrap import dedent
-from setuptools import find_packages
 from distutils.core import setup
 
 install_requires = [
@@ -41,7 +40,7 @@ else:
 setup(
     name="pyfarm.models",
     version="1.0.0-dev0",
-    packages=map(lambda name: "pyfarm.%s" % name, find_packages("pyfarm")),
+    packages=["pyfarm", "pyfarm.models", "pyfarm.models.core"],
     namespace_packages=["pyfarm"],
     install_requires=install_requires,
     url="https://github.com/pyfarm/pyfarm-models",
