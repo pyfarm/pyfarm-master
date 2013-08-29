@@ -14,4 +14,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# NOTE: this file is a place holder only so the package will properly install
+__import__('pkg_resources').declare_namespace(__name__)
