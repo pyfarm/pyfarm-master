@@ -21,7 +21,7 @@ assert sys.version_info[0:2] >= (2, 6), "Python 2.6 or higher is required"
 
 from os.path import isfile
 from textwrap import dedent
-from distutils.core import setup
+from setuptools import setup
 
 install_requires = [
     "pyfarm.core", "sqlalchemy", "netaddr",
