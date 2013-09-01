@@ -45,7 +45,9 @@ Stores basic configuration data related to tables and models.
     Stores the name of the table for job tasks
 """
 
-TABLE_PREFIX = "pyfarm_"
+from pyfarm.core.config import cfg
+
+TABLE_PREFIX = cfg.get("db.table_prefix", "pyfarm_")
 TABLE_AGENT = "%sagent" % TABLE_PREFIX
 TABLE_AGENT_TAGS = "%s_tags" % TABLE_AGENT
 TABLE_AGENT_SOFTWARE = "%s_software" % TABLE_AGENT
