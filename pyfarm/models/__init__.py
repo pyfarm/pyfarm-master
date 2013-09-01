@@ -25,21 +25,11 @@ from warnings import warn
 from pyfarm.core.warning import ConfigurationWarning
 from pyfarm.core.config import cfg
 
-if "SQLALCHEMY_DATABASE_URI" in os.environ and "db.uri" in cfg:
-    warn(
-        "$SQLALCHEMY_DATABASE_URI present in environment but "
-        "db.uri was already set, not using setting from the environment",
-        ConfigurationWarning)
-
-    # database uri is in the environment but we shouldn't be using it because
-    # the configuration value `db.uri` was set
-    del os.environ["SQLALCHEMY_DATABASE_URI"]
-
-elif "SQLALCHEMY_DATABASE_URI" in os.environ and "db.uri" not in cfg:
-    cfg.set("db.uri", expandvars(os.environ["SQLALCHEMY_DATABASE_URI"]))
+if "SQLALCHEMY_DATABASE_URI" in os.environ and "db.uri" not in cfg:
+    cfg.setdefault("db.uri", expandvars(os.environ["SQLALCHEMY_DATABASE_URI"]))
 
 else:
-    cfg.set("db.uri", "sqlite:///:memory:")
+    cfg.setdefault("db.uri", "sqlite:///:memory:")
 
 if cfg.get("db.uri").startswith("sqlite"):
     warn("sqlite is for development purposes only", ConfigurationWarning)

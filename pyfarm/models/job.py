@@ -60,7 +60,10 @@ class JobTagsModel(db.Model):
     .. autoattribute:: _jobid
     """
     __tablename__ = TABLE_JOB_TAGS
-    __table_args__ = (UniqueConstraint("_jobid", "tag"),)
+    __table_args__ = (
+        UniqueConstraint("_jobid", "tag"),
+        {"extend_existing": True})
+
     id = IDColumn()
     _jobid = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_JOB),
                        doc=dedent("""
@@ -86,7 +89,10 @@ class JobSoftwareModel(db.Model):
     .. autoattribute:: _jobid
     """
     __tablename__ = TABLE_JOB_SOFTWARE
-    __table_args__ = (UniqueConstraint("_jobid", "software", "version"),)
+    __table_args__ = (
+        UniqueConstraint("_jobid", "software", "version"),
+        {"extend_existing": True})
+
     id = IDColumn()
     _jobid = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_JOB),
                        doc=dedent("""
