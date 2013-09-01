@@ -22,7 +22,7 @@ from sqlalchemy.exc import IntegrityError
 try:
     from pg8000 import ProgrammingError
 except ImportError:
-    ProgrammingError = None
+    ProgrammingError = NotImplementedError
 
 from utcore import ModelTestCase, db
 from pyfarm.core.enums import AgentState
@@ -168,14 +168,10 @@ class TestAgentModel(AgentTestCase):
         db.session.add(modelA)
         db.session.add(modelB)
 
-        exception_classes = [IntegrityError]
-        if ProgrammingError is not None:
-            exception_classes.append(ProgrammingError)
-
         try:
             db.session.commit()
             self.fail("commit success, expected failure")
-        except exception_classes:
+        except (IntegrityError, ProgrammingError):
             return
         except Exception, e:
             raise SkipTest("unknown exception: %s" % e)
