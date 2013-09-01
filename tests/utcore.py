@@ -21,6 +21,7 @@ used by the unittests.
 
 import os
 import sys
+import time
 from functools import wraps
 
 if sys.version_info[0:2] < (2, 7):
@@ -36,15 +37,23 @@ except ImportError:
 from nose.plugins.skip import SkipTest
 from pyfarm.core.config import cfg
 
-TEST_CONFIG = {
+# Some initial configuration values before we load the models.  Some values,
+# such as the table prefix are included here just so two tests don't step
+# on each other (though in production it would be better to use a different DB).
+cfg.update({
+    "db.table_prefix": "pyfarm_unittest_%s_" % time.strftime("%M%d%Y%H%M%S"),
     "agent.min_port": 1025, "agent.max_port": 65535,
     "agent.min_cpus": 1, "agent.max_cpus": 2147483647,
     "agent.min_ram": 32, "agent.max_ram": 2147483647,
     "job.priority": 500, "job.max_username_length": 254,
     "job.batch": 1, "job.requeue": True, "job.cpus": 4,
-    "job.ram": 0}
+    "job.ram": 0})
 
-cfg.update(TEST_CONFIG)
+# import all model objects into this space so relationships, foreign keys,
+# and the the mapper won't have problems finding the required classes
+from pyfarm.models.task import TaskModel
+from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
+from pyfarm.models.job import JobModel, JobSoftwareModel, JobTagsModel
 
 from pyfarm.models.core.app import db
 
@@ -57,7 +66,6 @@ def skip_on_ci(func):
         return func(*args, **kwargs)
     return wrapper
 
-
 class ModelTestCase(unittest.TestCase):
     ORIGINAL_ENVIRONMENT = dict(os.environ.data)
 
@@ -67,5 +75,5 @@ class ModelTestCase(unittest.TestCase):
         db.create_all()
 
     def tearDown(self):
-        db.session.rollback()
+        db.session.remove()
         db.drop_all()
