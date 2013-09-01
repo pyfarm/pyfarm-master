@@ -25,7 +25,8 @@ from pyfarm.models.core.app import db
 from pyfarm.models.mixins import WorkValidationMixin
 from pyfarm.models.core.types import IDColumn, IDType, IPv4Address
 from pyfarm.models.core.cfg import (
-    TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE)
+    TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE,
+    MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH)
 
 
 REGEX_HOSTNAME = re.compile("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*"
@@ -72,7 +73,7 @@ class AgentTagsModel(db.Model, AgentTaggingMixin):
     _agentid = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_AGENT),
                          doc=dedent("""
                          The foreign key which stores :attr:`AgentModel.id`"""))
-    tag = db.Column(db.String,
+    tag = db.Column(db.String(MAX_TAG_LENGTH),
                     doc=dedent("""
                     A string value to tag an :class:`.AgentModel`. Generally
                     this value is used for grouping like resources together
@@ -102,11 +103,12 @@ class AgentSoftwareModel(db.Model, AgentTaggingMixin):
     _agentid = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_AGENT),
                          doc=dedent("""
                          The foreign key which stores :attr:`AgentModel.id`"""))
-    software = db.Column(db.String, nullable=False,
+    software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
                          doc=dedent("""
                          The name of the software installed.  No normalization
                          is performed prior to being stored in the database"""))
-    version = db.Column(db.String, default="any", nullable=False,
+    version = db.Column(db.String(MAX_TAG_LENGTH),
+                        default="any", nullable=False,
                         doc=dedent("""
                         The version of the software installed on a host.  This
                         value does not follow any special formatting rules
@@ -136,7 +138,7 @@ class AgentModel(db.Model, WorkValidationMixin):
     id = IDColumn()
 
     # basic host attribute information
-    hostname = db.Column(db.String, nullable=False,
+    hostname = db.Column(db.String(MAX_HOSTNAME_LENGTH), nullable=False,
                          doc=dedent("""
                          The hostname we should use to talk to this host.
                          Preferably this value will be the fully qualified

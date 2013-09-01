@@ -41,7 +41,8 @@ from pyfarm.models.core.functions import WorkColumns
 from pyfarm.models.core.types import (
     IDColumn, IDType, JobType, JSONDict, JSONList)
 from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE)
+    TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE,
+    MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH)
 from pyfarm.models.mixins import WorkValidationMixin, StateChangedMixin
 
 
@@ -68,7 +69,7 @@ class JobTagsModel(db.Model):
                        doc=dedent("""
                        Foreign key which stores :attr:`JobModel.id`"""))
 
-    tag = db.Column(db.String, nullable=False)
+    tag = db.Column(db.String(MAX_TAG_LENGTH), nullable=False)
 
 
 class JobSoftwareModel(db.Model):
@@ -95,10 +96,11 @@ class JobSoftwareModel(db.Model):
     _jobid = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_JOB),
                        doc=dedent("""
                        The foreign key which stores :attr:`JobModel.id`"""))
-    software = db.Column(db.String, nullable=False,
+    software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
                          doc=dedent("""
                          The name of the software required to run a job"""))
-    version = db.Column(db.String, default="any", nullable=False,
+    version = db.Column(db.String(MAX_TAG_LENGTH),
+                        default="any", nullable=False,
                         doc=dedent("""
                         The version of software required to run the job.  This
                         value does not follow any special formatting rules
@@ -116,8 +118,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
         WorkColumns(STATE_ENUM.QUEUED, "job.priority")
-
-    user = db.Column(db.String(cfg.get("job.max_username_length")),
+    user = db.Column(db.String(MAX_USERNAME_LENGTH),
                      doc=dedent("""
                      The user this job should execute as.  The agent
                      process will have to be running as root on platforms
@@ -143,7 +144,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                         The name of the the jobtype to execute.  This value
                         will be set by the jobtype property when the class
                         is setup."""))
-    cmd = db.Column(db.String,
+    cmd = db.Column(db.String(MAX_COMMAND_LENGTH),
                     doc=dedent("""
                     The platform independent command to run. Each agent will
                     resolve this value for itself when the task begins so a

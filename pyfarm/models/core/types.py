@@ -33,7 +33,7 @@ try:
 except ImportError:
     from simplejson import dumps, loads
 
-from sqlalchemy.types import TypeDecorator, CHAR, String, BigInteger, Unicode
+from sqlalchemy.types import TypeDecorator, CHAR, String, BigInteger, UnicodeText
 from sqlalchemy.dialects.postgresql import UUID as PGUuid
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.core.app import db
@@ -117,7 +117,7 @@ class JSONSerializable(TypeDecorator):
         if True, do not raise :class:`ValueError` if the input data
         itself is empty
     """
-    impl = Unicode
+    impl = UnicodeText
     serialize_types = None
     serialize_none = False
 

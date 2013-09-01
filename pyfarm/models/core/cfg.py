@@ -47,6 +47,7 @@ Stores basic configuration data related to tables and models.
 
 from pyfarm.core.config import cfg
 
+# table names
 TABLE_PREFIX = cfg.get("db.table_prefix", "pyfarm_")
 TABLE_AGENT = "%sagent" % TABLE_PREFIX
 TABLE_AGENT_TAGS = "%s_tags" % TABLE_AGENT
@@ -55,3 +56,10 @@ TABLE_JOB = "%sjob" % TABLE_PREFIX
 TABLE_JOB_TAGS = "%s_tags" % TABLE_JOB
 TABLE_JOB_SOFTWARE = "%s_software" % TABLE_JOB
 TABLE_TASK = "%stask" % TABLE_PREFIX
+
+# column lengths
+MAX_HOSTNAME_LENGTH = cfg.get("db.MAX_COMMAND_LENGTH", 255)
+MAX_JOBTYPE_LENGTH = cfg.get("db.MAX_JOBTYPE_LENGTH", 64)
+MAX_COMMAND_LENGTH = cfg.get("db.MAX_COMMAND_LENGTH", 64)
+MAX_USERNAME_LENGTH = cfg.get("db.MAX_USERNAME_LENGTH", 255)
+MAX_TAG_LENGTH = cfg.get("db.MAX_TAG_LENGTH", 32)  # general length, used by multiple columns
