@@ -22,4 +22,4 @@ install:
 
 script:
   - pip freeze
-  - nosetests -s --verbose tests
+  - nosetests -s --verbose --with-isolation tests
