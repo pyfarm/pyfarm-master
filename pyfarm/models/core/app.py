@@ -15,11 +15,12 @@
 # limitations under the License.
 
 import uuid
+from os.path import expandvars
 from flask import Flask
 from pyfarm.core.config import cfg
 
 app = Flask("PyFarm")
-app.config["SQLALCHEMY_DATABASE_URI"] = cfg.get("db.uri")
+app.config["SQLALCHEMY_DATABASE_URI"] = expandvars(cfg.get("db.uri"))
 app.secret_key = str(uuid.uuid4())  # TODO: this needs a config or extern lookup
 
 # sqlite fixes (development work only)
