@@ -14,13 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from uuid import UUID
 from textwrap import dedent
 from sqlalchemy import event
 from pyfarm.models.core.app import db
 from pyfarm.core.enums import WorkState
 from pyfarm.models.core.types import IDType
-from pyfarm.models.core.functions import WorkColumns, modelfor, getuuid
+from pyfarm.models.core.functions import WorkColumns, getuuid
 from pyfarm.models.core.cfg import TABLE_JOB, TABLE_TASK, TABLE_AGENT
 from pyfarm.models.mixins import WorkValidationMixin, StateChangedMixin
 
