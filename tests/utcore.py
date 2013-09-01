@@ -21,9 +21,6 @@ used by the unittests.
 
 import os
 import sys
-import shutil
-import tempfile
-from random import randint
 from functools import wraps
 
 if sys.version_info[0:2] < (2, 7):
@@ -50,7 +47,6 @@ TEST_CONFIG = {
 cfg.update(TEST_CONFIG)
 
 from pyfarm.models.core.app import db
-from pyfarm.core.utility import randstr
 
 
 def skip_on_ci(func):
@@ -62,84 +58,14 @@ def skip_on_ci(func):
     return wrapper
 
 
-class RandomPrivateIPGenerator(set):
-    def __call__(self):
-        while True:
-            int_values = [10, randint(0, 255), randint(0, 255), randint(0, 255)]
-            random_address = ".".join(map(str, int_values))
-
-            if random_address not in self:
-                self.add(random_address)
-                return random_address
-
-
-class RandomStringGenerator(set):
-    def __call__(self):
-        while True:
-            value = randstr()
-            if value not in self:
-                self.add(value)
-                return value
-
-
-unique_ip = RandomPrivateIPGenerator()
-unique_str = RandomStringGenerator()
-
-
-class TestCase(unittest.TestCase):
-    TEMPDIR_PREFIX = ""
-    BUILDBOT_UUID = os.environ.get("BUILDBOT_UUID")
-    ORIGINAL_ENVIRONMENT = {}
-    temp_directories = set()
-
-    @classmethod
-    def remove(cls, path):
-        assert isinstance(path, basestring), "expected a string for `path`"
-
-        if os.path.isfile(path):
-            delete = os.remove
-        elif os.path.isdir(path):
-            delete = shutil.rmtree
-        else:
-            delete = lambda path: None
-
-        # delete the path
-        try:
-            delete(path)
-
-        except (OSError, IOError):
-            pass
-
-        else:
-            if path in cls.temp_directories:
-                cls.temp_directories.remove(path)
-
-    @classmethod
-    def setUpClass(cls):
-        cls.ORIGINAL_ENVIRONMENT = os.environ.copy()
-
-    @classmethod
-    def mktempdir(cls):
-        tempdir = tempfile.mkdtemp(prefix=cls.TEMPDIR_PREFIX)
-        cls.temp_directories.add(tempdir)
-        return tempdir
+class ModelTestCase(unittest.TestCase):
+    ORIGINAL_ENVIRONMENT = dict(os.environ.data)
 
     def setUp(self):
-        self.tempdir = self.mktempdir()
         os.environ.clear()
         os.environ.update(self.ORIGINAL_ENVIRONMENT)
-
-    def tearDown(self):
-        self.remove(self.tempdir)
-        map(self.remove, self.temp_directories.copy())
-
-
-class ModelTestCase(TestCase):
-    def setUp(self):
-        super(ModelTestCase, self).setUp()
         db.create_all()
 
     def tearDown(self):
         db.session.rollback()
         db.drop_all()
-        super(ModelTestCase, self).setUp()
