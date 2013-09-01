@@ -35,8 +35,8 @@ except ImportError:
 
 from sqlalchemy.types import TypeDecorator, CHAR, String, BigInteger, Unicode
 from sqlalchemy.dialects.postgresql import UUID as PGUuid
+from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.core.app import db
-# from pyfarm.ext.jobtypes.core import Job
 
 JSON_NONE = dumps(None)
 RESUB_GUID_CHARS = re.compile("[{}-]")
@@ -52,6 +52,7 @@ def short_guid(func):
 
         return value
     return wrapper
+
 
 class GUID(TypeDecorator):
     """
@@ -206,8 +207,8 @@ class JobType(TypeDecorator):
     """
     Column type which loads and stores job types.
     """
-    impl = String
-    MODULE_ROOT = "pyfarm.ext.jobtypes.%s"
+    impl = String(MAX_JOBTYPE_LENGTH)
+    MODULE_ROOTS = ("pyfarm.jobtypes.%s", "pyfarm_jobtypes.%s")
 
     def process_bind_param(self, value, dialect):
         if isinstance(value, Job) or isclass(value):
@@ -223,22 +224,23 @@ class JobType(TypeDecorator):
             raise ValueError("value provided for `jobtype` cannot be None")
 
         module_name = value.lower()
-        module_path = self.MODULE_ROOT % module_name
+        for module_root in self.MODULE_ROOTS:
+            module_path = module_root % module_name
 
-        # attempt to import the module for the job type
-        try:
-            module = import_module(module_path)
-        except ImportError:
-            args = (module_name, module_path)
-            raise ImportError(
-                "failed to find a job type to import for %s at %s" % args)
+            # attempt to import the module for the job type
+            try:
+                module = import_module(module_path)
+            except ImportError:
+                args = (module_name, module_path)
+                raise ImportError(
+                    "failed to find a job type to import for %s at %s" % args)
 
-        # try to get the class attribute and return it
-        try:
-            return getattr(module, value)
-        except AttributeError:
-            raise AttributeError(
-                "job type %s does exist on %s" % (value, module))
+            # try to get the class attribute and return it
+            try:
+                return getattr(module, value)
+            except AttributeError:
+                raise AttributeError(
+                    "job type %s does exist on %s" % (value, module))
 
 
 def IDColumn():
