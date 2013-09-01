@@ -61,8 +61,7 @@ class JobTagsModel(db.Model):
     """
     __tablename__ = TABLE_JOB_TAGS
     __table_args__ = (
-        UniqueConstraint("_jobid", "tag"),
-        {"extend_existing": True})
+        UniqueConstraint("_jobid", "tag"), )
 
     id = IDColumn()
     _jobid = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_JOB),
@@ -90,8 +89,7 @@ class JobSoftwareModel(db.Model):
     """
     __tablename__ = TABLE_JOB_SOFTWARE
     __table_args__ = (
-        UniqueConstraint("_jobid", "software", "version"),
-        {"extend_existing": True})
+        UniqueConstraint("_jobid", "software", "version"), )
 
     id = IDColumn()
     _jobid = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_JOB),
