@@ -19,25 +19,30 @@ Contains all the models used for database communication and object
 relational management.
 """
 
-# set the database uri
 import os
+from os.path import expandvars
+from warnings import warn
+from pyfarm.core.warning import ConfigurationWarning
 from pyfarm.core.config import cfg
 
-# determine the database url to use
-if "SQLALCHEMY_DATABASE_URI" in os.environ:
-    cfg.setdefault("db.uri", os.environ["SQLALCHEMY_DATABASE_URI"])
+if "SQLALCHEMY_DATABASE_URI" in os.environ and "db.uri" in cfg:
+    warn(
+        "$SQLALCHEMY_DATABASE_URI present in environment but "
+        "db.uri was already set, not using setting from the environment",
+        ConfigurationWarning)
+
+    # database uri is in the environment but we shouldn't be using it because
+    # the configuration value `db.uri` was set
+    del os.environ["SQLALCHEMY_DATABASE_URI"]
+
+elif "SQLALCHEMY_DATABASE_URI" in os.environ and "db.uri" not in cfg:
+    cfg.set("db.uri", expandvars(os.environ["SQLALCHEMY_DATABASE_URI"]))
 
 else:
-    uri = cfg.setdefault("db.uri", "sqlite:///:memory:")
+    cfg.set("db.uri", "sqlite:///:memory:")
 
-    # if using sqlite, produce a warning
-    if uri.startswith("sqlite"):
-        from warnings import warn
-        from pyfarm.core.warning import ConfigurationWarning
-        warn("sqlite is for development purposes only", ConfigurationWarning)
-
-    del uri  # uri should not be present on __init__.py
-
+if cfg.get("db.uri").startswith("sqlite"):
+    warn("sqlite is for development purposes only", ConfigurationWarning)
 
 # NOTE: All models must be loaded here so the mapper
 #       can create the relationships on startup
