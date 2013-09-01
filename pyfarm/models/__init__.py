@@ -44,13 +44,8 @@ else:
 if cfg.get("db.uri").startswith("sqlite"):
     warn("sqlite is for development purposes only", ConfigurationWarning)
 
-# NOTE: All models must be loaded here so the mapper
-#       can create the relationships on startup
-from pyfarm.models.job import JobTagsModel, JobSoftwareModel, JobModel
-from pyfarm.models.task import TaskModel
-from pyfarm.models.agent import AgentTagsModel, AgentSoftwareModel, AgentModel
-
-# load the interface classes
+# load the interface classes, this also loads the models to
+# define relationships
 from pyfarm.models.agent import Agent, AgentSoftware, AgentTag
 from pyfarm.models.job import Job, JobSoftware, JobTag
 from pyfarm.models.task import Task
