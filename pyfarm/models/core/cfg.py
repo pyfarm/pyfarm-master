@@ -15,13 +15,11 @@
 # limitations under the License.
 
 """
-Stores basic configuration data related to tables and models.
-
-:var DBCFG: Instanced
-    :class:`Loader` class which loads dbdata.yml
+Stores basic configuration data related to tables and models.  Most of these
+variables have defaults defined in the configuration under `db.<value>`
 
 :var TABLE_PREFIX:
-    Prefix for all tables, defaults to dbdata.yml:tables.prefix
+    Prefix for all tables
 
 :var TABLE_AGENT:
     Stores the name of the table for agents
@@ -43,6 +41,25 @@ Stores basic configuration data related to tables and models.
 
 :var TABLE_TASK:
     Stores the name of the table for job tasks
+
+:var MAX_HOSTNAME_LENGTH:
+    the max length of a hostname
+
+:var MAX_JOBTYPE_LENGTH:
+    the max length of a jobtype
+
+:var MAX_COMMAND_LENGTH:
+    the max length of a command (ex. `bash` or `cmd.exe`)
+
+:var MAX_USERNAME_LENGTH:
+    the max length of a username
+
+:var MAX_TAG_LENGTH:
+    the max length of a tag
+
+    .. note::
+        this value is shared amongst all tag columns and may be split into
+        multiple values at a later time
 """
 
 from pyfarm.core.config import cfg
@@ -62,4 +79,4 @@ MAX_HOSTNAME_LENGTH = cfg.get("db.MAX_COMMAND_LENGTH", 255)
 MAX_JOBTYPE_LENGTH = cfg.get("db.MAX_JOBTYPE_LENGTH", 64)
 MAX_COMMAND_LENGTH = cfg.get("db.MAX_COMMAND_LENGTH", 64)
 MAX_USERNAME_LENGTH = cfg.get("db.MAX_USERNAME_LENGTH", 255)
-MAX_TAG_LENGTH = cfg.get("db.MAX_TAG_LENGTH", 32)  # general length, used by multiple columns
+MAX_TAG_LENGTH = cfg.get("db.MAX_TAG_LENGTH", 32)  # used by multiple columns
