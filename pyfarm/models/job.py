@@ -15,6 +15,11 @@
 # limitations under the License.
 
 """
+Job Models
+==========
+
+Models and interface classes related to jobs.
+
 .. include:: ../include/references.rst
 """
 
@@ -166,7 +171,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                    The number of frames to count by between `start` and
                    `end`.  This column may also sometimes be referred to
                    as 'step' by other software."""))
-    batch = db.Column(db.Integer, default=cfg.get("job.batch"),
+    batch = db.Column(db.Integer, default=lambda: cfg.get("job.batch", 1),
                       doc=dedent("""
                       Number of tasks to run on a single agent at once.
                       Depending on the capabilities of the software being run
@@ -174,7 +179,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                       the agent or multiple processes on after the other.
 
                       **configured by**: `job.batch`"""))
-    requeue = db.Column(db.Integer, default=cfg.get("job.requeue"),
+    requeue = db.Column(db.Integer, default=lambda: cfg.get("job.requeue", 1),
                         doc=dedent("""
                         Number of times to requeue failed tasks
 
@@ -186,7 +191,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                             -1, requeue failed tasks indefinitely
 
                         **configured by**: `job.requeue`"""))
-    cpus = db.Column(db.Integer, default=cfg.get("job.cpus"),
+    cpus = db.Column(db.Integer, default=lambda: cfg.get("job.cpus", 0),
                      doc=dedent("""
                      Number of cpus or threads each task should consume on
                      each agent.  Depending on the job type being executed
@@ -202,7 +207,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                         -1, agent cpu is exclusive for a task from this job
 
                      **configured by**: `job.cpus`"""))
-    ram = db.Column(db.Integer, default=cfg.get("job.ram"),
+    ram = db.Column(db.Integer, default=lambda: cfg.get("job.ram", 0),
                     doc=dedent("""
                     Amount of ram a task from this job will require to be
                     free in order to run.  A task exceeding this value will

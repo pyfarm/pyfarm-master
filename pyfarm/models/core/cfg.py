@@ -15,6 +15,9 @@
 # limitations under the License.
 
 """
+Configuration Variables
+=======================
+
 Stores basic configuration data related to tables and models.  Most of these
 variables have defaults defined in the configuration under `db.<value>`
 

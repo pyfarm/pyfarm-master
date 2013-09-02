@@ -16,6 +16,9 @@
 
 
 """
+Functions
+=========
+
 Contains core functions and data for use by :mod:`pyfarm.models`
 
 .. include:: ../include/references.rst
@@ -100,7 +103,7 @@ def getuuid(value, table, table_attrib, error_tail):
         raise ValueError("failed to determine %s" % error_tail)
 
 
-def WorkColumns(state_default, priority_default):
+def WorkColumns(state_default, priority_default, priority_alt=500):
     """
     Produces some default columns which are used by models which produce
     work.  Currently this includes |JobModel| and |TaskModel|
@@ -116,7 +119,7 @@ def WorkColumns(state_default, priority_default):
                   :class:`.WorkState`""")),
 
         # priority
-        db.Column(db.Integer, default=cfg.get(priority_default),
+        db.Column(db.Integer, default=cfg.get(priority_default, priority_alt),
                   doc=dedent("""
                   The priority of the job relative to others in the
                   queue.  This is not the same as task priority.

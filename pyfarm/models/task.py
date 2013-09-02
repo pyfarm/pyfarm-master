@@ -14,6 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Task Models
+===========
+
+Models and interface classes related to tasks
+"""
+
 from textwrap import dedent
 
 from sqlalchemy import event

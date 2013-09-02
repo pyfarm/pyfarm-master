@@ -14,6 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Flask Application
+=================
+
+Sets up the flask application object and database interface
+
+:attr app:
+    module level instance of the :class:`flask.Flask` application object
+
+:attr db:
+    module level instance of the :class:`flask.ext.sqlalchemy.SQLAlchemy` class
+"""
+
 import uuid
 from os.path import expandvars
 from flask import Flask

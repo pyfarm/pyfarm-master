@@ -15,6 +15,9 @@
 # limitations under the License.
 
 """
+Custom Columns and Type Generators
+==================================
+
 Special column types used by PyFarm's models.
 """
 
