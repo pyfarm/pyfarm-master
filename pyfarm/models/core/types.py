@@ -37,7 +37,6 @@ from sqlalchemy.types import TypeDecorator, CHAR, String, BigInteger, UnicodeTex
 from sqlalchemy.dialects.postgresql import UUID as PGUuid
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.core.app import db
-from pyfarm.jobtypes.core import JobType
 
 JSON_NONE = dumps(None)
 RESUB_GUID_CHARS = re.compile("[{}-]")
@@ -225,6 +224,7 @@ class JobType(TypeDecorator):
             raise ValueError("value provided for `jobtype` cannot be None")
 
         module_name = value.lower()
+        attempted_imports = []
         for module_root in self.MODULE_ROOTS:
             module_path = module_root % module_name
 
@@ -232,9 +232,8 @@ class JobType(TypeDecorator):
             try:
                 module = import_module(module_path)
             except ImportError:
-                args = (module_name, module_path)
-                raise ImportError(
-                    "failed to find a job type to import for %s at %s" % args)
+                attempted_imports.append(".".join((module_name, module_path)))
+                continue
 
             # try to get the class attribute and return it
             try:

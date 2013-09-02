@@ -15,14 +15,16 @@
 # limitations under the License.
 
 import re
-import netaddr
 from textwrap import dedent
+
+import netaddr
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
+
 from pyfarm.models.core.app import db
-from pyfarm.models.mixins import WorkValidationMixin
+from pyfarm.models.core.mixins import WorkValidationMixin
 from pyfarm.models.core.types import IDColumn, IDType, IPv4Address
 from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE,

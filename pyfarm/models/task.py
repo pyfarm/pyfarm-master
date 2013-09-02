@@ -15,13 +15,15 @@
 # limitations under the License.
 
 from textwrap import dedent
+
 from sqlalchemy import event
-from pyfarm.models.core.app import db
 from pyfarm.core.enums import WorkState
+
+from pyfarm.models.core.app import db
 from pyfarm.models.core.types import IDType
 from pyfarm.models.core.functions import WorkColumns, getuuid
 from pyfarm.models.core.cfg import TABLE_JOB, TABLE_TASK, TABLE_AGENT
-from pyfarm.models.mixins import WorkValidationMixin, StateChangedMixin
+from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
 
 
 class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin):

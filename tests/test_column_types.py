@@ -25,6 +25,7 @@ from utcore import ModelTestCase
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.app import db
 from pyfarm.models.core.types import (
+    JobType as JobTypeBase,
     IPv4Address as IPv4AddressType,
     JSONDict as JSONDictType,
     JSONList as JSONListType,
@@ -49,6 +50,12 @@ class IPv4AddressModel(db.Model):
     data = db.Column(IPv4AddressType)
 
 
+class JobTypeModel(db.Model):
+    __tablename__ = "%s_jobtype_model_test" % TABLE_PREFIX
+    id = db.Column(Integer, primary_key=True, autoincrement=True)
+    data = db.Column(JobTypeBase)
+
+
 class JSONDict(JSONDictModel):
     def __init__(self, data):
         self.data = data
@@ -60,6 +67,11 @@ class JSONList(JSONListModel):
 
 
 class IPv4Address(IPv4AddressModel):
+    def __init__(self, data):
+        self.data = data
+
+
+class JobType(JobTypeModel):
     def __init__(self, data):
         self.data = data
 
@@ -180,3 +192,18 @@ class TestIPAddressType(ModelTestCase):
         result = IPv4Address.query.filter_by(id=insert_id).first()
         self.assertIsInstance(result.data, IPAddress)
         self.assertEqual(result.data, ipvalue)
+
+
+class JobTypeTest(ModelTestCase):
+    def setUp(self):
+        super(JobTypeTest, self).setUp()
+
+    def tearDown(self):
+        super(JobTypeTest, self).tearDown()
+
+    def test_foo(self):
+        model = JobType("foobar")
+        db.session.add(model)
+        db.session.commit()
+        insert_id = model.id
+        #print insert_id
