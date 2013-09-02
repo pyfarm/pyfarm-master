@@ -95,17 +95,13 @@ class TestAgentSoftware(AgentTestCase):
             db.session.add(software)
 
         db.session.commit()
-        agent = Agent.query.filter_by(id=agent_foobar.id).first()
+        agent_id = agent_foobar.id
+        db.session.remove()
 
-        # agent.software == software_objects
+        agent = Agent.query.filter_by(id=agent_id).first()
         self.assertEqual(
-            set(i.id for i in agent.software.all()),
-            set(i.id for i in software_objects))
-
-        # same as above, asking from the software table side
-        self.assertEqual(
-            set(i.id for i in AgentSoftware.query.filter_by(agent=agent).all()),
-            set(i.id for i in software_objects))
+            set(i.software for i in agent.software),
+            set(("foo", "bar", "baz")))
 
 
 class TestAgentTags(AgentTestCase):
@@ -150,8 +146,10 @@ class TestAgentModel(AgentTestCase):
             self.assertEqual(model.ram, ram)
             self.assertIsNone(model.id)
             db.session.commit()
+            model_id = model.id
+            db.session.remove()
             self.assertIsInstance(model.id, UUID)
-            result = Agent.query.filter_by(id=model.id).first()
+            result = Agent.query.filter_by(id=model_id).first()
             self.assertEqual(model.hostname, result.hostname)
             self.assertEqual(model.ip, result.ip)
             self.assertEqual(model.subnet, result.subnet)
