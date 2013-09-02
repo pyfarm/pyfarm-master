@@ -141,15 +141,15 @@ class JSONSerializable(TypeDecorator):
 
     def process_bind_param(self, value, dialect):
         """Converts the value being assigned into a json blob"""
-        if value is None:
-            return self.dumps(value) if self.serialize_none else value
-
-        elif isinstance(value, self.serialize_types):
-            return self.dumps(value)
-
-        else:
+        if not isinstance(value, self.serialize_types):
             args = (value, self.__class__.__name__)
             raise ValueError("unexpected input %s for `%s`" % args)
+
+        elif NoneType in self.serialize_types and value is None:
+            return self.dumps(value) if self.serialize_none else value
+
+        else:
+            return self.dumps(value)
 
     def process_result_value(self, value, dialect):
         """Converts data from the database into a Python object"""
@@ -260,4 +260,4 @@ def IDColumn():
 # the universal mapping which can be used, even if the underlying
 # type changes in the future
 IDType = GUID
-IDDefault = uuid4
+IDDefault = lambda: str(uuid4()).replace("-", "")
