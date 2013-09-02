@@ -14,7 +14,54 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pyfarm.models.core.app import db
-from pyfarm.models.core.types import GUID, JSONDict, JSONList
+from os import urandom
+from random import randint, choice
+from binascii import b2a_hex
+from sqlalchemy.types import Integer
 
-# TODO: test the custom column types
+from utcore import ModelTestCase
+from pyfarm.models.core.cfg import TABLE_PREFIX
+from pyfarm.models.core.app import db
+from pyfarm.models.core.types import (
+    JSONDict as JSONDictType,
+    JSONList as JSONListType)
+
+
+class JSONDictModel(db.Model):
+    __tablename__ = "%s_jsondict_model_test" % TABLE_PREFIX
+    id = db.Column(Integer, primary_key=True, autoincrement=True)
+    data = db.Column(JSONDictType)
+
+
+class JSONDict(JSONDictModel):
+    def __init__(self, data):
+        self.data = data
+
+
+class TestJsonTypes(ModelTestCase):
+    def test_jsondict(self):
+        for test_type in JSONDictType.serialize_types:
+            for i in xrange(10):
+                test_data = test_type({
+                    "str": b2a_hex(urandom(1024)),
+                    "int": randint(-1024, 1024),
+                    "list": [
+                        b2a_hex(urandom(1024)), -1024, 1024, True, None],
+                    "bool": choice([True, False]), "none": None,
+                    "dict": {
+                        "str": b2a_hex(urandom(1024)),
+                        "true": True, "false": False,
+                        "int": randint(-1024, 1024),
+                        "list": [
+                            b2a_hex(urandom(1024)), -1024, 1024, True, None]}})
+
+                model = JSONDict(test_data)
+                self.assertIsInstance(model.data, test_type)
+                db.session.add(model)
+                db.session.commit()
+                insert_id = model.id
+                db.session.remove()
+                result = JSONDict.query.filter_by(id=insert_id).first()
+                self.assertIsNot(model, result)
+                self.assertIsInstance(model.data, dict)
+                self.assertDictEqual(model.data, result.data)
