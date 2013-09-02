@@ -18,13 +18,15 @@ from os import urandom
 from random import randint, choice
 from binascii import b2a_hex
 from sqlalchemy.types import Integer
+from sqlalchemy.exc import StatementError
 
 from utcore import ModelTestCase
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.app import db
 from pyfarm.models.core.types import (
     JSONDict as JSONDictType,
-    JSONList as JSONListType)
+    JSONList as JSONListType,
+    JSONSerializable)
 
 
 class JSONDictModel(db.Model):
@@ -33,13 +35,31 @@ class JSONDictModel(db.Model):
     data = db.Column(JSONDictType)
 
 
+class JSONListModel(db.Model):
+    __tablename__ = "%s_jsonlist_model_test" % TABLE_PREFIX
+    id = db.Column(Integer, primary_key=True, autoincrement=True)
+    data = db.Column(JSONListType)
+
+
 class JSONDict(JSONDictModel):
     def __init__(self, data):
         self.data = data
 
 
+class JSONList(JSONListModel):
+    def __init__(self, data):
+        self.data = data
+
+
 class TestJsonTypes(ModelTestCase):
-    def test_jsondict(self):
+    def test_types_notimplemented(self):
+        class TestType(JSONSerializable):
+            pass
+
+        with self.assertRaises(NotImplementedError):
+            TestType()
+
+    def test_dict(self):
         for test_type in JSONDictType.serialize_types:
             for i in xrange(10):
                 test_data = test_type({
@@ -65,3 +85,34 @@ class TestJsonTypes(ModelTestCase):
                 self.assertIsNot(model, result)
                 self.assertIsInstance(model.data, dict)
                 self.assertDictEqual(model.data, result.data)
+
+    def test_dict_error(self):
+        data = JSONDict([])
+        db.session.add(data)
+
+        with self.assertRaises(StatementError):
+            db.session.commit()
+
+    def test_list(self):
+        for test_type in JSONListType.serialize_types:
+            for i in xrange(10):
+                test_data = test_type(
+                    [b2a_hex(urandom(1024)), -1024, 1024, True, None])
+
+                model = JSONList(test_data)
+                self.assertIsInstance(model.data, test_type)
+                db.session.add(model)
+                db.session.commit()
+                insert_id = model.id
+                db.session.remove()
+                result = JSONList.query.filter_by(id=insert_id).first()
+                self.assertIsNot(model, result)
+                self.assertIsInstance(model.data, list)
+                self.assertListEqual(model.data, result.data)
+
+    def test_list_error(self):
+        data = JSONList({})
+        db.session.add(data)
+
+        with self.assertRaises(StatementError):
+            db.session.commit()
