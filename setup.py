@@ -24,7 +24,8 @@ from textwrap import dedent
 from setuptools import setup
 
 install_requires = [
-    "pyfarm.core", "sqlalchemy", "netaddr",
+    "pyfarm.core", "pyfarm.jobtypes",
+    "sqlalchemy", "netaddr",
     "flask", "flask-sqlalchemy"]
 
 if sys.version_info[0:2] < (2, 7):
