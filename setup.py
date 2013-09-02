@@ -24,7 +24,7 @@ from textwrap import dedent
 from setuptools import setup
 
 install_requires = [
-    "pyfarm.core", "pyfarm.jobtypes",
+    "pyfarm.core",
     "sqlalchemy", "netaddr",
     "flask", "flask-sqlalchemy"]
 
