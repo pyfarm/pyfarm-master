@@ -146,37 +146,37 @@ class TestIPAddressType(ModelTestCase):
             instance.checkInteger(IPv4AddressType.MAX_INT + 1)
 
     def test_insert_int(self):
-        ipvale = int(IPAddress("192.168.1.1"))
-        model = IPv4Address(ipvale)
-        self.assertEqual(model.data, ipvale)
+        ipvalue = int(IPAddress("192.168.1.1"))
+        model = IPv4Address(ipvalue)
+        self.assertEqual(model.data, ipvalue)
         db.session.add(model)
         db.session.commit()
         insert_id = model.id
         db.session.remove()
         result = IPv4Address.query.filter_by(id=insert_id).first()
         self.assertIsInstance(result.data, IPAddress)
-        self.assertEqual(int(result.data), ipvale)
+        self.assertEqual(int(result.data), ipvalue)
 
     def test_insert_string(self):
-        ipvale = "192.168.1.1"
-        model = IPv4Address(ipvale)
-        self.assertEqual(model.data, ipvale)
+        ipvalue = "192.168.1.1"
+        model = IPv4Address(ipvalue)
+        self.assertEqual(model.data, ipvalue)
         db.session.add(model)
         db.session.commit()
         insert_id = model.id
         db.session.remove()
         result = IPv4Address.query.filter_by(id=insert_id).first()
         self.assertIsInstance(result.data, IPAddress)
-        self.assertEqual(str(result.data), ipvale)
+        self.assertEqual(str(result.data), ipvalue)
 
     def test_insert_ipclass(self):
-        ipvale = IPAddress("192.168.1.1")
-        model = IPv4Address(ipvale)
-        self.assertEqual(model.data, ipvale)
+        ipvalue = IPAddress("192.168.1.1")
+        model = IPv4Address(ipvalue)
+        self.assertEqual(model.data, ipvalue)
         db.session.add(model)
         db.session.commit()
         insert_id = model.id
         db.session.remove()
         result = IPv4Address.query.filter_by(id=insert_id).first()
         self.assertIsInstance(result.data, IPAddress)
-        self.assertEqual(result.data, ipvale)
+        self.assertEqual(result.data, ipvalue)
