@@ -37,6 +37,7 @@ from sqlalchemy.types import TypeDecorator, CHAR, String, BigInteger, UnicodeTex
 from sqlalchemy.dialects.postgresql import UUID as PGUuid
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.core.app import db
+from pyfarm.jobtypes.core import JobType
 
 JSON_NONE = dumps(None)
 RESUB_GUID_CHARS = re.compile("[{}-]")
@@ -211,7 +212,7 @@ class JobType(TypeDecorator):
     MODULE_ROOTS = ("pyfarm.jobtypes.%s", "pyfarm_jobtypes.%s")
 
     def process_bind_param(self, value, dialect):
-        if isinstance(value, Job) or isclass(value):
+        if isinstance(value, JobType) or isclass(value):
             return value.__name__
         elif isinstance(value, basestring):
             return value
