@@ -17,13 +17,15 @@
 from os import urandom
 from random import randint, choice
 from binascii import b2a_hex
-from sqlalchemy.types import Integer
+from sqlalchemy.types import Integer, BigInteger
 from sqlalchemy.exc import StatementError
+from netaddr.ip import IPAddress
 
 from utcore import ModelTestCase
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.app import db
 from pyfarm.models.core.types import (
+    IPv4Address as IPv4AddressType,
     JSONDict as JSONDictType,
     JSONList as JSONListType,
     JSONSerializable)
@@ -41,12 +43,23 @@ class JSONListModel(db.Model):
     data = db.Column(JSONListType)
 
 
+class IPv4AddressModel(db.Model):
+    __tablename__ = "%s_ipaddress_model_test" % TABLE_PREFIX
+    id = db.Column(Integer, primary_key=True, autoincrement=True)
+    data = db.Column(IPv4AddressType)
+
+
 class JSONDict(JSONDictModel):
     def __init__(self, data):
         self.data = data
 
 
 class JSONList(JSONListModel):
+    def __init__(self, data):
+        self.data = data
+
+
+class IPv4Address(IPv4AddressModel):
     def __init__(self, data):
         self.data = data
 
@@ -116,3 +129,54 @@ class TestJsonTypes(ModelTestCase):
 
         with self.assertRaises(StatementError):
             db.session.commit()
+
+
+class TestIPAddressType(ModelTestCase):
+    def test_implementation(self):
+        # IP addrs are a spec, we need to be specific
+        self.assertIs(IPv4AddressType.impl, BigInteger)
+        self.assertEqual(IPv4AddressType.MAX_INT, 4294967295)
+
+        with self.assertRaises(ValueError):
+            instance = IPv4AddressType()
+            instance.checkInteger(-1)
+
+        with self.assertRaises(ValueError):
+            instance = IPv4AddressType()
+            instance.checkInteger(IPv4AddressType.MAX_INT + 1)
+
+    def test_insert_int(self):
+        ipvale = int(IPAddress("192.168.1.1"))
+        model = IPv4Address(ipvale)
+        self.assertEqual(model.data, ipvale)
+        db.session.add(model)
+        db.session.commit()
+        insert_id = model.id
+        db.session.remove()
+        result = IPv4Address.query.filter_by(id=insert_id).first()
+        self.assertIsInstance(result.data, IPAddress)
+        self.assertEqual(int(result.data), ipvale)
+
+    def test_insert_string(self):
+        ipvale = "192.168.1.1"
+        model = IPv4Address(ipvale)
+        self.assertEqual(model.data, ipvale)
+        db.session.add(model)
+        db.session.commit()
+        insert_id = model.id
+        db.session.remove()
+        result = IPv4Address.query.filter_by(id=insert_id).first()
+        self.assertIsInstance(result.data, IPAddress)
+        self.assertEqual(str(result.data), ipvale)
+
+    def test_insert_ipclass(self):
+        ipvale = IPAddress("192.168.1.1")
+        model = IPv4Address(ipvale)
+        self.assertEqual(model.data, ipvale)
+        db.session.add(model)
+        db.session.commit()
+        insert_id = model.id
+        db.session.remove()
+        result = IPv4Address.query.filter_by(id=insert_id).first()
+        self.assertIsInstance(result.data, IPAddress)
+        self.assertEqual(result.data, ipvale)
