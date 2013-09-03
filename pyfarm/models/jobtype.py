@@ -13,3 +13,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""
+Job Type Models
+===============
+
+Models and objects dedicated to handling information which is specific
+to an individual job.  See :mod:`pyfarm.models.job` for more the more
+general implementation.
+"""
+
+from pyfarm.models.core.cfg import TABLE_JOB_TYPE
+from pyfarm.models.core.app import db
+
+
+class JobTypeModel(db.Model):
+    """
+    Stores the unique information necessary to execute a task
+    """
+    __tablename__ = TABLE_JOB_TYPE
