@@ -23,7 +23,7 @@ to an individual job.  See :mod:`pyfarm.models.job` for more the more
 general implementation.
 """
 
-from pyfarm.models.core.cfg import TABLE_JOB_TYPE
+from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH
 from pyfarm.models.core.app import db
 
 
@@ -32,3 +32,8 @@ class JobTypeModel(db.Model):
     Stores the unique information necessary to execute a task
     """
     __tablename__ = TABLE_JOB_TYPE
+
+    name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False)
+    code = db.Column(db.Text)
+    # loadmode =
+    #
