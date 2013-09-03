@@ -15,7 +15,6 @@
 # limitations under the License.
 
 from __future__ import with_statement
-from uuid import UUID
 from nose.plugins.skip import SkipTest
 from sqlalchemy.exc import IntegrityError
 
@@ -33,6 +32,7 @@ try:
     from itertools import product
 except ImportError:
     from pyfarm.core.backports import product
+
 
 class AgentTestCase(ModelTestCase):
     hostnamebase = "foobar"
@@ -148,7 +148,6 @@ class TestAgentModel(AgentTestCase):
             db.session.commit()
             model_id = model.id
             db.session.remove()
-            self.assertIsInstance(model.id, UUID)
             result = Agent.query.filter_by(id=model_id).first()
             self.assertEqual(model.hostname, result.hostname)
             self.assertEqual(model.ip, result.ip)

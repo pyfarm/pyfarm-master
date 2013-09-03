@@ -41,11 +41,11 @@ from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 from pyfarm.core.config import cfg
 from pyfarm.models.core.app import db
-from pyfarm.core.enums import WorkState
+from pyfarm.core.enums import WorkState, JobTypeLoadMode
 from pyfarm.models.core.functions import WorkColumns
-from pyfarm.models.core.types import IDColumn, IDType, JSONDict, JSONList
+from pyfarm.models.core.types import IDColumn, JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE,
+    TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE, TABLE_JOB_TYPE,
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH)
 from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
 
@@ -68,8 +68,8 @@ class JobTagsModel(db.Model):
     __table_args__ = (
         UniqueConstraint("_jobid", "tag"), )
 
-    id = IDColumn()
-    _jobid = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_JOB),
+    id = IDColumn(IDTypeWork)
+    _jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                        doc=dedent("""
                        Foreign key which stores :attr:`JobModel.id`"""))
 
@@ -97,7 +97,7 @@ class JobSoftwareModel(db.Model):
         UniqueConstraint("_jobid", "software", "version"), )
 
     id = IDColumn()
-    _jobid = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_JOB),
+    _jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                        doc=dedent("""
                        The foreign key which stores :attr:`JobModel.id`"""))
     software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
@@ -109,6 +109,15 @@ class JobSoftwareModel(db.Model):
                         The version of software required to run the job.  This
                         value does not follow any special formatting rules
                         because the format depends on the 3rd party."""))
+
+
+#class JobTypeModel(db.Model):
+#    """
+#    Stores the data and information required of a job type for a specific
+#    job.
+#    """
+#    __tablename__ = TABLE_JOB_TYPE
+#    id = db.Column(db.Integer)
 
 
 class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
@@ -273,7 +282,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                         applied to the session."""))
 
     # relationships
-    _parentjob = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_JOB))
+    _parentjob = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB))
 
     siblings = db.relationship("JobModel",
                                backref=db.backref("parent", remote_side=[id]),

@@ -29,7 +29,7 @@ from datetime import datetime
 from textwrap import dedent
 from pyfarm.models.core.app import db
 from pyfarm.core.config import cfg
-from pyfarm.models.core.types import IDColumn
+from pyfarm.models.core.types import IDColumn, IDTypeWork
 
 def modelfor(model, table):
     """
@@ -110,10 +110,10 @@ def WorkColumns(state_default, priority_default, priority_alt=500):
     """
     return (
         # id
-        IDColumn(),
+        IDColumn(IDTypeWork),
 
         # state
-        db.Column(db.Integer, default=state_default,
+        db.Column(db.SmallInteger, default=state_default,
                   doc=dedent("""
                   The state of the job with a value provided by
                   :class:`.WorkState`""")),

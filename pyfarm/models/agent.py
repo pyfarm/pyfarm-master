@@ -32,7 +32,8 @@ from pyfarm.core.config import cfg
 
 from pyfarm.models.core.app import db
 from pyfarm.models.core.mixins import WorkValidationMixin
-from pyfarm.models.core.types import IDColumn, IDType, IPv4Address
+from pyfarm.models.core.types import (
+    IDColumn, IPv4Address, IDTypeAgent, IDTypeTag)
 from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE,
     MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH)
@@ -78,8 +79,8 @@ class AgentTagsModel(db.Model, AgentTaggingMixin):
     """
     __tablename__ = TABLE_AGENT_TAGS
     __table_args__ = (UniqueConstraint("_agentid", "tag"), )
-    id = IDColumn()
-    _agentid = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_AGENT),
+    id = IDColumn(IDTypeTag)
+    _agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
                          doc=dedent("""
                          The foreign key which stores :attr:`AgentModel.id`"""))
     tag = db.Column(db.String(MAX_TAG_LENGTH),
@@ -108,8 +109,8 @@ class AgentSoftwareModel(db.Model, AgentTaggingMixin):
     """
     __tablename__ = TABLE_AGENT_SOFTWARE
     __table_args__ = (UniqueConstraint("_agentid", "version", "software"), )
-    id = IDColumn()
-    _agentid = db.Column(IDType, db.ForeignKey("%s.id" % TABLE_AGENT),
+    id = IDColumn(IDTypeTag)
+    _agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
                          doc=dedent("""
                          The foreign key which stores :attr:`AgentModel.id`"""))
     software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
@@ -144,7 +145,7 @@ class AgentModel(db.Model, WorkValidationMixin):
     __table_args__ = (UniqueConstraint("hostname", "ip", "subnet", "port"), )
     STATE_ENUM = AgentState
     STATE_DEFAULT = STATE_ENUM.ONLINE
-    id = IDColumn()
+    id = IDColumn(IDTypeAgent)
 
     # basic host attribute information
     hostname = db.Column(db.String(MAX_HOSTNAME_LENGTH), nullable=False,

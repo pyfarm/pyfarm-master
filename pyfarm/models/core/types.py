@@ -36,11 +36,15 @@ try:
 except ImportError:
     from simplejson import dumps, loads
 
-from sqlalchemy.types import TypeDecorator, CHAR, String, BigInteger, UnicodeText
+from sqlalchemy.types import (
+    TypeDecorator, CHAR, BigInteger, Integer, UnicodeText)
 from sqlalchemy.dialects.postgresql import UUID as PGUuid
-from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.core.app import db
 
+ID_GUID_DEFAULT = lambda: str(uuid4()).replace("-", "")
+ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should
+                         never be directly relied upon and it's intended for use
+                         by relationships.""")
 JSON_NONE = dumps(None)
 RESUB_GUID_CHARS = re.compile("[{}-]")
 NoneType = type(None)  # from stdlib types module
@@ -206,21 +210,26 @@ class IPv4Address(TypeDecorator):
         return value
 
 
-def IDColumn():
+def IDColumn(column_type=GUID):
     """
     Produces a column used for `id` on each table.  Typically this is done
     using a class in :mod:`pyfarm.models.mixins` however because of the ORM
     and the table relationships it's cleaner to have a function produce
     the column.
     """
-    return db.Column(IDType, primary_key=True, unique=True, default=IDDefault,
-                     doc=dedent("""
-                     Provides an id for the current row.  This value should
-                     never be directly relied upon and it's intended for use
-                     by relationships."""))
+    kwargs = {
+        "primary_key": True, "unique": True, "nullable": False,
+        "doc": ID_DOCSTRING}
 
+    if column_type is GUID:
+        kwargs.update(default=ID_GUID_DEFAULT)
+    else:
+        kwargs.update(autoincrement=True)
 
-# the universal mapping which can be used, even if the underlying
-# type changes in the future
-IDType = GUID
-IDDefault = lambda: str(uuid4()).replace("-", "")
+    return db.Column(column_type, **kwargs)
+
+# global mappings which can be used in relationships by external
+# tables
+IDTypeWork = GUID
+IDTypeAgent = Integer
+IDTypeTag = Integer
