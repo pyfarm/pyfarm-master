@@ -206,46 +206,6 @@ class IPv4Address(TypeDecorator):
         return value
 
 
-class JobType(TypeDecorator):
-    """
-    Column type which loads and stores job types.
-    """
-    impl = String(MAX_JOBTYPE_LENGTH)
-    MODULE_ROOTS = ("pyfarm.jobtypes.%s", "pyfarm_jobtypes.%s")
-
-    def process_bind_param(self, value, dialect):
-        if isinstance(value, JobType) or isclass(value):
-            return value.__name__
-        elif isinstance(value, basestring):
-            return value
-        else:
-            args = (type(value), self.__class__.__name__)
-            raise TypeError("unsupported type %s for %s" % args)
-
-    def process_result_value(self, value, dialect):
-        if value is None:
-            raise ValueError("value provided for `jobtype` cannot be None")
-
-        module_name = value.lower()
-        attempted_imports = []
-        for module_root in self.MODULE_ROOTS:
-            module_path = module_root % module_name
-
-            # attempt to import the module for the job type
-            try:
-                module = import_module(module_path)
-            except ImportError:
-                attempted_imports.append(".".join((module_name, module_path)))
-                continue
-
-            # try to get the class attribute and return it
-            try:
-                return getattr(module, value)
-            except AttributeError:
-                raise AttributeError(
-                    "job type %s does exist on %s" % (value, module))
-
-
 def IDColumn():
     """
     Produces a column used for `id` on each table.  Typically this is done

@@ -43,8 +43,7 @@ from pyfarm.core.config import cfg
 from pyfarm.models.core.app import db
 from pyfarm.core.enums import WorkState
 from pyfarm.models.core.functions import WorkColumns
-from pyfarm.models.core.types import (
-    IDColumn, IDType, JobType, JSONDict, JSONList)
+from pyfarm.models.core.types import IDColumn, IDType, JSONDict, JSONList
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE,
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH)
@@ -144,11 +143,12 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                       searching"""))
 
     # task data
-    jobtype = db.Column(JobType, nullable=False,
+    jobtype = db.Column(db.Text, nullable=False,
                         doc=dedent("""
                         The name of the the jobtype to execute.  This value
                         will be set by the jobtype property when the class
                         is setup."""))
+    jobtype_load_mode = db.Column(db.Integer, nullable=False, default=5)
     cmd = db.Column(db.String(MAX_COMMAND_LENGTH),
                     doc=dedent("""
                     The platform independent command to run. Each agent will
