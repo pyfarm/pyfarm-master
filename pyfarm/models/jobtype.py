@@ -26,6 +26,7 @@ general implementation.
 from textwrap import dedent
 from sqlalchemy.orm import validates
 from pyfarm.core.enums import JobTypeLoadMode
+from pyfarm.models.core.types import IDColumn
 from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH
 from pyfarm.models.core.app import db
 
@@ -36,6 +37,7 @@ class JobTypeModel(db.Model):
     """
     __tablename__ = TABLE_JOB_TYPE
 
+    id = IDColumn(db.Integer)
     name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
                      doc=dedent("""
                      The name of the job type.  This can be either a human
