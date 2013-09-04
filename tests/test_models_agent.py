@@ -81,27 +81,38 @@ class AgentTestCase(ModelTestCase):
 
 class TestAgentSoftware(AgentTestCase):
     def test_software(self):
-        # create the agent
-        agent_foobar = Agent(self._host, self._ip, self._subnet, self._port,
-                             self._cpus, self._ram)
-        db.session.add(agent_foobar)
-        db.session.commit()
+        for agent_foobar in self.agents():
+            db.session.add(agent_foobar)
+            db.session.commit()
 
-        # create some software tags
-        software_objects = []
-        for software_name in ("foo", "bar", "baz"):
-            software = AgentSoftware(agent_foobar, software_name)
-            software_objects.append(software)
+            # create some software tags
+            software_objects = []
+            for software_name in ("foo", "bar", "baz"):
+                software = AgentSoftware(agent_foobar, software_name)
+                software_objects.append(software)
+                db.session.add(software)
+
+            db.session.commit()
+            agent_id = agent_foobar.id
+            db.session.remove()
+
+            agent = Agent.query.filter_by(id=agent_id).first()
+            self.assertEqual(
+                set(i.software for i in agent.software),
+                set(("foo", "bar", "baz")))
+            break
+
+    def test_software_unique(self):
+        for agent_foobar in self.agents():
+            db.session.add(agent_foobar)
+            db.session.commit()
+            software = AgentSoftware(agent_foobar, "foo", version="1.0.0")
             db.session.add(software)
-
-        db.session.commit()
-        agent_id = agent_foobar.id
-        db.session.remove()
-
-        agent = Agent.query.filter_by(id=agent_id).first()
-        self.assertEqual(
-            set(i.software for i in agent.software),
-            set(("foo", "bar", "baz")))
+            software = AgentSoftware(agent_foobar, "foo", version="1.0.0")
+            db.session.add(software)
+            with self.assertRaises((IntegrityError, ProgrammingError)):
+                db.session.commit()
+            break
 
 
 class TestAgentTags(AgentTestCase):
@@ -183,13 +194,8 @@ class TestAgentModel(AgentTestCase):
         db.session.add(modelA)
         db.session.add(modelB)
 
-        try:
+        with self.assertRaises((IntegrityError, ProgrammingError)):
             db.session.commit()
-            self.fail("commit success, expected failure")
-        except (IntegrityError, ProgrammingError):
-            return
-        except Exception, e:
-            raise SkipTest("unknown exception: %s" % e)
 
     def test_hostname_validation(self):
         with self.assertRaises(ValueError):
