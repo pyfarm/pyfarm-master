@@ -105,32 +105,50 @@ class TestAgentSoftware(AgentTestCase):
 
 
 class TestAgentTags(AgentTestCase):
-    def test_tags(self):
-        # create the agent
-        agent_foobar = Agent(self._host, self._ip, self._subnet, self._port,
-                             self._cpus, self._ram)
-        db.session.add(agent_foobar)
-        db.session.commit()
+    def test_tags_validation(self):
+        for agent_foobar in self.agents():
+            db.session.add(agent_foobar)
+            db.session.commit()
 
-        # create some software tags
-        tag_objects = []
-        for tag_name in ("foo", "bar", "baz"):
-            tag = AgentTag(agent_foobar, tag_name)
-            tag_objects.append(tag)
+            tag = AgentTag(agent_foobar, 0)
             db.session.add(tag)
+            self.assertEqual(tag.tag, str(0))
+            break
 
-        db.session.commit()
-        agent = Agent.query.filter_by(id=agent_foobar.id).first()
+    def test_tags_validation_error(self):
+        for agent_foobar in self.agents():
+            db.session.add(agent_foobar)
+            db.session.commit()
 
-        # agent.software == software_objects
-        self.assertEqual(
-            set(i.id for i in agent.tags.all()),
-            set(i.id for i in tag_objects))
+            # create some software tags
+            with self.assertRaises(ValueError):
+                AgentTag(agent_foobar, None)
+            break
 
-        # same as above, asking from the software table side
-        self.assertEqual(
-            set(i.id for i in AgentTag.query.filter_by(agent=agent).all()),
-            set(i.id for i in tag_objects))
+    def test_tags(self):
+        for agent_foobar in self.agents():
+            db.session.add(agent_foobar)
+            db.session.commit()
+
+            # create some software tags
+            tag_objects = []
+            for tag_name in ("foo", "bar", "baz"):
+                tag = AgentTag(agent_foobar, tag_name)
+                tag_objects.append(tag)
+                db.session.add(tag)
+
+            db.session.commit()
+            agent = Agent.query.filter_by(id=agent_foobar.id).first()
+
+            # agent.software == software_objects
+            self.assertEqual(
+                set(i.id for i in agent.tags.all()),
+                set(i.id for i in tag_objects))
+
+            # same as above, asking from the software table side
+            self.assertEqual(
+                set(i.id for i in AgentTag.query.filter_by(agent=agent).all()),
+                set(i.id for i in tag_objects))
 
 
 class TestAgentModel(AgentTestCase):
