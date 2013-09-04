@@ -17,11 +17,6 @@
 from __future__ import with_statement
 from sqlalchemy.exc import IntegrityError
 
-try:
-    from pg8000.errors import ProgrammingError
-except ImportError:
-    ProgrammingError = NotImplementedError
-
 from utcore import ModelTestCase, db
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
@@ -109,8 +104,18 @@ class TestAgentSoftware(AgentTestCase):
             db.session.add(software)
             software = AgentSoftware(agent_foobar, "foo", version="1.0.0")
             db.session.add(software)
-            with self.assertRaises((IntegrityError, ProgrammingError)):
+            try:
                 db.session.commit()
+            except IntegrityError:
+                pass
+            except Exception, e:
+                # pg8000 uses relative imports to load and throw
+                # the exception internally.  This method made it
+                # *very* difficult to catch the real exception because
+                # the objecting being throw versus the object we're testing
+                # against is not the same object
+                if e.__class__.__name__ != "ProgrammingError":
+                    raise
             break
 
 
@@ -193,8 +198,18 @@ class TestAgentModel(AgentTestCase):
         db.session.add(modelA)
         db.session.add(modelB)
 
-        with self.assertRaises((IntegrityError, ProgrammingError)):
+        try:
             db.session.commit()
+        except IntegrityError:
+            pass
+        except Exception, e:
+            # pg8000 uses relative imports to load and throw
+            # the exception internally.  This method made it
+            # *very* difficult to catch the real exception because
+            # the objecting being throw versus the object we're testing
+            # against is not the same object
+            if e.__class__.__name__ != "ProgrammingError":
+                raise
 
     def test_hostname_validation(self):
         with self.assertRaises(ValueError):
