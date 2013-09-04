@@ -41,14 +41,14 @@ from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 from pyfarm.core.config import cfg
 from pyfarm.models.core.app import db
-from pyfarm.core.enums import WorkState, JobTypeLoadMode
+from pyfarm.core.enums import WorkState
 from pyfarm.models.core.functions import WorkColumns
 from pyfarm.models.core.types import IDColumn, JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE, TABLE_JOB_TYPE,
+    TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE,
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH)
 from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
-
+from pyfarm.models.jobtype import JobTypeModel
 
 class JobTagsModel(db.Model):
     """
@@ -152,12 +152,6 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                       searching"""))
 
     # task data
-    jobtype = db.Column(db.Text, nullable=False,
-                        doc=dedent("""
-                        The name of the the jobtype to execute.  This value
-                        will be set by the jobtype property when the class
-                        is setup."""))
-    jobtype_load_mode = db.Column(db.Integer, nullable=False, default=5)
     cmd = db.Column(db.String(MAX_COMMAND_LENGTH),
                     doc=dedent("""
                     The platform independent command to run. Each agent will
@@ -328,12 +322,10 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                                doc=dedent("""
                                Relationship between this job and
                                :class:`.JobSoftwareModel` objects"""))
-
-    def instanceJobType(self):
-        """
-        Produces an instance of the job type object using :attr:`.jobtype`
-        """
-        return self.jobtype(self.cmd, self.args, self.environ, self.data)
+    jobtype = db.relationship("JobTypeModel", backref="job", lazy="dynamic",
+                              doc=dedent("""
+                              Relationship between this job and
+                              :class:`.JobTypeModel` objects."""))
 
     @validates("ram", "cpus")
     def validate_resource(self, key, value):
