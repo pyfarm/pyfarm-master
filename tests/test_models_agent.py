@@ -112,7 +112,7 @@ class TestAgentSoftware(AgentTestCase):
                 # pg8000 uses relative imports to load and throw
                 # the exception internally.  This method made it
                 # *very* difficult to catch the real exception because
-                # the objecting being throw versus the object we're testing
+                # the object being throw versus the object we're testing
                 # against is not the same object
                 if e.__class__.__name__ != "ProgrammingError":
                     raise
@@ -206,7 +206,7 @@ class TestAgentModel(AgentTestCase):
             # pg8000 uses relative imports to load and throw
             # the exception internally.  This method made it
             # *very* difficult to catch the real exception because
-            # the objecting being throw versus the object we're testing
+            # the object being throw versus the object we're testing
             # against is not the same object
             if e.__class__.__name__ != "ProgrammingError":
                 raise
