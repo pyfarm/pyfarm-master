@@ -62,7 +62,6 @@ class AgentTaggingMixin(object):
 
         return value
 
-
 class AgentTagsModel(db.Model, AgentTaggingMixin):
     """
     Table model used to store tags for an agent.
@@ -81,6 +80,7 @@ class AgentTagsModel(db.Model, AgentTaggingMixin):
     __table_args__ = (UniqueConstraint("_agentid", "tag"), )
     id = IDColumn(IDTypeTag)
     _agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
+                         nullable=False,
                          doc=dedent("""
                          The foreign key which stores :attr:`AgentModel.id`"""))
     tag = db.Column(db.String(MAX_TAG_LENGTH),
@@ -111,6 +111,7 @@ class AgentSoftwareModel(db.Model, AgentTaggingMixin):
     __table_args__ = (UniqueConstraint("_agentid", "version", "software"), )
     id = IDColumn(IDTypeTag)
     _agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
+                         nullable=False,
                          doc=dedent("""
                          The foreign key which stores :attr:`AgentModel.id`"""))
     software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
@@ -351,7 +352,7 @@ class AgentSoftware(AgentSoftwareModel):
     """
     def __init__(self, agent, software, version="any"):
         agentid = agent
-        if isinstance(agent, AgentModel):
+        if isinstance(agent, (AgentModel, Agent)):
             agentid = agent.id
 
         self._agentid = agentid
