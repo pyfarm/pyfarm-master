@@ -15,11 +15,10 @@
 # limitations under the License.
 
 from __future__ import with_statement
-from nose.plugins.skip import SkipTest
 from sqlalchemy.exc import IntegrityError
 
 try:
-    from pg8000 import ProgrammingError
+    from pg8000.errors import ProgrammingError
 except ImportError:
     ProgrammingError = NotImplementedError
 
