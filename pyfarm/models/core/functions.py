@@ -113,13 +113,13 @@ def WorkColumns(state_default, priority_default, priority_alt=500):
         IDColumn(IDTypeWork),
 
         # state
-        db.Column(db.SmallInteger, default=state_default,
+        db.Column(db.Integer, default=state_default,
                   doc=dedent("""
                   The state of the job with a value provided by
                   :class:`.WorkState`""")),
 
         # priority
-        db.Column(db.Integer, default=cfg.get(priority_default, priority_alt),
+        db.Column(db.Integer, default=lambda: cfg.get(priority_default, priority_alt),
                   doc=dedent("""
                   The priority of the job relative to others in the
                   queue.  This is not the same as task priority.
