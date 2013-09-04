@@ -28,7 +28,8 @@ from pyfarm.models.core.types import (
     IPv4Address as IPv4AddressType,
     JSONDict as JSONDictType,
     JSONList as JSONListType,
-    JSONSerializable)
+    JSONSerializable, IDColumn, GUID,
+    IDTypeWork, IDTypeAgent, IDTypeTag)
 
 
 class JSONDictModel(db.Model):
@@ -181,3 +182,26 @@ class TestIPAddressType(ModelTestCase):
         self.assertIsInstance(result.data, IPAddress)
         self.assertEqual(result.data, ipvalue)
 
+
+class TestIDColumn(ModelTestCase):
+    def test_guid(self):
+        column = IDColumn(GUID)
+        self.assertIsInstance(column.type, GUID)
+        self.assertTrue(column.primary_key)
+        self.assertTrue(column.unique)
+        self.assertFalse(column.nullable)
+        self.assertTrue(column.default.is_callable)
+        self.assertTrue(column.autoincrement)
+
+    def test_integer(self):
+        column = IDColumn(db.Integer)
+        self.assertIsInstance(column.type, db.Integer)
+        self.assertTrue(column.primary_key)
+        self.assertTrue(column.unique)
+        self.assertFalse(column.nullable)
+        self.assertTrue(column.autoincrement)
+
+    def test_id_types(self):
+        self.assertIs(IDTypeWork, GUID)
+        self.assertIs(IDTypeAgent, db.Integer)
+        self.assertIs(IDTypeTag, db.Integer)
