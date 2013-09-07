@@ -14,8 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from uuid import uuid4
+from sqlalchemy import Column, Integer, DateTime
 from utcore import ModelTestCase
-from pyfarm.models.core.functions import modelfor
+from pyfarm.models.core.types import IDTypeWork
+from pyfarm.models.core.functions import modelfor, getuuid, WorkColumns
 
 
 class TestFunctionsModule(ModelTestCase):
@@ -23,3 +26,35 @@ class TestFunctionsModule(ModelTestCase):
         class Foo(object):
             __tablename__ = "test"
         self.assertTrue(modelfor(Foo(), Foo.__tablename__))
+
+    def test_getuuid(self):
+        self.assertIsNone(getuuid(None, None, None, None))
+        uuid = str(uuid4())
+        self.assertEqual(getuuid(uuid, None, None, None), uuid)
+        uuid = uuid4()
+        self.assertEqual(getuuid(uuid, None, None, None), str(uuid))
+
+    def test_getuuid_error(self):
+        with self.assertRaises(ValueError):
+            getuuid("foo", None, None, None)
+
+        # test a few values which should never return anything
+        for unknown_value in (1, 1.25, lambda: None):
+            with self.assertRaises(ValueError):
+                getuuid(unknown_value, None, None, None)
+
+    def test_work_columns(self):
+        columns = WorkColumns(0, 0)
+        self.assertEqual(len(columns), 6)
+        self.assertTrue(
+            all(map(lambda column: isinstance(column, Column), columns)))
+
+        id, state, priority, time_submitted, time_started, time_finished = \
+            columns
+
+        self.assertIsInstance(id.type, IDTypeWork)
+        self.assertIsInstance(state.type, Integer)
+        self.assertIsInstance(priority.type, Integer)
+        self.assertIsInstance(time_submitted.type, DateTime)
+        self.assertIsInstance(time_started.type, DateTime)
+        self.assertIsInstance(time_finished.type, DateTime)
