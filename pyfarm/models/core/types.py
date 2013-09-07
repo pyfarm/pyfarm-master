@@ -144,7 +144,7 @@ class JSONSerializable(TypeDecorator):
         if isinstance(value, (UserDict, UserList)):
             value = value.data
 
-        return dumps(value)
+        return unicode(dumps(value))
 
     def process_bind_param(self, value, dialect):
         """Converts the value being assigned into a json blob"""
