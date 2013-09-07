@@ -26,8 +26,6 @@ from textwrap import dedent
 from uuid import uuid4, UUID
 from UserDict import UserDict
 from UserList import UserList
-from inspect import isclass
-from importlib import import_module
 
 from netaddr import IPAddress
 
