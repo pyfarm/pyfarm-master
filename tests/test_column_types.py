@@ -15,13 +15,15 @@
 # limitations under the License.
 
 from os import urandom
+from uuid import uuid4
 from random import randint, choice
 from binascii import b2a_hex
-from sqlalchemy.types import Integer, BigInteger
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.types import Integer, BigInteger, CHAR
 from sqlalchemy.exc import StatementError
 from netaddr.ip import IPAddress
 
-from utcore import ModelTestCase
+from utcore import ModelTestCase, unittest
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.app import db
 from pyfarm.models.core.types import (
@@ -184,15 +186,6 @@ class TestIPAddressType(ModelTestCase):
 
 
 class TestIDColumn(ModelTestCase):
-    def test_guid(self):
-        column = IDColumn(GUID)
-        self.assertIsInstance(column.type, GUID)
-        self.assertTrue(column.primary_key)
-        self.assertTrue(column.unique)
-        self.assertFalse(column.nullable)
-        self.assertTrue(column.default.is_callable)
-        self.assertTrue(column.autoincrement)
-
     def test_integer(self):
         column = IDColumn(db.Integer)
         self.assertIsInstance(column.type, db.Integer)
@@ -205,3 +198,62 @@ class TestIDColumn(ModelTestCase):
         self.assertIs(IDTypeWork, GUID)
         self.assertIs(IDTypeAgent, db.Integer)
         self.assertIs(IDTypeTag, db.Integer)
+
+
+class TestGUIDImpl(unittest.TestCase):
+    def _dialect(self, name, driver):
+        """
+        constructs a fake dialect object that replicates a
+        sqlalchemy dialect
+        """
+        return type("FakeDialect", (object, ), {
+                    "name": name,
+                    "driver": driver,
+                    "type_descriptor": lambda self, value: value})()
+
+    def _short(self, value):
+        return str(value).replace("-", "")
+
+    def test_id_column(self):
+        column = IDColumn(GUID)
+        self.assertIsInstance(column.type, GUID)
+        self.assertTrue(column.primary_key)
+        self.assertTrue(column.unique)
+        self.assertFalse(column.nullable)
+        self.assertTrue(column.default.is_callable)
+        self.assertTrue(column.autoincrement)
+
+    def test_driver_psycopg2(self):
+        guid = GUID()
+        dialect = self._dialect("postgresql", "psycopg2")
+        impl = guid.load_dialect_impl(dialect)
+        self.assertIsInstance(impl, UUID)
+
+    def test_driver_pg8000(self):
+        guid = GUID()
+        dialect = self._dialect("postgresql", "pg8000")
+        impl = guid.load_dialect_impl(dialect)
+        self.assertIsInstance(impl, CHAR)
+
+    def test_driver_mysql(self):
+        guid = GUID()
+        dialect = self._dialect("mysql", None)
+        impl = guid.load_dialect_impl(dialect)
+        self.assertIsInstance(impl, CHAR)
+        self.assertEqual(impl.length, 32)
+
+    def test_bind_param(self):
+        guid = GUID()
+        self.assertIsNone(guid.process_bind_param(None, None))
+        dialect = self._dialect("postgresql", None)
+        uid = uuid4()
+        short_uid = self._short(uid)
+        self.assertEqual(
+            guid.process_bind_param(uid, dialect), short_uid)
+        dialect = self._dialect(None, None)
+        self.assertEqual(
+            guid.process_bind_param(uid, dialect), short_uid)
+        self.assertEqual(
+            guid.process_bind_param(str(uid), dialect), short_uid)
+        self.assertEqual(
+            guid.process_bind_param(self._short(str(uid)), dialect), short_uid)
