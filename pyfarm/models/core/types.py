@@ -72,8 +72,6 @@ class GUID(TypeDecorator):
         This code is copied from sqlalchemy's standard documentation with
         some minor modifications
     """
-    impl = CHAR
-
     def load_dialect_impl(self, dialect):
         # Currently, pg8000 does not support the PGUuid type.  This is
         # backed up both by tests and from sqlalchemy's docs. Unfortunately,
