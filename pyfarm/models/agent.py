@@ -300,9 +300,6 @@ class AgentModel(db.Model, WorkValidationMixin):
         Ensure the `value` provided for `key` is within an expected range as
         specified in `agent.yml`
         """
-        if value is None:
-            return value
-
         min_value = cfg.get("agent.min_%s" % key)
         max_value = cfg.get("agent.max_%s" % key)
 
