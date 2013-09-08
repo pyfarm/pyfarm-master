@@ -48,6 +48,7 @@ from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE,
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH)
 from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
+from pyfarm.models.jobtype import JobTypeModel  # relationship import
 
 
 class JobTagsModel(db.Model):
