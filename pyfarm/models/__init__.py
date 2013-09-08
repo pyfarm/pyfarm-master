@@ -18,18 +18,3 @@
 Contains all the models used for database communication and object
 relational management.
 """
-
-import os
-from os.path import expandvars
-from warnings import warn
-from pyfarm.core.warning import ConfigurationWarning
-from pyfarm.core.config import cfg
-
-if "SQLALCHEMY_DATABASE_URI" in os.environ and "db.uri" not in cfg:
-    cfg.setdefault("db.uri", expandvars(os.environ["SQLALCHEMY_DATABASE_URI"]))
-
-else:
-    cfg.setdefault("db.uri", "sqlite:///:memory:")
-
-if cfg.get("db.uri").startswith("sqlite"):
-    warn("sqlite is for development purposes only", ConfigurationWarning)
