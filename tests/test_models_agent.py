@@ -15,8 +15,7 @@
 # limitations under the License.
 
 from __future__ import with_statement
-from sqlalchemy.exc import IntegrityError
-from pg8000.errors import DatabaseError
+from sqlalchemy.exc import DatabaseError
 from utcore import ModelTestCase, db
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
@@ -105,7 +104,7 @@ class TestAgentSoftware(AgentTestCase):
             software = AgentSoftware(agent_foobar, "foo", version="1.0.0")
             db.session.add(software)
 
-            with self.assertRaises((IntegrityError, DatabaseError)):
+            with self.assertRaises(DatabaseError):
                 db.session.commit()
             db.session.rollback()
 
@@ -190,7 +189,7 @@ class TestAgentModel(AgentTestCase):
             db.session.add(modelA)
             db.session.add(modelB)
 
-            with self.assertRaises((IntegrityError, DatabaseError)):
+            with self.assertRaises(DatabaseError):
                 db.session.commit()
 
             db.session.rollback()
