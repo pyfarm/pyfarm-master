@@ -15,6 +15,15 @@
 PyFarm Models
 =============
 
+.. image:: https://travis-ci.org/pyfarm/pyfarm-models.png?branch=master
+    :target: https://travis-ci.org/pyfarm/pyfarm-models
+    :align: left
+
+.. image:: https://coveralls.io/repos/pyfarm/pyfarm-models/badge.png?branch=master
+    :target: https://coveralls.io/r/pyfarm/pyfarm-models?branch=master
+    :align: left
+
+
 Sub-library which contains the database models used by the admin interface and
 master server(s).  These models contains information and classes for:
     * jobs and tasks
