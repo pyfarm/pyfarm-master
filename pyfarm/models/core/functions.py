@@ -31,6 +31,7 @@ from pyfarm.models.core.app import db
 from pyfarm.core.config import cfg
 from pyfarm.models.core.types import IDColumn, IDTypeWork
 
+
 def modelfor(model, table):
     """
     Returns True if the given `model` object is for the
@@ -45,7 +46,7 @@ def modelfor(model, table):
         return model.__tablename__ == table
     except AttributeError:
         return False
-
+    
 
 def getuuid(value, table, table_attrib, error_tail):
     """
