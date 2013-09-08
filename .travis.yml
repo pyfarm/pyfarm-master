@@ -23,7 +23,7 @@ install:
 
 script:
   - pip freeze
-  - coverage run --source=pyfarm `which nosetests` -s tests --verbose
+  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.models tests
 
 after_success:
   - coveralls
