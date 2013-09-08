@@ -27,9 +27,9 @@ from textwrap import dedent
 import netaddr
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
+from netaddr import AddrFormatError
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
-
 from pyfarm.models.core.app import db
 from pyfarm.models.core.mixins import WorkValidationMixin
 from pyfarm.models.core.types import (
@@ -179,16 +179,6 @@ class AgentModel(db.Model, WorkValidationMixin):
                      The port the agent is currently running on"""))
 
     # host state
-    enabled = db.Column(db.Boolean, default=True, nullable=False,
-                        doc=dedent("""
-                        Tells the queue and various other parts of PyFarm if
-                        this host is considered part of the pool.  Setting
-                        this to True will prevent:
-
-                        * new work from being sent to an agent
-                        * failed job types from rerunning
-                        * batch commands being picked up over the pub/sub
-                          channel"""))
     state = db.Column(db.Integer, default=STATE_DEFAULT, nullable=False,
                       doc=dedent("""
                       Stores the current state of the host.  This value can be
@@ -278,7 +268,7 @@ class AgentModel(db.Model, WorkValidationMixin):
         try:
             ip = netaddr.IPAddress(value)
 
-        except ValueError, e:
+        except (AddrFormatError, ValueError), e:
             raise ValueError(
                 "%s is not a valid address format: %s" % (value, e))
 
@@ -366,7 +356,7 @@ class Agent(AgentModel):
     be instanced with initial values.
     """
     def __init__(self, hostname, ip, subnet, port, cpus, ram, state=None,
-                 enabled=None, ram_allocation=None, cpu_allocation=None):
+                 ram_allocation=None, cpu_allocation=None):
         self.hostname = hostname
         self.ip = ip
         self.subnet = subnet
@@ -376,9 +366,6 @@ class Agent(AgentModel):
 
         if state is not None:
             self.state = state
-
-        if enabled is not None:
-            self.enabled = enabled
 
         if ram_allocation is not None:
             self.ram_allocation = ram_allocation
