@@ -25,7 +25,7 @@ from warnings import warn
 from datetime import datetime
 from sqlalchemy.orm import validates
 from pyfarm.core.warning import ColumnStateChangeWarning
-
+from pyfarm.core.config import cfg
 
 class WorkValidationMixin(object):
     """
@@ -43,15 +43,25 @@ class WorkValidationMixin(object):
 
         return value
 
-    @validates("attempts", "priority")
-    def validate_positive_number(self, key, value):
-        """
-        Validates the `value` being provided a greater than or equal to zero
-        """
-        if value < 0:
-            raise ValueError("`%s` must be equal to zero or higher" % key)
+    @validates("priority")
+    def validate_priority(self, key, value):
+        """ensures the value provided to priority is valid"""
+        min_priority = cfg.get("job.min_priority")
+        max_priority = cfg.get("job.max_priority")
 
-        return value
+        if min_priority <= value <= max_priority:
+            return value
+
+        err_args = (key, min_priority, max_priority)
+        raise ValueError("%s must be between %s and %s" % err_args)
+
+    @validates("attempts")
+    def validate_attempts(self, key, value):
+        """ensures the number of attempts provided is valid"""
+        if value > 0:
+            return value
+
+        raise ValueError("%s cannot be less than zero" % key)
 
 
 class StateChangedMixin(object):
@@ -62,13 +72,13 @@ class StateChangedMixin(object):
     @staticmethod
     def stateChangedEvent(target, new_value, old_value, initiator):
         """update the datetime objects depending on the new value"""
-        if target.id is None:
-            return
-
-        elif new_value == target.STATE_ENUM.RUNNING:
+        if new_value == target.STATE_ENUM.RUNNING:
             target.time_started = datetime.now()
+            target.time_finished = None
 
-            if hasattr(target, "attempts"):
+            if target.attempts is None:
+                target.attempts = 1
+            else:
                 target.attempts += 1
 
         elif new_value in (target.STATE_ENUM.DONE, target.STATE_ENUM.FAILED):
