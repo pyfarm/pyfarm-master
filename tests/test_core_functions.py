@@ -20,6 +20,10 @@ from utcore import ModelTestCase
 from pyfarm.models.core.types import IDTypeWork
 from pyfarm.models.core.functions import modelfor, getuuid, WorkColumns
 
+class Foo(object):
+    __tablename__ = "test"
+    id = uuid4()
+
 
 class TestFunctionsModule(ModelTestCase):
     def test_modelfor(self):
@@ -33,6 +37,7 @@ class TestFunctionsModule(ModelTestCase):
         self.assertEqual(getuuid(uuid, None, None, None), uuid)
         uuid = uuid4()
         self.assertEqual(getuuid(uuid, None, None, None), str(uuid))
+        self.assertEqual(getuuid(Foo, Foo.__tablename__, "id", None), Foo.id)
 
     def test_getuuid_error(self):
         with self.assertRaises(ValueError):
@@ -42,6 +47,9 @@ class TestFunctionsModule(ModelTestCase):
         for unknown_value in (1, 1.25, lambda: None):
             with self.assertRaises(ValueError):
                 getuuid(unknown_value, None, None, None)
+
+        with self.assertRaises(ValueError):
+            getuuid(Foo, Foo.__tablename__, "none", None)
 
     def test_work_columns(self):
         columns = WorkColumns(0, 0)
