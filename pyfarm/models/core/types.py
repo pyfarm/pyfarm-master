@@ -31,7 +31,7 @@ from netaddr import IPAddress
 
 try:
     from json import dumps, loads
-except ImportError:
+except ImportError:  # pragma: no cover
     from simplejson import dumps, loads
 
 from sqlalchemy.types import (
@@ -95,7 +95,7 @@ class GUID(TypeDecorator):
                 # hexstring
                 return "%.32x" % value
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value, dialect):  # pragma: no cover
         if value is None:
             return value
         else:

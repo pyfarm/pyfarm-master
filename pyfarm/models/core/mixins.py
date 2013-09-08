@@ -82,7 +82,7 @@ class StateChangedMixin(object):
                 target.attempts += 1
 
         elif new_value in (target.STATE_ENUM.DONE, target.STATE_ENUM.FAILED):
-            if target.time_started is None:
+            if target.time_started is None:  # pragma: no cover
                 msg = "job %s has not been started yet, state is " % target.id
                 msg += "being set to %s" % target.STATE_ENUM.get(new_value)
                 warn(msg,  ColumnStateChangeWarning)
