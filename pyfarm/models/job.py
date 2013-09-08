@@ -27,12 +27,12 @@ import inspect
 
 try:
     import pwd
-except ImportError:
+except ImportError:  # pragma: no cover
     pwd = None
 
 try:
     import json
-except ImportError:
+except ImportError:  # pragma: no cover
     import simplejson as json
 
 from textwrap import dedent
@@ -48,7 +48,7 @@ from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE,
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH)
 from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
-from pyfarm.models.jobtype import JobTypeModel
+
 
 class JobTagsModel(db.Model):
     """
