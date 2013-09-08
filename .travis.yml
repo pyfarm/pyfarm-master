@@ -24,3 +24,6 @@ install:
 script:
   - pip freeze
   - coverage run --source=pyfarm `which nosetests` -s tests --verbose
+
+after_success:
+  - coveralls
