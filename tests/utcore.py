@@ -46,6 +46,7 @@ cfg.update({
     "agent.min_cpus": 1, "agent.max_cpus": 2147483647,
     "agent.min_ram": 32, "agent.max_ram": 2147483647,
     "job.priority": 500, "job.max_username_length": 254,
+    "job.min_priority": 0, "job.max_priority": 1000,
     "job.batch": 1, "job.requeue": True, "job.cpus": 4,
     "job.ram": 0})
 
