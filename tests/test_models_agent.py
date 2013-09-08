@@ -16,7 +16,7 @@
 
 from __future__ import with_statement
 from sqlalchemy.exc import IntegrityError
-
+from pg8000.errors import DatabaseError
 from utcore import ModelTestCase, db
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
@@ -33,15 +33,9 @@ class AgentTestCase(ModelTestCase):
     ports = (cfg.get("agent.min_port"), cfg.get("agent.max_port"))
     cpus = (cfg.get("agent.min_cpus"), cfg.get("agent.max_cpus"))
     ram = (cfg.get("agent.min_ram"), cfg.get("agent.max_ram"))
-    states = AgentState
-
-    # static test values
-    _port = ports[-1]
-    _ram = ram[-1]
-    _cpus = cpus[-1]
-    _host = hostnamebase
-    _ip = "10.0.0.0"
-    _subnet = "255.0.0.0"
+    states = (AgentState.ONLINE, AgentState.OFFLINE)
+    ram_allocation = (0, .5, 1)
+    cpu_allocation = (0, .5, 1)
 
     # General list of addresses we should test
     # against.  This covered the start and end
@@ -54,28 +48,35 @@ class AgentTestCase(ModelTestCase):
         ("172.31.255.255", "255.240.0.0"),
         ("192.168.255.255", "255.255.255.0"))
 
-    def agentModelArgs(self):
-        generator = product(self.addresses, self.ports, self.cpus, self.ram)
+    def modelArguments(self, limit=None):
+        generator = product(
+            self.addresses, self.ports, self.cpus, self.ram, self.states,
+            self.ram_allocation, self.cpu_allocation)
 
         count = 0
-        for address, port, cpus, ram in generator:
+        for (address, port, cpus, ram, state,
+             ram_allocation, cpu_allocation) in generator:
+            if limit is not None and count > limit:
+                break
+
             ip, subnet = address
-            hostname = "%s%02d" % (self.hostnamebase, count)
-            yield (hostname, ip, subnet, port, cpus, ram)
+            yield (
+                "%s%02d" % (self.hostnamebase, count), ip, subnet, port,
+                cpus, ram, state, ram_allocation, cpu_allocation)
             count += 1
 
-    def agents(self):
+    def models(self, limit=None):
         """
         Iterates over the class level variables and produces an agent
         model.  This is done so that we test endpoints in the extreme ranges.
         """
-        for args in self.agentModelArgs():
+        for args in self.modelArguments(limit=limit):
             yield Agent(*args)
 
 
 class TestAgentSoftware(AgentTestCase):
     def test_software(self):
-        for agent_foobar in self.agents():
+        for agent_foobar in self.models(limit=1):
             db.session.add(agent_foobar)
             db.session.commit()
 
@@ -94,54 +95,42 @@ class TestAgentSoftware(AgentTestCase):
             self.assertEqual(
                 set(i.software for i in agent.software),
                 set(("foo", "bar", "baz")))
-            break
 
     def test_software_unique(self):
-        for agent_foobar in self.agents():
+        for agent_foobar in self.models(limit=1):
             db.session.add(agent_foobar)
             db.session.commit()
             software = AgentSoftware(agent_foobar, "foo", version="1.0.0")
             db.session.add(software)
             software = AgentSoftware(agent_foobar, "foo", version="1.0.0")
             db.session.add(software)
-            try:
+
+            with self.assertRaises((IntegrityError, DatabaseError)):
                 db.session.commit()
-            except IntegrityError:
-                pass
-            except Exception, e:
-                # pg8000 uses relative imports to load and throw
-                # the exception internally.  This method made it
-                # *very* difficult to catch the real exception because
-                # the object being throw versus the object we're testing
-                # against is not the same object
-                if e.__class__.__name__ != "ProgrammingError":
-                    raise
-            break
+            db.session.rollback()
 
 
 class TestAgentTags(AgentTestCase):
     def test_tags_validation(self):
-        for agent_foobar in self.agents():
+        for agent_foobar in self.models(limit=1):
             db.session.add(agent_foobar)
             db.session.commit()
 
             tag = AgentTag(agent_foobar, 0)
             db.session.add(tag)
             self.assertEqual(tag.tag, str(0))
-            break
 
     def test_tags_validation_error(self):
-        for agent_foobar in self.agents():
+        for agent_foobar in self.models(limit=1):
             db.session.add(agent_foobar)
             db.session.commit()
 
             # create some software tags
             with self.assertRaises(ValueError):
                 AgentTag(agent_foobar, None)
-            break
 
     def test_tags(self):
-        for agent_foobar in self.agents():
+        for agent_foobar in self.models(limit=1):
             db.session.add(agent_foobar)
             db.session.commit()
 
@@ -168,8 +157,11 @@ class TestAgentTags(AgentTestCase):
 
 class TestAgentModel(AgentTestCase):
     def test_basic_insert(self):
-        for hostname, ip, subnet, port, cpus, ram in self.agentModelArgs():
-            model = Agent(hostname, ip, subnet, port, cpus, ram)
+        for (hostname, ip, subnet, port, cpus, ram, state,
+             ram_allocation, cpu_allocation) in self.modelArguments():
+            model = Agent(hostname, ip, subnet, port, cpus, ram,
+                          state=state, ram_allocation=ram_allocation,
+                          cpu_allocation=cpu_allocation)
             db.session.add(model)
             self.assertEqual(model.hostname, hostname)
             self.assertEqual(model.ip, ip)
@@ -191,37 +183,26 @@ class TestAgentModel(AgentTestCase):
             self.assertEqual(result.id, model.id)
 
     def test_basic_insert_nonunique(self):
-        modelA = Agent(self._host, self._ip, self._subnet, self._port,
-                       self._cpus, self._ram)
-        modelB = Agent(self._host, self._ip, self._subnet, self._port,
-                       self._cpus, self._ram)
-        db.session.add(modelA)
-        db.session.add(modelB)
+        for (hostname, ip, subnet, port, cpus, ram, state,
+             ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
+            modelA = Agent(hostname, ip, subnet, port, cpus, ram)
+            modelB = Agent(hostname, ip, subnet, port, cpus, ram)
+            db.session.add(modelA)
+            db.session.add(modelB)
 
-        try:
-            db.session.commit()
-        except IntegrityError:
-            pass
-        except Exception, e:
-            # pg8000 uses relative imports to load and throw
-            # the exception internally.  This method made it
-            # *very* difficult to catch the real exception because
-            # the object being throw versus the object we're testing
-            # against is not the same object
-            if e.__class__.__name__ != "ProgrammingError":
-                raise
+            with self.assertRaises((IntegrityError, DatabaseError)):
+                db.session.commit()
+
+            db.session.rollback()
 
     def test_hostname_validation(self):
-        with self.assertRaises(ValueError):
-            Agent("foo/bar", self._ip, self._subnet, self._port,
-                  self._cpus, self._ram)
+        for (hostname, ip, subnet, port, cpus, ram, state,
+             ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
+            with self.assertRaises(ValueError):
+                Agent("foo/bar", ip, subnet, port, cpus, ram)
 
-        with self.assertRaises(ValueError):
-            Agent("", self._ip, self._subnet, self._port,
-                  self._cpus, self._ram)
-
-        Agent("foo-bar", self._ip, self._subnet, self._port,
-              self._cpus, self._ram)
+            with self.assertRaises(ValueError):
+                Agent("", ip, subnet, port, cpus, ram)
 
     def test_ip_validation(self):
         fail_addresses = (
@@ -229,12 +210,13 @@ class TestAgentModel(AgentTestCase):
             "169.254.0.0", "169.254.254.255",  # link local
             "127.0.0.1", "127.255.255.255",  # loopback
             "224.0.0.0", "255.255.255.255",  # multi/broadcast
-            "255.0.0.0", "255.255.0.0")
+            "255.0.0.0", "255.255.0.0", "x.x.x.x")
 
-        for address in fail_addresses:
-            with self.assertRaises(ValueError):
-                Agent(self._host, address, self._subnet, self._port,
-                      self._cpus, self._ram)
+        for (hostname, ip, subnet, port, cpus, ram, state,
+             ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
+            for address in fail_addresses:
+                with self.assertRaises(ValueError):
+                    Agent(hostname, address, subnet, port, cpus, ram)
 
     def test_subnet_validation(self):
         fail_subnets = (
@@ -244,13 +226,15 @@ class TestAgentModel(AgentTestCase):
             "224.0.0.0", "255.255.255.255",  # multi/broadcast
             "10.56.0.1", "172.16.0.1")
 
-        for subnet in fail_subnets:
-            with self.assertRaises(ValueError):
-                Agent(self._host, self._ip, subnet, self._port,
-                      self._cpus, self._ram)
+        for (hostname, ip, subnet, port, cpus, ram, state,
+             ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
+            for subnet in fail_subnets:
+                with self.assertRaises(ValueError):
+                    Agent(hostname, ip, subnet, port, cpus, ram)
 
     def test_resource_validation(self):
-        for hostname, ip, subnet, port, cpus, ram in self.agentModelArgs():
+        for (hostname, ip, subnet, port, cpus, ram, state,
+             ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
             model = Agent(hostname, ip, subnet, port, cpus, ram)
             db.session.add(model)
             db.session.commit()
