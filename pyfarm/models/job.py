@@ -334,7 +334,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
         Validation that ensures that the value provided for either
         :attr:`.ram` or :attr:`.cpus` is a valid value with a given range
         """
-        if value is None:
+        if value is None or value in cfg.get("agent.special_%s" % key, ()):
             return value
 
         min_value = cfg.get("agent.min_%s" % key)
