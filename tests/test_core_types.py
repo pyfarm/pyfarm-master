@@ -176,6 +176,15 @@ class TestIPAddressType(ModelTestCase):
         self.assertIsInstance(result.data, IPAddress)
         self.assertEqual(result.data, ipvalue)
 
+    def test_insert_float(self):
+        ipvalue = 3.14
+        model = IPv4AddressModel()
+        model.data = ipvalue
+        self.assertEqual(model.data, ipvalue)
+        db.session.add(model)
+        with self.assertRaises(StatementError):
+            db.session.commit()
+
 
 class TestIDColumn(ModelTestCase):
     def test_integer(self):
