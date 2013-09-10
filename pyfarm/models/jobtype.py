@@ -23,12 +23,16 @@ to an individual job.  See :mod:`pyfarm.models.job` for more the more
 general implementation.
 """
 
+import ast
 from textwrap import dedent
+from sqlalchemy import event
 from sqlalchemy.orm import validates
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.models.core.types import IDColumn, IDTypeWork
 from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH, TABLE_JOB
 from pyfarm.models.core.app import db
+
+JOBTYPE_BASECLASS = "JobType"
 
 
 class JobTypeModel(db.Model):
@@ -39,6 +43,7 @@ class JobTypeModel(db.Model):
 
     id = IDColumn(db.Integer)
     _jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+                       nullable=False,
                        doc=dedent("""
                        The foreign key which stores :class:`JobModel.id`"""))
     name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
@@ -84,3 +89,41 @@ class JobTypeModel(db.Model):
         if value not in JobTypeLoadMode:
             raise ValueError("invalid value for mode")
         return value
+
+
+def jobtype_before_insert(mapper, connection, jobtype):
+    if jobtype.mode != JobTypeLoadMode.DOWNLOAD:
+        return
+
+    # TODO: this parsing is extremely basic and needs some expansion
+    # If jobtype's says to download a file then we must
+    # be sure it's valid.  If we don't, you could probably tip over
+    # the master(s) under the load of rapidly failing tasks due to
+    # any of the following:
+    #   * job class name does not exist in the code (...)
+    #   * invalid Python code (SyntaxError)
+    #   * invalid parent class (jobtype must subclass JobType)
+    try:
+        parsed = ast.parse(jobtype.code)
+
+        # NOTE: some coverage is skipped because the final except clause
+        # prevents coverage from pulling the correct lines in
+        for node in ast.walk(parsed):
+            if not isinstance(node, ast.ClassDef):
+                continue
+
+            # found the class, make sure it has the proper parent class
+            elif node.name == jobtype.classname:
+                if JOBTYPE_BASECLASS not in set(base.id for base in node.bases):
+                    error_args = (jobtype.classname, JOBTYPE_BASECLASS)
+                    raise SyntaxError("%s is not a subclass of %s" % error_args)
+                else:  # pragma: no cover
+                    break
+        else:  # pragma: no cover
+            raise SyntaxError(
+                "jobtype class `%s` does not exist" % jobtype.classname)
+
+    except Exception:
+        raise
+
+event.listen(JobTypeModel, "before_insert", jobtype_before_insert)
