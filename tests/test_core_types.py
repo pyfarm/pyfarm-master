@@ -52,21 +52,6 @@ class IPv4AddressModel(db.Model):
     data = db.Column(IPv4AddressType)
 
 
-class JSONDict(JSONDictModel):
-    def __init__(self, data):
-        self.data = data
-
-
-class JSONList(JSONListModel):
-    def __init__(self, data):
-        self.data = data
-
-
-class IPv4Address(IPv4AddressModel):
-    def __init__(self, data):
-        self.data = data
-
-
 class TestJsonTypes(ModelTestCase):
     def test_types_notimplemented(self):
         class TestType(JSONSerializable):
@@ -91,19 +76,21 @@ class TestJsonTypes(ModelTestCase):
                         "list": [
                             b2a_hex(urandom(1024)), -1024, 1024, True, None]}})
 
-                model = JSONDict(test_data)
+                model = JSONDictModel()
+                model.data = test_data
                 self.assertIsInstance(model.data, test_type)
                 db.session.add(model)
                 db.session.commit()
                 insert_id = model.id
                 db.session.remove()
-                result = JSONDict.query.filter_by(id=insert_id).first()
+                result = JSONDictModel.query.filter_by(id=insert_id).first()
                 self.assertIsNot(model, result)
                 self.assertIsInstance(model.data, dict)
                 self.assertDictEqual(model.data, result.data)
 
     def test_dict_error(self):
-        data = JSONDict([])
+        data = JSONDictModel()
+        data.data = []
         db.session.add(data)
 
         with self.assertRaises(StatementError):
@@ -115,19 +102,21 @@ class TestJsonTypes(ModelTestCase):
                 test_data = test_type(
                     [b2a_hex(urandom(1024)), -1024, 1024, True, None])
 
-                model = JSONList(test_data)
+                model = JSONListModel()
+                model.data = test_data
                 self.assertIsInstance(model.data, test_type)
                 db.session.add(model)
                 db.session.commit()
                 insert_id = model.id
                 db.session.remove()
-                result = JSONList.query.filter_by(id=insert_id).first()
+                result = JSONListModel.query.filter_by(id=insert_id).first()
                 self.assertIsNot(model, result)
                 self.assertIsInstance(model.data, list)
                 self.assertListEqual(model.data, result.data)
 
     def test_list_error(self):
-        data = JSONList({})
+        data = JSONListModel()
+        data.data = {}
         db.session.add(data)
 
         with self.assertRaises(StatementError):
@@ -150,37 +139,40 @@ class TestIPAddressType(ModelTestCase):
 
     def test_insert_int(self):
         ipvalue = int(IPAddress("192.168.1.1"))
-        model = IPv4Address(ipvalue)
+        model = IPv4AddressModel()
+        model.data = ipvalue
         self.assertEqual(model.data, ipvalue)
         db.session.add(model)
         db.session.commit()
         insert_id = model.id
         db.session.remove()
-        result = IPv4Address.query.filter_by(id=insert_id).first()
+        result = IPv4AddressModel.query.filter_by(id=insert_id).first()
         self.assertIsInstance(result.data, IPAddress)
         self.assertEqual(int(result.data), ipvalue)
 
     def test_insert_string(self):
         ipvalue = "192.168.1.1"
-        model = IPv4Address(ipvalue)
+        model = IPv4AddressModel()
+        model.data = ipvalue
         self.assertEqual(model.data, ipvalue)
         db.session.add(model)
         db.session.commit()
         insert_id = model.id
         db.session.remove()
-        result = IPv4Address.query.filter_by(id=insert_id).first()
+        result = IPv4AddressModel.query.filter_by(id=insert_id).first()
         self.assertIsInstance(result.data, IPAddress)
         self.assertEqual(str(result.data), ipvalue)
 
     def test_insert_ipclass(self):
         ipvalue = IPAddress("192.168.1.1")
-        model = IPv4Address(ipvalue)
+        model = IPv4AddressModel()
+        model.data = ipvalue
         self.assertEqual(model.data, ipvalue)
         db.session.add(model)
         db.session.commit()
         insert_id = model.id
         db.session.remove()
-        result = IPv4Address.query.filter_by(id=insert_id).first()
+        result = IPv4AddressModel.query.filter_by(id=insert_id).first()
         self.assertIsInstance(result.data, IPAddress)
         self.assertEqual(result.data, ipvalue)
 
