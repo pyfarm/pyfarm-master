@@ -42,13 +42,22 @@ from pyfarm.core.config import cfg
 # on each other (though in production it would be better to use a different DB).
 cfg.update({
     "db.table_prefix": "pyfarm_unittest_%s_" % time.strftime("%M%d%Y%H%M%S"),
-    "agent.min_port": 1025, "agent.max_port": 65535,
-    "agent.min_cpus": 1, "agent.max_cpus": 2147483647,
-    "agent.min_ram": 32, "agent.max_ram": 2147483647,
-    "job.priority": 500, "job.max_username_length": 254,
-    "job.min_priority": 0, "job.max_priority": 1000,
-    "job.batch": 1, "job.requeue": True, "job.cpus": 4,
-    "job.ram": 0})
+    "agent.min_port": 1025,
+    "agent.max_port": 65535,
+    "agent.min_cpus": 1,
+    "agent.max_cpus": 2147483647,
+    "agent.special_cpus": [0],
+    "agent.min_ram": 32,
+    "agent.max_ram": 2147483647,
+    "agent.special_ram": [0],
+    "job.priority": 500,
+    "job.max_username_length": 254,
+    "job.min_priority": 0,
+    "job.max_priority": 1000,
+    "job.batch": 1,
+    "job.requeue": 1,
+    "job.cpus": 4,
+    "job.ram": 32})
 
 # import all model objects into this space so relationships, foreign keys,
 # and the the mapper won't have problems finding the required classes
