@@ -112,15 +112,6 @@ class JobSoftwareModel(db.Model):
                         because the format depends on the 3rd party."""))
 
 
-#class JobTypeModel(db.Model):
-#    """
-#    Stores the data and information required of a job type for a specific
-#    job.
-#    """
-#    __tablename__ = TABLE_JOB_TYPE
-#    id = db.Column(db.Integer)
-
-
 class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
     """
     Defines the attributes and environment for a job.  Individual commands
