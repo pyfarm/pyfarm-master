@@ -17,11 +17,11 @@
 from sqlalchemy.exc import DatabaseError
 from utcore import ModelTestCase
 from pyfarm.models.core.app import db
-from pyfarm.models.job import JobTagsModel, JobModel
+from pyfarm.models.job import JobTagsModel, JobSoftwareModel, JobModel
 
 
 class TestTags(ModelTestCase):
-    def test_tag_insert(self):
+    def test_insert(self):
         job = JobModel()
         tag = JobTagsModel()
         tag.job = job
@@ -35,7 +35,7 @@ class TestTags(ModelTestCase):
         self.assertEqual(result.tag, "foo")
         self.assertEqual(result.job.id, job_id)
 
-    def test_null_values(self):
+    def test_null(self):
         with self.assertRaises(DatabaseError):
             model = JobTagsModel()
             db.session.add(model)
@@ -49,7 +49,7 @@ class TestTags(ModelTestCase):
             db.session.add(model)
             db.session.commit()
 
-    def test_tag_unique(self):
+    def test_unique(self):
         job = JobModel()
         tagA = JobTagsModel()
         tagB = JobTagsModel()
@@ -64,4 +64,44 @@ class TestTags(ModelTestCase):
 
 
 class TestSoftware(ModelTestCase):
-    pass
+    def test_insert(self):
+        job = JobModel()
+        software = JobSoftwareModel()
+        software.job = job
+        software.software = "foo"
+        db.session.add_all([job, software])
+        db.session.commit()
+        job_id = job.id
+        software_id = software.id
+        db.session.remove()
+        software = JobSoftwareModel.query.filter_by(id=software_id).first()
+        self.assertEqual(software.job.id, job_id)
+        self.assertEqual(software.software, "foo")
+        self.assertEqual(software.version, "any")
+
+    def test_null(self):
+        with self.assertRaises(DatabaseError):
+            model = JobSoftwareModel()
+            db.session.add(model)
+            db.session.commit()
+
+        db.session.remove()
+
+        with self.assertRaises(DatabaseError):
+            tag = JobSoftwareModel()
+            tag.software = "foo"
+            db.session.add(model)
+            db.session.commit()
+
+    def test_unique(self):
+        job = JobModel()
+        softwareA = JobSoftwareModel()
+        softwareB = JobSoftwareModel()
+        softwareA.job = job
+        softwareA.software = "foo"
+        softwareB.job = job
+        softwareB.software = "foo"
+        db.session.add_all([job, softwareA, softwareB])
+
+        with self.assertRaises(DatabaseError):
+            db.session.commit()

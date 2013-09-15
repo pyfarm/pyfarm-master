@@ -100,6 +100,7 @@ class JobSoftwareModel(db.Model):
 
     id = IDColumn()
     _jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+                       nullable=False,
                        doc=dedent("""
                        The foreign key which stores :attr:`JobModel.id`"""))
     software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
