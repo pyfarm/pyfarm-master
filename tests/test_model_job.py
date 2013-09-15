@@ -15,7 +15,7 @@
 # limitations under the License.
 
 """
-Basic model testing, the majority of testing for models is tested using
+Basic job model testing, the majority of testing for jobs is tested using
 relationships.
 """
 
