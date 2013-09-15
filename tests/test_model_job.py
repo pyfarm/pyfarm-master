@@ -14,10 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from datetime import datetime
 from sqlalchemy.exc import DatabaseError
-from utcore import ModelTestCase
+from utcore import ModelTestCase, unittest
+from pyfarm.core.enums import WorkState
+from pyfarm.core.config import cfg
 from pyfarm.models.core.app import db
-from pyfarm.models.job import JobTagsModel, JobSoftwareModel, JobModel
+from pyfarm.models.job import JobTagsModel, JobSoftwareModel, JobModel, Job
 
 
 class TestTags(ModelTestCase):
@@ -105,3 +108,71 @@ class TestSoftware(ModelTestCase):
 
         with self.assertRaises(DatabaseError):
             db.session.commit()
+
+
+class TestJobEventsAndValidation(unittest.TestCase):
+    def test_special_cases(self):
+        special_keys = filter(
+            lambda item: item.startswith("agent.special"), list(cfg))
+
+        for full_name in special_keys:
+            column = full_name.split("agent.special_")[-1]
+            for special_value in cfg.get(full_name):
+
+                model = JobModel()
+
+                # set it to the special case
+                setattr(model, column, special_value)
+                self.assertEqual(getattr(model, column), special_value)
+
+                # try something else
+                if isinstance(special_value, int):
+                    with self.assertRaises(ValueError):
+                        setattr(model, column, -1)
+                else:
+                    self.fail("unhandled type %s" % type(special_value))
+
+    def test_ram(self):
+        model = JobModel()
+        model.ram = cfg.get("agent.min_ram")
+        model.ram = cfg.get("agent.max_ram")
+        with self.assertRaises(ValueError):
+            model.ram = cfg.get("agent.min_ram") - 10
+        with self.assertRaises(ValueError):
+            model.ram = cfg.get("agent.max_ram") + 10
+
+    def test_cpus(self):
+        model = JobModel()
+        model.cpus = cfg.get("agent.min_cpus")
+        model.cpus = cfg.get("agent.max_cpus")
+        with self.assertRaises(ValueError):
+            model.cpus = cfg.get("agent.min_cpus") - 10
+        with self.assertRaises(ValueError):
+            model.cpus = cfg.get("agent.max_cpus") + 10
+
+    def test_priority(self):
+        model = JobModel()
+        model.priority = cfg.get("job.min_priority")
+        model.priority = cfg.get("job.max_priority")
+        with self.assertRaises(ValueError):
+            model.priority = cfg.get("job.min_priority") - 10
+
+        with self.assertRaises(ValueError):
+            model.priority = cfg.get("job.max_priority") + 10
+
+    def test_state_change_event(self):
+        model = JobModel()
+        self.assertIsNone(model.time_started)
+        self.assertIsNone(model.attempts)
+        model.state = WorkState.RUNNING
+        self.assertIsInstance(model.time_started, datetime)
+        self.assertEqual(model.attempts, 1)
+
+
+class TestJob(ModelTestCase):
+    def test_getid(self):
+        self.assertNotEqual(Job.getID(), Job.getID())
+        job_id = Job.getID()
+        job = Job.query.filter_by(id=job_id).first()
+        self.assertEqual(job.state, WorkState.ALLOC)
+        self.assertTrue(job.hidden)
