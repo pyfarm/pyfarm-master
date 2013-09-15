@@ -243,8 +243,12 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
 
                             -1, not set
                         """))
-
-    # underlying storage for properties
+    attempts = db.Column(db.Integer, default=0,
+                         doc=dedent("""
+                         The number attempts which have been made on this
+                         task. This value is auto incremented when
+                         :attr:`state` changes to a value synonyms with a
+                         running state."""))
     hidden = db.Column(db.Boolean, default=False, nullable=False,
                        doc=dedent("""
                        If True, keep the job hidden from the queue and web
