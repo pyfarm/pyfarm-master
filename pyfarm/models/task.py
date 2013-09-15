@@ -49,7 +49,7 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin):
     hidden = db.Column(db.Boolean, default=False,
                        doc=dedent("""
                        hides the task from queue and web ui"""))
-    attempts = db.Column(db.Integer, default=0,
+    attempts = db.Column(db.Integer,
                          doc=dedent("""
                          The number attempts which have been made on this
                          task. This value is auto incremented when

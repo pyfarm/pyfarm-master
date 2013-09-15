@@ -59,7 +59,7 @@ class WorkValidationMixin(object):
     @validates("attempts")
     def validate_attempts(self, key, value):
         """ensures the number of attempts provided is valid"""
-        if value > 0:
+        if value > 0 or value is None:
             return value
 
         raise ValueError("%s cannot be less than zero" % key)

@@ -243,7 +243,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
 
                             -1, not set
                         """))
-    attempts = db.Column(db.Integer, default=0,
+    attempts = db.Column(db.Integer,
                          doc=dedent("""
                          The number attempts which have been made on this
                          task. This value is auto incremented when
