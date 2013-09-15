@@ -27,6 +27,7 @@ from sqlalchemy.orm import validates
 from pyfarm.core.warning import ColumnStateChangeWarning
 from pyfarm.core.config import cfg
 
+
 class WorkValidationMixin(object):
     """
     Mixin that adds a `state` column and uses a class
