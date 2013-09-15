@@ -149,6 +149,12 @@ class AgentModel(db.Model, WorkValidationMixin):
     id = IDColumn(IDTypeAgent)
 
     # basic host attribute information
+    hidden = db.Column(db.Boolean, default=False, nullable=False,
+                       doc=dedent("""
+                       If True, keep the agent hidden from the queue and web
+                       ui.  This is typically set to True when you want to
+                       either save an agent for later use or if the agent's
+                       data is being populated in a deferred manner"""))
     hostname = db.Column(db.String(MAX_HOSTNAME_LENGTH), nullable=False,
                          doc=dedent("""
                          The hostname we should use to talk to this host.

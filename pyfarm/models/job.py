@@ -245,10 +245,12 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                         """))
 
     # underlying storage for properties
-    hidden = db.Column(db.Boolean, default=False,
+    hidden = db.Column(db.Boolean, default=False, nullable=False,
                        doc=dedent("""
-                       If True, keep the job hidden from things like the web
-                       ui"""))
+                       If True, keep the job hidden from the queue and web
+                       ui.  This is typically set to True if you either want
+                       to save a job for later viewing or if the jobs data
+                       is being populated in a deferred manner."""))
     environ = db.Column(JSONDict,
                         doc=dedent("""
                         Dictionary containing information about the environment
@@ -420,6 +422,7 @@ class Job(JobModel):
 
         model = JobModel()
         model.state = WorkState.ALLOC
+        model.hidden = True
 
         try:
             db.session.add(model)
