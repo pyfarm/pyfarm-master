@@ -72,18 +72,18 @@ class AgentTagsModel(db.Model, AgentTaggingMixin):
         must be unique and the combination of these columns must also be
         unique to limit the frequency of duplicate data:
 
-            * :attr:`_agentid`
+            * :attr:`agentid`
             * :attr:`tag`
 
-    .. autoattribute:: _agentid
+    .. autoattribute:: agentid
     """
     __tablename__ = TABLE_AGENT_TAGS
-    __table_args__ = (UniqueConstraint("_agentid", "tag"), )
+    __table_args__ = (UniqueConstraint("agentid", "tag"), )
     id = IDColumn(IDTypeTag)
-    _agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
-                         nullable=False,
-                         doc=dedent("""
-                         The foreign key which stores :attr:`AgentModel.id`"""))
+    agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
+                        nullable=False,
+                        doc=dedent("""
+                        The foreign key which stores :attr:`AgentModel.id`"""))
     tag = db.Column(db.String(MAX_TAG_LENGTH),
                     doc=dedent("""
                     A string value to tag an :class:`.AgentModel`. Generally
@@ -102,19 +102,19 @@ class AgentSoftwareModel(db.Model, AgentTaggingMixin):
         must be unique and the combination of these columns must also be
         unique to limit the frequency of duplicate data:
 
-            * :attr:`_agentid`
+            * :attr:`agentid`
             * :attr:`version`
             * :attr:`software`
 
-    .. autoattribute:: _agentid
+    .. autoattribute:: agentid
     """
     __tablename__ = TABLE_AGENT_SOFTWARE
-    __table_args__ = (UniqueConstraint("_agentid", "version", "software"), )
+    __table_args__ = (UniqueConstraint("agentid", "version", "software"), )
     id = IDColumn(IDTypeTag)
-    _agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
-                         nullable=False,
-                         doc=dedent("""
-                         The foreign key which stores :attr:`AgentModel.id`"""))
+    agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
+                        nullable=False,
+                        doc=dedent("""
+                        The foreign key which stores :attr:`AgentModel.id`"""))
     software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
                          doc=dedent("""
                          The name of the software installed.  No normalization

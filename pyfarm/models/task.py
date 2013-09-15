@@ -28,7 +28,7 @@ from pyfarm.core.enums import WorkState
 
 from pyfarm.models.core.app import db
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
-from pyfarm.models.core.functions import WorkColumns, getuuid
+from pyfarm.models.core.functions import WorkColumns
 from pyfarm.models.core.cfg import TABLE_JOB, TABLE_TASK, TABLE_AGENT
 from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
 
@@ -60,16 +60,15 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin):
                       The frame the :class:`TaskModel` will be executing."""))
 
     # relationships
-    _agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
-                         doc=dedent("""
-                         Foreign key which stores :attr:`JobModel.id`"""))
-    _jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+    agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
+                        doc=dedent("""
+                        Foreign key which stores :attr:`JobModel.id`"""))
+    jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+                      doc=dedent("""
+                      Foreign key which stores :attr:`JobModel.id`"""))
+    parent = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_TASK),
                        doc=dedent("""
-                       Foreign key which stores :attr:`JobModel.id`"""))
-    _parenttask = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_TASK),
-                            doc=dedent("""
-                            The foreign key which stores :attr:`TaskModel.id`
-                            """))
+                       The foreign key which stores :attr:`TaskModel.id`"""))
     siblings = db.relationship("TaskModel",
                                backref=db.backref("task", remote_side=[id]),
                                doc=dedent("""
@@ -83,5 +82,5 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin):
             target.state = target.STATE_ENUM.ASSIGN
 
 
-event.listen(TaskModel._agentid, "set", TaskModel.agentChangedEvent)
+event.listen(TaskModel.agentid, "set", TaskModel.agentChangedEvent)
 event.listen(TaskModel.state, "set", TaskModel.stateChangedEvent)

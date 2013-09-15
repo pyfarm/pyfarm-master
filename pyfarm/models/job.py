@@ -59,17 +59,17 @@ class JobTagsModel(db.Model):
         must be unique and the combination of these columns must also be
         unique to limit the frequency of duplicate data:
 
-            * :attr:`_jobid`
+            * :attr:`jobid`
             * :attr:`tag`
 
-    .. autoattribute:: _jobid
+    .. autoattribute:: jobid
     """
     __tablename__ = TABLE_JOB_TAGS
     __table_args__ = (
-        UniqueConstraint("_jobid", "tag"), )
+        UniqueConstraint("jobid", "tag"), )
 
     id = IDColumn()
-    _jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+    jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                        nullable=False,
                        doc=dedent("""
                        Foreign key which stores :attr:`JobModel.id`"""))
@@ -87,18 +87,18 @@ class JobSoftwareModel(db.Model):
         must be unique and the combination of these columns must also be
         unique to limit the frequency of duplicate data:
 
-            * :attr:`_jobid`
+            * :attr:`jobid`
             * :attr:`software`
             * :attr:`version`
 
-    .. autoattribute:: _jobid
+    .. autoattribute:: jobid
     """
     __tablename__ = TABLE_JOB_SOFTWARE
     __table_args__ = (
-        UniqueConstraint("_jobid", "software", "version"), )
+        UniqueConstraint("jobid", "software", "version"), )
 
     id = IDColumn()
-    _jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+    jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                        nullable=False,
                        doc=dedent("""
                        The foreign key which stores :attr:`JobModel.id`"""))
@@ -279,16 +279,11 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                         applied to the session."""))
 
     # relationships
-    _parentjob = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB))
-
-    siblings = db.relationship("JobModel",
-                               backref=db.backref("parent", remote_side=[id]),
-                               doc=dedent("""
-                               Relationship between this model and other
-                               :class:`.JobModel` objects which have the same
-                               parent.
-                               """))
-
+    parentid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB))
+    parent = db.relationship("JobModel", remote_side=[id],
+                             doc=dedent("""
+                             Relationship to the parent job, if one exists"""))
+    
     tasks = db.relationship("TaskModel", backref="job", lazy="dynamic",
                             doc=dedent("""
                             Relationship between this job and and child
@@ -297,21 +292,21 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
 
     tasks_done = db.relationship("TaskModel", lazy="dynamic",
         primaryjoin="(TaskModel.state == %s) & "
-                    "(TaskModel._jobid == JobModel.id)" % STATE_ENUM.DONE,
+                    "(TaskModel.jobid == JobModel.id)" % STATE_ENUM.DONE,
         doc=dedent("""
         Relationship between this job and any |TaskModel| objects which are
         done."""))
 
     tasks_failed = db.relationship("TaskModel", lazy="dynamic",
         primaryjoin="(TaskModel.state == %s) & "
-                    "(TaskModel._jobid == JobModel.id)" % STATE_ENUM.FAILED,
+                    "(TaskModel.jobid == JobModel.id)" % STATE_ENUM.FAILED,
         doc=dedent("""
         Relationship between this job and any |TaskModel| objects which have
         failed."""))
 
     tasks_queued = db.relationship("TaskModel", lazy="dynamic",
         primaryjoin="(TaskModel.state == %s) & "
-                    "(TaskModel._jobid == JobModel.id)" % STATE_ENUM.QUEUED,
+                    "(TaskModel.jobid == JobModel.id)" % STATE_ENUM.QUEUED,
         doc=dedent("""
         Relationship between this job and any |TaskModel| objects which
         are queued."""))

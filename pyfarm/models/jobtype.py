@@ -42,10 +42,10 @@ class JobTypeModel(db.Model):
     __tablename__ = TABLE_JOB_TYPE
 
     id = IDColumn(db.Integer)
-    _jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
-                       nullable=False,
-                       doc=dedent("""
-                       The foreign key which stores :class:`JobModel.id`"""))
+    jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+                      nullable=False,
+                      doc=dedent("""
+                      The foreign key which stores :class:`JobModel.id`"""))
     name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
                      doc=dedent("""
                      The name of the job type.  This can be either a human
