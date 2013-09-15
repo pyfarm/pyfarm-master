@@ -69,8 +69,9 @@ class JobTagsModel(db.Model):
     __table_args__ = (
         UniqueConstraint("_jobid", "tag"), )
 
-    id = IDColumn(IDTypeWork)
+    id = IDColumn()
     _jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+                       nullable=False,
                        doc=dedent("""
                        Foreign key which stores :attr:`JobModel.id`"""))
 
