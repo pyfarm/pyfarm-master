@@ -14,6 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Basic model testing, the majority of testing for models is tested using
+relationships.
+"""
+
 from datetime import datetime
 from sqlalchemy.exc import DatabaseError
 from utcore import ModelTestCase, unittest
