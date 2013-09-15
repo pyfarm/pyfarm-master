@@ -46,6 +46,9 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin):
     id, state, priority, time_submitted, time_started, time_finished = \
         WorkColumns(STATE_DEFAULT, "job.priority")
 
+    hidden = db.Column(db.Boolean, default=False,
+                       doc=dedent("""
+                       hides the task from queue and web ui"""))
     attempts = db.Column(db.Integer, default=0,
                          doc=dedent("""
                          The number attempts which have been made on this
