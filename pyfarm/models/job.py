@@ -360,81 +360,30 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
 event.listen(JobModel.state, "set", JobModel.stateChangedEvent)
 
 
-class JobTag(JobTagsModel):
+def getJobId():
     """
-    Provides :meth:`__init__` for :class:`JobTagsModel` so the model can
-    be instanced with initial values.
+    Creates a new job without any data and inserts it into the
+    database.
+
+    :exception ValueError:
+        raised if the session is dirty before trying to create
+        and commit a job model
     """
-    def __init__(self, job, tag):
-        jobid = job
-        if isinstance(job, JobModel):
-            jobid = job.id
+    # TODO: we should create a new session instead
+    if db.session.dirty:
+        raise ValueError("session is dirty, cannot proceed")
 
-        self._jobid = jobid
-        self.tag = tag
+    model = JobModel()
+    model.state = WorkState.ALLOC
+    model.hidden = True
 
+    try:
+        db.session.add(model)
+        db.session.commit()
 
-class JobSoftware(JobSoftwareModel):
-    """
-    Provides :meth:`__init__` for :class:`JobSoftwareModel` so the model can
-    be instanced with initial values.
-    """
-    def __init__(self, job, software, version="any"):
-        jobid = job
-        if isinstance(job, JobModel):
-            jobid = job.id
+    except DatabaseError:
+        db.session.rollback()
+        raise
 
-        self._jobid = jobid
-        self.software = software
-        self.version = version
-
-
-class Job(JobModel):
-    """
-    Provides :meth:`__init__` for :class:`.JobModel` so the model can
-    be instanced with initial values.  Unlike the other interface classes
-    however :class:`Job` only requires a single positional argument and
-    any number of kwargs.
-
-    .. note::
-        The :class:`.JobModel` allows nearly all of its columns to be nullable.
-        This is done so an `id` could be retrieved without creating a new
-        job however this class does not allow that
-    """
-    def __init__(self, jobtype, **kwargs):
-        self.jobtype = jobtype
-
-        for key, value in kwargs.iteritems():
-            if not hasattr(JobModel, key):
-                raise AttributeError("`Job` does not have `%s`" % key)
-            else:
-                setattr(self, key, value)
-
-    @classmethod
-    def getID(cls):
-        """
-        Creates a new job without any data and inserts it into the
-        database.
-
-        :exception ValueError:
-            raised if the session is dirty before trying to create
-            and commit a job model
-        """
-        # TODO: we should create a new session instead
-        if db.session.dirty:
-            raise ValueError("session is dirty, cannot proceed")
-
-        model = JobModel()
-        model.state = WorkState.ALLOC
-        model.hidden = True
-
-        try:
-            db.session.add(model)
-            db.session.commit()
-
-        except DatabaseError:
-            db.session.rollback()
-            raise
-
-        else:
-            return model.id
+    else:
+        return model.id
