@@ -61,8 +61,8 @@ cfg.update({
 
 # import all model objects into this space so relationships, foreign keys,
 # and the the mapper won't have problems finding the required classes
-from pyfarm.models.task import TaskModel
 from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
+from pyfarm.models.task import TaskModel
 from pyfarm.models.job import JobModel, JobSoftwareModel, JobTagsModel
 
 from pyfarm.models.core.app import db
@@ -76,10 +76,12 @@ def skip_on_ci(func):
         return func(*args, **kwargs)
     return wrapper
 
+
 class ModelTestCase(unittest.TestCase):
     ORIGINAL_ENVIRONMENT = dict(os.environ.data)
 
     def setUp(self):
+        db.session.rollback()
         os.environ.clear()
         os.environ.update(self.ORIGINAL_ENVIRONMENT)
         db.create_all()

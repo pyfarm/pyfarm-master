@@ -123,7 +123,7 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
             db.session.rollback()
 
 
-class TestAgentTags(AgentTestCase):
+class TestAgentTags(AgentTestCase, ModelTestCase):
     def test_tags_validation(self):
         for agent_foobar in self.models(limit=1):
             tag = AgentTagsModel()
@@ -169,23 +169,9 @@ class TestAgentTags(AgentTestCase):
                 set(i.id for i in tag_objects))
 
 
-class TestAgentModel(AgentTestCase):
+class TestAgentModel(AgentTestCase, ModelTestCase):
     def test_basic_insert(self):
-        agents = []
-        for (hostname, ip, subnet, port, cpus, ram, state,
-             ram_allocation, cpu_allocation) in self.modelArguments():
-            agent = AgentModel()
-            agent.hostname = hostname
-            agent.ip = ip
-            agent.subnet = subnet
-            agent.port = port
-            agent.cpus = cpus
-            agent.ram = ram
-            agent.state = state
-            agent.ram_allocation = ram_allocation
-            agent.cpu_allocation = cpu_allocation
-            agents.append(agent)
-
+        agents = list(self.models())
         db.session.add_all(agents)
         db.session.commit()
         agents = dict(
