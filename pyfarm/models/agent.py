@@ -62,6 +62,7 @@ class AgentTaggingMixin(object):
 
         return value
 
+
 class AgentTagsModel(db.Model, AgentTaggingMixin):
     """
     Table model used to store tags for an agent.
@@ -322,56 +323,3 @@ class AgentModel(db.Model, WorkValidationMixin):
             raise ValueError(msg)
 
         return value
-
-
-class AgentTag(AgentTagsModel):
-    """
-    Provides :meth:`__init__` for :class:`.AgentTagsModel` so the model can
-    be instanced with initial values.
-    """
-    def __init__(self, agent, tag):
-        agentid = agent
-        if isinstance(agent, AgentModel):
-            agentid = agent.id
-
-        self._agentid = agentid
-        self.tag = tag
-
-
-class AgentSoftware(AgentSoftwareModel):
-    """
-    Provides :meth:`__init__` for :class:`AgentSoftwareModel` so the model can
-    be instanced with initial values.
-    """
-    def __init__(self, agent, software, version="any"):
-        agentid = agent
-        if isinstance(agent, (AgentModel, Agent)):
-            agentid = agent.id
-
-        self._agentid = agentid
-        self.software = software
-        self.version = version
-
-
-class Agent(AgentModel):
-    """
-    Provides :meth:`__init__` for :class:`AgentModel` so the model can
-    be instanced with initial values.
-    """
-    def __init__(self, hostname, ip, subnet, port, cpus, ram, state=None,
-                 ram_allocation=None, cpu_allocation=None):
-        self.hostname = hostname
-        self.ip = ip
-        self.subnet = subnet
-        self.port = port
-        self.cpus = cpus
-        self.ram = ram
-
-        if state is not None:
-            self.state = state
-
-        if ram_allocation is not None:
-            self.ram_allocation = ram_allocation
-
-        if cpu_allocation is not None:
-            self.cpu_allocation = cpu_allocation

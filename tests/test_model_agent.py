@@ -16,10 +16,10 @@
 
 from __future__ import with_statement
 from sqlalchemy.exc import DatabaseError
-from utcore import ModelTestCase, db
+from utcore import ModelTestCase, db, unittest
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
-from pyfarm.models.agent import Agent, AgentSoftware, AgentTag
+from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
 
 try:
     from itertools import product
@@ -27,7 +27,7 @@ except ImportError:
     from pyfarm.core.backports import product
 
 
-class AgentTestCase(ModelTestCase):
+class AgentTestCase(unittest.TestCase):
     hostnamebase = "foobar"
     ports = (cfg.get("agent.min_port"), cfg.get("agent.max_port"))
     cpus = (cfg.get("agent.min_cpus"), cfg.get("agent.max_cpus"))
@@ -69,20 +69,31 @@ class AgentTestCase(ModelTestCase):
         Iterates over the class level variables and produces an agent
         model.  This is done so that we test endpoints in the extreme ranges.
         """
-        for args in self.modelArguments(limit=limit):
-            yield Agent(*args)
+        generator = self.modelArguments(limit=limit)
+        for (hostname, ip, subnet, port, cpus, ram, state,
+             ram_allocation, cpu_allocation) in generator:
+            agent = AgentModel()
+            agent.hostname = hostname
+            agent.ip = ip
+            agent.subnet = subnet
+            agent.port = port
+            agent.cpus = cpus
+            agent.ram = ram
+            agent.state = state
+            agent.ram_allocation = ram_allocation
+            agent.cpu_allocation = cpu_allocation
+            yield agent
 
 
-class TestAgentSoftware(AgentTestCase):
+class TestAgentSoftware(AgentTestCase, ModelTestCase):
     def test_software(self):
         for agent_foobar in self.models(limit=1):
-            db.session.add(agent_foobar)
-            db.session.commit()
-
             # create some software tags
             software_objects = []
             for software_name in ("foo", "bar", "baz"):
-                software = AgentSoftware(agent_foobar, software_name)
+                software = AgentSoftwareModel()
+                software.agent = agent_foobar
+                software.software = software_name
                 software_objects.append(software)
                 db.session.add(software)
 
@@ -90,19 +101,22 @@ class TestAgentSoftware(AgentTestCase):
             agent_id = agent_foobar.id
             db.session.remove()
 
-            agent = Agent.query.filter_by(id=agent_id).first()
+            agent = AgentModel.query.filter_by(id=agent_id).first()
             self.assertEqual(
                 set(i.software for i in agent.software),
                 set(("foo", "bar", "baz")))
 
     def test_software_unique(self):
         for agent_foobar in self.models(limit=1):
-            db.session.add(agent_foobar)
-            db.session.commit()
-            software = AgentSoftware(agent_foobar, "foo", version="1.0.0")
-            db.session.add(software)
-            software = AgentSoftware(agent_foobar, "foo", version="1.0.0")
-            db.session.add(software)
+            softwareA = AgentSoftwareModel()
+            softwareA.agent = agent_foobar
+            softwareA.software = "foo"
+            softwareA.version = "1.0.0"
+            softwareB = AgentSoftwareModel()
+            softwareB.agent = agent_foobar
+            softwareB.software = "foo"
+            softwareB.version = "1.0.0"
+            db.session.add_all([softwareA, softwareB])
 
             with self.assertRaises(DatabaseError):
                 db.session.commit()
@@ -112,21 +126,19 @@ class TestAgentSoftware(AgentTestCase):
 class TestAgentTags(AgentTestCase):
     def test_tags_validation(self):
         for agent_foobar in self.models(limit=1):
-            db.session.add(agent_foobar)
-            db.session.commit()
-
-            tag = AgentTag(agent_foobar, 0)
+            tag = AgentTagsModel()
+            tag.agent = agent_foobar
+            tag.tag = "foo"
             db.session.add(tag)
-            self.assertEqual(tag.tag, str(0))
+            db.session.commit()
+            self.assertEqual(tag.tag, "foo")
 
     def test_tags_validation_error(self):
         for agent_foobar in self.models(limit=1):
-            db.session.add(agent_foobar)
-            db.session.commit()
-
-            # create some software tags
+            tag = AgentTagsModel()
+            tag.agent = agent_foobar
             with self.assertRaises(ValueError):
-                AgentTag(agent_foobar, None)
+                tag.tag = None
 
     def test_tags(self):
         for agent_foobar in self.models(limit=1):
@@ -136,12 +148,14 @@ class TestAgentTags(AgentTestCase):
             # create some software tags
             tag_objects = []
             for tag_name in ("foo", "bar", "baz"):
-                tag = AgentTag(agent_foobar, tag_name)
+                tag = AgentTagsModel()
+                tag.agent = agent_foobar
+                tag.tag = tag_name
                 tag_objects.append(tag)
                 db.session.add(tag)
 
             db.session.commit()
-            agent = Agent.query.filter_by(id=agent_foobar.id).first()
+            agent = AgentModel.query.filter_by(id=agent_foobar.id).first()
 
             # agent.software == software_objects
             self.assertEqual(
@@ -150,42 +164,58 @@ class TestAgentTags(AgentTestCase):
 
             # same as above, asking from the software table side
             self.assertEqual(
-                set(i.id for i in AgentTag.query.filter_by(agent=agent).all()),
+                set(i.id for i in AgentTagsModel.query.filter_by(
+                    agent=agent).all()),
                 set(i.id for i in tag_objects))
 
 
 class TestAgentModel(AgentTestCase):
     def test_basic_insert(self):
+        agents = []
         for (hostname, ip, subnet, port, cpus, ram, state,
              ram_allocation, cpu_allocation) in self.modelArguments():
-            model = Agent(hostname, ip, subnet, port, cpus, ram,
-                          state=state, ram_allocation=ram_allocation,
-                          cpu_allocation=cpu_allocation)
-            db.session.add(model)
-            self.assertEqual(model.hostname, hostname)
-            self.assertEqual(model.ip, ip)
-            self.assertEqual(model.subnet, subnet)
-            self.assertEqual(model.port, port)
-            self.assertEqual(model.cpus, cpus)
-            self.assertEqual(model.ram, ram)
-            self.assertIsNone(model.id)
-            db.session.commit()
-            model_id = model.id
-            db.session.remove()
-            result = Agent.query.filter_by(id=model_id).first()
-            self.assertEqual(model.hostname, result.hostname)
-            self.assertEqual(model.ip, result.ip)
-            self.assertEqual(model.subnet, result.subnet)
-            self.assertEqual(model.port, result.port)
-            self.assertEqual(model.cpus, result.cpus)
-            self.assertEqual(model.ram, result.ram)
-            self.assertEqual(result.id, model.id)
+            agent = AgentModel()
+            agent.hostname = hostname
+            agent.ip = ip
+            agent.subnet = subnet
+            agent.port = port
+            agent.cpus = cpus
+            agent.ram = ram
+            agent.state = state
+            agent.ram_allocation = ram_allocation
+            agent.cpu_allocation = cpu_allocation
+            agents.append(agent)
+
+        db.session.add_all(agents)
+        db.session.commit()
+        agents = dict(
+            (AgentModel.query.filter_by(id=agent.id).first(), agent)
+            for agent in agents)
+
+        for result, agent, in agents.iteritems():
+            self.assertEqual(result.hostname, agent.hostname)
+            self.assertEqual(result.ip, agent.ip)
+            self.assertEqual(result.subnet, agent.subnet)
+            self.assertEqual(result.port, agent.port)
+            self.assertEqual(result.cpus, agent.cpus)
+            self.assertEqual(result.ram, agent.ram)
+            self.assertEqual(result.state, agent.state)
+            self.assertEqual(result.cpu_allocation, agent.cpu_allocation)
+            self.assertEqual(result.ram_allocation, agent.ram_allocation)
 
     def test_basic_insert_nonunique(self):
         for (hostname, ip, subnet, port, cpus, ram, state,
              ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
-            modelA = Agent(hostname, ip, subnet, port, cpus, ram)
-            modelB = Agent(hostname, ip, subnet, port, cpus, ram)
+            modelA = AgentModel()
+            modelA.hostname = hostname
+            modelA.ip = ip
+            modelA.subnet = subnet
+            modelA.port = port
+            modelB = AgentModel()
+            modelB.hostname = hostname
+            modelB.ip = ip
+            modelB.subnet = subnet
+            modelB.port = port
             db.session.add(modelA)
             db.session.add(modelB)
 
@@ -194,16 +224,19 @@ class TestAgentModel(AgentTestCase):
 
             db.session.rollback()
 
-    def test_hostname_validation(self):
-        for (hostname, ip, subnet, port, cpus, ram, state,
-             ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
-            with self.assertRaises(ValueError):
-                Agent("foo/bar", ip, subnet, port, cpus, ram)
 
-            with self.assertRaises(ValueError):
-                Agent("", ip, subnet, port, cpus, ram)
+class TestModelValidation(AgentTestCase):
+    def test_hostname(self):
+        for model in self.models(limit=1):
+            break
 
-    def test_ip_validation(self):
+        with self.assertRaises(ValueError):
+            model.hostname = "foo/bar"
+
+        with self.assertRaises(ValueError):
+            model.hostname = ""
+
+    def test_ip(self):
         fail_addresses = (
             "0.0.0.0",
             "169.254.0.0", "169.254.254.255",  # link local
@@ -211,13 +244,14 @@ class TestAgentModel(AgentTestCase):
             "224.0.0.0", "255.255.255.255",  # multi/broadcast
             "255.0.0.0", "255.255.0.0", "x.x.x.x")
 
-        for (hostname, ip, subnet, port, cpus, ram, state,
-             ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
-            for address in fail_addresses:
-                with self.assertRaises(ValueError):
-                    Agent(hostname, address, subnet, port, cpus, ram)
+        for agent in self.models(limit=1):
+            break
 
-    def test_subnet_validation(self):
+        for address in fail_addresses:
+            with self.assertRaises(ValueError):
+                agent.ip = address
+
+    def test_subnet(self):
         fail_subnets = (
             "0.0.0.0",
             "169.254.0.0", "169.254.254.255",  # link local
@@ -225,39 +259,48 @@ class TestAgentModel(AgentTestCase):
             "224.0.0.0", "255.255.255.255",  # multi/broadcast
             "10.56.0.1", "172.16.0.1")
 
-        for (hostname, ip, subnet, port, cpus, ram, state,
-             ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
-            for subnet in fail_subnets:
-                with self.assertRaises(ValueError):
-                    Agent(hostname, ip, subnet, port, cpus, ram)
+        for agent in self.models(limit=1):
+            break
 
-    def test_resource_validation(self):
-        for (hostname, ip, subnet, port, cpus, ram, state,
-             ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
-            model = Agent(hostname, ip, subnet, port, cpus, ram)
-            db.session.add(model)
-            db.session.commit()
+        for subnet in fail_subnets:
+            with self.assertRaises(ValueError):
+                agent.subnet = subnet
 
-            # port value test
-            if port == cfg.get("agent.min_port"):
-                with self.assertRaises(ValueError):
-                    Agent(hostname, ip, subnet, port-1, cpus, ram)
-            else:
-                with self.assertRaises(ValueError):
-                    Agent(hostname, ip, subnet, port+1, cpus, ram)
+    def test_port_validation(self):
+        for model in self.models(limit=1):
+            break
 
-            # cpu value test
-            if cpus == cfg.get("agent.min_cpus"):
-                with self.assertRaises(ValueError):
-                    Agent(hostname, ip, subnet, port, cpus-1, ram)
-            else:
-                with self.assertRaises(ValueError):
-                    Agent(hostname, ip, subnet, port, cpus+1, ram)
+        model.port = cfg.get("agent.min_port")
+        model.port = cfg.get("agent.max_port")
 
-            # ram value test
-            if ram == cfg.get("agent.min_ram"):
-                with self.assertRaises(ValueError):
-                    Agent(hostname, ip, subnet, port, cpus, ram-1)
-            else:
-                with self.assertRaises(ValueError):
-                    Agent(hostname, ip, subnet, port, cpus, ram+1)
+        with self.assertRaises(ValueError):
+            model.port = cfg.get("agent.min_port") - 10
+
+        with self.assertRaises(ValueError):
+            model.port = cfg.get("agent.max_port") + 10
+
+    def test_cpu_validation(self):
+        for model in self.models(limit=1):
+            break
+
+        model.cpus = cfg.get("agent.min_cpus")
+        model.cpus = cfg.get("agent.max_cpus")
+
+        with self.assertRaises(ValueError):
+            model.cpus = cfg.get("agent.min_cpus") - 10
+
+        with self.assertRaises(ValueError):
+            model.cpus = cfg.get("agent.max_cpus") + 10
+
+    def test_ram_validation(self):
+        for model in self.models(limit=1):
+            break
+
+        model.ram = cfg.get("agent.min_ram")
+        model.ram = cfg.get("agent.max_ram")
+
+        with self.assertRaises(ValueError):
+            model.ram = cfg.get("agent.min_ram") - 10
+
+        with self.assertRaises(ValueError):
+            model.ram = cfg.get("agent.max_ram") + 10

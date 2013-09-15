@@ -18,3 +18,15 @@
 Basic task model testing, the majority of testing for tasks is tested using
 relationships.
 """
+
+from utcore import ModelTestCase
+from pyfarm.models.agent import AgentModel
+from pyfarm.models.task import TaskModel
+
+
+class TestTask(ModelTestCase):
+    def test_state_changed(self):
+        agent = AgentModel()
+        model = TaskModel()
+        model.agent = agent
+        print model.state

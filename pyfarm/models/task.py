@@ -85,25 +85,3 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin):
 
 event.listen(TaskModel._agentid, "set", TaskModel.agentChangedEvent)
 event.listen(TaskModel.state, "set", TaskModel.stateChangedEvent)
-
-
-class Task(TaskModel):
-    """
-    Provides :meth:`__init__` for :class:`TaskModel` so the model can
-    be instanced with initial values.
-    """
-    def __init__(self, job, frame, parent_task=None, state=None,
-                 priority=None, attempts=None, agent=None):
-        self._jobid = getuuid(job, TABLE_JOB, "jobid", "parent job")
-        self._parenttask = getuuid(parent_task, TABLE_TASK, "id", "parent task")
-        self._agentid = getuuid(agent, TABLE_AGENT, "id", "agent id")
-        self.frame = frame
-
-        if state is not None:
-            self.state = state
-
-        if priority is not None:
-            self.priority = priority
-
-        if attempts is not None:
-            self.attempts = attempts
