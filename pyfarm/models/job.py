@@ -23,8 +23,6 @@ Models and interface classes related to jobs.
 .. include:: ../include/references.rst
 """
 
-import inspect
-
 try:
     import pwd
 except ImportError:  # pragma: no cover
@@ -37,6 +35,7 @@ except ImportError:  # pragma: no cover
 
 from textwrap import dedent
 from sqlalchemy import event
+from sqlalchemy.exc import DatabaseError
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 from pyfarm.core.config import cfg
@@ -246,6 +245,10 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                         """))
 
     # underlying storage for properties
+    hidden = db.Column(db.Boolean, default=False,
+                       doc=dedent("""
+                       If True, keep the job hidden from things like the web
+                       ui"""))
     environ = db.Column(JSONDict,
                         doc=dedent("""
                         Dictionary containing information about the environment
@@ -403,6 +406,28 @@ class Job(JobModel):
 
     @classmethod
     def getID(cls):
-        raise NotImplementedError
-        instance = cls(None)
-        return inspect.id
+        """
+        Creates a new job without any data and inserts it into the
+        database.
+
+        :exception ValueError:
+            raised if the session is dirty before trying to create
+            and commit a job model
+        """
+        # TODO: we should create a new session instead
+        if db.session.dirty:
+            raise ValueError("session is dirty, cannot proceed")
+
+        model = JobModel()
+        model.state = WorkState.ALLOC
+
+        try:
+            db.session.add(model)
+            db.session.commit()
+
+        except DatabaseError:
+            db.session.rollback()
+            raise
+
+        else:
+            return model.id
