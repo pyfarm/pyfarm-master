@@ -75,6 +75,7 @@ TABLE_AGENT_SOFTWARE = "%s_software" % TABLE_AGENT
 TABLE_JOB = "%sjob" % TABLE_PREFIX
 TABLE_JOB_TYPE = "%s_jobtype" % TABLE_JOB
 TABLE_JOB_TAGS = "%s_tags" % TABLE_JOB
+TABLE_JOB_DEPENDENCIES = "%s_dependencies" % TABLE_JOB
 TABLE_JOB_SOFTWARE = "%s_software" % TABLE_JOB
 TABLE_TASK = "%stask" % TABLE_PREFIX
 

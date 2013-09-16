@@ -45,7 +45,8 @@ from pyfarm.models.core.functions import WorkColumns
 from pyfarm.models.core.types import IDColumn, JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE,
-    MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH)
+    MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH,
+    TABLE_JOB_DEPENDENCIES)
 from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
 from pyfarm.models.jobtype import JobTypeModel  # relationship import
 
@@ -111,6 +112,14 @@ class JobSoftwareModel(db.Model):
                         The version of software required to run the job.  This
                         value does not follow any special formatting rules
                         because the format depends on the 3rd party."""))
+
+
+JobDependencies = db.Table(
+    TABLE_JOB_DEPENDENCIES, db.metadata,
+    db.Column("parentid", IDTypeWork,
+              db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True),
+    db.Column("childid", IDTypeWork,
+              db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
 
 
 class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
@@ -278,12 +287,13 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                         Changes made directly to this object are **not**
                         applied to the session."""))
 
-    # relationships
-    parentid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB))
-    parent = db.relationship("JobModel", remote_side=[id],
-                             doc=dedent("""
-                             Relationship to the parent job, if one exists"""))
-    
+    # self-referential many-to-many relationship
+    parents = db.relationship("JobModel",
+                              secondary=JobDependencies,
+                              primaryjoin=id==JobDependencies.c.parentid,
+                              secondaryjoin=id==JobDependencies.c.childid,
+                              backref="children")
+
     tasks = db.relationship("TaskModel", backref="job", lazy="dynamic",
                             doc=dedent("""
                             Relationship between this job and and child

@@ -64,7 +64,7 @@ class JobTypeTest(ModelTestCase):
         self.assertEqual(jobtype.classname, value_classname)
         self.assertEqual(jobtype.code, value_code)
         self.assertEqual(jobtype.mode, value_mode)
-        self.assertEqual(jobtype._jobid, jobid)
+        self.assertEqual(jobtype.jobid, jobid)
         self.assertEqual(jobtype.job.id, jobid)
 
     def test_before_insert_syntax(self):
