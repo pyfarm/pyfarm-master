@@ -78,6 +78,7 @@ TABLE_JOB_TAGS = "%s_tags" % TABLE_JOB
 TABLE_JOB_DEPENDENCIES = "%s_dependencies" % TABLE_JOB
 TABLE_JOB_SOFTWARE = "%s_software" % TABLE_JOB
 TABLE_TASK = "%stask" % TABLE_PREFIX
+TABLE_TASK_DEPENDENCIES = "%s_dependencies" % TABLE_TASK
 
 # column lengths
 MAX_HOSTNAME_LENGTH = cfg.get("db.MAX_COMMAND_LENGTH", 255)

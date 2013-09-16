@@ -29,8 +29,16 @@ from pyfarm.core.enums import WorkState
 from pyfarm.models.core.app import db
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
 from pyfarm.models.core.functions import WorkColumns
-from pyfarm.models.core.cfg import TABLE_JOB, TABLE_TASK, TABLE_AGENT
+from pyfarm.models.core.cfg import (
+    TABLE_JOB, TABLE_TASK, TABLE_AGENT, TABLE_TASK_DEPENDENCIES)
 from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
+
+TaskDependencies = db.Table(
+    TABLE_TASK_DEPENDENCIES, db.metadata,
+    db.Column("parentid", IDTypeWork,
+              db.ForeignKey("%s.id" % TABLE_TASK), primary_key=True),
+    db.Column("childid", IDTypeWork,
+              db.ForeignKey("%s.id" % TABLE_TASK), primary_key=True))
 
 
 class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin):
@@ -66,14 +74,12 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin):
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                       doc=dedent("""
                       Foreign key which stores :attr:`JobModel.id`"""))
-    parent = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_TASK),
-                       doc=dedent("""
-                       The foreign key which stores :attr:`TaskModel.id`"""))
-    siblings = db.relationship("TaskModel",
-                               backref=db.backref("task", remote_side=[id]),
-                               doc=dedent("""
-                               Relationship to other tasks which have the same
-                               parent"""))
+
+    parents = db.relationship("TaskModel",
+                              secondary=TaskDependencies,
+                              primaryjoin=id==TaskDependencies.c.parentid,
+                              secondaryjoin=id==TaskDependencies.c.childid,
+                              backref="children")
 
     @staticmethod
     def agentChangedEvent(target, new_value, old_value, initiator):
