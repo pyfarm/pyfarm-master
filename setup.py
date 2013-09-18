@@ -25,8 +25,7 @@ from setuptools import setup
 
 install_requires = [
     "pyfarm.core",
-    "sqlalchemy", "netaddr",
-    "flask", "flask-sqlalchemy"]
+    "sqlalchemy", "netaddr", "flask", "flask-sqlalchemy"]
 
 if sys.version_info[0:2] < (2, 7):
     install_requires.append("simplejson")
@@ -40,7 +39,7 @@ else:
 
 setup(
     name="pyfarm.models",
-    version="0.7.0-dev0",
+    version="0.7.0-dev1",
     packages=["pyfarm", "pyfarm.models", "pyfarm.models.core"],
     namespace_packages=["pyfarm"],
     install_requires=install_requires,
