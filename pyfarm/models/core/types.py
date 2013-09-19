@@ -199,13 +199,17 @@ class IPv4Address(TypeDecorator):
         elif isinstance(value, IPAddress):
             return self.checkInteger(int(value))
 
+        elif value is None:
+            return value
+
         else:
             raise ValueError("unexpected type %s for value" % type(value))
 
     def process_result_value(self, value, dialect):
-        value = IPAddress(value)
-        self.checkInteger(int(value))
-        return value
+        if value is not None:
+            value = IPAddress(value)
+            self.checkInteger(int(value))
+            return value
 
 
 def IDColumn(column_type=GUID):

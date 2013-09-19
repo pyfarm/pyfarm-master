@@ -28,7 +28,7 @@ Sets up the flask application object and database interface
 """
 
 import os
-import uuid
+from uuid import uuid4
 from os.path import expandvars
 from flask import Flask
 from pyfarm.core.config import cfg
@@ -44,13 +44,14 @@ os.environ.pop("SQLALCHEMY_DATABASE_URI", None)
 
 app = Flask("PyFarm")
 app.config["SQLALCHEMY_DATABASE_URI"] = expandvars(cfg.get("db.uri"))
-app.secret_key = str(uuid.uuid4())  # TODO: this needs a config or a lookup
+app.config["SECRET_KEY"] = cfg.get("app.secret", str(uuid4()))
 
 # sqlite fixes (development work only)
 if cfg.get("db.uri").startswith("sqlite"):  # pragma: no cover
     from warnings import warn
     from sqlalchemy.engine import Engine
     from sqlalchemy import event
+
     from pyfarm.core.warning import ConfigurationWarning
 
     warn("sqlite is for development purposes only", ConfigurationWarning)
