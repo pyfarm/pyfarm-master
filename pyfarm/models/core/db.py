@@ -27,34 +27,13 @@ Sets up the flask application object and database interface
     module level instance of the :class:`flask.ext.sqlalchemy.SQLAlchemy` class
 """
 
-import os
-from uuid import uuid4
-from os.path import expandvars
-from flask import Flask
-from pyfarm.core.config import cfg
+from pyfarm.core.app.loader import package
+db = package.database()
 
-if "SQLALCHEMY_DATABASE_URI" in os.environ and "db.uri" not in cfg:
-    cfg.setdefault("db.uri", os.environ["SQLALCHEMY_DATABASE_URI"])
-else:  # pragma: no cover
-    cfg.setdefault("db.uri", "sqlite:///:memory:")
-
-# For security reasons, we should not keep SQLALCHEMY_DATABASE_URI in
-# the environment.
-os.environ.pop("SQLALCHEMY_DATABASE_URI", None)
-
-app = Flask("PyFarm")
-app.config["SQLALCHEMY_DATABASE_URI"] = expandvars(cfg.get("db.uri"))
-app.config["SECRET_KEY"] = cfg.get("app.secret", str(uuid4()))
-
-# sqlite fixes (development work only)
-if cfg.get("db.uri").startswith("sqlite"):  # pragma: no cover
-    from warnings import warn
+# sqlite specific configuration for development
+if db.engine.name == "sqlite":
     from sqlalchemy.engine import Engine
     from sqlalchemy import event
-
-    from pyfarm.core.warning import ConfigurationWarning
-
-    warn("sqlite is for development purposes only", ConfigurationWarning)
 
     @event.listens_for(Engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -63,7 +42,3 @@ if cfg.get("db.uri").startswith("sqlite"):  # pragma: no cover
         cursor.execute("PRAGMA synchronous=OFF")
         cursor.execute("PRAGMA journal_mode=MEMORY")
         cursor.close()
-
-
-from flask.ext.sqlalchemy import SQLAlchemy
-db = SQLAlchemy(app)

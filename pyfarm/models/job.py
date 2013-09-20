@@ -39,7 +39,7 @@ from sqlalchemy.exc import DatabaseError
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 from pyfarm.core.config import cfg
-from pyfarm.models.core.app import db
+from pyfarm.models.core.db import db
 from pyfarm.core.enums import WorkState
 from pyfarm.models.core.functions import WorkColumns
 from pyfarm.models.core.types import IDColumn, JSONDict, JSONList, IDTypeWork

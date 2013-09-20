@@ -24,7 +24,7 @@ from sqlalchemy.exc import DatabaseError
 from utcore import ModelTestCase, unittest
 from pyfarm.core.enums import WorkState
 from pyfarm.core.config import cfg
-from pyfarm.models.core.app import db
+from pyfarm.models.core.db import db
 from pyfarm.models.job import (
     JobTagsModel, JobSoftwareModel, JobModel, getJobId)
 

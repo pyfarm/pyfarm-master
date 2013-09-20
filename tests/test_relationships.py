@@ -15,7 +15,7 @@
 # limitations under the License.
 
 from utcore import ModelTestCase
-from pyfarm.models.core.app import db
+from pyfarm.models.core.db import db
 from pyfarm.models.job import JobModel
 
 

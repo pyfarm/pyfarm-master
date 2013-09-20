@@ -37,7 +37,7 @@ except ImportError:  # pragma: no cover
 from sqlalchemy.types import (
     TypeDecorator, CHAR, BigInteger, Integer, UnicodeText)
 from sqlalchemy.dialects.postgresql import UUID as PGUuid
-from pyfarm.models.core.app import db
+from pyfarm.models.core.db import db
 
 ID_GUID_DEFAULT = lambda: str(uuid4()).replace("-", "")
 ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should

@@ -27,7 +27,7 @@ Contains core functions and data for use by :mod:`pyfarm.models`
 from uuid import UUID
 from datetime import datetime
 from textwrap import dedent
-from pyfarm.models.core.app import db
+from pyfarm.models.core.db import db
 from pyfarm.core.config import cfg
 from pyfarm.models.core.types import IDColumn, IDTypeWork
 

@@ -21,7 +21,7 @@ and other related information.
 """
 
 from flask.ext.security import UserMixin, RoleMixin
-from pyfarm.models.core.app import db
+from pyfarm.models.core.db import db
 from pyfarm.models.core.types import IPv4Address
 from pyfarm.models.core.cfg import (
     TABLE_SECURITY_USER, TABLE_SECURITY_USER_ROLES, TABLE_SECURITY_ROLE)

@@ -22,7 +22,7 @@ from sqlalchemy.types import Integer, DateTime
 from utcore import ModelTestCase
 from pyfarm.core.config import cfg
 from pyfarm.core.enums import WorkState
-from pyfarm.models.core.app import db
+from pyfarm.models.core.db import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.mixins import StateChangedMixin, WorkValidationMixin
 
