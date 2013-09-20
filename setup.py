@@ -39,7 +39,7 @@ else:
 
 setup(
     name="pyfarm.models",
-    version="0.7.0-dev1",
+    version="0.7.0-dev2",
     packages=["pyfarm", "pyfarm.models", "pyfarm.models.core"],
     namespace_packages=["pyfarm"],
     install_requires=install_requires,
