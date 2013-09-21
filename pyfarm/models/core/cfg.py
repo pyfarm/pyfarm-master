@@ -45,6 +45,16 @@ variables have defaults defined in the configuration under `db.<value>`
 :var TABLE_TASK:
     Stores the name of the table for job tasks
 
+:var TABLE_PERMISSION_USER:
+    Stores the registered users (both human and api)
+
+:var TABLE_PERMISSION_ROLE:
+    Stores roles in which a user can operate in
+
+:var TABLE_PERMISSION_USER_ROLES:
+    Stores relationships between :var:`.TABLE_PERMISSION_USER` and
+    :var:`.TABLE_PERMISSION_ROLE`
+
 :var MAX_HOSTNAME_LENGTH:
     the max length of a hostname
 
@@ -79,10 +89,10 @@ TABLE_JOB_DEPENDENCIES = "%s_dependencies" % TABLE_JOB
 TABLE_JOB_SOFTWARE = "%s_software" % TABLE_JOB
 TABLE_TASK = "%stask" % TABLE_PREFIX
 TABLE_TASK_DEPENDENCIES = "%s_dependencies" % TABLE_TASK
-TABLE_SECURITY = "%s_security" % TABLE_JOB
-TABLE_SECURITY_USER = "%s_user" % TABLE_SECURITY
-TABLE_SECURITY_ROLE = "%s_role" % TABLE_SECURITY
-TABLE_SECURITY_USER_ROLES = "%s_user_roles" % TABLE_SECURITY
+TABLE_PERMISSION = "%s_permission" % TABLE_JOB
+TABLE_PERMISSION_USER = "%s_user" % TABLE_PERMISSION
+TABLE_PERMISSION_ROLE = "%s_role" % TABLE_PERMISSION
+TABLE_PERMISSION_USER_ROLES = "%s_user_roles" % TABLE_PERMISSION
 
 # column lengths
 MAX_HOSTNAME_LENGTH = cfg.get("db.MAX_COMMAND_LENGTH", 255)
