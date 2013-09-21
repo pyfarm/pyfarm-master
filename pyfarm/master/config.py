@@ -15,9 +15,18 @@
 # limitations under the License.
 
 """
-Contains all the necessary code to operate an instance of the master.
+Config
+======
+
+Contains the classes required for configuring the application
+object.
 """
 
-# add in python.master's configuration
-from pyfarm.core.app.loader import package
-package.add_config("pyfarm.master.config.%(class)s")
+
+class Prod(object):
+    SECURITY_TRACKABLE = True
+    WTF_CSRF_ENABLED = False
+
+
+class Debug(Prod):
+    pass
