@@ -19,7 +19,6 @@ Contains all the models used for database communication and object
 relational management.
 """
 
-# append our configuration
-from pyfarm.core.app.loader import PackageLoader
-PackageLoader.CONFIGURATION_MODULES.append(
-    "pyfarm.models.core.config.%(class)s")
+# add in python.models's configuration
+from pyfarm.core.app.loader import package
+package.add_config("pyfarm.models.core.config.%(class)s")
