@@ -22,11 +22,31 @@ Contains the classes required for configuring the application
 object.
 """
 
+import os
+from warnings import warn
+from pyfarm.core.warning import EnvironmentWarning
+from uuid import uuid4
 
-class Prod(object):
+
+def get_session_key(warning=True):
+    if "PYFARM_CSRF_SESSION_KEY" in os.environ:
+        return os.environ["PYFARM_CSRF_SESSION_KEY"]
+    elif warning:
+        warn("$PYFARM_CSRF_SESSION_KEY is not present in the environment",
+             EnvironmentWarning)
+
+    return str(uuid4()).replace("-", "").decode("hex")
+
+
+class _Prod(object):
     SECURITY_TRACKABLE = True
     WTF_CSRF_ENABLED = False
+    CSRF_ENABLED = True
+    CSRF_SESSION_KEY = property(fget=lambda self: get_session_key())
 
 
-class Debug(Prod):
-    pass
+class Debug(_Prod):
+    CSRF_SESSION_KEY = get_session_key(warning=False)
+
+
+Prod = _Prod()
