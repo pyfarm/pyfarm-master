@@ -22,7 +22,7 @@ Stores users and their roles in the database.
 """
 
 from hashlib import sha256
-from datetime import datetime
+from datetime import datetime, timedelta
 from textwrap import dedent
 from flask.ext.login import UserMixin
 from itsdangerous import URLSafeTimedSerializer
@@ -51,18 +51,25 @@ login_serializer = URLSafeTimedSerializer(app.secret_key)
 class IsActiveMixin(object):
     """simple mixin to override :meth:`is_active`"""
     def is_active(self):
-        if not self.active:
-            return False
+        now = datetime.now()
 
-        active_roles = [role.is_active() for role in getattr(self, "roles", [])]
+        if isinstance(self, Role):
+            return self.active and now < self.expiration
 
-        if self.expiration is None:
-            return self.active and all(active_roles)
+        if isinstance(self, User):
+            # nothing else to do if the user itself has expired
+            if not self.active or now > self.expiration:
+                return False
 
-        return (
-            self.active
-            and datetime.now() < self.expiration
-            and all(active_roles))
+            # TODO: verify this works as expected in sessions
+            # We either have not asked the roles if they're active or its
+            # been a while since we've asked.
+            if (self.last_active_check is None
+                or (now - self.last_active_check) > self.ACTIVE_CHECK_INTERVAL):
+                self.roles_active = all(role.is_active() for role in self.roles)
+                self.last_active_check = datetime.now()
+
+            return self.roles_active
 
 
 class User(db.Model, IsActiveMixin, UserMixin):
@@ -70,6 +77,7 @@ class User(db.Model, IsActiveMixin, UserMixin):
     Stores information about a user including the roles they belong to
     """
     __tablename__ = TABLE_PERMISSION_USER
+    ACTIVE_CHECK_INTERVAL = timedelta(seconds=120)
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
@@ -107,6 +115,11 @@ class User(db.Model, IsActiveMixin, UserMixin):
 
     roles = db.relationship("Role", secondary=UserRoles,
                             backref=db.backref("users", lazy="dynamic"))
+
+    def __init__(self, *args, **kwargs):
+        super(User, self).__init__(*args, **kwargs)
+        self.last_active_check = None
+        self.roles_active = False
 
     @classmethod
     def create(cls, username, password, email=None, roles=None):
@@ -201,4 +214,3 @@ class Role(db.Model, IsActiveMixin):
             db.session.add(role)
 
         return role
-    
