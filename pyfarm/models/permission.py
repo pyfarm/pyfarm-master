@@ -26,13 +26,15 @@ from datetime import datetime, timedelta
 from textwrap import dedent
 from flask.ext.login import UserMixin
 from itsdangerous import URLSafeTimedSerializer
-from pyfarm.models.core.db import db
+from pyfarm.core.logger import getLogger
 from pyfarm.core.app.loader import package
+from pyfarm.models.core.db import db
 from pyfarm.models.core.cfg import (
     TABLE_PERMISSION_USER, TABLE_PERMISSION_ROLE, TABLE_PERMISSION_USER_ROLES,
     MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
     MAX_ROLE_LENGTH)
 
+logger = getLogger("models.permission")
 
 UserRoles = db.Table(
     TABLE_PERMISSION_USER_ROLES,
@@ -48,36 +50,11 @@ app = package.application()
 login_serializer = URLSafeTimedSerializer(app.secret_key)
 
 
-class IsActiveMixin(object):
-    """simple mixin to override :meth:`is_active`"""
-    def is_active(self):
-        now = datetime.now()
-
-        if isinstance(self, Role):
-            return self.active and now < self.expiration
-
-        if isinstance(self, User):
-            # nothing else to do if the user itself has expired
-            if not self.active or now > self.expiration:
-                return False
-
-            # TODO: verify this works as expected in sessions
-            # We either have not asked the roles if they're active or its
-            # been a while since we've asked.
-            if (self.last_active_check is None
-                or (now - self.last_active_check) > self.ACTIVE_CHECK_INTERVAL):
-                self.roles_active = all(role.is_active() for role in self.roles)
-                self.last_active_check = datetime.now()
-
-            return self.roles_active
-
-
-class User(db.Model, IsActiveMixin, UserMixin):
+class User(db.Model, UserMixin):
     """
     Stores information about a user including the roles they belong to
     """
     __tablename__ = TABLE_PERMISSION_USER
-    ACTIVE_CHECK_INTERVAL = timedelta(seconds=120)
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
@@ -116,22 +93,14 @@ class User(db.Model, IsActiveMixin, UserMixin):
     roles = db.relationship("Role", secondary=UserRoles,
                             backref=db.backref("users", lazy="dynamic"))
 
-    def __init__(self, *args, **kwargs):
-        super(User, self).__init__(*args, **kwargs)
-        self.last_active_check = None
-        self.roles_active = False
-
     @classmethod
     def create(cls, username, password, email=None, roles=None):
         # create the list or roles to add
         if roles is None:
             roles = []
+
         elif isinstance(roles, basestring):
             roles = [roles]
-
-        # ensure the user will be added to "everyone"
-        if "everyone" not in roles:
-            roles.append("everyone")
 
         # create the user with the proper initial values
         user = cls(
@@ -160,10 +129,6 @@ class User(db.Model, IsActiveMixin, UserMixin):
         else:
             raise TypeError("string or integer required for User.get()")
 
-    def check_password(self, password):
-        """checks the password provided against the stored password"""
-        return self.hash_password(str(password)) == self.password
-
     @classmethod
     def hash_password(cls, value):
         return sha256(app.secret_key + value).hexdigest()
@@ -172,10 +137,53 @@ class User(db.Model, IsActiveMixin, UserMixin):
         return login_serializer.dumps([str(self.id), self.password])
 
     def get_id(self):
-        return unicode(self.username)
+        return self.id
+
+    def check_password(self, password):
+        """checks the password provided against the stored password"""
+        return self.hash_password(str(password)) == self.password
+
+    def is_active(self):
+        """returns true if the user and the roles it belongs to are active"""
+        now = datetime.now()
+
+        logger.debug("checking if user `%s` is active" % self.username)
+        # user is not active
+        if not self.active:
+            return False
+
+        # user has expired
+        if self.expiration is not None and now > self.expiration:
+            return False
+
+        # TODO: there's probably some way to cache this information
+        return all(role.is_active() for role in self.roles)
+
+    def has_roles(self, allowed=None, required=None):
+        """checks the provided arguments against the roles assigned"""
+        if not allowed and not required:
+            return True
+
+        user_roles = set(role.name for role in self.roles)
+        logger.debug("user `%s` roles: %s" % (self.username, user_roles))
+
+        if allowed:
+            assert isinstance(allowed, set), "expected set for allowed"
+
+            logger.debug("...allowed: %s" % allowed)
+            for role_name in user_roles:
+                if role_name in allowed:
+                    return True
+
+            return False
+
+        if required:
+            assert isinstance(required, set), "expected set required"
+            logger.debug("...required: %s" % required)
+            return required.issubset(user_roles)
 
 
-class Role(db.Model, IsActiveMixin):
+class Role(db.Model):
     """
     Stores role information that can be used to give a user access
     to individual resources.
@@ -207,6 +215,9 @@ class Role(db.Model, IsActiveMixin):
         Creates a role by the given name or returns an existing
         role if it already exists.
         """
+        if isinstance(name, Role):
+            return name
+
         role = Role.query.filter_by(name=name).first()
 
         if role is None:
@@ -214,3 +225,9 @@ class Role(db.Model, IsActiveMixin):
             db.session.add(role)
 
         return role
+
+    def is_active(self):
+        now = datetime.now()
+        if self.expiration is None:
+            return self.active
+        return self.active and now < self.expiration
