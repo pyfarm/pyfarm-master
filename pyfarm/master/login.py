@@ -31,7 +31,7 @@ from flask.ext.login import (
     user_unauthorized)
 from pyfarm.core.app.loader import package
 from pyfarm.core.enums import MimeType
-from pyfarm.models.user import User
+from pyfarm.models.users import User
 
 try:
     import json
