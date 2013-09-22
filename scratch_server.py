@@ -1,25 +1,22 @@
 from flask.ext.security import login_required, auth_token_required
 
-from pyfarm.models.security import User, Role
-from pyfarm.models.security import Role, User
-
-import pyfarm.master
 from pyfarm.core.app.loader import package
+import pyfarm.master
+
 app = package.application()
 db = package.database()
 security = package.security(User, Role)
-user_datastore = package.security_datastore(User, Role)
+securitydb = package.security_datastore(User, Role)
 
-#
-# # Create a user to test with
+
+# Create a user to test with
 @app.before_first_request
 def create_user():
     db.create_all()
-    user_datastore.create_user(
-        email='test', password='test')
+    securitydb.create_user(
+        email="agent", password="agent", username="foo")
     db.session.commit()
 
-# Views
 @app.route('/')
 @login_required
 def home():

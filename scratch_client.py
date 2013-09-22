@@ -1,23 +1,34 @@
 import json
 import requests
 
-print "logging in.."
+
 r = requests.post(
-    "http://127.0.0.1:5000/login",
+    "http://127.0.0.1:5000/login/",
     headers={'content-type': 'application/json'},
-    data=json.dumps({"email": "test", "password": "test"}))
-
-authentication_token = r.json()["response"]["user"]["authentication_token"]
-print "Authentication-Token: %s" % authentication_token
-
-# try with the token
-print "testing WITH auth token..."
-r = requests.get(
-    "http://127.0.0.1:5000/test",
-    headers={"Authentication-Token": authentication_token})
+    data=json.dumps({"username": "agent", "password": "agent"}))
 print r.text
 
-# and try without
-print "testing WITHOUT auth token..."
-r = requests.get("http://127.0.0.1:5000/test")
+# r = requests.post(
+#     "http://127.0.0.1:5000/login/",
+#     headers={'content-type': 'application/json'},
+#     data=json.dumps({"login": "test", "password": "test"}))
 print r.text
+print r.cookies
+
+print "==========="
+
+None
+# r = requests.get(
+#     "http://127.0.0.1:5000/login",
+#     headers={'content-type': 'application/json'},
+#     data=json.dumps({"username": "agent", "password": "agent"}))
+# print r.text
+#
+# cookie = r.headers["set-cookie"]
+# headers = {"set-cookie": cookie}
+# r = requests.get("http://127.0.0.1:5000/", cookies=r.cookies)
+# print r.text
+# print "==========="
+# # r = requests.get("http://127.0.0.1:5000/admin/", cookies=r.cookies)
+# # print r.text
+# # # print r.text

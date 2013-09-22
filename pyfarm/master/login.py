@@ -22,10 +22,12 @@ View and code necessary for providing the basic login and authentication
 services
 """
 
+from functools import wraps
 from httplib import UNAUTHORIZED
 from itsdangerous import URLSafeTimedSerializer
 from flask import Response, request, redirect, render_template
-from flask.ext.login import LoginManager, login_user, logout_user
+from flask.ext.login import (
+    LoginManager, login_user, logout_user, current_app, current_user)
 from pyfarm.core.app.loader import package
 from pyfarm.core.enums import MimeType
 from pyfarm.models.permission import User
@@ -105,3 +107,59 @@ def logout_page():
     """log out the user then redirect them"""
     logout_user()
     return redirect("/")
+
+raise Exception("required roles")
+
+class roles_required(object):
+    def __init__(self, allowed=None, required=None):
+        self.required = set()
+        self.allowed = set(["everyone"])
+
+        # setup allowed
+        if isinstance(allowed, basestring):
+            self.allowed.update(set([allowed]))
+        elif isinstance(allowed, (list, tuple)):
+            self.allowed.update(set(allowed))
+        elif allowed is not None:
+            raise TypeError("`allowed` must be a string, list, or set")
+
+        # setup required
+        if isinstance(required, basestring):
+            self.required.update(set([required]))
+        elif isinstance(required, (list, tuple)):
+            self.required.update(set(required))
+        elif required is not None:
+            raise TypeError("`required` must be a string, list, or set")
+
+    def __call__(self, *args, **kwargs):
+        print args, kwargs
+
+def login_required(allowed_roles=None, required_roles=None):
+    """
+    custom replacement of Flask's login_required decorator with
+    role support
+    """
+    def wrapper(fn):
+        @wraps(fn)
+        def decorated_view(*args, **kwargs):
+            # if not current_user.is_authenticated():
+            #    return current_app.login_manager.unauthorized()
+            print fn
+            # if isinstance(allowed_roles, (list, tuple)):
+            #     allowed_roles = set(allowed_roles)
+
+            # user = current_app.login_manager.reload_user()
+            # roles = set(role.name for role in user.roles)
+
+            # if ( (urole != role) and (role != "ANY")):
+            #     return current_app.login_manager.unauthorized()
+
+            return fn(*args, **kwargs)
+        return decorated_view
+    return wrapper
+
+@roles_required(allowed="foo")
+def foo():
+    print 42
+
+foo()
