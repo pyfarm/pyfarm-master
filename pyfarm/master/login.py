@@ -31,7 +31,7 @@ from flask.ext.login import (
     user_unauthorized)
 from pyfarm.core.app.loader import package
 from pyfarm.core.enums import MimeType
-from pyfarm.models.permission import User
+from pyfarm.models.user import User
 
 try:
     import json
@@ -43,7 +43,6 @@ app = package.application()
 manager = LoginManager(app)
 manager.login_view = "/login/"
 login_serializer = URLSafeTimedSerializer(app.secret_key)
-
 
 @manager.user_loader
 def load_user(user):
