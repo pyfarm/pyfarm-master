@@ -34,7 +34,7 @@ from pyfarm.models.core.cfg import (
     MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
     MAX_ROLE_LENGTH)
 
-logger = getLogger("models.permission")
+logger = getLogger("models.user")
 
 UserRoles = db.Table(
     TABLE_PERMISSION_USER_ROLES,
