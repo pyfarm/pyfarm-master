@@ -22,12 +22,13 @@ View and code necessary for providing the basic login and authentication
 services
 """
 
-from functools import wraps
 from httplib import UNAUTHORIZED
+from functools import wraps
 from itsdangerous import URLSafeTimedSerializer
-from flask import Response, request, redirect, render_template
+from flask import Response, request, redirect, render_template, abort, flash
 from flask.ext.login import (
-    LoginManager, login_user, logout_user, current_app, current_user)
+    LoginManager, login_user, logout_user, current_app, current_user, login_url,
+    user_unauthorized)
 from pyfarm.core.app.loader import package
 from pyfarm.core.enums import MimeType
 from pyfarm.models.permission import User
@@ -40,13 +41,14 @@ except ImportError:
 
 app = package.application()
 manager = LoginManager(app)
+manager.login_view = "/login/"
 login_serializer = URLSafeTimedSerializer(app.secret_key)
 
 
 @manager.user_loader
 def load_user(user):
     """
-    callback for flask-login's user_loader
+    callback for :func:`flask_login.LoginManager.user_loader`
 
     When the user id is is not present in the session this function
     is used to load the user from the database directly.
@@ -57,7 +59,7 @@ def load_user(user):
 @manager.token_loader
 def load_token(token):
     """
-    callback for flask-login's token_loader
+    callback for :func:`flask_login.LoginManager.token_loader`
 
     When a user is already loaded check the token provided to be sure
     the password matches and that the token has not expired.
@@ -73,6 +75,27 @@ def load_token(token):
 
     user = User.get(userid)
     return user if user and user.password == password else None
+
+
+@manager.unauthorized_handler
+def unauthorized():
+    """
+    callback for :func:`flask_login.LoginManager.unauthorized`
+
+    When ever a user is either unauthorized or their authorization fails this
+    handler will be called.
+    """
+    user_unauthorized.send(current_app._get_current_object())
+
+    if not current_app.login_manager:
+        abort(401)
+
+    if current_app.login_manager.login_view:
+        flash(current_app.login_manager.login_message,
+              category=current_app.login_manager.login_message_category)
+
+    return redirect(
+        login_url(current_app.login_manager.login_view, request.url))
 
 
 @app.route("/login/", methods=("GET", "POST"))
@@ -108,58 +131,56 @@ def logout_page():
     logout_user()
     return redirect("/")
 
-raise Exception("required roles")
 
-class roles_required(object):
-    def __init__(self, allowed=None, required=None):
-        self.required = set()
-        self.allowed = set(["everyone"])
-
-        # setup allowed
-        if isinstance(allowed, basestring):
-            self.allowed.update(set([allowed]))
-        elif isinstance(allowed, (list, tuple)):
-            self.allowed.update(set(allowed))
-        elif allowed is not None:
-            raise TypeError("`allowed` must be a string, list, or set")
-
-        # setup required
-        if isinstance(required, basestring):
-            self.required.update(set([required]))
-        elif isinstance(required, (list, tuple)):
-            self.required.update(set(required))
-        elif required is not None:
-            raise TypeError("`required` must be a string, list, or set")
-
-    def __call__(self, *args, **kwargs):
-        print args, kwargs
-
-def login_required(allowed_roles=None, required_roles=None):
+def login_role(allow_roles=None, require_roles=None):
     """
-    custom replacement of Flask's login_required decorator with
-    role support
+    Decorator which operates in the same manner that
+    :func:`flask_login.login_required` does but can also check for the user's
+    membership in one or more roles.
+
+    :type allow_roles: set or str or list or tuple
+    :param allow_roles:
+        if provided the user must have at least one of these roles
+
+    :type require_roles: set or str or list or or tuple
+    :param require_roles:
+        if provided the user must have all of these roles
     """
-    def wrapper(fn):
-        @wraps(fn)
-        def decorated_view(*args, **kwargs):
-            # if not current_user.is_authenticated():
-            #    return current_app.login_manager.unauthorized()
-            print fn
-            # if isinstance(allowed_roles, (list, tuple)):
-            #     allowed_roles = set(allowed_roles)
+    def construct_data(data, varname):
+        if isinstance(data, (list, tuple)):
+            return set(data)
 
-            # user = current_app.login_manager.reload_user()
-            # roles = set(role.name for role in user.roles)
+        elif isinstance(data, basestring):
+            return set([data])
 
-            # if ( (urole != role) and (role != "ANY")):
-            #     return current_app.login_manager.unauthorized()
+        elif data is None:
+            return set()
 
-            return fn(*args, **kwargs)
-        return decorated_view
-    return wrapper
+        else:
+            raise TypeError(
+                "expected list, tuple, or string for `%s`" % varname)
 
-@roles_required(allowed="foo")
-def foo():
-    print 42
+    def wrap(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if current_app.login_manager._login_disabled:
+                return func(*args, **kwargs)
+            elif not current_user.is_authenticated():
+                return current_app.login_manager.unauthorized()
+            else:
+                # construct the data we're doing to operate on
+                # and rename the variable so we don't have to have to
+                # use 'global'
+                allowed = construct_data(allow_roles, "allow_roles")
+                required = construct_data(require_roles, "require_roles")
+                if required and allowed:
+                    raise ValueError(
+                        "please use either allow_roles or require_roles")
 
-foo()
+                if not current_user.has_roles(
+                        allowed=allowed, required=required):
+                    return current_app.login_manager.unauthorized()
+
+                return func(*args, **kwargs)
+        return wrapper
+    return wrap
