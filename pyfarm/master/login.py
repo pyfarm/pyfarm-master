@@ -24,7 +24,9 @@ services
 
 from httplib import UNAUTHORIZED
 from functools import wraps
-from itsdangerous import URLSafeTimedSerializer
+from wtforms import (
+    Form, TextField, PasswordField, validators, ValidationError)
+from itsdangerous import URLSafeTimedSerializer, BadTimeSignature
 from flask import Response, request, redirect, render_template, abort, flash
 from flask.ext.login import (
     LoginManager, login_user, logout_user, current_app, current_user, login_url,
@@ -68,33 +70,62 @@ def load_token(token):
     # stored on the users computer it also has a expiry date, but could be
     # changed by the user, so this feature allows us to enforce the exipry
     # date of the token server side and not rely on the users cookie to expire.
-    userid, password = login_serializer.loads(
-        token,
-        max_age=app.config["REMEMBER_COOKIE_DURATION"].total_seconds())
+    try:
+        userid, password = login_serializer.loads(
+            token,
+            max_age=app.config["REMEMBER_COOKIE_DURATION"].total_seconds())
+        user = User.get(userid)
+        return user if user and user.password == password else None
 
-    user = User.get(userid)
-    return user if user and user.password == password else None
+    except BadTimeSignature:
+        return None
 
 
-@manager.unauthorized_handler
-def unauthorized():
-    """
-    callback for :func:`flask_login.LoginManager.unauthorized`
+# TODO: this is *not* redirecting
+# @manager.unauthorized_handler
+# def unauthorized():
+#     """
+#     callback for :func:`flask_login.LoginManager.unauthorized`
+#
+#     When ever a user is either unauthorized or their authorization fails this
+#     handler will be called.
+#     """
+#     user_unauthorized.send(current_app._get_current_object())
+#
+#     if not current_app.login_manager:
+#         abort(401)
+#
+#     if current_app.login_manager.login_view:
+#         flash(current_app.login_manager.login_message,
+#               category=current_app.login_manager.login_message_category)
+#
+#     return redirect("/login")
+#         # login_url(current_app.login_manager.login_view, request.url))
 
-    When ever a user is either unauthorized or their authorization fails this
-    handler will be called.
-    """
-    user_unauthorized.send(current_app._get_current_object())
 
-    if not current_app.login_manager:
-        abort(401)
+class LoginForm(Form):
+    username = TextField(validators=[validators.Required()])
+    password = PasswordField(validators=[validators.Required()])
 
-    if current_app.login_manager.login_view:
-        flash(current_app.login_manager.login_message,
-              category=current_app.login_manager.login_message_category)
+    def __init__(self, *args, **kwargs):
+        self.dbuser = False
+        super(LoginForm, self).__init__(*args, **kwargs)
 
-    return redirect(
-        login_url(current_app.login_manager.login_view, request.url))
+    def validate_username(self, field):
+        if self.dbuser is False:
+            self.dbuser = User.get(request.form["username"])
+
+        if self.dbuser is None:
+            raise ValidationError("invalid username")
+
+    def validate_password(self, field):
+        if self.dbuser is False:
+            self.dbuser = User.get(request.form["username"])
+
+        if self.dbuser:
+            password = str(field.data)
+            if self.dbuser.hash_password(password) != self.dbuser.password:
+                raise ValidationError("invalid password")
 
 
 @app.route("/login/", methods=("GET", "POST"))
@@ -108,20 +139,19 @@ def login_page():
             login_user(user, remember=True)
             return redirect(request.args.get("next") or "/")
 
-        else:
-            return Response(
-                response=json.dumps({"error": "invalid user or password"}),
-                content_type=request.content_type,
-                status=UNAUTHORIZED)
+        return Response(
+            response=json.dumps({"error": "invalid user or password"}),
+            content_type=request.content_type,
+            status=UNAUTHORIZED)
 
-    elif request.method == "POST":
-        user = User.get(request.form['username'])
+    elif request.method in ("GET", "POST"):
+        form = LoginForm(request.form)
 
-        if user and user.check_password(request.form['password']):
-            login_user(user, remember=True)
+        if form.validate():
+            login_user(form.dbuser, remember=True)
             return redirect(request.args.get("next") or "/")
 
-    return render_template("login.html")
+        return render_template("pyfarm/login.html", form=form)
 
 
 @app.route("/logout/")
@@ -183,3 +213,7 @@ def login_role(allow_roles=None, require_roles=None):
                 return func(*args, **kwargs)
         return wrapper
     return wrap
+
+
+# TODO: add /register/
+# TODO: add /logout/
