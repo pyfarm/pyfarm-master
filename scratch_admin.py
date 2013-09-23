@@ -19,30 +19,29 @@ Version: 0.1a
 """
 
 from datetime import timedelta
- 
-from flask import redirect
-from flask_login import login_required, logout_user
+
 
 from pyfarm.core.app.loader import package
-from pyfarm.models.permission import User, Role, login_serializer
-
-from pyfarm.master.login import manager
+from pyfarm.models.users import User, Role, login_serializer
+from pyfarm.master.admin import index
+from pyfarm.master.login import login_role
 
 
 app = package.application()
 db = package.database()
 
-
 @app.before_first_request
 def create_user():
     db.create_all()
-    User.create(username="agent", password="agent")
-
-
+    user = User.create(username="agent", password="agent")
+    role = Role.create("api")
+    user.roles.append(role)
+    db.session.add_all([user, role])
+    db.session.commit()
 
  
 @app.route("/")
-@login_required
+@login_role(require_roles=["api", "admin"])
 def index_page():
     """
     Web Page to display The Main Index Page
@@ -54,10 +53,6 @@ if __name__ == "__main__":
     #Change the duration of how long the Remember Cookie is valid on the users
     #computer.  This can not really be trusted as a user can edit it. 
     app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=14)
-
-    #Tell the login manager where to redirect users to display the login page
-    manager.login_view = "/login/"
-    manager.init_app(app)
  
     #Run the flask Development Server
     app.run()
