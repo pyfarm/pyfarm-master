@@ -1,28 +1,26 @@
 {% from "pyfarm/macros.html" import render_field %}
 <html>
     <head>
-        {% block head_css %}
         <link href="{{ url_for('admin.static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/layout.css') }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/headings.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/login.css') }}" rel="stylesheet">
-        {% endblock %}
     </head>
     <body>
-        {% block body %}
-            <div class="title">PyFarm</div>
-            <div class="subtitle">Welcome! Please login below.</div>
-            <form method="POST" action="/login/" class="form-horizontal">
-                <!-- fields from form -->
-                <fieldset>
-                    {{ render_field(form.username) }}
-                    {{ render_field(form.password) }}
+        <div class="title">PyFarm</div>
+        <div class="subtitle">Welcome! Please login below.</div>
+        <form method="POST" action="/login/" class="form-horizontal">
+            <!-- fields from form -->
+            <fieldset>
+                {{ render_field(form.username) }}
+                {{ render_field(form.password) }}
 
-                 <!-- buttons -->
-                <div class="controls">
-                    <input type="submit" class="btn btn-primary btn-large" value="Submit">
-                    <a href="/" class="btn btn-large">Cancel</a>
-                </div>
-                </fieldset>
-            </form>
-        {% endblock %}
+             <!-- buttons -->
+            <div class="controls">
+                <input type="submit" class="btn btn-primary btn-large" value="Submit">
+                <a href="/" class="btn btn-large">Cancel</a>
+            </div>
+            </fieldset>
+        </form>
     </body>
 </html>
