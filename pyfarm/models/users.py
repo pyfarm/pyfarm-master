@@ -30,18 +30,18 @@ from pyfarm.core.logger import getLogger
 from pyfarm.core.app.loader import package
 from pyfarm.models.core.db import db
 from pyfarm.models.core.cfg import (
-    TABLE_PERMISSION_USER, TABLE_PERMISSION_ROLE, TABLE_PERMISSION_USER_ROLES,
+    TABLE_USERS_USER, TABLE_USERS_ROLE, TABLE_USERS_USER_ROLES,
     MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
     MAX_ROLE_LENGTH)
 
-logger = getLogger("models.user")
+logger = getLogger("models.users")
 
 UserRoles = db.Table(
-    TABLE_PERMISSION_USER_ROLES,
+    TABLE_USERS_USER_ROLES,
     db.Column("user_id", db.Integer(),
-              db.ForeignKey("%s.id" % TABLE_PERMISSION_USER)),
+              db.ForeignKey("%s.id" % TABLE_USERS_USER)),
     db.Column("role_id", db.Integer(),
-              db.ForeignKey("%s.id" % TABLE_PERMISSION_ROLE)))
+              db.ForeignKey("%s.id" % TABLE_USERS_ROLE)))
 
 app = package.application()
 
@@ -54,7 +54,7 @@ class User(db.Model, UserMixin):
     """
     Stores information about a user including the roles they belong to
     """
-    __tablename__ = TABLE_PERMISSION_USER
+    __tablename__ = TABLE_USERS_USER
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
@@ -165,12 +165,10 @@ class User(db.Model, UserMixin):
             return True
 
         user_roles = set(role.name for role in self.roles)
-        logger.debug("user `%s` roles: %s" % (self.username, user_roles))
 
         if allowed:
             assert isinstance(allowed, set), "expected set for allowed"
 
-            logger.debug("...allowed: %s" % allowed)
             for role_name in user_roles:
                 if role_name in allowed:
                     return True
@@ -188,7 +186,7 @@ class Role(db.Model):
     Stores role information that can be used to give a user access
     to individual resources.
     """
-    __tablename__ = TABLE_PERMISSION_ROLE
+    __tablename__ = TABLE_USERS_ROLE
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
