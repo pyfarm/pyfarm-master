@@ -127,7 +127,8 @@ def login_page():
         login_user(form.dbuser, remember=True)
         return redirect(request.args.get("next") or "/")
 
-    return render_template("pyfarm/login.html", form=form)
+    return render_template("pyfarm/login.html", form=form,
+                           next=request.args.get("next"))
 
 
 @app.route("/logout/")

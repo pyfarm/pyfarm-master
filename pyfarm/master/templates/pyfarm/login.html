@@ -9,7 +9,7 @@
     <body>
         <div class="title">PyFarm</div>
         <div class="subtitle">Welcome! Please login below.</div>
-        <form method="POST" action="/login/" class="form-horizontal">
+        <form method="POST" action="/login/?next={{next}}" class="form-horizontal">
             <!-- fields from form -->
             <fieldset>
                 {{ render_field(form.username) }}
