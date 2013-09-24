@@ -21,25 +21,65 @@ Admin Index
 Setup the administrative index.
 """
 
-from flask import redirect
+from warnings import warn
+from flask import redirect, abort
 from flask.ext.login import current_user
-from flask.ext.admin import Admin as _Admin
-from flask.ext.admin import AdminIndexView as _AdminIndexView, expose, BaseView
+from flask.ext.admin.contrib.sqlamodel import ModelView as BaseModelView
+from flask.ext.admin import AdminIndexView
+from pyfarm.core.warning import ConfigurationWarning
 
 
-class AdminIndexView(_AdminIndexView):
+def authorized(login_url, required=None, allowed=None):
+    if not current_user.is_authenticated():
+        return redirect(login_url)
 
-    @expose()
-    def index(self):
-        """
-        Dislay the index
-        """
-        if not current_user.is_authenticated():
-            return redirect("/login?next=admin")
-        else:
-            return super(AdminIndexView, self).index()
+    elif not current_user.has_roles(allowed=allowed, required=required):
+        abort(401)
+
+    return False
 
 
-class Admin(_Admin):
-    def render(self):
-        pass
+class AuthMixin(object):
+    access_roles = set()
+
+    def is_visible(self):
+        if current_user.is_authenticated():
+            return current_user.has_roles(allowed=self.access_roles)
+        return False
+
+    def is_accessible(self):
+        if current_user.is_authenticated():
+            return current_user.has_roles(allowed=self.access_roles)
+        return True  # should always return True so we can run render()
+
+
+class AdminIndex(AuthMixin, AdminIndexView):
+    access_roles = set(["admin"])
+
+    def render(self, template, **kwargs):
+        return (
+            authorized("/login?next=admin", allowed=self.access_roles) or
+            super(AdminIndex, self).render(template, **kwargs))
+
+
+class ModelView(AuthMixin, BaseModelView):
+    def __init__(self, model, session,
+                 name=None, category=None, endpoint=None, url=None,
+                 access_roles=None):
+        if isinstance(access_roles, (list, tuple)):
+            self.access_roles = set(access_roles)
+        elif isinstance(access_roles, set):
+            self.access_roles = access_roles
+        elif access_roles is not None:
+            raise TypeError("expected list, tuple, or set for `access_roles`")
+
+        if not access_roles:
+            warn("no access_roles provided for %s" % model, ConfigurationWarning)
+
+        super(ModelView, self).__init__(
+            model, session, name=name, category=category, endpoint=endpoint, url=url)
+
+    def render(self, template, **kwargs):
+        return (
+            authorized("/login/?next=%s" % self.url) or
+            super(ModelView, self).render(template, **kwargs))

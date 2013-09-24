@@ -15,34 +15,33 @@
 # limitations under the License.
 
 from flask.ext.admin import Admin
-from flask.ext.admin.contrib.sqlamodel import ModelView
 from pyfarm.core.app.loader import package
 from pyfarm.models.users import User, Role
 
-# setup endpoints
-from pyfarm.master.admin.base import AdminIndexView
-from pyfarm.master import index, login
+from pyfarm.master.admin.base import AdminIndex, ModelView
+
+# load endpoints
+from pyfarm.master import index, login, errors
 
 
 app = package.application()
 db = package.database()
 
-@app.route("/admin/<path:url>/")
-def route_admin(url):
-    print url
-
-admin = Admin(app, index_view=AdminIndexView())
-admin.add_view(ModelView(User, db.session))
-
-
 @app.before_first_request
 def create_user():
     db.create_all()
-    user = User.create(username="agent", password="agent")
-    role = Role.create("api")
-    user.roles.append(role)
-    db.session.add_all([user, role])
+    user = User.create(username="admin", password="admin")
+    roles = ["api", "admin"] #"admin.usermanager"]
+    for role in roles:
+        user.roles.append(Role.create(role))
+
+    db.session.add(user)
     db.session.commit()
+
+admin = Admin(app, index_view=AdminIndex())
+admin.add_view(ModelView(User, db.session,
+                         access_roles=("admin.usermanager", )))
+
 
 from datetime import timedelta
 app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=14)
