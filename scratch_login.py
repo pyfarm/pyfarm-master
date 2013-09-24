@@ -20,12 +20,16 @@ from pyfarm.core.app.loader import package
 from pyfarm.models.users import User, Role
 
 # setup endpoints
-from pyfarm.master.admin.index import AdminIndexView
+from pyfarm.master.admin.base import AdminIndexView
 from pyfarm.master import index, login
 
 
 app = package.application()
 db = package.database()
+
+@app.route("/admin/<path:url>/")
+def route_admin(url):
+    print url
 
 admin = Admin(app, index_view=AdminIndexView())
 admin.add_view(ModelView(User, db.session))
