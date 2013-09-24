@@ -144,14 +144,12 @@ def login_page():
             content_type=request.content_type,
             status=UNAUTHORIZED)
 
-    elif request.method in ("GET", "POST"):
-        form = LoginForm(request.form)
+    form = LoginForm(request.form)
+    if request.method == "POST" and form.validate():
+        login_user(form.dbuser, remember=True)
+        return redirect(request.args.get("next") or "/")
 
-        if form.validate():
-            login_user(form.dbuser, remember=True)
-            return redirect(request.args.get("next") or "/")
-
-        return render_template("pyfarm/login.html", form=form)
+    return render_template("pyfarm/login.html", form=form)
 
 
 @app.route("/logout/")
