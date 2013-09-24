@@ -21,12 +21,25 @@ Admin Index
 Setup the administrative index.
 """
 
-from flask.ext.login import current_user, login_required
-from flask.ext.admin import AdminIndexView as _AdminIndexView
-from pyfarm.master.login import login_role
+from flask import redirect
+from flask.ext.login import current_user
+from flask.ext.admin import Admin as _Admin
+from flask.ext.admin import AdminIndexView as _AdminIndexView, expose, BaseView
 
 
 class AdminIndexView(_AdminIndexView):
-    @login_required
-    def is_accessible(self):
-        return current_user.is_authenticated()
+
+    @expose()
+    def index(self):
+        """
+        Dislay the index
+        """
+        if not current_user.is_authenticated():
+            return redirect("/login?next=admin")
+        else:
+            return super(AdminIndexView, self).index()
+
+
+class Admin(_Admin):
+    def render(self):
+        pass
