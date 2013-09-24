@@ -1,31 +1,3 @@
-body {
-    width: 550px;
-    margin-top: 75px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.title {
-    text-align: center;
-    display: block;
-    float: center;
-    margin-bottom: 10px;
-    font-size: 20px;
-    font-weight: 200;
-    color: #5c5c5c;
-    text-shadow: 0 1px 0 #ffffff;
-}
-
-.subtitle {
-    text-align: center;
-    display: block;
-    float: center;
-    margin-bottom: 20px;
-    font-size: inherit;
-    color: #5c5c5c;
-    text-shadow: 0 1px 0 #ffffff;
-}
-
 /*
 override the input fields because they're
 not displayed properly after being inherited
