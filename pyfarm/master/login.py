@@ -155,8 +155,12 @@ def login_page():
 @app.route("/logout/")
 def logout_page():
     """log out the user then redirect them"""
-    logout_user()
-    return redirect("/")
+    logged_in = current_user.is_authenticated()
+    if logged_in:
+        logout_user()
+
+    # TODO: this should probably have a configuration value for seconds
+    return render_template("pyfarm/logout.html", logged_in=logged_in, seconds=3)
 
 
 def login_role(allow_roles=None, require_roles=None):
@@ -211,7 +215,3 @@ def login_role(allow_roles=None, require_roles=None):
                 return func(*args, **kwargs)
         return wrapper
     return wrap
-
-
-# TODO: add /register/
-# TODO: add /logout/
