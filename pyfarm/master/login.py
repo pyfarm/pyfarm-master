@@ -81,28 +81,6 @@ def load_token(token):
         return None
 
 
-# TODO: this is *not* redirecting
-# @manager.unauthorized_handler
-# def unauthorized():
-#     """
-#     callback for :func:`flask_login.LoginManager.unauthorized`
-#
-#     When ever a user is either unauthorized or their authorization fails this
-#     handler will be called.
-#     """
-#     user_unauthorized.send(current_app._get_current_object())
-#
-#     if not current_app.login_manager:
-#         abort(401)
-#
-#     if current_app.login_manager.login_view:
-#         flash(current_app.login_manager.login_message,
-#               category=current_app.login_manager.login_message_category)
-#
-#     return redirect("/login")
-#         # login_url(current_app.login_manager.login_view, request.url))
-
-
 class LoginForm(Form):
     username = TextField(validators=[validators.Required()])
     password = PasswordField(validators=[validators.Required()])
