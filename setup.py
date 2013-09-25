@@ -39,7 +39,7 @@ else:
 
 setup(
     name="pyfarm.master",
-    version="0.7.0-dev1",
+    version="0.7.0-dev2",
     packages=["pyfarm", "pyfarm.master"],
     namespace_packages=["pyfarm"],
     install_requires=install_requires,
@@ -47,8 +47,8 @@ setup(
     license="Apache v2.0",
     author="Oliver Palmer",
     author_email="development@pyfarm.net",
-    description=dedent("""Sub-library which contains the code necessary to
-    communicate with the database via a REST api."""),
+    description="Sub-library which contains the code necessary to "
+                "communicate with the database via a REST api.",
     long_description=long_description,
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
