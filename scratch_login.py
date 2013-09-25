@@ -27,7 +27,7 @@ from pyfarm.master import index, login, errors
 def create_user():
     db.create_all()
     user = User.create(username="admin", password="admin")
-    roles = ["api", "admin"] #"admin.usermanager"]
+    roles = ["api", "admin", "admin.usermanager"]
     for role in roles:
         user.roles.append(Role.create(role))
 
