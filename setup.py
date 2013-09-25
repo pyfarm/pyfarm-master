@@ -39,7 +39,7 @@ else:
 
 setup(
     name="pyfarm.master",
-    version="0.7.0-dev0",
+    version="0.7.0-dev1",
     packages=["pyfarm", "pyfarm.master"],
     namespace_packages=["pyfarm"],
     install_requires=install_requires,
