@@ -20,7 +20,6 @@ import sys
 assert sys.version_info[0:2] >= (2, 6), "Python 2.6 or higher is required"
 
 from os.path import isfile
-from textwrap import dedent
 from setuptools import setup
 
 install_requires = [
