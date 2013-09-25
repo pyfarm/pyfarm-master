@@ -20,7 +20,6 @@ import sys
 assert sys.version_info[0:2] >= (2, 6), "Python 2.6 or higher is required"
 
 from os.path import isfile
-from textwrap import dedent
 from setuptools import setup
 
 install_requires = [
@@ -47,8 +46,8 @@ setup(
     license="Apache v2.0",
     author="Oliver Palmer",
     author_email="development@pyfarm.net",
-    description=dedent("""Sub-library which contains the database models
-    used by the admin interface and master server(s)."""),
+    description="Sub-library which contains the database models used "
+                "by the admin interface and master server(s)",
     long_description=long_description,
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
