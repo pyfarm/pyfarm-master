@@ -31,8 +31,8 @@ from flask import Response, request, redirect, render_template, abort, flash
 from flask.ext.login import (
     LoginManager, login_user, logout_user, current_app, current_user, login_url,
     user_unauthorized)
-from pyfarm.core.app.loader import package
 from pyfarm.core.enums import MimeType
+from pyfarm.master.application import app, login_manager, login_serializer
 from pyfarm.models.users import User
 
 try:
@@ -41,12 +41,8 @@ try:
 except ImportError:
     import simplejson as json
 
-app = package.application()
-manager = LoginManager(app)
-manager.login_view = "/login/"
-login_serializer = URLSafeTimedSerializer(app.secret_key)
 
-@manager.user_loader
+@login_manager.user_loader
 def load_user(user):
     """
     callback for :func:`flask_login.LoginManager.user_loader`
@@ -57,7 +53,7 @@ def load_user(user):
     return User.get(user)
 
 
-@manager.token_loader
+@login_manager.token_loader
 def load_token(token):
     """
     callback for :func:`flask_login.LoginManager.token_loader`
@@ -173,10 +169,10 @@ def login_role(allow_roles=None, require_roles=None):
     def wrap(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if current_app.login_manager._login_disabled:
+            if current_app.login_login_manager._login_disabled:
                 return func(*args, **kwargs)
             elif not current_user.is_authenticated():
-                return current_app.login_manager.unauthorized()
+                return current_app.login_login_manager.unauthorized()
             else:
                 # construct the data we're doing to operate on
                 # and rename the variable so we don't have to have to
@@ -189,7 +185,7 @@ def login_role(allow_roles=None, require_roles=None):
 
                 if not current_user.has_roles(
                         allowed=allowed, required=required):
-                    return current_app.login_manager.unauthorized()
+                    return current_app.login_login_manager.unauthorized()
 
                 return func(*args, **kwargs)
         return wrapper

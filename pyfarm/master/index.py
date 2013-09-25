@@ -22,10 +22,8 @@ Contains the endpoints for master"s index ("/")
 """
 
 import os
-from flask import Response,abort
-from pyfarm.core.app.loader import package
-
-app = package.application()
+from flask import Response, abort
+from pyfarm.master.application import app
 
 
 @app.route("/favicon.ico")

@@ -15,17 +15,13 @@
 # limitations under the License.
 
 from flask.ext.admin import Admin
-from pyfarm.core.app.loader import package
 from pyfarm.models.users import User, Role
-
-from pyfarm.master.admin.base import AdminIndex, ModelView
+from pyfarm.master.admin.base import ModelView
+from pyfarm.master.application import app, db, admin
 
 # load endpoints
 from pyfarm.master import index, login, errors
 
-
-app = package.application()
-db = package.database()
 
 @app.before_first_request
 def create_user():
@@ -38,11 +34,12 @@ def create_user():
     db.session.add(user)
     db.session.commit()
 
-admin = Admin(app, index_view=AdminIndex())
+#admin = Admin(app, index_view=AdminIndex())
 admin.add_view(ModelView(User, db.session,
                          access_roles=("admin.usermanager", )))
 
 
 from datetime import timedelta
+app.config["SQLALCHEMY_ECHO"] = True
 app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=14)
 app.run()

@@ -22,9 +22,7 @@ Custom error Flask error pages
 """
 
 from flask import render_template, request
-from pyfarm.core.app.loader import package
-
-app = package.application()
+from pyfarm.master.application import app
 
 
 @app.errorhandler(401)
