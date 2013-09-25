@@ -20,6 +20,7 @@ from utcore import ModelTestCase
 from pyfarm.models.core.types import IDTypeWork
 from pyfarm.models.core.functions import modelfor, getuuid, WorkColumns
 
+
 class Foo(object):
     __tablename__ = "test"
     id = uuid4()

@@ -30,7 +30,7 @@ from sqlalchemy.orm import validates
 from netaddr import AddrFormatError
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
-from pyfarm.models.core.db import db
+from pyfarm.master.application import db
 from pyfarm.models.core.mixins import WorkValidationMixin
 from pyfarm.models.core.types import (
     IDColumn, IPv4Address, IDTypeAgent, IDTypeTag)

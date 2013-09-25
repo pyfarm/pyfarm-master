@@ -27,6 +27,9 @@ install:
   - pip install coverage python-coveralls --use-mirrors
   - pip install . --use-mirrors
 
+  # required for testing, in production pyfarm.master will install pyfarm.models
+  - pip install git+https://github.com/pyfarm/pyfarm-master --use-mirrors
+
 script:
   - pip freeze
   - nosetests -s --verbose --with-coverage --cover-package=pyfarm.models tests

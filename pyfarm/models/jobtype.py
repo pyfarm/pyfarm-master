@@ -28,9 +28,9 @@ from textwrap import dedent
 from sqlalchemy import event
 from sqlalchemy.orm import validates
 from pyfarm.core.enums import JobTypeLoadMode
+from pyfarm.master.application import db
 from pyfarm.models.core.types import IDColumn, IDTypeWork
 from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH, TABLE_JOB
-from pyfarm.models.core.db import db
 
 JOBTYPE_BASECLASS = "JobType"
 

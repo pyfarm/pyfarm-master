@@ -19,6 +19,17 @@ Contains all the models used for database communication and object
 relational management.
 """
 
-# add in python.models's configuration
-from pyfarm.core.app.loader import package
-package.add_config("pyfarm.models.core.config.%(class)s")
+#from pyfarm.master.application import db
+#
+## sqlite specific configuration for development
+#if db.engine.name == "sqlite":
+#    from sqlalchemy.engine import Engine
+#    from sqlalchemy import event
+#
+#    @event.listens_for(Engine, "connect")
+#    def set_sqlite_pragma(dbapi_connection, connection_record):
+#        cursor = dbapi_connection.cursor()
+#        cursor.execute("PRAGMA foreign_keys=ON")
+#        cursor.execute("PRAGMA synchronous=OFF")
+#        cursor.execute("PRAGMA journal_mode=MEMORY")
+#        cursor.close()

@@ -25,8 +25,7 @@ from textwrap import dedent
 
 from sqlalchemy import event
 from pyfarm.core.enums import WorkState
-
-from pyfarm.models.core.db import db
+from pyfarm.master.application import db
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
 from pyfarm.models.core.functions import WorkColumns
 from pyfarm.models.core.cfg import (

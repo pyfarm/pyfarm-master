@@ -65,7 +65,7 @@ from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
 from pyfarm.models.task import TaskModel
 from pyfarm.models.job import JobModel, JobSoftwareModel, JobTagsModel
 
-from pyfarm.models.core.db import db
+from pyfarm.master.application import db
 
 
 def skip_on_ci(func):

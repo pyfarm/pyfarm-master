@@ -16,10 +16,12 @@
 
 from __future__ import with_statement
 from sqlalchemy.exc import DatabaseError
-from utcore import ModelTestCase, db, unittest
+from utcore import ModelTestCase, unittest
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
+from pyfarm.master.application import db
 from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
+
 
 try:
     from itertools import product

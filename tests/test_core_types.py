@@ -25,14 +25,13 @@ from netaddr.ip import IPAddress
 
 from utcore import ModelTestCase, unittest
 from pyfarm.models.core.cfg import TABLE_PREFIX
-from pyfarm.models.core.db import db
 from pyfarm.models.core.types import (
     IPv4Address as IPv4AddressType,
     JSONDict as JSONDictType,
     JSONList as JSONListType,
     JSONSerializable, IDColumn, GUID,
     IDTypeWork, IDTypeAgent, IDTypeTag)
-
+from pyfarm.master.application import db
 
 class JSONDictModel(db.Model):
     __tablename__ = "%s_jsondict_model_test" % TABLE_PREFIX

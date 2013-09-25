@@ -17,7 +17,7 @@
 from textwrap import dedent
 from utcore import ModelTestCase
 from pyfarm.core.enums import JobTypeLoadMode
-from pyfarm.models.core.db import db
+from pyfarm.master.application import db
 from pyfarm.models.job import JobModel
 from pyfarm.models.jobtype import JobTypeModel
 
