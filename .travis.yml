@@ -28,7 +28,7 @@ install:
   - pip install . --use-mirrors
 
   # required for testing, in production pyfarm.master will install pyfarm.models
-  - pip install git+https://github.com/pyfarm/pyfarm-master --use-mirrors
+  - pip install pyfarm.master --use-mirrors
 
 script:
   - pip freeze
