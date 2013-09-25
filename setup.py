@@ -25,7 +25,8 @@ from setuptools import setup
 
 install_requires = [
     "pyfarm.core", "pyfarm.models",
-    "flask-restful", "flask-login", "flask-admin", "flask-sqlalchemy",
+    "flask-restful", "flask-login", "flask-admin",
+    "flask-sqlalchemy", "flask-cache",
     "itsdangerous"]
 
 if sys.version_info[0:2] < (2, 7):
