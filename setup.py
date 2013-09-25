@@ -25,7 +25,8 @@ from setuptools import setup
 
 install_requires = [
     "pyfarm.core", "pyfarm.models",
-    "flask-restful", "flask-login", "itsdangerous"]
+    "flask-restful", "flask-login", "flask-admin", "flask-sqlalchemy",
+    "itsdangerous"]
 
 if sys.version_info[0:2] < (2, 7):
     install_requires.append("simplejson")
