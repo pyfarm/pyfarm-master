@@ -18,6 +18,10 @@
 Contains all the necessary code to operate an instance of the master.
 """
 
-# add in python.master's configuration
-from pyfarm.core.app.loader import package
-package.add_config("pyfarm.master.config.%(class)s")
+
+# **DO NOT** put imports in this file.
+#
+# PyFarm's master does not have an external interface outside the
+# web interface and REST methods. Adding an import or imports into
+# this file will likely break the models since they have to
+# import pyfarm.master.application.
