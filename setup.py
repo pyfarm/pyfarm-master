@@ -19,7 +19,8 @@ from __future__ import with_statement
 import sys
 assert sys.version_info[0:2] >= (2, 6), "Python 2.6 or higher is required"
 
-from os.path import isfile
+from os import walk
+from os.path import isfile, join
 from setuptools import setup
 
 install_requires = [
@@ -36,11 +37,24 @@ if isfile("README.rst"):
 else:
     long_description = ""
 
+def get_package_data():
+    parent = join("pyfarm", "master")
+
+    output = []
+    for top in (join(parent, "static"), join(parent, "templates")):
+        for root, dirs, files in walk(top):
+            for filename in files:
+                output.append(join(root, filename).split(parent)[-1][1:])
+
+    return output
+
 setup(
     name="pyfarm.master",
     version="0.7.0-dev2",
-    packages=["pyfarm", "pyfarm.master"],
-    namespace_packages=["pyfarm"],
+    packages=[
+        "pyfarm", "pyfarm.master", "pyfarm.master.admin"],
+    include_package_data=True,
+    package_data={"pyfarm.master": get_package_data()},
     install_requires=install_requires,
     url="https://github.com/pyfarm/pyfarm-master",
     license="Apache v2.0",
