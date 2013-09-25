@@ -22,10 +22,9 @@ Stores users and their roles in the database.
 """
 
 from hashlib import sha256
-from datetime import datetime, timedelta
+from datetime import datetime
 from textwrap import dedent
 from flask.ext.login import UserMixin
-from itsdangerous import URLSafeTimedSerializer
 from pyfarm.master.application import app, db, login_serializer
 from pyfarm.core.logger import getLogger
 from pyfarm.models.core.cfg import (
@@ -42,6 +41,9 @@ UserRoles = db.Table(
     db.Column("role_id", db.Integer(),
               db.ForeignKey("%s.id" % TABLE_USERS_ROLE)))
 
+# TODO:
+# TODO: cache user information
+# TODO:
 
 class User(db.Model, UserMixin):
     """
@@ -83,15 +85,11 @@ class User(db.Model, UserMixin):
                            doc=dedent("""
                            The last date that this user was logged in."""))
 
-    _roles = db.relationship("Role", secondary=UserRoles,
+    roles = db.relationship("Role", secondary=UserRoles,
                             backref=db.backref("users", lazy="dynamic"))
 
     def __repr__(self):  # override provided for caching purposes
         return "%s(id=%s)" % (self.__class__.__name__, self.id)
-
-    @property
-    def roles(self):
-        return self._roles
 
     @classmethod
     def create(cls, username, password, email=None, roles=None):
@@ -164,16 +162,10 @@ class User(db.Model, UserMixin):
         if not allowed and not required:
             return True
 
-        print "==========",self._id, id(self)
-        raise Exception("this *needs* to be cached somehow")
-        if self._id == id(self):
-            user_roles = self._roles
-        else:
-            self._id = id(self)
-            self._roles = user_roles = set(role.name for role in self.roles)
-
         if allowed:
             assert isinstance(allowed, set), "expected set for allowed"
+
+            user_roles = set(role.name for role in self.roles)
 
             for role_name in user_roles:
                 if role_name in allowed:
