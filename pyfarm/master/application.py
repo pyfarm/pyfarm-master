@@ -27,6 +27,7 @@ from uuid import uuid4
 from warnings import warn
 from werkzeug.datastructures import ImmutableDict
 from flask import Flask
+from flask.ext.cache import Cache
 from flask.ext.admin import Admin
 from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -87,15 +88,20 @@ def get_session_key(warning=True):
 if os.environ.get("PYFARM_CONFIG", "Debug") == "Debug":
     CONFIG = ImmutableDict({
         "DEBUG": True,
+        "SQLALCHEMY_ECHO": False,
         "SECRET_KEY": get_secret_key(warning=False),
         "SQLALCHEMY_DATABASE_URI": get_database_uri(warning=False),
-        "CSRF_SESSION_KEY": get_session_key(warning=False)})
+        "CSRF_SESSION_KEY": get_session_key(warning=False),
+        "CACHE_TYPE": "simple"})
+
 else:
     CONFIG = ImmutableDict({
         "DEBUG": False,
+        "SQLALCHEMY_ECHO": False,
         "SECRET_KEY": get_secret_key(warning=True),
         "SQLALCHEMY_DATABASE_URI": get_database_uri(warning=True),
-        "CSRF_SESSION_KEY": get_session_key(warning=True)})
+        "CSRF_SESSION_KEY": get_session_key(warning=True),
+        "CACHE_TYPE": "simple"})  # TODO: should probably be server based
 
 
 app = Flask("PyFarm",
@@ -106,9 +112,10 @@ app = Flask("PyFarm",
 # configure the application
 app.config.update(CONFIG)
 
-# admin and database
-db = SQLAlchemy(app)
+# admin, database, and cache
 admin = Admin(app, index_view=AdminIndex())
+db = SQLAlchemy(app)
+cache = Cache(app)
 
 # login system
 login_manager = LoginManager(app)
