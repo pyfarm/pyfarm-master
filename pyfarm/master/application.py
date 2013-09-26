@@ -88,6 +88,7 @@ def get_session_key(warning=True):
 if os.environ.get("PYFARM_CONFIG", "debug") == "debug":
     CONFIG = ImmutableDict({
         "DEBUG": True,
+        "LOGIN_DISABLED": True,
         "SQLALCHEMY_ECHO": False,
         "SECRET_KEY": get_secret_key(warning=False),
         "SQLALCHEMY_DATABASE_URI": get_database_uri(warning=False),

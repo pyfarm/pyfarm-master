@@ -166,7 +166,7 @@ def login_role(allow_roles=None, require_roles=None):
     def wrap(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if current_app.login_login_manager._login_disabled:
+            if current_app.login_manager._login_disabled:
                 return func(*args, **kwargs)
             elif not current_user.is_authenticated():
                 return current_app.login_login_manager.unauthorized()

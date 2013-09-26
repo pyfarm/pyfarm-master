@@ -26,7 +26,7 @@ from pyfarm.master import index, login, errors
 @app.before_first_request
 def create_user():
     db.create_all()
-    user = User.create(username="admin", password="admin")
+    user = User.create(username="a", password="a")
     roles = ["api", "admin", "admin.usermanager"]
     for role in roles:
         user.roles.append(Role.create(role))
@@ -34,7 +34,6 @@ def create_user():
     db.session.add(user)
     db.session.commit()
 
-#admin = Admin(app, index_view=AdminIndex())
 admin.add_view(ModelView(User, db.session,
                          access_roles=("admin.usermanager", )))
 

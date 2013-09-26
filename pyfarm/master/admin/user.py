@@ -22,6 +22,10 @@ Objects and classes for working with the user models.
 """
 
 from wtforms import Form, PasswordField, DateField
+from flask.ext.admin.contrib.sqlamodel import ModelView
+from pyfarm.master.admin.base import AuthMixins
+from pyfarm.master.application import db
+from pyfarm.models.users import User
 
 
 class CreateUser(Form):
@@ -34,3 +38,8 @@ class CreateUser(Form):
     def validate_expiration(self, field):
         # TODO: ensure not already expired
         pass
+
+
+class UserView(AuthMixins, ModelView):
+    def __init__(self):
+        super(UserView, self).__init__(User, db.session)

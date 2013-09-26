@@ -23,49 +23,71 @@ Setup the administrative index.
 
 from warnings import warn
 from flask import redirect, abort
-from flask.ext.login import current_user
+from flask.ext.login import current_user, current_app
 from flask.ext.admin.contrib.sqlamodel import ModelView as BaseModelView
 from flask.ext.admin import AdminIndexView
 from pyfarm.core.warning import ConfigurationWarning
 
 
-def authorized(login_url, required=None, allowed=None):
-    if not current_user.is_authenticated():
-        return redirect(login_url)
+def current_user_authorized(required=None, allowed=None, redirect=True):
+    """
+    Simple function which take into account roles, enabled/disabled login system
+    and various other bits of information.  In the event a user does not
+    have access when this function is call a 401 will e raised using
+    :func:`abort`
+    """
+    if current_app.login_manager._login_disabled:
+        return True
 
-    elif not current_user.has_roles(allowed=allowed, required=required):
-        abort(401)
+    if not current_user.is_authenticated():
+        return False
+
+    if not (current_user.has_roles(allowed=allowed, required=required)
+              and redirect):
+            abort(401)
 
     return False
 
 
-class AuthMixin(object):
+class AuthMixins(object):
     access_roles = set()
 
-    def is_visible(self):
-        if current_user.is_authenticated():
+    def _has_access(self, default):
+        if current_app.login_manager._login_disabled:
+            return True
+        elif current_user.is_authenticated():
             return current_user.has_roles(allowed=self.access_roles)
-        return False
+        else:
+            return default
+
+    def is_visible(self):
+        return self._has_access(False)
 
     def is_accessible(self):
-        if current_user.is_authenticated():
-            return current_user.has_roles(allowed=self.access_roles)
-        return True  # should always return True so we can run render()
-
-
-class AdminIndex(AuthMixin, AdminIndexView):
-    access_roles = set(["admin"])
+        return self._has_access(True)
 
     def render(self, template, **kwargs):
-        return (
-            authorized("/login?next=admin", allowed=self.access_roles) or
-            super(AdminIndex, self).render(template, **kwargs))
+        if not current_app.login_manager._login_disabled:
+            if not current_user.is_authenticated():
+                return redirect("/login/?next=%s" % self.url)
+
+            if not current_user.has_roles(allowed=self.access_roles):
+                abort(401)
+
+        return super(AuthMixins, self).render(template, **kwargs)
 
 
-class ModelView(AuthMixin, BaseModelView):
+class AdminIndex(AuthMixins, AdminIndexView):
+    access_roles = set(["admin"])
+
+
+class ModelView(AuthMixins, BaseModelView):
     def __init__(self, model, session,
                  name=None, category=None, endpoint=None, url=None,
                  access_roles=None):
+
+        # setup the roles which are supposed to have
+        # access to this particular view
         if isinstance(access_roles, (list, tuple)):
             self.access_roles = set(access_roles)
         elif isinstance(access_roles, set):
@@ -76,10 +98,11 @@ class ModelView(AuthMixin, BaseModelView):
         if not access_roles:
             warn("no access_roles provided for %s" % model, ConfigurationWarning)
 
+        if category is None:
+            category = "Database"
+
+        if endpoint is None:
+            endpoint = "database/%s" % model.__name__
+
         super(ModelView, self).__init__(
             model, session, name=name, category=category, endpoint=endpoint, url=url)
-
-    def render(self, template, **kwargs):
-        return (
-            authorized("/login/?next=%s" % self.url) or
-            super(ModelView, self).render(template, **kwargs))
