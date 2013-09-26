@@ -41,9 +41,6 @@ UserRoles = db.Table(
     db.Column("role_id", db.Integer(),
               db.ForeignKey("%s.id" % TABLE_USERS_ROLE)))
 
-# TODO:
-# TODO: cache user information
-# TODO:
 
 class User(db.Model, UserMixin):
     """
@@ -162,10 +159,10 @@ class User(db.Model, UserMixin):
         if not allowed and not required:
             return True
 
+        user_roles = set(role.name for role in self.roles)
+
         if allowed:
             assert isinstance(allowed, set), "expected set for allowed"
-
-            user_roles = set(role.name for role in self.roles)
 
             for role_name in user_roles:
                 if role_name in allowed:
