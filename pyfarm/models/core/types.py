@@ -47,6 +47,16 @@ JSON_NONE = dumps(None)
 RESUB_GUID_CHARS = re.compile("[{}-]")
 NoneType = type(None)  # from stdlib types module
 
+# global mappings which can be used in relationships by external
+# tables
+if db.engine.name == "sqlite":
+    IDTypeWork = Integer
+else:
+    IDTypeWork = BigInteger
+
+IDTypeAgent = Integer
+IDTypeTag = Integer
+
 
 def short_guid(func):
     """decorator which shortens guids by replacing {, }, and - with ''"""
@@ -212,26 +222,13 @@ class IPv4Address(TypeDecorator):
             return value
 
 
-def IDColumn(column_type=GUID):
+def IDColumn(column_type=None):
     """
     Produces a column used for `id` on each table.  Typically this is done
     using a class in :mod:`pyfarm.models.mixins` however because of the ORM
     and the table relationships it's cleaner to have a function produce
     the column.
     """
-    kwargs = {
-        "primary_key": True, "unique": True, "nullable": False,
-        "doc": ID_DOCSTRING}
-
-    if column_type is GUID:
-        kwargs.update(default=ID_GUID_DEFAULT)
-    else:
-        kwargs.update(autoincrement=True)
-
-    return db.Column(column_type, **kwargs)
-
-# global mappings which can be used in relationships by external
-# tables
-IDTypeWork = GUID
-IDTypeAgent = Integer
-IDTypeTag = Integer
+    return db.Column(
+        column_type or Integer,
+        primary_key=True, autoincrement=True, doc=ID_DOCSTRING, nullable=False)
