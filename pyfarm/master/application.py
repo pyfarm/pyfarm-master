@@ -23,6 +23,7 @@ configure it.
 """
 
 import os
+from datetime import timedelta
 from uuid import uuid4
 from warnings import warn
 from werkzeug.datastructures import ImmutableDict
@@ -88,12 +89,13 @@ def get_session_key(warning=True):
 if os.environ.get("PYFARM_CONFIG", "debug") == "debug":
     CONFIG = ImmutableDict({
         "DEBUG": True,
-        "LOGIN_DISABLED": True,
+        #"LOGIN_DISABLED": True,
         "SQLALCHEMY_ECHO": False,
         "SECRET_KEY": get_secret_key(warning=False),
         "SQLALCHEMY_DATABASE_URI": get_database_uri(warning=False),
         "CSRF_SESSION_KEY": get_session_key(warning=False),
-        "CACHE_TYPE": "simple"})
+        "CACHE_TYPE": "simple",
+        "REMEMBER_COOKIE_DURATION": timedelta(hours=1)})
 
 else:
     CONFIG = ImmutableDict({
@@ -102,7 +104,8 @@ else:
         "SECRET_KEY": get_secret_key(warning=True),
         "SQLALCHEMY_DATABASE_URI": get_database_uri(warning=True),
         "CSRF_SESSION_KEY": get_session_key(warning=True),
-        "CACHE_TYPE": "simple"})  # TODO: should probably be server based
+        "CACHE_TYPE": "simple",  # TODO: should probably be server based
+        "REMEMBER_COOKIE_DURATION": timedelta(hours=12)})
 
 
 app = Flask("PyFarm",
@@ -122,3 +125,17 @@ cache = Cache(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "/login/"
 login_serializer = URLSafeTimedSerializer(app.secret_key)
+
+
+# sqlite specific configuration for development
+if db.engine.name == "sqlite":
+    from sqlalchemy.engine import Engine
+    from sqlalchemy import event
+
+    @event.listens_for(Engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA synchronous=OFF")
+        cursor.execute("PRAGMA journal_mode=MEMORY")
+        cursor.close()
