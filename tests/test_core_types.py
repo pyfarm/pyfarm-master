@@ -190,12 +190,15 @@ class TestIDColumn(ModelTestCase):
         column = IDColumn(db.Integer)
         self.assertIsInstance(column.type, db.Integer)
         self.assertTrue(column.primary_key)
-        self.assertTrue(column.unique)
         self.assertFalse(column.nullable)
         self.assertTrue(column.autoincrement)
 
     def test_id_types(self):
-        self.assertIs(IDTypeWork, GUID)
+        if db.engine.name == "sqlite":
+            self.assertIs(IDTypeWork, db.Integer)
+        else:
+            self.assertIs(IDTypeWork, db.BigInteger)
+
         self.assertIs(IDTypeAgent, db.Integer)
         self.assertIs(IDTypeTag, db.Integer)
 
@@ -218,9 +221,7 @@ class TestGUIDImpl(unittest.TestCase):
         column = IDColumn(GUID)
         self.assertIsInstance(column.type, GUID)
         self.assertTrue(column.primary_key)
-        self.assertTrue(column.unique)
         self.assertFalse(column.nullable)
-        self.assertTrue(column.default.is_callable)
         self.assertTrue(column.autoincrement)
 
     def test_driver_psycopg2(self):
