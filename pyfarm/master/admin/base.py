@@ -24,7 +24,7 @@ Setup the administrative index.
 from warnings import warn
 from flask import redirect, abort
 from flask.ext.login import current_user, current_app
-from flask.ext.admin.contrib.sqlamodel import ModelView as BaseModelView
+from flask.ext.admin.contrib.sqlamodel import ModelView as _ModelView
 from flask.ext.admin import AdminIndexView
 from pyfarm.core.warning import ConfigurationWarning
 
@@ -81,7 +81,7 @@ class AdminIndex(AuthMixins, AdminIndexView):
     access_roles = set(["admin"])
 
 
-class ModelView(AuthMixins, BaseModelView):
+class BaseModelView(AuthMixins, _ModelView):
     def __init__(self, model, session,
                  name=None, category=None, endpoint=None, url=None,
                  access_roles=None):
@@ -104,5 +104,5 @@ class ModelView(AuthMixins, BaseModelView):
         if endpoint is None:
             endpoint = "database/%s" % model.__name__
 
-        super(ModelView, self).__init__(
+        super(BaseModelView, self).__init__(
             model, session, name=name, category=category, endpoint=endpoint, url=url)
