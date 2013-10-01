@@ -31,6 +31,7 @@ install_requires = [
 
 if sys.version_info[0:2] < (2, 7):
     install_requires.append("simplejson")
+    install_requires.append("argparse")
 
 if isfile("README.rst"):
     with open("README.rst", "r") as readme:
@@ -56,6 +57,10 @@ setup(
         "pyfarm", "pyfarm.master", "pyfarm.master.admin"],
     include_package_data=True,
     package_data={"pyfarm.master": get_package_data()},
+    entry_points={
+        "console_scripts": [
+            "pyfarm-user = pyfarm.master.scripts:user_management",
+            "pyfarm-master = pyfarm.master.scripts:run_master"]},
     install_requires=install_requires,
     url="https://github.com/pyfarm/pyfarm-master",
     license="Apache v2.0",
