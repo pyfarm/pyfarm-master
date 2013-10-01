@@ -99,7 +99,6 @@ class LoginForm(Form):
                 raise ValidationError("invalid password")
 
 
-@app.route("/login/", methods=("GET", "POST"))
 def login_page():
     """display and process the login for or action"""
     if request.method == "POST" and request.content_type == MimeType.JSON:
@@ -121,10 +120,9 @@ def login_page():
         return redirect(request.args.get("next") or "/")
 
     return render_template("pyfarm/login.html", form=form,
-                           next=request.args.get("next"))
+                           next=request.args.get("next") or "/")
 
 
-@app.route("/logout/")
 def logout_page():
     """log out the user then redirect them"""
     logged_in = current_user.is_authenticated()
