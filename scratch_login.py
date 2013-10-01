@@ -14,9 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from flask.ext.admin import Admin
 from pyfarm.models.users import User, Role
-from pyfarm.master.admin.base import ModelView
+from pyfarm.master.admin.user import UserView
 from pyfarm.master.application import app, db, admin
 
 # load endpoints
@@ -26,19 +25,16 @@ from pyfarm.master import index, login, errors
 @app.before_first_request
 def create_user():
     db.create_all()
-    user = User.create(username="a", password="a")
-    roles = ["api", "admin", "admin.usermanager"]
-    for role in roles:
-        user.roles.append(Role.create(role))
-
-    db.session.add(user)
-    db.session.commit()
-
-admin.add_view(ModelView(User, db.session,
-                         access_roles=("admin.usermanager", )))
+    User.create(username="pyfarm", password="pyfarm", roles=["root"])
 
 
-from datetime import timedelta
-app.config["SQLALCHEMY_ECHO"] = True
-app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=14)
+from flask.ext.admin.base import MenuLink
+
+#print admin._add_view_to_menu(MenuItem("Foo"))
+# TODO: add /preferences endpoint, maybe give it an admin interface too?
+admin.add_link(MenuLink("Preferences", "/preferences"))
+admin.add_link(MenuLink("Log Out", "/logout"))
+admin.add_view(UserView())
+
+
 app.run()
