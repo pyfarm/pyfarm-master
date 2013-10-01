@@ -22,24 +22,30 @@ Objects and classes for working with the user models.
 """
 
 from wtforms import Form, PasswordField, DateField
-from flask.ext.admin.contrib.sqlamodel import ModelView
-from pyfarm.master.admin.base import AuthMixins
+from pyfarm.master.admin.base import BaseModelView
 from pyfarm.master.application import db
 from pyfarm.models.users import User
 
 
-class CreateUser(Form):
-    password = PasswordField()  # TODO: serialize
-    expiration = DateField()
-
-    # TODO: don't display last login or onetime code
+from flask.ext.admin.contrib.sqlamodel.form import AdminModelConverter
 
 
-    def validate_expiration(self, field):
-        # TODO: ensure not already expired
-        pass
+class TestConverter(AdminModelConverter):
+    def post_process(self, form_class, info):
+        print form_class
+        return form_class
 
 
-class UserView(AuthMixins, ModelView):
+# TODO: post process password field for insertion
+# TODO: don't display password, or other security related fields
+class UserView(BaseModelView):
+    inline_model_form_converter = TestConverter  # not always working?
+
     def __init__(self):
-        super(UserView, self).__init__(User, db.session)
+        super(UserView, self).__init__(User, db.session,
+                                       access_roles=("admin.usermanager", ))
+
+    #def create_form(self, obj=None):
+    #    print obj
+    #    return super(UserView, self).create_form(obj)
+
