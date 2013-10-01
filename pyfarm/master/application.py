@@ -48,7 +48,7 @@ def get_secret_key(warning=True):
         warn("$PYFARM_SECRET_KEY not present in environment",
              EnvironmentWarning)
 
-    return str(uuid4()).replace("-", "").decode("hex")
+    return "4n)Z\xc2\xde\xdd\x17\xdd\xf7\xa6)>{\xfc\xff"
 
 
 def get_database_uri(warning=True):
@@ -62,7 +62,7 @@ def get_database_uri(warning=True):
     if "PYFARM_DATABASE_URI" in os.environ:
         uri = os.environ["PYFARM_DATABASE_URI"]
     else:
-        uri = "sqlite:///:memory:"
+        uri = "sqlite:///pyfarm.sql"
 
         if warning:
             warn("$PYFARM_DATABASE_URI not present in environment",
