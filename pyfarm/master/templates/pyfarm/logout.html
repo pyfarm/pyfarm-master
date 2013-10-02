@@ -3,9 +3,9 @@
     <head>
         <meta http-equiv="refresh" content="{{seconds}};/">
         {% if logged_in %}
-            <title>Logged Out</title>
+            <title>PyFarm - Logged Out</title>
         {% else %}
-            <title>Already Logged Out</title>
+            <title>PyFarm - Already Logged Out</title>
         {% endif %}
         <link href="{{ url_for('admin.static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/layout.css') }}" rel="stylesheet">
