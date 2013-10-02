@@ -156,6 +156,7 @@ def run_master():
     from pyfarm.master.admin.user import UserView
     from pyfarm.master.application import app, admin, db
     from pyfarm.master.login import login_page, logout_page
+    from pyfarm.master.initial import setup_page
 
     # tables to setup
     from pyfarm.models.users import User, Role
@@ -165,6 +166,8 @@ def run_master():
         "/login/", "login_page", login_page, methods=("GET", "POST"))
     app.add_url_rule(
         "/logout/", "logout_page", logout_page)
+    app.add_url_rule(
+        "/setup/", "setup_page", setup_page, methods=("GET", "POST"))
 
     # setup the admin interface
     admin.add_link(MenuLink("Preferences", "/preferences"))
