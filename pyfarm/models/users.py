@@ -126,7 +126,7 @@ class User(db.Model, UserMixin):
 
     @classmethod
     def hash_password(cls, value):
-        return sha256(app.secret_key + value).hexdigest()
+        return sha256(app.secret_key.encode("hex") + value).hexdigest()
 
     def get_auth_token(self):
         return login_serializer.dumps([str(self.id), self.password])
