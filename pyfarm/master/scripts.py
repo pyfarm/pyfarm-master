@@ -158,10 +158,17 @@ def run_master():
     from pyfarm.master.login import login_page, logout_page
     from pyfarm.master.initial import setup_page
 
-    # tables to setup
+    # import all tables so we know what should exist and
+    # what we'll need to create
+    from pyfarm.models.core.cfg import TABLES
+    from pyfarm.models.task import TaskModel, TaskDependencies
+    from pyfarm.models.job import JobModel, JobTagsModel, JobDependencies
+    from pyfarm.models.jobtype import JobTypeModel
+    from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
     from pyfarm.models.users import User, Role
 
     # routes
+    app.before_first_request_funcs.append(db.create_all)
     app.add_url_rule(
         "/login/", "login_page", login_page, methods=("GET", "POST"))
     app.add_url_rule(

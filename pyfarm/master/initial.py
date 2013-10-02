@@ -24,16 +24,8 @@ Entry points for the /setup/ target
 from wtforms import Form, TextField, PasswordField, ValidationError
 from wtforms.validators import Required
 from flask import render_template, request
-from pyfarm.master.application import db
-
-# import all tables so we know what should exist and
-# what we'll need to create
-from pyfarm.models.core.cfg import TABLES
-from pyfarm.models.task import TaskModel, TaskDependencies
-from pyfarm.models.job import JobModel, JobTagsModel, JobDependencies
-from pyfarm.models.jobtype import JobTypeModel
-from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
 from pyfarm.models.users import User, Role
+from pyfarm.master.application import db
 
 
 class NewUserForm(Form):
@@ -52,9 +44,6 @@ def setup_page():
     form = NewUserForm(request.form)
 
     if request.method == "GET":
-        # make sure the tables exist
-        db.create_all()
-
         # create the admin role if it does not exist and
         # find any existing administrators
         admin_role = Role.query.filter_by(name="admin").first()
