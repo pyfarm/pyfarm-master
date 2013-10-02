@@ -1,6 +1,11 @@
 <!DOCTYPE html>
+{% from "pyfarm/macros.html" import render_field %}
 <html>
     <head>
+        {% if finished %}
+            <meta http-equiv="refresh" content="{{redirect_seconds}};/">
+        {% endif %}
+
         <title>PyFarm - Setup</title>
         <link href="{{ url_for('admin.static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/layout.css') }}" rel="stylesheet">
@@ -10,9 +15,37 @@
     <body>
         <h3>PyFarm Setup</h3>
         <div class="subtext">
-            {% if not admin_exists or not admin_users%}
-                Hello and welcome to PyFarm's initial setup!  Please follow the
-                to get started.
+            {% if finished %}
+                The setup has been completed!  Redirecting to the
+                <a href="/">index</a> in {{redirect_seconds}} seconds.
+
+            {% elif not admin_role or not admin_users %}
+                <p>
+                    Hello and welcome to PyFarm's initial setup!  Before you
+                    start using PyFarm you'll need to create an Administrator
+                    account.
+                </p>
+
+                <form method="POST" action="/setup/" class="form-horizontal">
+                    <fieldset>
+                        {{ render_field(form.username) }}
+                        {{ render_field(form.email) }}
+                        {{ render_field(form.password) }}
+
+                        <div class="controls">
+                            <input type="submit" class="btn btn-primary btn-large" value="Submit">
+                            <a href="/setup/" class="btn btn-large">Cancel</a>
+                        </div>
+                    </fieldset>
+                </form>
+
+                <p>
+                    <b>Security Note:</b>
+                    The account you are creating will have full control over
+                    PyFarm.  It is recommended you use this account for user
+                    administration and create other roles for the various parts
+                    of PyFarm.
+                </p>
 
 
             {% elif admin_users %}

@@ -3,6 +3,12 @@ li {
     margin-left: 5px;
 }
 
+input { min-height: 30; }
+
+fieldset {
+    margin-left: -60px;
+}
+
 .subtext {
     margin-left: 10px;
 }
