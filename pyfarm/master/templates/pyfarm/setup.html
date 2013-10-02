@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>PyFarm - Setup</title>
+        <link href="{{ url_for('admin.static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/layout.css') }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/headings.css') }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/setup.css') }}" rel="stylesheet">
+    </head>
+    <body>
+        <h3>PyFarm Setup</h3>
+        <div class="subtext">
+            {% if not admin_exists or not admin_users%}
+                Hello and welcome to PyFarm's initial setup!  Please follow the
+                to get started.
+
+
+            {% elif admin_users %}
+                Looks like everything is ready to go!  The database has already
+                been setup and you have some existing administrators:
+                <ul>
+                    {% for user in admin_users %}
+                        <li>{{user.username}} ({{user.email or "No email provided"}})</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </body>
+</html>
