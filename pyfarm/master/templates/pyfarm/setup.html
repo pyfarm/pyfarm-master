@@ -15,7 +15,11 @@
     <body>
         <h3>PyFarm Setup</h3>
         <div class="subtext">
-            {% if finished %}
+            {% if error %}
+                There was a problem while attempting to perform your
+                request: {{error}}
+
+            {% elif finished %}
                 The setup has been completed!  Redirecting to the
                 <a href="/">index</a> in {{redirect_seconds}} seconds.
 

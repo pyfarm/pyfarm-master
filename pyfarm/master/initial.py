@@ -58,6 +58,13 @@ def setup_page():
 
     elif request.method == "POST":
         if form.validate():
+            # make sure we're still the only admin
+            admin_role = Role.query.filter_by(name="admin").first()
+            if admin_role and admin_role.users:
+                return render_template(
+                    "pyfarm/setup.html",
+                    error="someone else created an administrator")
+
             admin_role = Role.create("admin")
             user = User.create(
                 request.form["username"],
