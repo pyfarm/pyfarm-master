@@ -1,0 +1,10 @@
+div.test {
+    background-color: #464646;
+    margin-top: 20px;
+    margin-right: 40px;
+    width: 12em;
+    height: 5em;
+    border-radius: 1em 4em 1em 4em;
+    text-align: center;
+    -moz-border-radius: 0.5em 2em 0.5em 2em;
+}
