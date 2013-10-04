@@ -157,6 +157,7 @@ def run_master():
     from pyfarm.master.application import app, admin, db
     from pyfarm.master.login import login_page, logout_page
     from pyfarm.master.initial import setup_page
+    from pyfarm.master.index import index_page, favicon
 
     # import all tables so we know what should exist and
     # what we'll need to create
@@ -169,6 +170,10 @@ def run_master():
 
     # routes
     app.before_first_request_funcs.append(db.create_all)
+    app.add_url_rule(
+        "/", "index_page", index_page)
+    app.add_url_rule(
+        "/favicon.ico", "favicon", favicon)
     app.add_url_rule(
         "/login/", "login_page", login_page, methods=("GET", "POST"))
     app.add_url_rule(
