@@ -22,11 +22,10 @@ Contains the endpoints for master"s index ("/")
 """
 
 import os
-from flask import Response, abort
+from flask import Response, abort, render_template
 from pyfarm.master.application import app
 
 
-@app.route("/favicon.ico")
 def favicon():
     """
     Sends out the favicon from the static directory
@@ -41,19 +40,16 @@ def favicon():
     try:
         with open(path, "rb") as stream:
             # construct a response and ask the client not
-            # to ask again about this file for a while (1 month)
-            response = Response(
+            # to ask again about this file for a while
+            return Response(
                 response=stream.read(),
                 headers={"Cache-Control": "max-age=2628000"})
-
-        return response
-
     except OSError:
-        abort(404)
+        abort(404, path=path)
+
     except IOError:
-        abort(500)
+        abort(500, error="failed to open %s" % path)
 
 
-@app.route("/")
-def index():
-    return "TODO: return a **real** index"
+def index_page():
+    return render_template("pyfarm/index.html")
