@@ -127,6 +127,10 @@ login_manager.login_view = "/login/"
 login_serializer = URLSafeTimedSerializer(app.secret_key)
 
 
+class SessionMixin(object):
+    _session = property(fget=lambda self: db.session)
+
+
 # sqlite specific configuration for development
 if db.engine.name == "sqlite":
     from sqlalchemy.engine import Engine

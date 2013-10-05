@@ -28,7 +28,6 @@ from flask.ext.admin.contrib.sqlamodel import ModelView as _ModelView
 from flask.ext.admin import AdminIndexView
 from pyfarm.core.warning import ConfigurationWarning
 
-
 def current_user_authorized(required=None, allowed=None, redirect=True):
     """
     Simple function which take into account roles, enabled/disabled login system
@@ -82,28 +81,20 @@ class AdminIndex(AuthMixins, AdminIndexView):
 
 
 class BaseModelView(AuthMixins, _ModelView):
-    def __init__(self, model, session,
-                 name=None, category=None, endpoint=None, url=None,
-                 access_roles=None):
+    def __init__(self, name=None, category=None, endpoint=None, url=None):
 
-        # setup the roles which are supposed to have
-        # access to this particular view
-        if isinstance(access_roles, (list, tuple)):
-            self.access_roles = set(access_roles)
-        elif isinstance(access_roles, set):
-            self.access_roles = access_roles
-        elif access_roles is not None:
-            raise TypeError("expected list, tuple, or set for `access_roles`")
+        try:
+            self.access_roles
+        except AttributeError:
+            raise NotImplementedError("you must override `access_roles`")
 
-        if not access_roles:
-            warn("no access_roles provided for %s" % model,
-                 ConfigurationWarning)
-
-        if category is None:
-            category = "Database"
-
-        if endpoint is None:
-            endpoint = "db/%s" % model.__name__
+        try:
+            self._session
+        except AttributeError:
+            raise NotImplementedError("you must provide a `_session` attribute")
 
         super(BaseModelView, self).__init__(
-            model, session, name=name, category=category, endpoint=endpoint, url=url)
+            self.model, self._session, name=name,
+            category=(category or "Database"),
+            endpoint="db/%s" % (endpoint or self.model.__name__),
+            url=url)

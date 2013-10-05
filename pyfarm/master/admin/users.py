@@ -21,10 +21,9 @@ User
 Objects and classes for working with the user models.
 """
 
-from wtforms import Form, PasswordField, DateField
 from pyfarm.master.admin.base import BaseModelView
-from pyfarm.master.application import db
-from pyfarm.models.users import User
+from pyfarm.master.application import SessionMixin
+from pyfarm.models.users import User, Role
 
 
 from flask.ext.admin.contrib.sqlamodel.form import AdminModelConverter
@@ -36,11 +35,20 @@ class TestConverter(AdminModelConverter):
         return form_class
 
 
+class UserRolesMixin(object):
+    access_roles = ("admin.usermanager", )
+
+
 # TODO: post process password field for insertion
 # TODO: don't display password, or other security related fields
-class UserView(BaseModelView):
+class UserView(SessionMixin, UserRolesMixin, BaseModelView):
+    model = User
+    column_searchable_list = ('username', 'email')
+    column_filters = ('username', 'email')
     inline_model_form_converter = TestConverter  # not always working?
 
-    def __init__(self):
-        super(UserView, self).__init__(User, db.session,
-                                       access_roles=("admin.usermanager",))
+
+class RoleView(SessionMixin, UserRolesMixin, BaseModelView):
+    model = Role
+    column_searchable_list = ('name',)
+    column_filters = ('name', )

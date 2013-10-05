@@ -153,7 +153,9 @@ def user_management(args=None):
 
 def run_master():
     from flask.ext.admin.base import MenuLink
-    from pyfarm.master.admin.user import UserView
+    from pyfarm.master.admin.users import UserView, RoleView
+    from pyfarm.master.admin.agent import (
+        AgentModelView, AgentSoftwareModelView, AgentTagsModelView)
     from pyfarm.master.application import app, admin, db
     from pyfarm.master.login import login_page, logout_page
     from pyfarm.master.initial import setup_page
@@ -191,7 +193,16 @@ def run_master():
     # setup the admin interface
     admin.add_link(MenuLink("Preferences", "/preferences"))
     admin.add_link(MenuLink("Log Out", "/logout"))
-    admin.add_view(UserView())
+    admin.add_view(UserView(
+        name="Users - User", endpoint="users/user"))
+    admin.add_view(RoleView(
+        name="Users - Role", endpoint="users/role"))
+    admin.add_view(AgentModelView(
+        name="Agents - Host", endpoint="agents/agent"))
+    admin.add_view(AgentSoftwareModelView(
+        name="Agents - Software", endpoint="agents/software"))
+    admin.add_view(AgentTagsModelView(
+        name="Agents - Tags", endpoint="agents/tags"))
 
     app.run()
 
