@@ -25,8 +25,9 @@ from hashlib import sha256
 from datetime import datetime
 from textwrap import dedent
 from flask.ext.login import UserMixin
-from pyfarm.master.application import app, db, login_serializer
 from pyfarm.core.logger import getLogger
+from pyfarm.master.application import app, db, login_serializer, cache
+from pyfarm.models.core.functions import split_and_extend
 from pyfarm.models.core.cfg import (
     TABLE_USERS_USER, TABLE_USERS_ROLE, TABLE_USERS_USER_ROLES,
     MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
@@ -138,11 +139,12 @@ class User(db.Model, UserMixin):
         """checks the password provided against the stored password"""
         return self.hash_password(str(password)) == self.password
 
+    @cache.memoize(timeout=120)
     def is_active(self):
         """returns true if the user and the roles it belongs to are active"""
+        logger.debug("%(self)s.is_active()" % locals())
         now = datetime.now()
 
-        logger.debug("checking if user `%s` is active" % self.username)
         # user is not active
         if not self.active:
             return False
@@ -154,26 +156,28 @@ class User(db.Model, UserMixin):
         # TODO: there's probably some way to cache this information
         return all(role.is_active() for role in self.roles)
 
+    @cache.memoize(timeout=120)
     def has_roles(self, allowed=None, required=None):
         """checks the provided arguments against the roles assigned"""
         if not allowed and not required:
             return True
 
-        user_roles = set(role.name for role in self.roles)
+        logger.debug(
+            "%(self)s.has_roles(allowed=%(allowed)s, required=%(required)s)"
+            % locals())
 
         if allowed:
-            assert isinstance(allowed, set), "expected set for allowed"
-
-            for role_name in user_roles:
-                if role_name in allowed:
-                    return True
-
-            return False
+            # Ask the database if the user has any of the allowed roles.  For
+            # smaller numbers of roles this is very slightly slower with
+            # SQLite in :memory: but is a good amount faster over the network
+            # or with large role sets.
+            return bool(
+                User.query.filter(
+                    User.roles.any(
+                        Role.name.in_(split_and_extend(allowed)))).count())
 
         if required:
-            assert isinstance(required, set), "expected set required"
-            logger.debug("...required: %s" % required)
-            return required.issubset(user_roles)
+            return required.issubset(split_and_extend(required))
 
 
 class Role(db.Model):
