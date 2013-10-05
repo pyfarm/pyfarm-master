@@ -77,7 +77,9 @@ class AuthMixins(object):
 
 
 class AdminIndex(AuthMixins, AdminIndexView):
-    access_roles = set(["admin"])
+    access_roles = (
+        "admin", "admin.db", "admin.db.user", "admin.db.job",
+        "admin.db.agent")
 
 
 class BaseModelView(AuthMixins, _ModelView):
