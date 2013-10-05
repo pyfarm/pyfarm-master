@@ -22,9 +22,18 @@ Custom error Flask error pages
 """
 
 from flask import render_template, request
-from pyfarm.master.application import app
 
 
-@app.errorhandler(401)
-def unauthorized(e):
-    return render_template("pyfarm/errors/401.html", url=request.url_rule), 401
+def error_404(e):
+    return render_template(
+        "pyfarm/errors/404.html", url=request.url), 404
+
+
+def error_401(e):
+    return render_template(
+        "pyfarm/errors/401.html", url=request.url), 401
+
+
+def error_500(e):
+    return render_template(
+        "pyfarm/errors/500.html", url=request.url), 500

@@ -158,18 +158,25 @@ def run_master():
     from pyfarm.master.login import login_page, logout_page
     from pyfarm.master.initial import setup_page
     from pyfarm.master.index import index_page, favicon
+    from pyfarm.master.errors import error_404, error_401, error_500
 
-    # import all tables so we know what should exist and
-    # what we'll need to create
-    from pyfarm.models.core.cfg import TABLES
-    from pyfarm.models.task import TaskModel, TaskDependencies
-    from pyfarm.models.job import JobModel, JobTagsModel, JobDependencies
-    from pyfarm.models.jobtype import JobTypeModel
-    from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
-    from pyfarm.models.users import User, Role
+    # when debugging we should create the database
+    # tables
+    if app.debug:
+        from pyfarm.models.core.cfg import TABLES
+        from pyfarm.models.task import TaskModel, TaskDependencies
+        from pyfarm.models.job import JobModel, JobTagsModel, JobDependencies
+        from pyfarm.models.jobtype import JobTypeModel
+        from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
+        from pyfarm.models.users import User, Role
+        app.before_first_request_funcs.append(db.create_all)
+
+    # register error handlers
+    app.register_error_handler(404, error_404)
+    app.register_error_handler(401, error_401)
+    app.register_error_handler(500, error_500)
 
     # routes
-    app.before_first_request_funcs.append(db.create_all)
     app.add_url_rule(
         "/", "index_page", index_page)
     app.add_url_rule(
