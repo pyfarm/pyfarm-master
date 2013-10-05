@@ -96,13 +96,14 @@ class BaseModelView(AuthMixins, _ModelView):
             raise TypeError("expected list, tuple, or set for `access_roles`")
 
         if not access_roles:
-            warn("no access_roles provided for %s" % model, ConfigurationWarning)
+            warn("no access_roles provided for %s" % model,
+                 ConfigurationWarning)
 
         if category is None:
             category = "Database"
 
         if endpoint is None:
-            endpoint = "database/%s" % model.__name__
+            endpoint = "db/%s" % model.__name__
 
         super(BaseModelView, self).__init__(
             model, session, name=name, category=category, endpoint=endpoint, url=url)

@@ -43,9 +43,4 @@ class UserView(BaseModelView):
 
     def __init__(self):
         super(UserView, self).__init__(User, db.session,
-                                       access_roles=("admin.usermanager", ))
-
-    #def create_form(self, obj=None):
-    #    print obj
-    #    return super(UserView, self).create_form(obj)
-
+                                       access_roles=("admin.usermanager",))
