@@ -30,6 +30,7 @@ class AgentRolesMixin(object):
     access_roles = ("admin.db.agent", )
 
 
+# TODO: !!! add display override for STATE field
 class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     model = AgentModel
 

@@ -156,8 +156,8 @@ def run_master():
     from pyfarm.master.admin.users import UserView, RoleView
     from pyfarm.master.admin.agent import (
         AgentModelView, AgentSoftwareModelView, AgentTagsModelView)
-    from pyfarm.master.admin.job import (
-        JobModelView, JobSoftwareModelView, JobTagsModelView)
+    from pyfarm.master.admin.work import (
+        JobModelView, JobSoftwareModelView, JobTagsModelView, TaskModelView)
     from pyfarm.master.application import app, admin, db
     from pyfarm.master.login import login_page, logout_page
     from pyfarm.master.initial import setup_page
@@ -192,9 +192,11 @@ def run_master():
     app.add_url_rule(
         "/setup/", "setup_page", setup_page, methods=("GET", "POST"))
 
-    # setup the admin interface
+    # admin links
     admin.add_link(MenuLink("Preferences", "/preferences"))
     admin.add_link(MenuLink("Log Out", "/logout"))
+
+    # admin database views
     admin.add_view(UserView(
         name="Users - User", endpoint="users/user"))
     admin.add_view(RoleView(
@@ -207,6 +209,8 @@ def run_master():
         name="Agents - Tags", endpoint="agents/tags"))
     admin.add_view(JobModelView(
         name="Jobs - Job", endpoint="jobs/job"))
+    admin.add_view(TaskModelView(
+        name="Jobs - Task", endpoint="jobs/task"))
     admin.add_view(JobSoftwareModelView(
         name="Jobs - Software", endpoint="jobs/software"))
     admin.add_view(JobTagsModelView(
