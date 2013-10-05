@@ -149,3 +149,24 @@ def WorkColumns(state_default, priority_default, priority_alt=500):
                   Time the job was finished.  This will be set when the last
                   task finishes and reset if a job is requeued."""))
     )
+
+
+def split_and_extend(items):
+    """
+    Takes a list of input elements and splits them
+    before producing an extended set.
+
+    **Example**
+        >>> split_and_extend(["root.admin", "admin"])
+        set(['admin', 'root.admin', 'root'])
+    """
+    output = set()
+
+    for item in items:
+        current = []
+
+        for split_item in item.split("."):
+            current = current + [split_item]
+            output.add(".".join(current))
+
+    return output
