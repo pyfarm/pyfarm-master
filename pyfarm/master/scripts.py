@@ -156,6 +156,8 @@ def run_master():
     from pyfarm.master.admin.users import UserView, RoleView
     from pyfarm.master.admin.agent import (
         AgentModelView, AgentSoftwareModelView, AgentTagsModelView)
+    from pyfarm.master.admin.job import (
+        JobModelView, JobSoftwareModelView, JobTagsModelView)
     from pyfarm.master.application import app, admin, db
     from pyfarm.master.login import login_page, logout_page
     from pyfarm.master.initial import setup_page
@@ -203,6 +205,12 @@ def run_master():
         name="Agents - Software", endpoint="agents/software"))
     admin.add_view(AgentTagsModelView(
         name="Agents - Tags", endpoint="agents/tags"))
+    admin.add_view(JobModelView(
+        name="Jobs - Job", endpoint="jobs/job"))
+    admin.add_view(JobSoftwareModelView(
+        name="Jobs - Software", endpoint="jobs/software"))
+    admin.add_view(JobTagsModelView(
+        name="Jobs - Tags", endpoint="jobs/tags"))
 
     app.run()
 
