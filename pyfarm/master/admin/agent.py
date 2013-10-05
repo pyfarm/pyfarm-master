@@ -27,7 +27,7 @@ from pyfarm.models.agent import AgentTagsModel, AgentSoftwareModel, AgentModel
 
 
 class AgentRolesMixin(object):
-    access_roles = ("admin.agentmanager", )
+    access_roles = ("admin.db.agent", )
 
 
 class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):

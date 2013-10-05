@@ -36,7 +36,7 @@ class TestConverter(AdminModelConverter):
 
 
 class UserRolesMixin(object):
-    access_roles = ("admin.usermanager", )
+    access_roles = ("admin.db.user", )
 
 
 # TODO: post process password field for insertion
