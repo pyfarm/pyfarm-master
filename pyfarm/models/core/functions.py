@@ -160,6 +160,9 @@ def split_and_extend(items):
         >>> split_and_extend(["root.admin", "admin"])
         set(['admin', 'root.admin', 'root'])
     """
+    if not items:
+        return items
+
     output = set()
 
     for item in items:

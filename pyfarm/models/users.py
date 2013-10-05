@@ -162,6 +162,9 @@ class User(db.Model, UserMixin):
         if not allowed and not required:
             return True
 
+        allowed = split_and_extend(allowed)
+        required = split_and_extend(required)
+
         logger.debug(
             "%(self)s.has_roles(allowed=%(allowed)s, required=%(required)s)"
             % locals())
