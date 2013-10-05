@@ -65,12 +65,11 @@ def setup_page():
                     "pyfarm/setup.html",
                     error="someone else created an administrator")
 
-            admin_role = Role.create("admin")
             user = User.create(
                 request.form["username"],
                 request.form["password"],
                 email=request.form["email"])
-            user.roles.append(admin_role)
+            user.roles.append(Role.create("admin"))
             db.session.add(user)
             db.session.commit()
             return render_template("pyfarm/setup.html",
