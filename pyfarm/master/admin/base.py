@@ -83,6 +83,9 @@ class AdminIndex(AuthMixins, AdminIndexView):
 
 
 class BaseModelView(AuthMixins, _ModelView):
+    edit_form_class = None
+    create_form_class = None
+
     def __init__(self, name=None, category=None, endpoint=None, url=None):
 
         try:
@@ -100,3 +103,15 @@ class BaseModelView(AuthMixins, _ModelView):
             category=(category or "Database"),
             endpoint="db/%s" % (endpoint or self.model.__name__),
             url=url)
+
+    def get_create_form(self):
+        if self.create_form_class is not None:
+            return self.create_form_class
+        else:
+            return self.get_form()
+
+    def get_edit_form(self):
+        if self.edit_form_class is not None:
+            return self.edit_form_class
+        else:
+            return self.get_form()

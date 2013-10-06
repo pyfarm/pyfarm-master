@@ -14,7 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from wtforms.fields import SelectField, TextField
+from functools import partial
+from wtforms.validators import Required
+from wtforms.fields import SelectField, TextField, IntegerField, FloatField
 
 
 class EnumList(SelectField):
@@ -38,3 +40,22 @@ class EnumList(SelectField):
 
         super(EnumList, self).__init__(
             choices=processed_choices, coerce=int, **kwargs)
+
+
+def construct_field(field_type, column, label=None, required=True, **kwargs):
+    if required:
+        validators = kwargs.setdefault("validators", [])
+        validators.append(Required())
+
+    kwargs["description"] = column.__doc__
+    if label:
+        kwargs["label"] = label
+
+    if column.default:
+        kwargs.setdefault("default", column.default.arg)
+
+    return field_type(**kwargs)
+
+txt_field = partial(construct_field, TextField)
+int_field = partial(construct_field, IntegerField)
+float_field = partial(construct_field, FloatField)

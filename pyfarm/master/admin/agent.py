@@ -21,41 +21,22 @@ Agent
 Objects and classes for working with the agent models.
 """
 
-from functools import partial
-from wtforms import IntegerField, TextField, FloatField
-from wtforms.validators import Required
 from flask.ext.wtf import Form
 from pyfarm.core.enums import AgentState
 from pyfarm.models.agent import AgentTagsModel, AgentSoftwareModel, AgentModel
 from pyfarm.master.admin.base import BaseModelView
-from pyfarm.master.admin.forms.fields import EnumList
+from pyfarm.master.admin.forms.fields import (
+    EnumList, int_field, txt_field, float_field)
 from pyfarm.master.application import SessionMixin
 
 
-def construct_field(field_type, column, label=None, required=True, **kwargs):
-    if required:
-        validators = kwargs.setdefault("validators", [])
-        validators.append(Required())
-
-    kwargs["description"] = column.__doc__
-    if label:
-        kwargs["label"] = label
-
-    if column.default:
-        kwargs.setdefault("default", column.default.arg)
-
-    return field_type(**kwargs)
-
-#subnet
-
-txt_field = partial(construct_field, TextField)
-int_field = partial(construct_field, IntegerField)
-float_field = partial(construct_field, FloatField)
+class AgentRolesMixin(object):
+    access_roles = ("admin.db.agent", )
 
 
 class AgentModelForm(Form):
     """
-    Constructs the form for adding
+    Constructs the form for adding new agents
     """
     state = EnumList(AgentState,
                      default=AgentState.ONLINE,
@@ -63,7 +44,6 @@ class AgentModelForm(Form):
                               AgentState.OFFLINE),
                      description="Current the state of the agent, see the docs "
                                  "for more information.")
-
     hostname = txt_field(AgentModel.hostname)
     cpus = int_field(AgentModel.cpus, "CPU Count")
     ram = int_field(AgentModel.ram, "RAM")
@@ -77,14 +57,9 @@ class AgentModelForm(Form):
 
 
 
-class AgentRolesMixin(object):
-    access_roles = ("admin.db.agent", )
-
-
-# TODO: !!! add display override for STATE field
 class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     model = AgentModel
-    form = AgentModelForm
+    create_form_class = AgentModelForm
     column_searchable_list = ("hostname", )
     column_filters = ("hostname", "ram", "cpus", "state")
 
