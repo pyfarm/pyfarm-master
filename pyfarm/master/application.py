@@ -86,7 +86,7 @@ def get_database_uri(warning=True):
     if "PYFARM_DATABASE_URI" in os.environ:
         uri = os.environ["PYFARM_DATABASE_URI"]
     else:
-        uri = "sqlite:///pyfarm.sql"
+        uri = "sqlite:///pyfarm.sqlite"
 
         if warning:
             warn("$PYFARM_DATABASE_URI not present in environment",

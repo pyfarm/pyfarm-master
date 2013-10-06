@@ -21,12 +21,11 @@ Admin Index
 Setup the administrative index.
 """
 
-from warnings import warn
 from flask import redirect, abort
 from flask.ext.login import current_user, current_app
-from flask.ext.admin.contrib.sqlamodel import ModelView as _ModelView
+from flask.ext.admin.contrib import sqla
 from flask.ext.admin import AdminIndexView
-from pyfarm.core.warning import ConfigurationWarning
+
 
 def current_user_authorized(required=None, allowed=None, redirect=True):
     """
@@ -82,7 +81,7 @@ class AdminIndex(AuthMixins, AdminIndexView):
         "admin.db.work.job", "admin.db.work.task")
 
 
-class BaseModelView(AuthMixins, _ModelView):
+class BaseModelView(AuthMixins, sqla.ModelView):
     edit_form_class = None
     create_form_class = None
 

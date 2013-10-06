@@ -171,7 +171,9 @@ def run_master():
         from pyfarm.models.task import TaskModel, TaskDependencies
         from pyfarm.models.job import JobModel, JobTagsModel, JobDependencies
         from pyfarm.models.jobtype import JobTypeModel
-        from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
+        from pyfarm.models.agent import (
+            AgentModel, AgentSoftwareModel, AgentTagsModel,
+            AgentSoftwareDependencies, AgentTagDependencies)
         from pyfarm.models.users import User, Role
         app.before_first_request_funcs.append(db.create_all)
 

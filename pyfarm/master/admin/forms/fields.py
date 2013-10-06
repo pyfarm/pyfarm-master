@@ -14,9 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functools import partial
-from wtforms.validators import Required
-from wtforms.fields import SelectField, TextField, IntegerField, FloatField
+from flask.ext.admin.contrib.sqla import ajax
+from wtforms.fields import SelectField
+from pyfarm.master.application import db
+
+
+class AjaxQueryLoader(ajax.QueryAjaxModelLoader):
+    def __init__(self, name, model, **kwargs):
+        super(AjaxQueryLoader, self).__init__(
+            name, db.session, model, **kwargs)
 
 
 class EnumList(SelectField):
@@ -31,31 +37,14 @@ class EnumList(SelectField):
         if provided, only these keys will be provided as choices
         in the html list widget
     """
-    def __init__(self, enum, choices=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         processed_choices = []
+        enum = kwargs.pop("enum")
+        values = kwargs.pop("values")
 
         for key, value in enum._asdict().iteritems():
-            if not choices or value in choices:
+            if value in values:
                 processed_choices.append((value, key.title()))
 
         super(EnumList, self).__init__(
             choices=processed_choices, coerce=int, **kwargs)
-
-
-def construct_field(field_type, column, label=None, required=True, **kwargs):
-    if required:
-        validators = kwargs.setdefault("validators", [])
-        validators.append(Required())
-
-    kwargs["description"] = column.__doc__
-    if label:
-        kwargs["label"] = label
-
-    if column.default:
-        kwargs.setdefault("default", column.default.arg)
-
-    return field_type(**kwargs)
-
-txt_field = partial(construct_field, TextField)
-int_field = partial(construct_field, IntegerField)
-float_field = partial(construct_field, FloatField)
