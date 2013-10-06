@@ -161,29 +161,18 @@ class AgentModel(db.Model, WorkValidationMixin):
                          The hostname we should use to talk to this host.
                          Preferably this value will be the fully qualified
                          name instead of the base hostname alone."""))
-    ip = db.Column(IPv4Address, nullable=False,
-                   doc=dedent("""
-                   The IPv4 network address this host resides on.  This is
-                   'best guess' address using factors described in
-                   :meth:`pyfarm.system.network.NetworkInfo.ip`"""))
-    subnet = db.Column(IPv4Address, nullable=False,
+    ip = db.Column(IPv4Address, nullable=True,
+                   doc="The IPv4 network address this host resides on")
+    subnet = db.Column(IPv4Address, nullable=True,
                        doc=dedent("""
                        The subnet associated with the agent at the time we
-                       discovered :attr:`ip`"""))
+                       discovered the IP address"""))
     ram = db.Column(db.Integer, nullable=False,
-                    doc=dedent("""
-                    The amount of ram (in megabytes) installed on the agent.
-                    This value is provided by
-                    :attr:`pyfarm.system.memory.MemoryInfo.TOTAL_RAM`"""))
+                    doc="The amount of ram installed on the agent in megabytes")
     cpus = db.Column(db.Integer, nullable=False,
-                     doc=dedent("""
-                     The number of cpus installed on the agent.  This value
-                     is provided by
-                     :attr:`pyfarm.system.processor.ProcessorInfo.NUM_CPUS`
-                     """))
+                     doc="The number of cpus installed on the agent")
     port = db.Column(db.Integer, nullable=False,
-                     doc=dedent("""
-                     The port the agent is currently running on"""))
+                     doc="The port the agent is currently running on")
 
     # host state
     state = db.Column(db.Integer, default=STATE_DEFAULT, nullable=False,
@@ -208,24 +197,21 @@ class AgentModel(db.Model, WorkValidationMixin):
                                default=cfg.get("agent.ram_allocation", .8),
                                doc=dedent("""
                                The amount of ram the agent is allowed to
-                               allocate towards work.  A value of `1.0` would
+                               allocate towards work.  A value of 1.0 would
                                mean to let the agent use all of the memory
-                               installed on the system when assigning work.
+                               installed on the system when assigning work."""))
 
-                               **configured by**: `agent.ram_allocation`"""))
     cpu_allocation = db.Column(db.Float, nullable=False,
                                default=cfg.get("agent.cpu_allocation", 1.0),
                                doc=dedent("""
                                The total amount of cpu space an agent is
-                               allowed to process work in.  A value of `1.0`
+                               allowed to process work in.  A value of 1.0
                                would mean an agent can handle as much work
                                as the system could handle given the
                                requirements of a task.  For example if an agent
                                has 8 cpus, cpu_allocation is .5, and a task
                                requires 4 cpus then only that task will run
-                               on the system.
-
-                               **configured by**: `agent.cpu_allocation`"""))
+                               on the system."""))
 
     # relationships
     tasks = db.relationship("TaskModel", backref="agent", lazy="dynamic",
@@ -272,6 +258,9 @@ class AgentModel(db.Model, WorkValidationMixin):
         This method will also value subnet masks to ensure their format is
         valid.
         """
+        if not value:
+            return
+
         try:
             ip = netaddr.IPAddress(value)
 
@@ -309,6 +298,7 @@ class AgentModel(db.Model, WorkValidationMixin):
         """
         min_value = cfg.get("agent.min_%s" % key)
         max_value = cfg.get("agent.max_%s" % key)
+
 
         # quick sanity check of the incoming config
         assert isinstance(min_value, int), "db.min_%s must be an integer" % key

@@ -40,7 +40,7 @@ class WorkValidationMixin(object):
         the range provided by `STATE_ENUM`
         """
         if value not in self.STATE_ENUM:
-            raise ValueError("%s is not a valid state" % value)
+            raise ValueError("%s is not a valid state" % repr(value))
 
         return value
 
