@@ -17,9 +17,11 @@
 import socket
 from functools import partial
 from flask import flash
+from flask.ext.admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from wtforms.validators import StopValidation
 from wtforms.fields import SelectField
 from pyfarm.models.agent import AgentModel
+from pyfarm.master.application import db
 
 
 class EnumList(SelectField):
@@ -92,3 +94,28 @@ def validate_network_fields_provided(form, field):
     """
     When the form is submitted ensure that if either the IP or sub
     """
+
+
+class AjaxLoader(QueryAjaxModelLoader):
+    """
+    Same init as Flask's QueryAjaxModelLoader except the session is
+    shared and you can override the primary key
+
+    :keyword pk:
+        the name of column to use as the primary key
+
+    :keyword fmt:
+        callable function which will format the row's model
+    """
+    def __init__(self, name, model, session=db.session, **options):
+        pk = options.pop("pk", None)
+        self.fmt = options.pop("fmt", lambda model: unicode(model))
+        super(AjaxLoader, self).__init__(name, session, model, **options)
+        if pk is not None:
+            self.pk = pk
+
+    def format(self, model):
+        if not model:
+            return None
+
+        return (getattr(model, self.pk), self.fmt(model))

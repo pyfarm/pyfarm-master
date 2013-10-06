@@ -22,37 +22,31 @@ Objects and classes for working with the agent models.
 """
 
 from wtforms import TextField
-from flask.ext.admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from pyfarm.core.enums import AgentState
 from pyfarm.models.agent import AgentTagsModel, AgentSoftwareModel, AgentModel
-from pyfarm.master.application import SessionMixin, db
+from pyfarm.master.application import SessionMixin
 from pyfarm.master.admin.base import BaseModelView
 from pyfarm.master.admin.fields import (
     EnumList, validate_resource, validate_address, validate_hostname,
-    check_dns_mapping)
+    check_dns_mapping, AjaxLoader)
 
 
-class AgentTagsDisplay(AgentTagsModel):
-    def __repr__(self):
-        return self.tag
+def repr_tag(model):
+    return model.tag
 
 
-class AgentSoftwareDisplay(AgentSoftwareModel):
-    def __repr__(self):
-        return "%s (%s)" % (self.software, self.version)
+def repr_software(model):
+    return "%s (%s)" % (model.software, model.version)
 
 
-class AgentModelDisplay(AgentModel):
-    def __repr__(self):
-        if self.ip:
-            return "%s (%s)" % (self.hostname, self.ip)
-        else:
-            return self.hostname
+def repr_agent(model):
+    if model.ip:
+        return "%s (%s)" % (model.hostname, model.ip)
+    return model.hostname
 
 
 class AgentRolesMixin(object):
     access_roles = ("admin.db.agent", )
-
 
 
 class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
@@ -118,12 +112,11 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
 
     # create ajax loaders for the relationships
     form_ajax_refs = {
-        "tags": QueryAjaxModelLoader("tags", db.session,
-                                     AgentTagsDisplay,
-                                     fields=("tag", )),
-        "software": QueryAjaxModelLoader("software", db.session,
-                                         AgentSoftwareDisplay,
-                                         fields=("software", "version"))}
+        "tags": AjaxLoader("tags", AgentTagsModel,
+                           fields=("tag", ), fmt=repr_tag),
+        "software": AjaxLoader("software", AgentSoftwareModel,
+                               fields=("software", "version"),
+                               fmt=repr_software)}
 
 
 class AgentTagsModelView(SessionMixin, AgentRolesMixin, BaseModelView):
@@ -142,9 +135,8 @@ class AgentTagsModelView(SessionMixin, AgentRolesMixin, BaseModelView):
 
     # create ajax loaders for the relationships
     form_ajax_refs = {
-        "agents": QueryAjaxModelLoader("agents", db.session,
-                                       AgentModelDisplay,
-                                       fields=("hostname", ))}
+        "agents": AjaxLoader("agents", AgentModel,
+                             fields=("hostname", ), fmt=repr_agent)}
 
 
 class AgentSoftwareModelView(SessionMixin, AgentRolesMixin, BaseModelView):
@@ -165,6 +157,5 @@ class AgentSoftwareModelView(SessionMixin, AgentRolesMixin, BaseModelView):
 
     # create ajax loaders for the relationships
     form_ajax_refs = {
-        "agents": QueryAjaxModelLoader("agents", db.session,
-                                       AgentModelDisplay,
-                                       fields=("hostname", ))}
+        "agents": AjaxLoader("agents", AgentModel,
+                             fields=("hostname", ), fmt=repr_agent)}
