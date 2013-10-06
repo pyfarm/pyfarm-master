@@ -54,7 +54,9 @@ setup(
     name="pyfarm.master",
     version="0.7.0-dev3",
     packages=[
-        "pyfarm", "pyfarm.master", "pyfarm.master.admin",
+        "pyfarm",
+        "pyfarm.master",
+        "pyfarm.master.admin",
         "pyfarm.master.scripts"],
     include_package_data=True,
     package_data={"pyfarm.master": get_package_data()},
