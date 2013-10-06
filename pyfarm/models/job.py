@@ -44,7 +44,7 @@ from pyfarm.master.application import db
 from pyfarm.models.core.functions import WorkColumns
 from pyfarm.models.core.types import IDColumn, JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_JOB_TAGS, TABLE_JOB_SOFTWARE,
+    TABLE_JOB, TABLE_JOB_TAG, TABLE_JOB_SOFTWARE,
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH,
     TABLE_JOB_DEPENDENCIES)
 from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
@@ -65,7 +65,7 @@ class JobTagsModel(db.Model):
 
     .. autoattribute:: jobid
     """
-    __tablename__ = TABLE_JOB_TAGS
+    __tablename__ = TABLE_JOB_TAG
     __table_args__ = (
         UniqueConstraint("jobid", "tag"), )
 

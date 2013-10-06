@@ -26,8 +26,7 @@ from textwrap import dedent
 from uuid import uuid4, UUID
 from UserDict import UserDict
 from UserList import UserList
-
-from netaddr import IPAddress
+from netaddr import IPAddress, AddrFormatError
 
 try:
     from json import dumps, loads
@@ -204,7 +203,14 @@ class IPv4Address(TypeDecorator):
             return self.checkInteger(value)
 
         elif isinstance(value, basestring):
-            return self.checkInteger(int(IPAddress(value)))
+            original_value = value
+            try:
+                return self.checkInteger(int(IPAddress(value.replace("%", ""))))
+            except AddrFormatError:
+                # value provided is coming from a form search
+                if "%" in value:
+                    return None
+                raise
 
         elif isinstance(value, IPAddress):
             return self.checkInteger(int(value))

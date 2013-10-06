@@ -22,7 +22,6 @@ Models and interface classes related to tasks
 """
 
 from textwrap import dedent
-
 from sqlalchemy import event
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
@@ -34,9 +33,9 @@ from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
 
 TaskDependencies = db.Table(
     TABLE_TASK_DEPENDENCIES, db.metadata,
-    db.Column("parentid", IDTypeWork,
+    db.Column("parent_id", IDTypeWork,
               db.ForeignKey("%s.id" % TABLE_TASK), primary_key=True),
-    db.Column("childid", IDTypeWork,
+    db.Column("child_id", IDTypeWork,
               db.ForeignKey("%s.id" % TABLE_TASK), primary_key=True))
 
 
@@ -68,16 +67,14 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin):
 
     # relationships
     agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
-                        doc=dedent("""
-                        Foreign key which stores :attr:`JobModel.id`"""))
+                        doc="Foreign key which stores :attr:`JobModel.id`")
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
-                      doc=dedent("""
-                      Foreign key which stores :attr:`JobModel.id`"""))
+                      doc="Foreign key which stores :attr:`JobModel.id`")
 
     parents = db.relationship("TaskModel",
                               secondary=TaskDependencies,
-                              primaryjoin=id==TaskDependencies.c.parentid,
-                              secondaryjoin=id==TaskDependencies.c.childid,
+                              primaryjoin=id==TaskDependencies.c.parent_id,
+                              secondaryjoin=id==TaskDependencies.c.child_id,
                               backref="children")
 
     @staticmethod

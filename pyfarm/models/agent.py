@@ -36,12 +36,27 @@ from pyfarm.models.core.types import (
     IDColumn, IPv4Address, IDTypeAgent, IDTypeTag)
 from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE,
-    MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH)
+    MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH, TABLE_AGENT_SOFTWARE_DEPENDENCIES,
+    TABLE_AGENT_TAGS_DEPENDENCIES)
 
 
 REGEX_HOSTNAME = re.compile("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*"
                             "[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9]"
                             "[A-Za-z0-9\-]*[A-Za-z0-9])$")
+
+AgentTagDependencies = db.Table(
+    TABLE_AGENT_TAGS_DEPENDENCIES, db.metadata,
+    db.Column("agent_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
+    db.Column("tag_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_AGENT_TAGS), primary_key=True))
+
+AgentSoftwareDependencies = db.Table(
+    TABLE_AGENT_SOFTWARE_DEPENDENCIES, db.metadata,
+    db.Column("agent_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
+    db.Column("software_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_AGENT_SOFTWARE), primary_key=True))
 
 
 class AgentTaggingMixin(object):
@@ -78,17 +93,12 @@ class AgentTagsModel(db.Model, AgentTaggingMixin):
     .. autoattribute:: agentid
     """
     __tablename__ = TABLE_AGENT_TAGS
-    __table_args__ = (UniqueConstraint("agentid", "tag"), )
     id = IDColumn(IDTypeTag)
-    agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
-                        nullable=False,
-                        doc=dedent("""
-                        The foreign key which stores :attr:`AgentModel.id`"""))
     tag = db.Column(db.String(MAX_TAG_LENGTH),
                     doc=dedent("""
-                    A string value to tag an :class:`.AgentModel`. Generally
-                    this value is used for grouping like resources together
-                    on the network but could also be used by jobs as a sort of
+                    A string value to tag an agent with. Generally this value
+                    is used for grouping like resources together on the network
+                    but could also be used by jobs as a sort of
                     requirement."""))
 
 
@@ -109,12 +119,8 @@ class AgentSoftwareModel(db.Model, AgentTaggingMixin):
     .. autoattribute:: agentid
     """
     __tablename__ = TABLE_AGENT_SOFTWARE
-    __table_args__ = (UniqueConstraint("agentid", "version", "software"), )
+    __table_args__ = (UniqueConstraint("version", "software"), )
     id = IDColumn(IDTypeTag)
-    agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
-                        nullable=False,
-                        doc=dedent("""
-                        The foreign key which stores :attr:`AgentModel.id`"""))
     software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
                          doc=dedent("""
                          The name of the software installed.  No normalization
@@ -187,7 +193,7 @@ class AgentModel(db.Model, WorkValidationMixin):
     # Max allocation of the two primary resources which `1.0` is 100%
     # allocation.  For `cpu_allocation` 100% allocation typically means
     # one task per cpu.
-    ram_allocation = db.Column(db.Float, nullable=False,
+    ram_allocation = db.Column(db.Float,
                                default=cfg.get("agent.ram_allocation", .8),
                                doc=dedent("""
                                The amount of ram the agent is allowed to
@@ -195,7 +201,7 @@ class AgentModel(db.Model, WorkValidationMixin):
                                mean to let the agent use all of the memory
                                installed on the system when assigning work."""))
 
-    cpu_allocation = db.Column(db.Float, nullable=False,
+    cpu_allocation = db.Column(db.Float,
                                default=cfg.get("agent.cpu_allocation", 1.0),
                                doc=dedent("""
                                The total amount of cpu space an agent is
@@ -213,19 +219,21 @@ class AgentModel(db.Model, WorkValidationMixin):
                             Relationship between an :class:`AgentModel`
                             and any :class:`pyfarm.models.TaskModel`
                             objects"""))
-    tags = db.relationship("AgentTagsModel", backref="agent", lazy="dynamic",
-                           doc=dedent("""
-                           Relationship between an :class:`AgentModel`
-                           and any :class:`pyfarm.models.AgentTagsModel`
-                           objects"""))
-    software = db.relation("AgentSoftwareModel", backref="agent",
-                           lazy="dynamic", doc=dedent("""
-                           Relationship between an :class:`AgentModel`
-                           and any :class:`pyfarm.models.AgentSoftwareModel`
-                           objects"""))
+    tags = db.relationship("AgentTagsModel", secondary=AgentTagDependencies,
+                            enable_typechecks=False,
+                            backref=db.backref("agents", lazy="dynamic"),
+                            lazy="dynamic",
+                            doc="Tag(s) assigned to this agent")
+    software = db.relation("AgentSoftwareModel",
+                           enable_typechecks=False,
+                           secondary=AgentSoftwareDependencies,
+                           backref=db.backref("agents", lazy="dynamic"),
+                           lazy="dynamic",
+                           doc="software this agent has installed or is "
+                               "configured for")
 
-    @validates("hostname")
-    def validate_hostname(self, key, value):
+    @classmethod
+    def validate_hostname(cls, key, value):
         """
         Ensures that the hostname provided by `value` matches a regular
         expression that expresses what a valid hostname is.
@@ -236,8 +244,31 @@ class AgentModel(db.Model, WorkValidationMixin):
 
         return value
 
-    @validates("ip", "subnet")
-    def validate_address(self, key, value):
+    @classmethod
+    def validate_resource(cls, key, value):
+        """
+        Ensure the `value` provided for `key` is within an expected range as
+        specified in `agent.yml`
+        """
+        min_value = cfg.get("agent.min_%s" % key)
+        max_value = cfg.get("agent.max_%s" % key)
+
+        # quick sanity check of the incoming config
+        assert isinstance(min_value, int), "db.min_%s must be an integer" % key
+        assert isinstance(max_value, int), "db.max_%s must be an integer" % key
+        assert min_value >= 1, "db.min_%s must be > 0" % key
+        assert max_value >= 1, "db.max_%s must be > 0" % key
+
+        # check the provided input
+        if min_value > value or value > max_value:
+            msg = "value for `%s` must be between " % key
+            msg += "%s and %s" % (min_value, max_value)
+            raise ValueError(msg)
+
+        return value
+
+    @classmethod
+    def validate_address(cls, key, value):
         """
         Ensures the :attr:`ip` and :attr:`subnet` are valid.  For ip addresses
         this will make sure `value` is:
@@ -284,26 +315,14 @@ class AgentModel(db.Model, WorkValidationMixin):
 
         return value
 
+    @validates("ip", "subnet")
+    def validate_address_column(self, key, value):
+        return self.validate_address(key, value)
+
+    @validates("hostname")
+    def validate_hostname_column(self, key, value):
+        return self.validate_hostname(key, value)
+
     @validates("ram", "cpus", "port")
-    def validate_resource(self, key, value):
-        """
-        Ensure the `value` provided for `key` is within an expected range as
-        specified in `agent.yml`
-        """
-        min_value = cfg.get("agent.min_%s" % key)
-        max_value = cfg.get("agent.max_%s" % key)
-
-
-        # quick sanity check of the incoming config
-        assert isinstance(min_value, int), "db.min_%s must be an integer" % key
-        assert isinstance(max_value, int), "db.max_%s must be an integer" % key
-        assert min_value >= 1, "db.min_%s must be > 0" % key
-        assert max_value >= 1, "db.max_%s must be > 0" % key
-
-        # check the provided input
-        if min_value > value or value > max_value:
-            msg = "value for `%s` must be between " % key
-            msg += "%s and %s" % (min_value, max_value)
-            raise ValueError(msg)
-
-        return value
+    def validate_resource_column(self, key, value):
+        return self.validate_resource(key, value)

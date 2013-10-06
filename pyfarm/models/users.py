@@ -37,9 +37,9 @@ logger = getLogger("models.users")
 
 UserRoles = db.Table(
     TABLE_USERS_USER_ROLES,
-    db.Column("user_id", db.Integer(),
+    db.Column("user_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_USERS_USER)),
-    db.Column("role_id", db.Integer(),
+    db.Column("role_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_USERS_ROLE)))
 
 
