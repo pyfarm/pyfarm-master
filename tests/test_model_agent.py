@@ -15,13 +15,13 @@
 # limitations under the License.
 
 from __future__ import with_statement
+from os import urandom
 from sqlalchemy.exc import DatabaseError
 from utcore import ModelTestCase, unittest
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
 from pyfarm.master.application import db
 from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
-
 
 try:
     from itertools import product
@@ -42,12 +42,12 @@ class AgentTestCase(unittest.TestCase):
     # against.  This covered the start and end
     # points for all private network ranges.
     addresses = (
-        ("10.0.0.0", "255.0.0.0"),
-        ("172.16.0.0", "255.240.0.0"),
-        ("192.168.0.0", "255.255.255.0"),
-        ("10.255.255.255", "255.0.0.0"),
-        ("172.31.255.255", "255.240.0.0"),
-        ("192.168.255.255", "255.255.255.0"))
+        "10.0.0.0",
+        "172.16.0.0",
+        "192.168.0.0",
+        "10.255.255.255",
+        "172.31.255.255",
+        "192.168.255.255")
 
     def modelArguments(self, limit=None):
         generator = product(
@@ -55,14 +55,13 @@ class AgentTestCase(unittest.TestCase):
             self.ram_allocation, self.cpu_allocation)
 
         count = 0
-        for (address, port, cpus, ram, state,
+        for (ip, port, cpus, ram, state,
              ram_allocation, cpu_allocation) in generator:
             if limit is not None and count > limit:
                 break
 
-            ip, subnet = address
             yield (
-                "%s%02d" % (self.hostnamebase, count), ip, subnet, port,
+                "%s%02d" % (self.hostnamebase, count), ip, port,
                 cpus, ram, state, ram_allocation, cpu_allocation)
             count += 1
 
@@ -72,12 +71,11 @@ class AgentTestCase(unittest.TestCase):
         model.  This is done so that we test endpoints in the extreme ranges.
         """
         generator = self.modelArguments(limit=limit)
-        for (hostname, ip, subnet, port, cpus, ram, state,
+        for (hostname, ip, port, cpus, ram, state,
              ram_allocation, cpu_allocation) in generator:
             agent = AgentModel()
             agent.hostname = hostname
             agent.ip = ip
-            agent.subnet = subnet
             agent.port = port
             agent.cpus = cpus
             agent.ram = ram
@@ -90,23 +88,29 @@ class AgentTestCase(unittest.TestCase):
 class TestAgentSoftware(AgentTestCase, ModelTestCase):
     def test_software(self):
         for agent_foobar in self.models(limit=1):
+            db.session.add(agent_foobar)
+
             # create some software tags
             software_objects = []
             for software_name in ("foo", "bar", "baz"):
                 software = AgentSoftwareModel()
                 software.agent = agent_foobar
                 software.software = software_name
-                software_objects.append(software)
-                db.session.add(software)
+                software.version = urandom(5).encode("hex")
+                software_objects.append((software.software, software.version))
+                agent_foobar.software.append(software)
 
             db.session.commit()
             agent_id = agent_foobar.id
             db.session.remove()
 
             agent = AgentModel.query.filter_by(id=agent_id).first()
-            self.assertEqual(
-                set(i.software for i in agent.software),
-                set(("foo", "bar", "baz")))
+            self.assertIsNotNone(agent)
+
+            agent_software = list(
+                (str(i.software), str(i.version)) for i in agent.software)
+            inserted_software = software_objects
+            self.assertLessEqual(agent_software, inserted_software)
 
     def test_software_unique(self):
         for agent_foobar in self.models(limit=1):
@@ -145,30 +149,23 @@ class TestAgentTags(AgentTestCase, ModelTestCase):
     def test_tags(self):
         for agent_foobar in self.models(limit=1):
             db.session.add(agent_foobar)
-            db.session.commit()
 
-            # create some software tags
-            tag_objects = []
-            for tag_name in ("foo", "bar", "baz"):
+            tags = []
+            rand = lambda: urandom(6).encode("hex")
+            for tag_name in (rand(), rand(), rand()):
                 tag = AgentTagsModel()
-                tag.agent = agent_foobar
                 tag.tag = tag_name
-                tag_objects.append(tag)
-                db.session.add(tag)
+                tags.append(tag_name)
+                agent_foobar.tags.append(tag)
+
 
             db.session.commit()
-            agent = AgentModel.query.filter_by(id=agent_foobar.id).first()
-
-            # agent.software == software_objects
-            self.assertEqual(
-                set(i.id for i in agent.tags.all()),
-                set(i.id for i in tag_objects))
-
-            # same as above, asking from the software table side
-            self.assertEqual(
-                set(i.id for i in AgentTagsModel.query.filter_by(
-                    agent=agent).all()),
-                set(i.id for i in tag_objects))
+            agent_id = agent_foobar.id
+            db.session.remove()
+            agent = AgentModel.query.filter_by(id=agent_id).first()
+            self.assertIsNotNone(agent)
+            self.assertListEqual(
+                list(str(tag.tag) for tag in agent.tags), tags)
 
 
 class TestAgentModel(AgentTestCase, ModelTestCase):
@@ -183,7 +180,6 @@ class TestAgentModel(AgentTestCase, ModelTestCase):
         for result, agent, in agents.iteritems():
             self.assertEqual(result.hostname, agent.hostname)
             self.assertEqual(result.ip, agent.ip)
-            self.assertEqual(result.subnet, agent.subnet)
             self.assertEqual(result.port, agent.port)
             self.assertEqual(result.cpus, agent.cpus)
             self.assertEqual(result.ram, agent.ram)
@@ -192,17 +188,15 @@ class TestAgentModel(AgentTestCase, ModelTestCase):
             self.assertEqual(result.ram_allocation, agent.ram_allocation)
 
     def test_basic_insert_nonunique(self):
-        for (hostname, ip, subnet, port, cpus, ram, state,
+        for (hostname, ip, port, cpus, ram, state,
              ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
             modelA = AgentModel()
             modelA.hostname = hostname
             modelA.ip = ip
-            modelA.subnet = subnet
             modelA.port = port
             modelB = AgentModel()
             modelB.hostname = hostname
             modelB.ip = ip
-            modelB.subnet = subnet
             modelB.port = port
             db.session.add(modelA)
             db.session.add(modelB)
@@ -238,21 +232,6 @@ class TestModelValidation(AgentTestCase):
         for address in fail_addresses:
             with self.assertRaises(ValueError):
                 agent.ip = address
-
-    def test_subnet(self):
-        fail_subnets = (
-            "0.0.0.0",
-            "169.254.0.0", "169.254.254.255",  # link local
-            "127.0.0.1", "127.255.255.255",  # loopback
-            "224.0.0.0", "255.255.255.255",  # multi/broadcast
-            "10.56.0.1", "172.16.0.1")
-
-        for agent in self.models(limit=1):
-            break
-
-        for subnet in fail_subnets:
-            with self.assertRaises(ValueError):
-                agent.subnet = subnet
 
     def test_port_validation(self):
         for model in self.models(limit=1):

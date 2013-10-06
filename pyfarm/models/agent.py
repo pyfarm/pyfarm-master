@@ -145,12 +145,11 @@ class AgentModel(db.Model, WorkValidationMixin):
 
             * :attr:`hostname`
             * :attr:`ip`
-            * :attr:`subnet`
             * :attr:`port`
 
     """
     __tablename__ = TABLE_AGENT
-    __table_args__ = (UniqueConstraint("hostname", "ip", "subnet", "port"), )
+    __table_args__ = (UniqueConstraint("hostname", "ip", "port"), )
     STATE_ENUM = AgentState
     STATE_DEFAULT = STATE_ENUM.ONLINE
     id = IDColumn(IDTypeAgent)
@@ -163,10 +162,6 @@ class AgentModel(db.Model, WorkValidationMixin):
                          name instead of the base hostname alone."""))
     ip = db.Column(IPv4Address, nullable=True,
                    doc="The IPv4 network address this host resides on")
-    subnet = db.Column(IPv4Address, nullable=True,
-                       doc=dedent("""
-                       The subnet associated with the agent at the time we
-                       discovered the IP address"""))
     ram = db.Column(db.Integer, nullable=False,
                     doc="The amount of ram installed on the agent in megabytes")
     cpus = db.Column(db.Integer, nullable=False,
@@ -215,6 +210,7 @@ class AgentModel(db.Model, WorkValidationMixin):
 
     # relationships
     tasks = db.relationship("TaskModel", backref="agent", lazy="dynamic",
+                            enable_typechecks=False,
                             doc=dedent("""
                             Relationship between an :class:`AgentModel`
                             and any :class:`pyfarm.models.TaskModel`
@@ -224,13 +220,13 @@ class AgentModel(db.Model, WorkValidationMixin):
                             backref=db.backref("agents", lazy="dynamic"),
                             lazy="dynamic",
                             doc="Tag(s) assigned to this agent")
-    software = db.relation("AgentSoftwareModel",
-                           enable_typechecks=False,
-                           secondary=AgentSoftwareDependencies,
-                           backref=db.backref("agents", lazy="dynamic"),
-                           lazy="dynamic",
-                           doc="software this agent has installed or is "
-                               "configured for")
+    software = db.relationship("AgentSoftwareModel",
+                               enable_typechecks=False,
+                               secondary=AgentSoftwareDependencies,
+                               backref=db.backref("agents", lazy="dynamic"),
+                               lazy="dynamic",
+                               doc="software this agent has installed or is "
+                                   "configured for")
 
     @classmethod
     def validate_hostname(cls, key, value):
@@ -268,10 +264,10 @@ class AgentModel(db.Model, WorkValidationMixin):
         return value
 
     @classmethod
-    def validate_address(cls, key, value):
+    def validate_ip_address(cls, key, value):
         """
-        Ensures the :attr:`ip` and :attr:`subnet` are valid.  For ip addresses
-        this will make sure `value` is:
+        Ensures the :attr:`ip` address is valid.  This checks to ensure
+        that the value provided is:
 
             * not a hostmask
             * not link local (:rfc:`3927`)
@@ -279,9 +275,6 @@ class AgentModel(db.Model, WorkValidationMixin):
             * not a netmask (:rfc:`4632`)
             * not reserved (:rfc:`6052`)
             * a private address (:rfc:`1918`)
-
-        This method will also value subnet masks to ensure their format is
-        valid.
         """
         if not value:
             return
@@ -293,31 +286,19 @@ class AgentModel(db.Model, WorkValidationMixin):
             raise ValueError(
                 "%s is not a valid address format: %s" % (value, e))
 
-        if key == "ip":
-            valid = all([
-                not ip.is_hostmask(), not ip.is_link_local(),
-                not ip.is_loopback(), not ip.is_multicast(),
-                not ip.is_netmask(), ip.is_private(),
-                not ip.is_reserved()
-            ])
-            if not valid:
-                raise ValueError("%s it not a private ip address" % value)
-
-        elif key == "subnet":
-            valid = all([
-                not ip.is_hostmask(), not ip.is_link_local(),
-                not ip.is_loopback(), not ip.is_multicast(),
-                ip.is_netmask(), not ip.is_private(),
-                ip.is_reserved()
-            ])
-            if not valid:
-                raise ValueError("%s is not valid subnet" % value)
+        if not all([
+            not ip.is_hostmask(), not ip.is_link_local(),
+            not ip.is_loopback(), not ip.is_multicast(),
+            not ip.is_netmask(), ip.is_private(),
+            not ip.is_reserved()
+        ]):
+            raise ValueError("%s it not a private ip address" % value)
 
         return value
 
-    @validates("ip", "subnet")
+    @validates("ip")
     def validate_address_column(self, key, value):
-        return self.validate_address(key, value)
+        return self.validate_ip_address(key, value)
 
     @validates("hostname")
     def validate_hostname_column(self, key, value):
