@@ -210,18 +210,15 @@ class AgentModel(db.Model, WorkValidationMixin):
 
     # relationships
     tasks = db.relationship("TaskModel", backref="agent", lazy="dynamic",
-                            enable_typechecks=False,
                             doc=dedent("""
                             Relationship between an :class:`AgentModel`
                             and any :class:`pyfarm.models.TaskModel`
                             objects"""))
     tags = db.relationship("AgentTagsModel", secondary=AgentTagDependencies,
-                            enable_typechecks=False,
                             backref=db.backref("agents", lazy="dynamic"),
                             lazy="dynamic",
                             doc="Tag(s) assigned to this agent")
     software = db.relationship("AgentSoftwareModel",
-                               enable_typechecks=False,
                                secondary=AgentSoftwareDependencies,
                                backref=db.backref("agents", lazy="dynamic"),
                                lazy="dynamic",
