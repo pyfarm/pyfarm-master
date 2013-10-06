@@ -37,6 +37,13 @@ except ImportError:
 from nose.plugins.skip import SkipTest
 from pyfarm.core.config import cfg
 
+if "PYFARM_DATABASE_URI" not in os.environ:
+    os.environ["PYFARM_DATABASE_URI"] = "sqlite:///:memory:"
+
+if "PYFARM_CONFIG" not in os.environ:
+    os.environ["PYFARM_CONFIG"] = "debug"
+
+
 # Some initial configuration values before we load the models.  Some values,
 # such as the table prefix are included here just so two tests don't step
 # on each other (though in production it would be better to use a different DB).
