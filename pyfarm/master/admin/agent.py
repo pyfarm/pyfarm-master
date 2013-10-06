@@ -21,70 +21,63 @@ Agent
 Objects and classes for working with the agent models.
 """
 
-from functools import partial
-from flask import flash
 from wtforms import TextField
-from wtforms.validators import ValidationError
 from flask.ext.admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from pyfarm.core.enums import AgentState
 from pyfarm.models.agent import AgentTagsModel, AgentSoftwareModel, AgentModel
-from pyfarm.master.admin.base import BaseModelView
-from pyfarm.master.admin.forms.fields import EnumList
 from pyfarm.master.application import SessionMixin, db
+from pyfarm.master.admin.base import BaseModelView
+from pyfarm.master.admin.fields import (
+    EnumList, validate_resource, validate_address, validate_hostname,
+    check_dns_mapping)
+
+
+class AgentTagsDisplay(AgentTagsModel):
+    def __repr__(self):
+        return self.tag
+
+
+class AgentSoftwareDisplay(AgentSoftwareModel):
+    def __repr__(self):
+        return "%s (%s)" % (self.software, self.version)
+
+
+class AgentModelDisplay(AgentModel):
+    def __repr__(self):
+        if self.ip:
+            return "%s (%s)" % (self.hostname, self.ip)
+        else:
+            return self.hostname
 
 
 class AgentRolesMixin(object):
     access_roles = ("admin.db.agent", )
 
 
-class AgentTagsModelDisp(AgentTagsModel):
-    def __repr__(self):
-        return self.tag
-
-
-class AgentSoftwareDisp(AgentSoftwareModel):
-    def __repr__(self):
-        return "%s (%s)" % (self.software, self.version)
-
-
-def validate_model_field(form, field, function=None):
-    try:
-        return function(field.name, field.data)
-    except ValueError, e:
-        flash(e)
-        raise ValidationError(e)
-
-# resource validation wrappers
-validate_address = partial(
-    validate_model_field, function=AgentModel.validate_address)
-validate_hostname = partial(
-    validate_model_field, function=AgentModel.validate_hostname)
-validate_resource = partial(
-    validate_model_field, function=AgentModel.validate_resource)
-
 
 class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     model = AgentModel
 
-    # search setup
+    # column setup
     column_searchable_list = ("hostname",)
     column_filters = ("hostname", "ram", "cpus", "state")
+    column_choices = {
+        "state": [(value, key.title()) for key, value in
+                  AgentState._asdict().items()]}
 
     # columns the form should display
     form_columns = (
         "state", "hostname", "port", "cpus", "ram",
-        "tags", "software", "ip", "subnet", "ram_allocation", "cpu_allocation")
+        "tags", "software", "ip", "ram_allocation", "cpu_allocation")
 
     # custom type columns need overrides
     form_overrides = {
         "ip": TextField,
-        "subnet": TextField,
         "state": EnumList}
 
     # more human readable labels
     column_labels = {
         "ip": "IPv4 Address",
-        "subnet": "IPv4 Subnet",
         "ram_allocation": "RAM Allocation",
         "cpu_allocation": "CPU Allocation"}
 
@@ -112,11 +105,8 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
             "validators": [validate_resource],
             "description": AgentModel.ram.__doc__},
         "ip": {
-            "validators": [validate_address],
+            "validators": [validate_address, check_dns_mapping],
             "description": AgentModel.ip.__doc__},
-        "subnet": {
-            "validators": [validate_address],
-            "description": AgentModel.subnet.__doc__},
         "tags": {
             "description": AgentModel.tags.__doc__},
         "software": {
@@ -129,18 +119,52 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     # create ajax loaders for the relationships
     form_ajax_refs = {
         "tags": QueryAjaxModelLoader("tags", db.session,
-                                     AgentTagsModelDisp,
+                                     AgentTagsDisplay,
                                      fields=("tag", )),
         "software": QueryAjaxModelLoader("software", db.session,
-                                         AgentSoftwareDisp,
+                                         AgentSoftwareDisplay,
                                          fields=("software", "version"))}
 
 
-# TODO: update form to use proper setup (see above)
 class AgentTagsModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     model = AgentTagsModel
 
+    # column setup
+    column_searchable_list = ("tag", )
+    column_filters = ("tag", )
 
-# TODO: update form to use proper setup (see above)
+    # arguments to pass into the fields
+    form_args = {
+        "tag": {
+            "description": AgentTagsModel.tag.__doc__},
+        "agents": {
+            "description": "Agents(s) which are tagged with this string"}}
+
+    # create ajax loaders for the relationships
+    form_ajax_refs = {
+        "agents": QueryAjaxModelLoader("agents", db.session,
+                                       AgentModelDisplay,
+                                       fields=("hostname", ))}
+
+
 class AgentSoftwareModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     model = AgentSoftwareModel
+
+    # search setup
+    column_searchable_list = ("software", "version")
+    column_filters = ("software", "version")
+
+    # arguments to pass into the fields
+    form_args = {
+        "software": {
+            "description": AgentSoftwareModel.software.__doc__},
+        "version": {
+            "description": AgentSoftwareModel.version.__doc__},
+        "agents": {
+            "description": "Agent(s) which are tagged with this software"}}
+
+    # create ajax loaders for the relationships
+    form_ajax_refs = {
+        "agents": QueryAjaxModelLoader("agents", db.session,
+                                       AgentModelDisplay,
+                                       fields=("hostname", ))}
