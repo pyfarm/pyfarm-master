@@ -62,7 +62,7 @@ setup(
     package_data={"pyfarm.master": get_package_data()},
     entry_points={
         "console_scripts": [
-            "pyfarm-dev-dbdata = pyfarm.master.dev:dbdata",
+            "pyfarm-dev-dbdata = pyfarm.master.scripts.dev:dbdata",
             "pyfarm-master = pyfarm.master.scripts.master:run_master"]},
     install_requires=install_requires,
     url="https://github.com/pyfarm/pyfarm-master",
