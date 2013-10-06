@@ -54,13 +54,14 @@ setup(
     name="pyfarm.master",
     version="0.7.0-dev3",
     packages=[
-        "pyfarm", "pyfarm.master", "pyfarm.master.admin"],
+        "pyfarm", "pyfarm.master", "pyfarm.master.admin",
+        "pyfarm.master.scripts"],
     include_package_data=True,
     package_data={"pyfarm.master": get_package_data()},
     entry_points={
         "console_scripts": [
-            "pyfarm-user = pyfarm.master.scripts:user_management",
-            "pyfarm-master = pyfarm.master.scripts:run_master"]},
+            "pyfarm-dev-dbdata = pyfarm.master.dev:dbdata",
+            "pyfarm-master = pyfarm.master.scripts.master:run_master"]},
     install_requires=install_requires,
     url="https://github.com/pyfarm/pyfarm-master",
     license="Apache v2.0",
