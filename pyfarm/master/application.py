@@ -33,8 +33,32 @@ from flask.ext.admin import Admin
 from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
 from itsdangerous import URLSafeTimedSerializer
+from pyfarm.core.config import cfg
 from pyfarm.core.warning import EnvironmentWarning, ConfigurationWarning
 from pyfarm.master.admin.base import AdminIndex
+
+# default configuration values
+# TODO: these should either be in the, read from a config, or come from the
+# environment
+cfg.update({
+    "db.table_prefix": "pyfarm_",
+    "agent.min_port": 1025,
+    "agent.max_port": 65535,
+    "agent.min_cpus": 1,
+    "agent.max_cpus": 2147483647,
+    "agent.special_cpus": [0],
+    "agent.min_ram": 32,
+    "agent.max_ram": 2147483647,
+    "agent.special_ram": [0],
+    "job.priority": 500,
+    "job.max_username_length": 254,
+    "job.min_priority": 0,
+    "job.max_priority": 1000,
+    "job.batch": 1,
+    "job.requeue": 1,
+    "job.cpus": 4,
+    "job.ram": 32})
+
 
 
 def get_secret_key(warning=True):

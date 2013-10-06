@@ -21,9 +21,60 @@ Agent
 Objects and classes for working with the agent models.
 """
 
-from pyfarm.master.admin.base import BaseModelView
-from pyfarm.master.application import SessionMixin
+from functools import partial
+from wtforms import IntegerField, TextField, FloatField
+from wtforms.validators import Required
+from flask.ext.wtf import Form
+from pyfarm.core.enums import AgentState
 from pyfarm.models.agent import AgentTagsModel, AgentSoftwareModel, AgentModel
+from pyfarm.master.admin.base import BaseModelView
+from pyfarm.master.admin.forms.fields import EnumList
+from pyfarm.master.application import SessionMixin
+
+
+def construct_field(field_type, column, label=None, required=True, **kwargs):
+    if required:
+        validators = kwargs.setdefault("validators", [])
+        validators.append(Required())
+
+    kwargs["description"] = column.__doc__
+    if label:
+        kwargs["label"] = label
+
+    if column.default:
+        kwargs.setdefault("default", column.default.arg)
+
+    return field_type(**kwargs)
+
+#subnet
+
+txt_field = partial(construct_field, TextField)
+int_field = partial(construct_field, IntegerField)
+float_field = partial(construct_field, FloatField)
+
+
+class AgentModelForm(Form):
+    """
+    Constructs the form for adding
+    """
+    state = EnumList(AgentState,
+                     default=AgentState.ONLINE,
+                     choices=(AgentState.ONLINE, AgentState.DISABLED,
+                              AgentState.OFFLINE),
+                     description="Current the state of the agent, see the docs "
+                                 "for more information.")
+
+    hostname = txt_field(AgentModel.hostname)
+    cpus = int_field(AgentModel.cpus, "CPU Count")
+    ram = int_field(AgentModel.ram, "RAM")
+    port = int_field(AgentModel.port)
+    ram_allocation = float_field(AgentModel.ram_allocation, "RAM Allocation",
+                                 required=False)
+    cpu_allocation = float_field(AgentModel.cpu_allocation, "CPU Allocation",
+                                 required=False)
+    ip = txt_field(AgentModel.ip, "IPv4 Address", required=False)
+    subnet = txt_field(AgentModel.subnet, "IPv4 Subnet", required=False)
+
 
 
 class AgentRolesMixin(object):
@@ -33,6 +84,9 @@ class AgentRolesMixin(object):
 # TODO: !!! add display override for STATE field
 class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     model = AgentModel
+    form = AgentModelForm
+    column_searchable_list = ("hostname", )
+    column_filters = ("hostname", "ram", "cpus", "state")
 
 
 class AgentTagsModelView(SessionMixin, AgentRolesMixin, BaseModelView):
