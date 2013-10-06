@@ -109,8 +109,9 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
 
             agent_software = list(
                 (str(i.software), str(i.version)) for i in agent.software)
-            inserted_software = software_objects
-            self.assertListEqual(agent_software, inserted_software)
+            software_objects.sort()
+            agent_software.sort()
+            self.assertListEqual(agent_software, software_objects)
 
     def test_software_unique(self):
         for agent_foobar in self.models(limit=1):
@@ -158,14 +159,15 @@ class TestAgentTags(AgentTestCase, ModelTestCase):
                 tags.append(tag_name)
                 agent_foobar.tags.append(tag)
 
-
             db.session.commit()
             agent_id = agent_foobar.id
             db.session.remove()
             agent = AgentModel.query.filter_by(id=agent_id).first()
             self.assertIsNotNone(agent)
-            self.assertListEqual(
-                list(str(tag.tag) for tag in agent.tags), tags)
+            tags.sort()
+            agent_tags = list(str(tag.tag) for tag in agent.tags)
+            agent_tags.sort()
+            self.assertListEqual(agent_tags, tags)
 
 
 class TestAgentModel(AgentTestCase, ModelTestCase):
