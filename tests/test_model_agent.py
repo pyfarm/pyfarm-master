@@ -110,7 +110,7 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
             agent_software = list(
                 (str(i.software), str(i.version)) for i in agent.software)
             inserted_software = software_objects
-            self.assertLessEqual(agent_software, inserted_software)
+            self.assertListEqual(agent_software, inserted_software)
 
     def test_software_unique(self):
         for agent_foobar in self.models(limit=1):
