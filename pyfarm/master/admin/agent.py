@@ -22,13 +22,16 @@ Objects and classes for working with the agent models.
 """
 
 from wtforms import TextField
+from flask.ext.admin.actions import action
+from flask.ext.admin.babel import lazy_gettext
 from pyfarm.core.enums import AgentState
-from pyfarm.models.agent import AgentTagsModel, AgentSoftwareModel, AgentModel
-from pyfarm.master.application import SessionMixin
+from pyfarm.models.agent import (
+    AgentTagsModel, AgentSoftwareModel, AgentModel, AgentTagDependencies)
+from pyfarm.master.application import SessionMixin, db
 from pyfarm.master.admin.base import BaseModelView
-from pyfarm.master.admin.fields import (
+from pyfarm.master.admin.core import (
     EnumList, validate_resource, validate_address, validate_hostname,
-    check_dns_mapping, AjaxLoader)
+    check_dns_mapping, AjaxLoader, BaseFilter, FilterResultWrapper)
 
 
 def repr_tag(model):
@@ -49,12 +52,58 @@ class AgentRolesMixin(object):
     access_roles = ("admin.db.agent", )
 
 
+class FilterTagsContains(BaseFilter):
+    operation_text = "with tag"
+
+    def apply(self, query, value):
+        tag = AgentTagsModel.query.filter_by(tag=value).first()
+        if tag is None:
+            return FilterResultWrapper(query.filter_by(id=None), failed=True)
+
+        return FilterResultWrapper(
+            AgentModel.query.filter(
+                AgentModel.id.in_(
+                    agent_id for agent_id, tag_id in db.session.query(
+                        AgentTagDependencies).filter_by(tag_id=tag.id))))
+
+
+class FilterTagsNotContains(BaseFilter):
+    operation_text = "without tag"
+
+    def apply(self, query, value):
+        raise NotImplementedError("inverted search not implemented")
+
+
+class FilterSoftwareContains(BaseFilter):
+    operation_text = "with software"
+
+
+class FilterSoftwareNotContains(BaseFilter):
+    operation_text = "without software"
+
+
+class FilterSoftwareVersionContains(BaseFilter):
+    operation_text = "with software version"
+
+
+class FilterSoftwareVersionNotContains(BaseFilter):
+    operation_text = "without software version"
+
+
+
 class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     model = AgentModel
 
     # column setup
     column_searchable_list = ("hostname",)
-    column_filters = ("hostname", "ram", "cpus", "state")
+    column_filters = ("hostname", "ram", "cpus", "state",
+                      FilterTagsContains(AgentModel.tags, "Tags"),
+                      FilterTagsNotContains(AgentModel.tags, "Tags"),
+                      FilterSoftwareContains(AgentModel.software, "Software"),
+                      FilterSoftwareNotContains(AgentModel.software, "Software"),
+                      FilterSoftwareVersionContains(AgentModel.software, "Software"),
+                      FilterSoftwareVersionNotContains(AgentModel.software, "Software"))
+
     column_choices = {
         "state": [(value, key.title()) for key, value in
                   AgentState._asdict().items()]}
@@ -118,6 +167,11 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
                                fields=("software", "version"),
                                fmt=repr_software)}
 
+    @action("tag",
+            lazy_gettext("Add Tags"))
+    def action_tag(self, ids):
+        pass
+
 
 class AgentTagsModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     model = AgentTagsModel
@@ -141,6 +195,8 @@ class AgentTagsModelView(SessionMixin, AgentRolesMixin, BaseModelView):
 
 class AgentSoftwareModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     model = AgentSoftwareModel
+
+    #action_disallowed_list =
 
     # search setup
     column_searchable_list = ("software", "version")

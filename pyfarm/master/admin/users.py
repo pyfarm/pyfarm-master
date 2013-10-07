@@ -37,7 +37,7 @@ class UserRolesMixin(object):
     access_roles = ("admin.db.user", )
 
 
-# TODO: post process password field for insertion
+# TODO: post process password field for insertion (form_overrides)
 # TODO: don't display password, or other security related fields
 class UserView(SessionMixin, UserRolesMixin, BaseModelView):
     model = User

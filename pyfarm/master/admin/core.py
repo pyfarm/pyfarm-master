@@ -14,10 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Admin Core
+==========
+
+Functions, class, and objects form the base datatypes and
+logic necessary for the admin forms.
+"""
+
 import socket
 from functools import partial
 from flask import flash
+from flask.ext.admin.babel import gettext
 from flask.ext.admin.contrib.sqla.ajax import QueryAjaxModelLoader
+from flask.ext.admin.contrib.sqla.filters import BaseSQLAFilter
+from sqlalchemy.orm.exc import MultipleResultsFound
 from wtforms.validators import StopValidation
 from wtforms.fields import SelectField
 from pyfarm.models.agent import AgentModel
@@ -119,3 +130,60 @@ class AjaxLoader(QueryAjaxModelLoader):
             return None
 
         return (getattr(model, self.pk), self.fmt(model))
+
+
+class BaseFilter(BaseSQLAFilter):
+    """
+    Wrapper around :class:`.BaseSQLAFilter` which will properly
+    the `table` attributes for columns which don't already have it.  This
+    is required for certain types of objects, such as relationships.
+    """
+    column = None
+    operation_text = NotImplemented
+
+    class MapTableAttribute(object):
+        def __init__(self, column):
+            self.column = column
+
+        def __getattr__(self, item):
+            if item == "table":
+                return self.column._parententity.class_.__table__
+            return object.__getattribute__(self, item)
+
+    def __init__(self, column, name, options=None, data_type=None):
+        if not hasattr(column, "table"):
+            column = self.MapTableAttribute(column)
+
+        super(BaseFilter, self).__init__(
+            column, name, options=options, data_type=data_type)
+
+        if self.operation_text is NotImplemented:
+            raise NotImplementedError("`operation_text` was not defined")
+
+    def apply(self, query, value):
+        raise NotImplementedError
+
+    def operation(self):
+        return gettext(self.operation_text)
+
+
+class FilterResultWrapper(object):
+    def __init__(self, result, failed=False):
+        self._result = result
+        self._failed = failed
+        if self._failed:
+            self._result = self._result.filter_by(id=None)
+
+    def __getattr__(self, attr):
+        if attr == "scalar":
+            if not self._failed:
+                try:
+                    value = self._result.scalar()
+                except MultipleResultsFound:
+                    value = self._result.count()
+
+                return lambda: value or 0
+            else:
+                return lambda: 0
+
+        return getattr(self._result, attr)
