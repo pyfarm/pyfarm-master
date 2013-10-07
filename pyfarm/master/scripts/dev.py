@@ -25,11 +25,16 @@ These are internal scripts used for development only.  They should
 
 def dbdata():
     """creates some fake internal data for use in testing.agent_names"""
-    #if raw_input(
-    #    "WARNING: THIS WILL REPLACE ALL DATABASE DATA.  DO NOT USE IN "
-    #    "PRODUCTION.  CONTINUE [Y/n]? ") != "Y":
-    #    print "Quit!"
-    #    return
+    if raw_input(
+        "WARNING: THIS WILL REPLACE ALL DATABASE DATA.  DO NOT USE IN "
+        "PRODUCTION.  CONTINUE [Y/n]? ") != "Y":
+        print "Quit!"
+        return
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    parser.add_argument("--host-count", "-c", type=int, default=20)
+    parsed = parser.parse_args()
 
     from random import randint
     from pyfarm.master.application import db
@@ -74,7 +79,7 @@ def dbdata():
     software_ping.version = "1.2.3"
 
     print "creating agents"
-    for i in xrange(1, 6):
+    for i in xrange(1, parsed.host_count):
         agent_name = "agent%s" % i
         print "   %s:" % agent_name
         agent = AgentModel()
