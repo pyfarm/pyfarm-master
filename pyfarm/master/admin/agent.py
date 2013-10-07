@@ -90,15 +90,14 @@ class FilterSoftwareVersionNotContains(BaseFilter):
     operation_text = "without software version"
 
 
-
 class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     model = AgentModel
 
     # column setup
     column_searchable_list = ("hostname",)
     column_filters = ("hostname", "ram", "cpus", "state",
-                      FilterTagsContains(AgentModel.tags, "Tags"),
-                      FilterTagsNotContains(AgentModel.tags, "Tags"),
+                      FilterTagsContains(AgentModel.tags, "Tag"),
+                      FilterTagsNotContains(AgentModel.tags, "Tag"),
                       FilterSoftwareContains(AgentModel.software, "Software"),
                       FilterSoftwareNotContains(AgentModel.software, "Software"),
                       FilterSoftwareVersionContains(AgentModel.software, "Software"),
