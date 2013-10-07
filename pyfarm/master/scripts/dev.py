@@ -62,11 +62,18 @@ def dbdata():
     tag_agents_even.tag = "even"
     tag_agents_odd.tag = "odd"
 
+    print "creating agent software"
+    software_any = AgentSoftwareModel()
+    software_any.software = "any"
+    software_any.version = "any"
+    software_any1 = AgentSoftwareModel()
+    software_any1.software = "any"
+    software_any1.version = "1.0.0"
+    software_ping = AgentSoftwareModel()
+    software_ping.software = "ping"
+    software_ping.version = "1.2.3"
+
     print "creating agents"
-
-    #rand_ip = "
-    #".".join(map(str, (10, randint(0, 255), randint(0, 255), randint(0, 255))
-
     for i in xrange(1, 6):
         agent_name = "agent%s" % i
         print "   %s:" % agent_name
@@ -78,16 +85,20 @@ def dbdata():
         agent.cpus = randint(2, 24)
         agent.port = randint(1024, 65535)
         agent.tags.append(tag_agents_all)
+        agent.software.append(software_any)
 
         if i % 2:
             agent.tags.append(tag_agents_odd)
+            agent.software.append(software_ping)
         else:
             agent.tags.append(tag_agents_even)
+            agent.software.append(software_any1)
 
         print "        ip: %s" % agent.ip
         print "      cpus: %s" % agent.cpus
         print "       ram: %s" % agent.ram
         print "      port: %s" % agent.port
         print "      tags: %s" % list(tag.tag for tag in agent.tags)
+        print "  software: %s" % list(tag.software for tag in agent.software)
         db.session.add(agent)
     db.session.commit()
