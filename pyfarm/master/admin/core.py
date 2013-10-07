@@ -168,11 +168,16 @@ class BaseFilter(BaseSQLAFilter):
 
 
 class FilterResultWrapper(object):
+    """
+    This class is a wrapper around :class:`sqlalchemy.orm.Query` objects.
+    Flask-admin's form uses :meth:`sqlalchemy.orm.Query.scalar` to
+    discover how many rows are in the query however for relationships this
+    often returns None or raises an exception.  We catch those conditions here
+    and return the value from :meth:`sqlalchemy.orm.Query.count` instead.
+    """
     def __init__(self, result, failed=False):
         self._result = result
         self._failed = failed
-        if self._failed:
-            self._result = self._result.filter_by(id=None)
 
     def __getattr__(self, attr):
         if attr == "scalar":
