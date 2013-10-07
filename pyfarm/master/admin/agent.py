@@ -74,20 +74,13 @@ class FilterTagsNotContains(BaseFilter):
         raise NotImplementedError("inverted search not implemented")
 
 
+# TODO: add parsing for "name[,version])
 class FilterSoftwareContains(BaseFilter):
     operation_text = "includes"
 
-
+# TODO: add parsing for "name[,version])
 class FilterSoftwareNotContains(BaseFilter):
     operation_text = "excludes"
-
-
-class FilterSoftwareVersionContains(BaseFilter):
-    operation_text = "includes version"
-
-
-class FilterSoftwareVersionNotContains(BaseFilter):
-    operation_text = "excludes version"
 
 
 class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
@@ -99,9 +92,7 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
                       FilterTagsContains(AgentModel.tags, "Tag"),
                       FilterTagsNotContains(AgentModel.tags, "Tag"),
                       FilterSoftwareContains(AgentModel.software, "Software"),
-                      FilterSoftwareNotContains(AgentModel.software, "Software"),
-                      FilterSoftwareVersionContains(AgentModel.software, "Software"),
-                      FilterSoftwareVersionNotContains(AgentModel.software, "Software"))
+                      FilterSoftwareNotContains(AgentModel.software, "Software"))
 
     column_choices = {
         "state": [(value, key.title()) for key, value in
