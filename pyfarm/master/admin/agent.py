@@ -53,7 +53,7 @@ class AgentRolesMixin(object):
 
 
 class FilterTagsContains(BaseFilter):
-    operation_text = "with tag"
+    operation_text = "includes"
 
     def apply(self, query, value):
         tag = AgentTagsModel.query.filter_by(tag=value).first()
@@ -68,26 +68,26 @@ class FilterTagsContains(BaseFilter):
 
 
 class FilterTagsNotContains(BaseFilter):
-    operation_text = "without tag"
+    operation_text = "excludes"
 
     def apply(self, query, value):
         raise NotImplementedError("inverted search not implemented")
 
 
 class FilterSoftwareContains(BaseFilter):
-    operation_text = "with software"
+    operation_text = "includes"
 
 
 class FilterSoftwareNotContains(BaseFilter):
-    operation_text = "without software"
+    operation_text = "excludes"
 
 
 class FilterSoftwareVersionContains(BaseFilter):
-    operation_text = "with software version"
+    operation_text = "includes version"
 
 
 class FilterSoftwareVersionNotContains(BaseFilter):
-    operation_text = "without software version"
+    operation_text = "excludes version"
 
 
 class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
