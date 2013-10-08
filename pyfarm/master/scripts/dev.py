@@ -79,6 +79,13 @@ def dbdata():
     software_ping.version = "1.2.3"
 
     print "creating agents"
+    first_two = AgentTagsModel()
+    first_two.tag = "two"
+    first_four = AgentTagsModel()
+    first_four.tag = "four"
+    first_eight = AgentTagsModel()
+    first_eight.tag = "eight"
+
     for i in xrange(1, parsed.host_count):
         agent_name = "agent%s" % i
         print "   %s:" % agent_name
@@ -91,6 +98,15 @@ def dbdata():
         agent.port = randint(1024, 65535)
         agent.tags.append(tag_agents_all)
         agent.software.append(software_any)
+
+        if i <= 2:
+            agent.tags.append(first_two)
+
+        if i <= 4:
+            agent.tags.append(first_four)
+
+        if i <= 8:
+            agent.tags.append(first_eight)
 
         if i % 2:
             agent.tags.append(tag_agents_odd)
