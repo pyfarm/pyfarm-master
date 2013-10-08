@@ -30,6 +30,7 @@ class APIBlueprint(Blueprint):
     VERSION = 1
     PREFIX = "/v%s" % VERSION
 
+    # TODO: application (aka import) name is pyfarm.api
     # TODO: add response update so the default is application/json
     # TODO: standard method for error ourput (errorno, [href], [error], [description])
     # TODO: wrapper/integration with the flask MethodView class

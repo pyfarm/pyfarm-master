@@ -132,7 +132,7 @@ else:
         "REMEMBER_COOKIE_DURATION": timedelta(hours=12)})
 
 
-app = Flask("PyFarm",
+app = Flask("pyfarm",
             static_url_path="/pyfarm/static",
             template_folder="pyfarm/master/templates",
             static_folder="pyfarm/master/static")
