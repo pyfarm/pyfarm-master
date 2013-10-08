@@ -22,16 +22,17 @@ Objects and classes for working with the agent models.
 """
 
 from wtforms import TextField
+from sqlalchemy import not_
 from flask.ext.admin.actions import action
 from flask.ext.admin.babel import lazy_gettext
 from pyfarm.core.enums import AgentState
 from pyfarm.models.agent import (
-    AgentTagsModel, AgentSoftwareModel, AgentModel, AgentTagDependencies)
-from pyfarm.master.application import SessionMixin, db
-from pyfarm.master.admin.base import BaseModelView
+    AgentTagsModel, AgentSoftwareModel, AgentModel)
+from pyfarm.master.application import SessionMixin
+from pyfarm.master.admin.baseview import BaseModelView
 from pyfarm.master.admin.core import (
     EnumList, validate_resource, validate_address, validate_hostname,
-    check_dns_mapping, AjaxLoader, BaseFilter, FilterResultWrapper)
+    check_dns_mapping, AjaxLoader, BaseFilter)
 
 
 def repr_tag(model):
@@ -56,27 +57,24 @@ class FilterTagsContains(BaseFilter):
     operation_text = "includes"
 
     def apply(self, query, value):
-        tag = AgentTagsModel.query.filter_by(tag=value).first()
-        if tag is None:
-            return FilterResultWrapper(query.filter_by(id=None), failed=True)
-
-        return FilterResultWrapper(
-            AgentModel.query.filter(
-                AgentModel.id.in_(
-                    agent_id for agent_id, tag_id in db.session.query(
-                        AgentTagDependencies).filter_by(tag_id=tag.id))))
+        if value.strip():
+            return query.filter(AgentModel.tags.any(tag=value))
+        return query
 
 
 class FilterTagsNotContains(BaseFilter):
     operation_text = "excludes"
 
     def apply(self, query, value):
-        raise NotImplementedError("inverted search not implemented")
+        if value.strip():
+            return query.filter(not_(AgentModel.tags.any(tag=value)))
+        return query
 
 
 # TODO: add parsing for "name[,version])
 class FilterSoftwareContains(BaseFilter):
     operation_text = "includes"
+
 
 # TODO: add parsing for "name[,version])
 class FilterSoftwareNotContains(BaseFilter):

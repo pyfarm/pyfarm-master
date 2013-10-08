@@ -35,7 +35,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from itsdangerous import URLSafeTimedSerializer
 from pyfarm.core.config import cfg
 from pyfarm.core.warning import EnvironmentWarning, ConfigurationWarning
-from pyfarm.master.admin.base import AdminIndex
+from pyfarm.master.admin.baseview import AdminIndex
 
 # default configuration values
 # TODO: these should either be in the, read from a config, or come from the

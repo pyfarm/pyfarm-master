@@ -21,7 +21,7 @@ Job
 Objects and classes for working with the job models.
 """
 
-from pyfarm.master.admin.base import BaseModelView
+from pyfarm.master.admin.baseview import BaseModelView
 from pyfarm.master.application import SessionMixin
 from pyfarm.models.job import JobModel, JobTagsModel, JobSoftwareModel
 from pyfarm.models.task import TaskModel
