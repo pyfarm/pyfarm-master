@@ -73,6 +73,9 @@ class AuthMixins(object):
             if not current_user.has_roles(allowed=self.access_roles):
                 abort(401)
 
+        kwargs.setdefault("form_widget_args", self.form_widget_args)
+        kwargs.setdefault("admin_base_template", self.admin.base_template)
+        kwargs.setdefault("extra", lambda: None)
         return super(AuthMixins, self).render(template, **kwargs)
 
 

@@ -1,0 +1,10 @@
+{% extends 'admin/base.html' %}
+{% import 'admin/lib.html' as lib with context %}
+{% block body %}
+    <form action={{api_prefix}}/agents/tags" method="POST" class="form-horizontal" enctype="multipart/form-data">
+      <fieldset>
+        {{ lib.render_form_fields(form, widget_args=form_widget_args) }}
+        {{ lib.render_form_buttons(return_url, extra()) }}
+      </fieldset>
+    </form>
+{% endblock %}

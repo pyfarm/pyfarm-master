@@ -23,6 +23,7 @@ Objects and classes for working with the agent models.
 
 from wtforms import TextField
 from sqlalchemy import not_
+from flask.ext.admin.base import expose
 from flask.ext.admin.actions import action
 from flask.ext.admin.babel import lazy_gettext
 from pyfarm.core.enums import AgentState
@@ -183,10 +184,40 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
                                fields=("software", "version"),
                                fmt=repr_software)}
 
-    @action("tag",
-            lazy_gettext("Add Tags"))
-    def action_tag(self, ids):
-        pass
+    #@action("tag",
+    #        lazy_gettext("Add Tags"))
+    #def action_tag(self, selected_ids):
+    #    from wtforms import HiddenField, StringField, Field
+    #    from wtforms.compat import text_type
+    #    from flask.ext.admin.form import BaseForm
+    #
+    #    class TagListField(StringField):
+    #        def process_formdata(self, valuelist):
+    #            if valuelist:
+    #                self.data = valuelist[0]
+    #            else:
+    #                self.data = ''
+    #
+    #        def _value(self):
+    #            data = text_type(self.data) if self.data is not None else ''
+    #            print "!!!!!!!!!!1", data
+    #            return data
+    #
+    #    class ThisForm(BaseForm):
+    #        ids = HiddenField(default=selected_ids)
+    #        add_tags = TagListField(
+    #            description="Comma separated list of tags to add to the "
+    #                        "selected hosts.  Leading and/or trailing "
+    #                        "whitespace will be stripped.")
+    #
+    #
+    #
+    #    form = ThisForm()
+    #    return self.render(
+    #        "pyfarm/actions/add_agent_tags.html", form=form)
+    #    #return render_template(
+    #    #    "pyfarm/actions/add_agent_tags.html", admin_view=self, form=form,
+    #    #    form_widget_args=self.form_widget_args)
 
 
 class AgentTagsModelView(SessionMixin, AgentRolesMixin, BaseModelView):
