@@ -76,7 +76,7 @@ def dbdata():
     software_any1.version = "1.0.0"
     software_ping = AgentSoftwareModel()
     software_ping.software = "ping"
-    software_ping.version = "1.2.3"
+    software_ping.version = "1.0.0"
 
     print "creating agents"
     first_two = AgentTagsModel()

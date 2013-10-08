@@ -71,14 +71,40 @@ class FilterTagsNotContains(BaseFilter):
         return query
 
 
-# TODO: add parsing for "name[,version])
 class FilterSoftwareContains(BaseFilter):
     operation_text = "includes"
 
+    def apply(self, query, value):
+        if value.strip():
+            return query.filter(AgentModel.software.any(software=value))
+        return query
 
-# TODO: add parsing for "name[,version])
+
 class FilterSoftwareNotContains(BaseFilter):
     operation_text = "excludes"
+
+    def apply(self, query, value):
+        if value.strip():
+            return query.filter(not_(AgentModel.software.any(software=value)))
+        return query
+
+
+class FilterSoftwareContainsVersion(BaseFilter):
+    operation_text = "includes version"
+
+    def apply(self, query, value):
+        if value.strip():
+            return query.filter(AgentModel.software.any(version=value))
+        return query
+
+
+class FilterSoftwareNotContainsVersion(BaseFilter):
+    operation_text = "excludes version"
+
+    def apply(self, query, value):
+        if value.strip():
+            return query.filter(not_(AgentModel.software.any(version=value)))
+        return query
 
 
 class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
@@ -90,7 +116,9 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
                       FilterTagsContains(AgentModel.tags, "Tag"),
                       FilterTagsNotContains(AgentModel.tags, "Tag"),
                       FilterSoftwareContains(AgentModel.software, "Software"),
-                      FilterSoftwareNotContains(AgentModel.software, "Software"))
+                      FilterSoftwareNotContains(AgentModel.software, "Software"),
+                      FilterSoftwareContainsVersion(AgentModel.software, "Software"),
+                      FilterSoftwareNotContainsVersion(AgentModel.software, "Software"))
 
     column_choices = {
         "state": [(value, key.title()) for key, value in
