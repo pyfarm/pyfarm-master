@@ -40,13 +40,18 @@ else:
     long_description = ""
 
 def get_package_data():
-    parent = join("pyfarm", "master")
+    master_root = join("pyfarm", "master")
+    packge_data_roots = (
+        join("pyfarm", "master", "static"),
+        join("pyfarm", "master", "templates"),
+        join("pyfarm", "master", "api", "templates"),
+        join("pyfarm", "master", "api", "static"))
 
     output = []
-    for top in (join(parent, "static"), join(parent, "templates")):
+    for top in packge_data_roots:
         for root, dirs, files in walk(top):
             for filename in files:
-                output.append(join(root, filename).split(parent)[-1][1:])
+                output.append(join(root, filename).split(master_root)[-1][1:])
 
     return output
 
@@ -57,6 +62,7 @@ setup(
         "pyfarm",
         "pyfarm.master",
         "pyfarm.master.admin",
+        "pyfarm.master.api",
         "pyfarm.master.scripts"],
     include_package_data=True,
     package_data={"pyfarm.master": get_package_data()},
