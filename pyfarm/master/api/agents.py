@@ -29,28 +29,29 @@ def try_or_fail(callable, error, description):
 
 
 # TODO: documentation
-class AgentsIndex(MethodView):
-    """
-    Endpoint for /agents
-    """
-    def get(self):
-        kwargs = {}
-        state = request.args.get("state")
-        if state:
-            state = try_or_fail(
-                lambda: int(state), "failed to convert `state`", None)
-
-        raise NotImplementedError("filtering from args")
-
-
-        # no parameters provided
-        data = dict(
-            (i.hostname, (i.id, i.state, i.freeram, i.ram, i.cpus))
-            for i in AgentModel.query)
-        return JSONResponse(data)
-
-    def post(self):
-        pass
-
-    def update(self):
-        pass
+# TODO: on hold, POST/UPDATE for agents needs to be finished first
+#class AgentsIndex(MethodView):
+#    """
+#    Endpoint for /agents
+#    """
+#    def get(self):
+#        kwargs = {}
+#        state = request.args.get("state")
+#        if state:
+#            state = try_or_fail(
+#                lambda: int(state), "failed to convert `state`", None)
+#
+#        raise NotImplementedError("filtering from args")
+#
+#
+#        # no parameters provided
+#        data = dict(
+#            (i.hostname, (i.id, i.state, i.freeram, i.ram, i.cpus))
+#            for i in AgentModel.query)
+#        return JSONResponse(data)
+#
+#    def post(self): # TODO: start here
+#        pass
+#
+#    def update(self): # TODO: start here
+#        pass
