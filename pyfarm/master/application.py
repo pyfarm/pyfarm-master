@@ -27,7 +27,7 @@ from datetime import timedelta
 from uuid import uuid4
 from warnings import warn
 from werkzeug.datastructures import ImmutableDict
-from flask import Flask
+from flask import Flask, Blueprint
 from flask.ext.cache import Cache
 from flask.ext.admin import Admin
 from flask.ext.login import LoginManager
@@ -109,11 +109,21 @@ def get_session_key(warning=True):
     return str(uuid4()).replace("-", "").decode("hex")
 
 
+def get_json_pretty():
+    if "PYFARM_JSON_PRETTY" in os.environ:
+        return os.environ["PYFARM_JSON_PRETTY"] == "true"
+    elif "PYFARM_CONFIG" in os.environ:
+        return os.environ["PYFARM_CONFIG"] == "debug"
+    else:
+        return True
+
+
 # build the configuration
 if os.environ.get("PYFARM_CONFIG", "debug") == "debug":
     CONFIG = ImmutableDict({
         "DEBUG": True,
         #"LOGIN_DISABLED": True,
+        "PYFARM_JSON_PRETTY": get_json_pretty(),
         "SQLALCHEMY_ECHO": False,
         "SECRET_KEY": get_secret_key(warning=False),
         "SQLALCHEMY_DATABASE_URI": get_database_uri(warning=False),
@@ -124,6 +134,7 @@ if os.environ.get("PYFARM_CONFIG", "debug") == "debug":
 else:
     CONFIG = ImmutableDict({
         "DEBUG": False,
+        "PYFARM_JSON_PRETTY": get_json_pretty(),
         "SQLALCHEMY_ECHO": False,
         "SECRET_KEY": get_secret_key(warning=True),
         "SQLALCHEMY_DATABASE_URI": get_database_uri(warning=True),
@@ -135,6 +146,11 @@ app = Flask("pyfarm.master")
 
 # configure the application
 app.config.update(CONFIG)
+
+# api blueprint
+api_version = 1
+api = Blueprint("api", "pyfarm.master.api", url_prefix="/v%s" % api_version)
+app.register_blueprint(api)
 
 # admin, database, and cache
 admin = Admin(app, index_view=AdminIndex())
