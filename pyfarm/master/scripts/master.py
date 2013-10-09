@@ -18,11 +18,11 @@
 def run_master():
     from flask.ext.admin.base import MenuLink
     from pyfarm.master.admin.users import UserView, RoleView
-    from pyfarm.master.admin.agent import (
+    from pyfarm.master.admin.agents import (
         AgentModelView, AgentSoftwareModelView, AgentTagsModelView)
     from pyfarm.master.admin.work import (
         JobModelView, JobSoftwareModelView, JobTagsModelView, TaskModelView)
-    from pyfarm.master.application import app, admin, db
+    from pyfarm.master.application import app, api, admin, db
     from pyfarm.master.login import login_page, logout_page
     from pyfarm.master.initial import setup_page
     from pyfarm.master.index import index_page, favicon
