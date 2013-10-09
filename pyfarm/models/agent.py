@@ -164,6 +164,8 @@ class AgentModel(db.Model, WorkValidationMixin):
                    doc="The IPv4 network address this host resides on")
     ram = db.Column(db.Integer, nullable=False,
                     doc="The amount of ram installed on the agent in megabytes")
+    freeram = db.Column(db.Integer, nullable=False,
+                        doc="The amount of ram which was last considered free")
     cpus = db.Column(db.Integer, nullable=False,
                      doc="The number of cpus installed on the agent")
     port = db.Column(db.Integer, nullable=False,
