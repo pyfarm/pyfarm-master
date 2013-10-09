@@ -22,18 +22,47 @@ Custom error Flask error pages
 """
 
 from flask import render_template, request
+from pyfarm.master.utility import JSONResponse, TemplateDictionary
+
+# template for all json errors
+json_error_template = TemplateDictionary(
+    {"errorno": None,
+     "error": None,
+     "description": None})
 
 
 def error_404(e):
-    return render_template(
-        "pyfarm/errors/404.html", url=request.url), 404
+    if request.mimetype == "application/json":
+        data = json_error_template()
+        data["errorno"] = 404
+        data["error"] = "NOT FOUND"
+        data["description"] = "%s could not be found" % request.url
+        return JSONResponse(response=data, status=404)
+    else:
+        return render_template(
+            "pyfarm/errors/404.html", url=request.url), 404
 
 
 def error_401(e):
-    return render_template(
-        "pyfarm/errors/401.html", url=request.url), 401
+    if request.mimetype == "application/json":
+        data = json_error_template()
+        data["errorno"] = 401
+        data["error"] = "UNAUTHORIZED"
+        data["description"] = "unauthorized access to %s" % request.url
+        return JSONResponse(response=data, status=401)
+    else:
+        return render_template(
+            "pyfarm/errors/401.html", url=request.url), 401
 
 
 def error_500(e):
-    return render_template(
-        "pyfarm/errors/500.html", url=request.url), 500
+    if request.mimetype == "application/json":
+        data = json_error_template()
+        data["errorno"] = 500
+        data["error"] = "INTERNAL SERVER ERROR"
+        data["description"] = "the server produce an error while serving " \
+                              "a request for %s" % request.url
+        return JSONResponse(response=data, status=500)
+    else:
+        return render_template(
+            "pyfarm/errors/500.html", url=request.url), 500
