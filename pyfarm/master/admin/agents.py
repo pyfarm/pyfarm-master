@@ -113,7 +113,7 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
 
     # column setup
     column_searchable_list = ("hostname",)
-    column_filters = ("hostname", "ram", "cpus", "state",
+    column_filters = ("hostname", "ram", "freeram", "cpus", "state",
                       FilterTagsContains(AgentModel.tags, "Tag"),
                       FilterTagsNotContains(AgentModel.tags, "Tag"),
                       FilterSoftwareContains(AgentModel.software, "Software"),
@@ -127,7 +127,7 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
 
     # columns the form should display
     form_columns = (
-        "state", "hostname", "port", "cpus", "ram",
+        "state", "hostname", "port", "cpus", "ram", "freeram",
         "tags", "software", "ip", "ram_allocation", "cpu_allocation")
 
     # custom type columns need overrides
@@ -138,6 +138,9 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     # more human readable labels
     column_labels = {
         "ip": "IPv4 Address",
+        "ram": "RAM",
+        "freeram": "RAM (free)",
+        "cpus": "CPUs",
         "ram_allocation": "RAM Allocation",
         "cpu_allocation": "CPU Allocation"}
 
@@ -164,6 +167,8 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
         "ram": {
             "validators": [validate_resource],
             "description": AgentModel.ram.__doc__},
+        "freeram": {
+            "description": AgentModel.freeram.__doc__},
         "ip": {
             "validators": [validate_address, check_dns_mapping],
             "description": AgentModel.ip.__doc__},
