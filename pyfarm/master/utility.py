@@ -100,4 +100,3 @@ class TemplateDictionary(ImmutableDict):
     def __call__(self, reducible=True):
         class_ = ReducibleDictionary if reducible else dict
         return class_(self.copy())
-    
