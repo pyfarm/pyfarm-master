@@ -131,11 +131,7 @@ else:
         "CACHE_TYPE": "simple",  # TODO: should probably be server based
         "REMEMBER_COOKIE_DURATION": timedelta(hours=12)})
 
-
-app = Flask("pyfarm",
-            static_url_path="/pyfarm/static",
-            template_folder="pyfarm/master/templates",
-            static_folder="pyfarm/master/static")
+app = Flask("pyfarm.master")
 
 # configure the application
 app.config.update(CONFIG)
