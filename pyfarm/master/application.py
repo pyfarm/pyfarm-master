@@ -60,11 +60,13 @@ cfg.update({
     "job.ram": 32})
 
 
-
 def get_secret_key(warning=True):
     """
-    Returns the secret key to use.  Depending on :var:`warning` this may
-    produce a warning if $PYFARM_SECRET_KEY was not in the environment.
+    Returns the secret key to use
+
+    :param boolean warning:
+        if True, produce a warning if :envvar:`PYFARM_SECRET_KEY` is not
+        present in the environment
     """
     if "PYFARM_SECRET_KEY" in os.environ:
         return os.environ["PYFARM_SECRET_KEY"]
@@ -77,11 +79,11 @@ def get_secret_key(warning=True):
 
 def get_database_uri(warning=True):
     """
-    Returns the database uri.  Depending on :var:`warning` this may produce
-    warnings for:
+    Returns the database uri
 
-        * missing $PYFARM_DATABASE_URI in the environment
-        * use of sqlite
+    :param boolean warning:
+        if True, produce a warning when sqlite is being used or when
+        :envvar:`PYFARM_DATABASE_URI` is not present in the environment
     """
     if "PYFARM_DATABASE_URI" in os.environ:
         uri = os.environ["PYFARM_DATABASE_URI"]
@@ -99,17 +101,27 @@ def get_database_uri(warning=True):
 
 
 def get_session_key(warning=True):
-    """returns the CSRF session key for use by the application"""
+    """
+    Returns the CSRF session key for use by the application
+
+    :param boolean warning:
+        if True, produce a warning if :envvar:`PYFARM_CSRF_SESSION_KEY` is not
+        present in the environment
+    """
     if "PYFARM_CSRF_SESSION_KEY" in os.environ:
         return os.environ["PYFARM_CSRF_SESSION_KEY"]
     elif warning:
         warn("$PYFARM_CSRF_SESSION_KEY is not present in the environment",
              EnvironmentWarning)
-
-    return str(uuid4()).replace("-", "").decode("hex")
+        return get_secret_key(warning=warning)
 
 
 def get_json_pretty():
+    """
+    If :envvar:`PYFARM_JSON_PRETTY` is set to `true` all json output
+    will be dumped in a human readable form.  The same will also be true
+    if :envvar:`PYFARM_CONFIG` is set to `debug`.
+    """
     if "PYFARM_JSON_PRETTY" in os.environ:
         return os.environ["PYFARM_JSON_PRETTY"] == "true"
     elif "PYFARM_CONFIG" in os.environ:
@@ -164,6 +176,10 @@ login_serializer = URLSafeTimedSerializer(app.secret_key)
 
 
 class SessionMixin(object):
+    """
+    Mixin which adds a :attr:`._session` attribute.  This class is provided
+    mainly to limit issues with circular imports.
+    """
     _session = property(fget=lambda self: db.session)
 
 

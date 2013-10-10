@@ -15,8 +15,8 @@
 # limitations under the License.
 
 """
-Master Script Endpoints
-=======================
+Master Script Entry Points
+===========================
 
 Contains the functions necessary to run individual components
 of PyFarm's master.
@@ -45,7 +45,7 @@ app.register_error_handler(404, error_404)
 app.register_error_handler(500, error_500)
 
 
-def endpoint_setup(app_instance):
+def load_setup(app_instance):
     """configures flask to serve the endpoint used for setting up the system"""
     assert app_instance is app
     from pyfarm.master.initial import setup_page
@@ -53,7 +53,7 @@ def endpoint_setup(app_instance):
                               "setup_page", setup_page, methods=("GET", "POST"))
 
 
-def endpoint_authentication(app_instance):
+def load_authentication(app_instance):
     """configures flask to serve the authentication endpoints"""
     assert app_instance is app
     from pyfarm.master.login import login_page, logout_page
@@ -62,7 +62,7 @@ def endpoint_authentication(app_instance):
         "/login/", "login_page", login_page, methods=("GET", "POST"))
 
 
-def endpoint_index(app_instance):
+def load_index(app_instance):
     """configures flask to serve the main index and favicon"""
     assert app_instance is app
     from pyfarm.master.index import index_page, favicon
@@ -70,7 +70,7 @@ def endpoint_index(app_instance):
     app_instance.add_url_rule("/favicon.ico", "favicon", favicon)
 
 
-def endpoint_api(app_instance, api_instance):
+def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
     assert app_instance is app
     assert api_instance is api
@@ -83,7 +83,7 @@ def endpoint_api(app_instance, api_instance):
 
 
 
-def endpoint_admin(admin_instance):
+def load_admin(admin_instance):
     """serves the administrative interface endpoints"""
     assert admin_instance is admin
     from flask.ext.admin.base import MenuLink
@@ -120,10 +120,10 @@ def endpoint_admin(admin_instance):
 
 def run_master():
     """runs the application server and all end points except for /setup"""
-    endpoint_index(app)
-    endpoint_authentication(app)
-    endpoint_admin(admin)
-    endpoint_api(app, api)
+    load_index(app)
+    load_authentication(app)
+    load_admin(admin)
+    load_api(app, api)
     app.run()
 
 

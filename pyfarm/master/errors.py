@@ -32,6 +32,11 @@ json_error_template = TemplateDictionary(
 
 
 def error_400(e):
+    """
+    Populates and renders the custom 400 error page.  For json requests
+    this will send out a response with the error number, error string,
+    and a short description.
+    """
     if request.mimetype == "application/json":
         data = json_error_template()
         data["errorno"] = 400
@@ -43,6 +48,11 @@ def error_400(e):
 
 
 def error_401(e):
+    """
+    Populates and renders the custom 401 error page.  For json requests
+    this will send out a response with the error number, error string,
+    and a short description.
+    """
     if request.mimetype == "application/json":
         data = json_error_template()
         data["errorno"] = 401
@@ -55,6 +65,11 @@ def error_401(e):
 
 
 def error_404(e):
+    """
+    Populates and renders the custom 404 error page.  For json requests
+    this will send out a response with the error number, error string,
+    and a short description.
+    """
     if request.mimetype == "application/json":
         data = json_error_template()
         data["errorno"] = 404
@@ -67,6 +82,11 @@ def error_404(e):
 
 
 def error_500(e):
+    """
+    Populates and renders the custom 500 error page.  For json requests
+    this will send out a response with the error number, error string,
+    and a short description.
+    """
     if request.mimetype == "application/json":
         data = json_error_template()
         data["errorno"] = 500

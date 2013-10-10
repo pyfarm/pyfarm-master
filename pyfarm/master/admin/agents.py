@@ -23,38 +23,40 @@ Objects and classes for working with the agent models.
 
 from wtforms import TextField
 from sqlalchemy import not_
-from flask.ext.admin.base import expose
-from flask.ext.admin.actions import action
-from flask.ext.admin.babel import lazy_gettext
 from pyfarm.core.enums import AgentState
 from pyfarm.models.agent import (
     AgentTagsModel, AgentSoftwareModel, AgentModel)
 from pyfarm.master.application import SessionMixin
-from pyfarm.master.admin.baseview import BaseModelView
+from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.admin.core import (
     EnumList, validate_resource, validate_address, validate_hostname,
     check_dns_mapping, AjaxLoader, BaseFilter)
 
 
-def repr_tag(model):
-    return model.tag
-
-
-def repr_software(model):
-    return "%s (%s)" % (model.software, model.version)
-
-
 def repr_agent(model):
+    """
+    Returns a string which translates the class into a human readable
+    form
+    """
     if model.ip:
         return "%s (%s)" % (model.hostname, model.ip)
-    return model.hostname
+    else:
+        return model.hostname
 
 
 class AgentRolesMixin(object):
+    """
+    Mixin which declares what role(s) are allowed access to
+    :class:`AgentModelView`
+    """
     access_roles = ("admin.db.agent", )
 
 
 class FilterTagsContains(BaseFilter):
+    """
+    Filter for :class:`AgentModelView` which allows specific tags
+    to be included from the view.
+    """
     operation_text = "includes"
 
     def apply(self, query, value):
@@ -64,6 +66,10 @@ class FilterTagsContains(BaseFilter):
 
 
 class FilterTagsNotContains(BaseFilter):
+    """
+    Filter for :class:`AgentModelView` which allows specific tags
+    to be excluded from the view.
+    """
     operation_text = "excludes"
 
     def apply(self, query, value):
@@ -73,6 +79,10 @@ class FilterTagsNotContains(BaseFilter):
 
 
 class FilterSoftwareContains(BaseFilter):
+    """
+    Filter for :class:`AgentModelView` which allows specific software
+    to be included in the view.
+    """
     operation_text = "includes"
 
     def apply(self, query, value):
@@ -82,6 +92,10 @@ class FilterSoftwareContains(BaseFilter):
 
 
 class FilterSoftwareNotContains(BaseFilter):
+    """
+    Filter for :class:`AgentModelView` which allows specific software
+    to be excluded from the view.
+    """
     operation_text = "excludes"
 
     def apply(self, query, value):
@@ -91,6 +105,10 @@ class FilterSoftwareNotContains(BaseFilter):
 
 
 class FilterSoftwareContainsVersion(BaseFilter):
+    """
+    Filter for :class:`AgentModelView` which allows specific software versions
+    to be included in the view.
+    """
     operation_text = "includes version"
 
     def apply(self, query, value):
@@ -100,6 +118,10 @@ class FilterSoftwareContainsVersion(BaseFilter):
 
 
 class FilterSoftwareNotContainsVersion(BaseFilter):
+    """
+    Filter for :class:`AgentModelView` which allows specific software versions
+    to be excluded in the view.
+    """
     operation_text = "excludes version"
 
     def apply(self, query, value):
@@ -108,7 +130,10 @@ class FilterSoftwareNotContainsVersion(BaseFilter):
         return query
 
 
-class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
+class AgentModelView(SessionMixin, AgentRolesMixin, SQLModelView):
+    """
+    Administrative view which allows users to view, create, or edit agents.
+    """
     model = AgentModel
 
     # column setup
@@ -184,48 +209,17 @@ class AgentModelView(SessionMixin, AgentRolesMixin, BaseModelView):
     # create ajax loaders for the relationships
     form_ajax_refs = {
         "tags": AjaxLoader("tags", AgentTagsModel,
-                           fields=("tag", ), fmt=repr_tag),
+                           fields=("tag", ), fmt=lambda model: model.tag),
         "software": AjaxLoader("software", AgentSoftwareModel,
                                fields=("software", "version"),
-                               fmt=repr_software)}
-
-    #@action("tag",
-    #        lazy_gettext("Add Tags"))
-    #def action_tag(self, selected_ids):
-    #    from wtforms import HiddenField, StringField, Field
-    #    from wtforms.compat import text_type
-    #    from flask.ext.admin.form import BaseForm
-    #
-    #    class TagListField(StringField):
-    #        def process_formdata(self, valuelist):
-    #            if valuelist:
-    #                self.data = valuelist[0]
-    #            else:
-    #                self.data = ''
-    #
-    #        def _value(self):
-    #            data = text_type(self.data) if self.data is not None else ''
-    #            print "!!!!!!!!!!1", data
-    #            return data
-    #
-    #    class ThisForm(BaseForm):
-    #        ids = HiddenField(default=selected_ids)
-    #        add_tags = TagListField(
-    #            description="Comma separated list of tags to add to the "
-    #                        "selected hosts.  Leading and/or trailing "
-    #                        "whitespace will be stripped.")
-    #
-    #
-    #
-    #    form = ThisForm()
-    #    return self.render(
-    #        "pyfarm/actions/add_agent_tags.html", form=form)
-    #    #return render_template(
-    #    #    "pyfarm/actions/add_agent_tags.html", admin_view=self, form=form,
-    #    #    form_widget_args=self.form_widget_args)
+                               fmt=lambda model: "%s (%s)" % (
+                                   model.software, model.version))}
 
 
-class AgentTagsModelView(SessionMixin, AgentRolesMixin, BaseModelView):
+class AgentTagsModelView(SessionMixin, AgentRolesMixin, SQLModelView):
+    """
+    Administrative view which allows users to view, create, or edit agent tags.
+    """
     model = AgentTagsModel
 
     # column setup
@@ -245,10 +239,12 @@ class AgentTagsModelView(SessionMixin, AgentRolesMixin, BaseModelView):
                              fields=("hostname", ), fmt=repr_agent)}
 
 
-class AgentSoftwareModelView(SessionMixin, AgentRolesMixin, BaseModelView):
+class AgentSoftwareModelView(SessionMixin, AgentRolesMixin, SQLModelView):
+    """
+    Administrative view which allows users to view, create, or edit agent
+    software.
+    """
     model = AgentSoftwareModel
-
-    #action_disallowed_list =
 
     # search setup
     column_searchable_list = ("software", "version")

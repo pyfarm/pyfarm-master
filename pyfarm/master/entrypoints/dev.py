@@ -15,11 +15,13 @@
 # limitations under the License.
 
 """
-Development Scripts
-===================
+Development Entry Points
+========================
 
-These are internal scripts used for development only.  They should
-**never be deployed or used in production**
+These are internal entry points used for development only.
+
+.. warning::
+    These entry pints should **never** be deployed or used in production.
 """
 
 
