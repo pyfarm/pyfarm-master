@@ -21,53 +21,53 @@ Configuration Variables
 Stores basic configuration data related to tables and models.  Most of these
 variables have defaults defined in the configuration under `db.<value>`
 
-:var TABLE_PREFIX:
+:const string TABLE_PREFIX:
     Prefix for all tables
 
-:var TABLE_AGENT:
+:const string TABLE_AGENT:
     Stores the name of the table for agents
 
-:var TABLE_AGENT_TAGS:
+:const string TABLE_AGENT_TAGS:
     Stores the name of the table for agent tags
 
-:var TABLE_AGENT_SOFTWARE:
+:const string TABLE_AGENT_SOFTWARE:
     Stores the name of the table for agent software
 
-:var TABLE_JOB:
+:const string TABLE_JOB:
     Stores the name of the table for jobs
 
-:var TABLE_JOB_TAG:
+:const string TABLE_JOB_TAG:
     Stores the name of the table for job tags
 
-:var TABLE_JOB_SOFTWARE:
+:const string TABLE_JOB_SOFTWARE:
     Stores the name of the table for job software
 
-:var TABLE_TASK:
+:const string TABLE_TASK:
     Stores the name of the table for job tasks
 
-:var TABLE_USERS_USER:
+:const string TABLE_USERS_USER:
     Stores the registered users (both human and api)
 
-:var TABLE_USERS_ROLE:
+:const string TABLE_USERS_ROLE:
     Stores roles in which a user can operate in
 
-:var TABLE_USERS_USER_ROLES:
-    Stores relationships between :var:`.TABLE_USERS_USER` and
-    :var:`.TABLE_USERS_ROLE`
+:const string TABLE_USERS_USER_ROLE:
+    Stores relationships between :const:`.TABLE_USERS_USER` and
+    :const:`.TABLE_USERS_ROLE`
 
-:var MAX_HOSTNAME_LENGTH:
+:const integer MAX_HOSTNAME_LENGTH:
     the max length of a hostname
 
-:var MAX_JOBTYPE_LENGTH:
+:const integer MAX_JOBTYPE_LENGTH:
     the max length of a jobtype
 
-:var MAX_COMMAND_LENGTH:
+:const integer MAX_COMMAND_LENGTH:
     the max length of a command (ex. `bash` or `cmd.exe`)
 
-:var MAX_USERNAME_LENGTH:
+:const integer MAX_USERNAME_LENGTH:
     the max length of a username
 
-:var MAX_TAG_LENGTH:
+:const integer MAX_TAG_LENGTH:
     the max length of a tag
 
     .. note::

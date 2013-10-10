@@ -86,11 +86,6 @@ class AgentTagsModel(db.Model, AgentTaggingMixin):
         This table enforces two forms of uniqueness.  The :attr:`id` column
         must be unique and the combination of these columns must also be
         unique to limit the frequency of duplicate data:
-
-            * :attr:`agentid`
-            * :attr:`tag`
-
-    .. autoattribute:: agentid
     """
     __tablename__ = TABLE_AGENT_TAGS
     id = IDColumn(IDTypeTag)
@@ -112,11 +107,8 @@ class AgentSoftwareModel(db.Model, AgentTaggingMixin):
         must be unique and the combination of these columns must also be
         unique to limit the frequency of duplicate data:
 
-            * :attr:`agentid`
             * :attr:`version`
             * :attr:`software`
-
-    .. autoattribute:: agentid
     """
     __tablename__ = TABLE_AGENT_SOFTWARE
     __table_args__ = (UniqueConstraint("version", "software"), )

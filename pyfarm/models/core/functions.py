@@ -16,12 +16,12 @@
 
 
 """
+.. include:: ../include/references.rst
+
 Functions
 =========
 
 Contains core functions and data for use by :mod:`pyfarm.models`
-
-.. include:: ../include/references.rst
 """
 
 from uuid import UUID
@@ -58,24 +58,21 @@ def getuuid(value, table, table_attrib, error_tail):
         * string from a UUID
         * the original value (after validating it's a UUID)
 
-    :type value: None or UUID or basestring or sqlalchemy.Table
-    :arg value:
+    :arg string value:
         the value to validate and returning data from
 
-    :type table: sqlalchemy.Table
-    :arg table:
+    :arg string table:
         the table which the provided `value` belongs to
 
-    :type table_attrib: str
-    :arg table_attrib:
+    :arg string table_attrib:
         the attribute to use when attempting to pull data off of a model
         object
 
-    :type error_tail str
-    :arg error_tail:
+    :arg string error_tail:
         added to the end of error messages
 
     :arg str error_text:
+        error text to render in the event of problems
 
     :exception ValueError:
         raised when the provided input is invalid, blank, or otherwise
