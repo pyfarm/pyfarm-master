@@ -26,11 +26,13 @@ try:
 except ImportError:
     from simplejson import dumps as _dumps
 
+from sqlalchemy.schema import Table
 from werkzeug.datastructures import ImmutableDict
 from flask import Response
 from pyfarm.master.application import app
 
 PRETTY_JSON = app.config["PYFARM_JSON_PRETTY"]
+COLUMN_CACHE = {}
 
 
 def dumps(*args, **kwargs):

@@ -30,6 +30,7 @@ json_error_template = TemplateDictionary(
      "error": None,
      "description": None})
 
+
 def error_400(e):
     if request.mimetype == "application/json":
         data = json_error_template()
@@ -52,6 +53,7 @@ def error_401(e):
         return render_template(
             "pyfarm/errors/401.html", url=request.url), 401
 
+
 def error_404(e):
     if request.mimetype == "application/json":
         data = json_error_template()
@@ -62,7 +64,6 @@ def error_404(e):
     else:
         return render_template(
             "pyfarm/errors/404.html", url=request.url), 404
-
 
 
 def error_500(e):
