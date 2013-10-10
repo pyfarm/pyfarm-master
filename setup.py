@@ -23,7 +23,7 @@ from os.path import isfile
 from setuptools import setup
 
 install_requires = [
-    "pyfarm.core", 
+    "pyfarm.core",
     "sqlalchemy", "netaddr", "flask"]
 
 if sys.version_info[0:2] < (2, 7):
@@ -38,7 +38,7 @@ else:
 
 setup(
     name="pyfarm.models",
-    version="0.7.0-dev4",
+    version="0.7.0-dev5",
     packages=["pyfarm", "pyfarm.models", "pyfarm.models.core"],
     namespace_packages=["pyfarm"],
     install_requires=install_requires,
