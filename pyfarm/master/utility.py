@@ -26,7 +26,6 @@ try:
 except ImportError:
     from simplejson import dumps as _dumps
 
-from sqlalchemy.schema import Table
 from werkzeug.datastructures import ImmutableDict
 from flask import Response
 from pyfarm.master.application import app
@@ -45,6 +44,16 @@ def dumps(*args, **kwargs):
     return _dumps(*args, **kwargs)
 
 
+def get_required_columns(model):
+    """returns a set of non-nullable columns for the provided database model"""
+    required = set()
+    for column_name, column in model.__table__.columns.items():
+        if not column.nullable:
+            required.add(column_name)
+
+    return required
+
+
 class JSONResponse(Response):
     """
     Wrapper around :class:`.Response` which will set the proper content type
@@ -52,20 +61,11 @@ class JSONResponse(Response):
     """
     content_type = "application/json"
 
-    def __init__(self, *args, **kwargs):
-        # retrieve, reduce, then serialize the data to json
-        data = kwargs.get("response", args[0])
+    def __init__(self, data, **kwargs):
         if isinstance(data, ReducibleDictionary):
             data.reduce()
-        data = dumps(data)
 
-        if "response" in kwargs:
-            kwargs["response"] = data
-
-        elif len(args) == 1:
-            args = (data, )
-
-        super(JSONResponse, self).__init__(*args, **kwargs)
+        super(JSONResponse, self).__init__(dumps(data), **kwargs)
 
 
 class ReducibleDictionary(dict):
