@@ -48,7 +48,7 @@ def get_required_columns(model):
     """returns a set of non-nullable columns for the provided database model"""
     required = set()
     for column_name, column in model.__table__.columns.items():
-        if not column.nullable:
+        if not column.nullable and not column.primary_key:
             required.add(column_name)
 
     return required
