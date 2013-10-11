@@ -28,7 +28,6 @@ from wtforms import Form, TextField, PasswordField, validators, ValidationError
 from itsdangerous import BadTimeSignature
 from flask import Response, request, redirect, render_template
 from flask.ext.login import login_user, logout_user, current_app, current_user
-from pyfarm.core.enums import MimeType
 from pyfarm.master.application import app, login_manager, login_serializer
 from pyfarm.models.users import User
 
@@ -101,7 +100,7 @@ class LoginForm(Form):
 
 def login_page():
     """display and process the login for or action"""
-    if request.method == "POST" and request.content_type == MimeType.JSON:
+    if request.method == "POST" and request.content_type == "application/json":
         data = json.loads(request.data)
         user = User.get(data["username"])
 
