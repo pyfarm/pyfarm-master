@@ -74,13 +74,11 @@ def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
     assert app_instance is app
     assert api_instance is api
-    # TODO: below on hold, POST/UPDATE for agents needs to be finished first
-    #from pyfarm.master.api.agents import AgentsIndex
-    #
-    #api_instance.add_url_rule(
-    #    "/agents", view_func=AgentsIndex.as_view("agents_index"))
-    #app_instance.register_blueprint(api)
+    from pyfarm.master.api.agents import AgentsIndex
 
+    api_instance.add_url_rule(
+        "/agents", view_func=AgentsIndex.as_view("agents_index"))
+    app_instance.register_blueprint(api)
 
 
 def load_admin(admin_instance):
