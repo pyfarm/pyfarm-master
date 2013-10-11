@@ -18,17 +18,19 @@
 Error
 =====
 
-Custom error Flask error pages
+Custom error Flask error pages.  For failures within the REST
+api these error pages are only provided as a fallback.  Typically,
+those requests will be responded to directly instead of calling
+:meth:`flask.abort`
 """
 
 from flask import render_template, request
 from pyfarm.master.utility import JSONResponse, TemplateDictionary
 
-# template for all json errors
-json_error_template = TemplateDictionary(
-    {"errorno": None,
-     "error": None,
-     "description": None})
+ERROR_400_JSON = {"errorno": 400, "error": "BAD REQUEST"}
+ERROR_401_JSON = {"errorno": 401, "error": "UNAUTHORIZED"}
+ERROR_404_JSON = {"errorno": 404, "error": "NOT FOUND"}
+ERROR_500_JSON = {"errorno": 500, "error": "INTERNAL SERVER ERROR"}
 
 
 def error_400(e):
@@ -38,10 +40,7 @@ def error_400(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        data = json_error_template()
-        data["errorno"] = 400
-        data["error"] = "BAD REQUEST"
-        return JSONResponse(response=data, status=400)
+        return JSONResponse(ERROR_400_JSON, status=400)
     else:
         return render_template(
             "pyfarm/errors/400.html", url=request.url), 400
@@ -54,11 +53,7 @@ def error_401(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        data = json_error_template()
-        data["errorno"] = 401
-        data["error"] = "UNAUTHORIZED"
-        data["description"] = "unauthorized access to %s" % request.url
-        return JSONResponse(response=data, status=401)
+        return JSONResponse(ERROR_401_JSON, status=401)
     else:
         return render_template(
             "pyfarm/errors/401.html", url=request.url), 401
@@ -71,11 +66,7 @@ def error_404(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        data = json_error_template()
-        data["errorno"] = 404
-        data["error"] = "NOT FOUND"
-        data["description"] = "%s could not be found" % request.url
-        return JSONResponse(response=data, status=404)
+        return JSONResponse(ERROR_404_JSON, status=404)
     else:
         return render_template(
             "pyfarm/errors/404.html", url=request.url), 404
@@ -88,12 +79,7 @@ def error_500(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        data = json_error_template()
-        data["errorno"] = 500
-        data["error"] = "INTERNAL SERVER ERROR"
-        data["description"] = "the server produce an error while serving " \
-                              "a request for %s" % request.url
-        return JSONResponse(response=data, status=500)
+        return JSONResponse(ERROR_500_JSON, status=500)
     else:
         return render_template(
             "pyfarm/errors/500.html", url=request.url), 500
