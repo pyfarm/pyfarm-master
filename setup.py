@@ -64,6 +64,7 @@ setup(
         "pyfarm.master.admin",
         "pyfarm.master.api",
         "pyfarm.master.entrypoints"],
+    namespace_packages=["pyfarm"],
     include_package_data=True,
     package_data={"pyfarm.master": get_package_data()},
     entry_points={
