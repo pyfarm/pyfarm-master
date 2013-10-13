@@ -14,8 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from httplib import BAD_REQUEST, OK
+from httplib import OK, BAD_REQUEST, INTERNAL_SERVER_ERROR
 from functools import wraps
+from sqlalchemy.exc import StatementError
 from flask import request, abort
 from flask.views import MethodView
 from pyfarm.core.logger import getLogger
@@ -33,26 +34,16 @@ def try_or_fail(callable, error, description):
     except:
         abort(BAD_REQUEST)
 
-from textwrap import dedent
-msg = dedent("""
 
-* merge decorator into utilities
-* return all row/columns in the post body
-* catch any unhandled exceptions for SQL (display in response)
-* common class for convert a model to json
-""")
-
-raise Exception(msg)
-
-# TODO: move to utilities
-class requires_columns(object):
+class put_model(object):
     def __init__(self, model, data_class=dict):
+        self.model = model
         self.required_columns = get_required_columns(model)
         self.data_class = data_class
 
     def __call__(self, func):
         @wraps(func)
-        def caller(*args, **kwargs):
+        def caller(caller_self):
             # before doing anything else, make sure we can
             # decode the json data
             try:
@@ -87,12 +78,14 @@ class requires_columns(object):
                         return JSONResponse(
                             APIError.UNEXPECTED_NULL, status=BAD_REQUEST)
 
-            return func(*args, **kwargs)
+            try:
+                return func(caller_self, data, self.model(**data))
 
-        # TODO: catch errors with the insertion
-        # TODO: trap error and respond on failure
+            except StatementError:
+                return JSONResponse(
+                    APIError.DATABASE_ERROR, status=INTERNAL_SERVER_ERROR)
+
         return caller
-
 
 
 #TODO: documentation
@@ -108,19 +101,9 @@ class AgentsIndex(MethodView):
             for i in AgentModel.query)
         return JSONResponse(data)
 
-    @requires_columns(AgentModel)
-    def post(self):
-        data = request.get_json()
-        agent = AgentModel()
-
-        for key, value in data.iteritems():
-            if isinstance(value, unicode):
-                value = str(value)
-            if key in data:
-                setattr(agent, key, data[key])
-
-        # TODO: trap error and respond on failure
-        db.session.add(agent)
+    @put_model(AgentModel)
+    def put(self, data, model):
+        db.session.add(model)
         db.session.commit()
-
-        return JSONResponse("", status=OK)
+        print model.to_dict()
+        return ""

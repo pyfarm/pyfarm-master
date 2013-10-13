@@ -160,8 +160,10 @@ app = Flask("pyfarm.master")
 app.config.update(CONFIG)
 
 # api blueprint
-api_version = 1
-api = Blueprint("api", "pyfarm.master.api", url_prefix="/v%s" % api_version)
+api_version = os.environ.get("PYFARM_API_VERSION", "1")
+api = Blueprint(
+    "api", "pyfarm.master.api",
+    url_prefix=os.environ.get("PYFARM_API_PREFIX", "/api/v%s" % api_version))
 app.register_blueprint(api)
 
 # admin, database, and cache
