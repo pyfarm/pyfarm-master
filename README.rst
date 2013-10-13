@@ -15,6 +15,10 @@
 PyFarm Models
 =============
 
+.. image:: https://badge.waffle.io/pyfarm/pyfarm-models.png?label=ready
+    :target: https://waffle.io/pyfarm/pyfarm-models
+    :align: left
+    
 .. image:: https://travis-ci.org/pyfarm/pyfarm-models.png?branch=master
     :target: https://travis-ci.org/pyfarm/pyfarm-models
     :align: left
