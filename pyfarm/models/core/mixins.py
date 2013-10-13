@@ -89,3 +89,9 @@ class StateChangedMixin(object):
                 warn(msg,  ColumnStateChangeWarning)
 
             target.time_finished = datetime.now()
+
+
+class DictMixin(object):
+    def to_dict(self):
+        print self.__table__.c
+        return "that's no dictionary!"

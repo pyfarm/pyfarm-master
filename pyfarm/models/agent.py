@@ -31,7 +31,7 @@ from netaddr import AddrFormatError
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
 from pyfarm.master.application import db
-from pyfarm.models.core.mixins import WorkValidationMixin
+from pyfarm.models.core.mixins import WorkValidationMixin, DictMixin
 from pyfarm.models.core.types import (
     IDColumn, IPv4Address, IDTypeAgent, IDTypeTag)
 from pyfarm.models.core.cfg import (
@@ -125,7 +125,7 @@ class AgentSoftwareModel(db.Model, AgentTaggingMixin):
                         because the format depends on the 3rd party."""))
 
 
-class AgentModel(db.Model, WorkValidationMixin):
+class AgentModel(db.Model, WorkValidationMixin, DictMixin):
     """
     Stores information about an agent include its network address,
     state, allocation configuration, etc.
