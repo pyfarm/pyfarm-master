@@ -51,6 +51,17 @@ class RequestDecorator(object):
             return JSONResponse(
                 APIError.UNEXPECTED_DATATYPE, status=BAD_REQUEST)
 
+        return data
+
+
+class put_model(RequestDecorator):
+    """
+    Decorator used for validating PUT data including required fields,
+    non-nullable information, and ensuring we're not trying to add extra fields
+    """
+    def to_json(self):
+        data = super(put_model, self).to_json()
+
         # since we're working with a dictionary from the request
         # compare its data against the table
         if isinstance(data, dict):
@@ -81,8 +92,6 @@ class RequestDecorator(object):
 
         return data
 
-
-class put_model(RequestDecorator):
     def __call__(self, func):
         @wraps(func)
         def caller(self_):
