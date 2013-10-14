@@ -91,7 +91,34 @@ class StateChangedMixin(object):
             target.time_finished = datetime.now()
 
 
-class DictMixin(object):
+class DictMixins(object):
+    """
+    Mixins which can be used to produce dictionaries
+    of existing data
+    """
     def to_dict(self):
-        print self.__table__.c
-        return "that's no dictionary!"
+        """Produce a dictionary of existing data in the table"""
+        result = {}
+        for column_name in self.__table__.c.keys():
+            result[column_name] = getattr(self, column_name)
+
+        return result
+
+    def to_schema(self):
+        """
+        Produce a dictionary which represents the
+        table's schema in a basic format
+        """
+        result = {}
+        for name, column in self.__table__.c.items():
+            try:
+                column.type.python_type
+            except NotImplementedError:
+                column_type = column.type.__class__.__name__
+            else:
+                column_type = str(column.type)
+
+            result[name] = column_type
+
+        return result
+
