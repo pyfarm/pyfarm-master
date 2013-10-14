@@ -44,14 +44,23 @@ def dumps(*args, **kwargs):
     return _dumps(*args, **kwargs)
 
 
-def get_required_columns(model):
-    """returns a set of non-nullable columns for the provided database model"""
-    required = set()
-    for column_name, column in model.__table__.columns.items():
-        if not column.nullable and not column.primary_key:
-            required.add(column_name)
+def get_column_sets(model):
+    """returns a set of required and all columns as sets"""
+    all_columns = set()
+    required_columns = set()
 
-    return required
+    for name, column in model.__table__.c.items():
+        # skip autoincremented primary keys
+        if column.primary_key and column.autoincrement:
+            continue
+
+        all_columns.add(name)
+
+        # column is non-nullable without a default
+        if not column.nullable and column.default is None:
+            required_columns.add(name)
+
+    return all_columns, required_columns
 
 
 class JSONResponse(Response):
