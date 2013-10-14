@@ -14,82 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from httplib import OK, BAD_REQUEST, INTERNAL_SERVER_ERROR
-from functools import wraps
-from sqlalchemy.exc import StatementError
-from flask import request, abort
 from flask.views import MethodView
-from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import APIError
 from pyfarm.models.agent import AgentModel
+from pyfarm.master.api.decorators import put_model
 from pyfarm.master.application import db
-from pyfarm.master.utility import JSONResponse, get_required_columns
-
-logger = getLogger("api.agents")
-
-
-def try_or_fail(callable, error, description):
-    try:
-        return callable()
-    except:
-        abort(BAD_REQUEST)
-
-
-class put_model(object):
-    def __init__(self, model, data_class=dict):
-        self.model = model
-        self.required_columns = get_required_columns(model)
-        self.data_class = data_class
-
-    def __call__(self, func):
-        @wraps(func)
-        def caller(caller_self):
-            # before doing anything else, make sure we can
-            # decode the json data
-            try:
-                data = request.get_json()
-            except ValueError, e:
-                logger.exception(e)
-                return JSONResponse(
-                    APIError.JSON_DECODE_FAILED, status=BAD_REQUEST)
-
-            # make sure the type coming in from the json data
-            # is correct
-            if not isinstance(data, self.data_class):
-                logger.error("invalid json class")
-                logger.debug("provided: %s, " % str(type(data)) +
-                             "expected: %s" % self.data_class)
-                return JSONResponse(
-                    APIError.UNEXPECTED_DATATYPE, status=BAD_REQUEST)
-
-            # ensure all the keys exist
-            if set(data) != self.required_columns:
-                logger.error("not enough columns provided")
-                logger.debug("provided: %s, " % set(data) +
-                             "expected: %s" % self.required_columns)
-                return JSONResponse(
-                    APIError.MISSING_FIELDS, status=BAD_REQUEST)
-
-            # now check for null data
-            if isinstance(data, dict):
-                for key, value in data.iteritems():
-                    if value is None:
-                        logger.error("column %s should not be null")
-                        return JSONResponse(
-                            APIError.UNEXPECTED_NULL, status=BAD_REQUEST)
-
-            try:
-                return func(caller_self, data, self.model(**data))
-
-            except StatementError:
-                return JSONResponse(
-                    APIError.DATABASE_ERROR, status=INTERNAL_SERVER_ERROR)
-
-        return caller
+from pyfarm.master.utility import JSONResponse
 
 
 #TODO: documentation
-#TODO: on hold, POST/UPDATE for agents needs to be finished first
 class AgentsIndex(MethodView):
     """
     Endpoint for /agents
@@ -105,5 +37,4 @@ class AgentsIndex(MethodView):
     def put(self, data, model):
         db.session.add(model)
         db.session.commit()
-        print model.to_dict()
-        return ""
+        return JSONResponse(model.to_dict())
