@@ -23,9 +23,8 @@ configure it.
 """
 
 import os
+from functools import partial
 from datetime import timedelta
-from uuid import uuid4
-from warnings import warn
 from werkzeug.datastructures import ImmutableDict
 from flask import Flask, Blueprint
 from flask.ext.cache import Cache
@@ -33,126 +32,80 @@ from flask.ext.admin import Admin
 from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
 from itsdangerous import URLSafeTimedSerializer
-from pyfarm.core.config import cfg
-from pyfarm.core.warning import EnvironmentWarning, ConfigurationWarning
+from pyfarm.core.config import cfg, read_env
 from pyfarm.master.admin.baseview import AdminIndex
 
 # default configuration values
-# TODO: these should either be in the, read from a config, or come from the
-# environment
+eval_env = partial(read_env, eval_literal=True)
 cfg.update({
-    "db.table_prefix": "pyfarm_",
-    "agent.min_port": 1025,
-    "agent.max_port": 65535,
-    "agent.min_cpus": 1,
-    "agent.max_cpus": 2147483647,
+    "db.table_prefix": eval_env("PYFARM_TABLE_PREFIX", "pyfarm_"),
+    "agent.min_port": eval_env("PYFARM_AGENT_MIN_PORT", 1025),
+    "agent.max_port": eval_env("PYFARM_AGENT_MAX_PORT", 65535),
+    "agent.min_cpus": eval_env("PYFARM_AGENT_MIN_CPUS", 1),
+    "agent.max_cpus": eval_env("PYFARM_AGENT_MAX_CPUS", 2147483647),
     "agent.special_cpus": [0],
-    "agent.min_ram": 32,
-    "agent.max_ram": 2147483647,
+    "agent.min_ram": eval_env("PYFARM_AGENT_MIN_RAM", 32),
+    "agent.max_ram": read_env("PYFARM_AGENT_MAX_RAM", 2147483647),
     "agent.special_ram": [0],
-    "job.priority": 500,
-    "job.max_username_length": 254,
-    "job.min_priority": 0,
-    "job.max_priority": 1000,
-    "job.batch": 1,
-    "job.requeue": 1,
-    "job.cpus": 4,
-    "job.ram": 32})
-
-
-def get_secret_key(warning=True):
-    """
-    Returns the secret key to use
-
-    :param boolean warning:
-        if True, produce a warning if :envvar:`PYFARM_SECRET_KEY` is not
-        present in the environment
-    """
-    if "PYFARM_SECRET_KEY" in os.environ:
-        return os.environ["PYFARM_SECRET_KEY"]
-    elif warning:
-        warn("$PYFARM_SECRET_KEY not present in environment",
-             EnvironmentWarning)
-
-    return "4n)Z\xc2\xde\xdd\x17\xdd\xf7\xa6)>{\xfc\xff"
-
-
-def get_database_uri(warning=True):
-    """
-    Returns the database uri
-
-    :param boolean warning:
-        if True, produce a warning when sqlite is being used or when
-        :envvar:`PYFARM_DATABASE_URI` is not present in the environment
-    """
-    if "PYFARM_DATABASE_URI" in os.environ:
-        uri = os.environ["PYFARM_DATABASE_URI"]
-    else:
-        uri = "sqlite:///pyfarm.sqlite"
-
-        if warning:
-            warn("$PYFARM_DATABASE_URI not present in environment",
-                 EnvironmentWarning)
-
-    if warning and "sqlite:" in uri:
-        warn("sqlite is for development purposes only", ConfigurationWarning)
-
-    return uri
-
-
-def get_session_key(warning=True):
-    """
-    Returns the CSRF session key for use by the application
-
-    :param boolean warning:
-        if True, produce a warning if :envvar:`PYFARM_CSRF_SESSION_KEY` is not
-        present in the environment
-    """
-    if "PYFARM_CSRF_SESSION_KEY" in os.environ:
-        return os.environ["PYFARM_CSRF_SESSION_KEY"]
-    elif warning:
-        warn("$PYFARM_CSRF_SESSION_KEY is not present in the environment",
-             EnvironmentWarning)
-        return get_secret_key(warning=warning)
-
-
-def get_json_pretty():
-    """
-    If :envvar:`PYFARM_JSON_PRETTY` is set to `true` all json output
-    will be dumped in a human readable form.  The same will also be true
-    if :envvar:`PYFARM_CONFIG` is set to `debug`.
-    """
-    if "PYFARM_JSON_PRETTY" in os.environ:
-        return os.environ["PYFARM_JSON_PRETTY"] == "true"
-    elif "PYFARM_CONFIG" in os.environ:
-        return os.environ["PYFARM_CONFIG"] == "debug"
-    else:
-        return True
+    "job.max_username_length": eval_env("PYFARM_MAX_USERNAME_LENGTH", 254),
+    "job.priority": eval_env("PYFARM_JOB_DEFAULT_PRIORITY", 500),
+    "job.min_priority": eval_env("PYFARM_JOB_MIN_PRIORITY", 0),
+    "job.max_priority": eval_env("PYFARM_JOB_MAX_PRIORITY", 1000),
+    "job.batch": eval_env("PYFARM_JOB_DEFAULT_BATCH", 1),
+    "job.requeue": eval_env("PYFARM_JOB_DEFAULT_REQUEUE", 1),
+    "job.cpus": eval_env("PYFARM_JOB_DEFAULT_CPUS", 4),
+    "job.ram": eval_env("PYFARM_JOB_DEFAULT_RAM", 32)})
 
 
 # build the configuration
-if os.environ.get("PYFARM_CONFIG", "debug") == "debug":
+if read_env("PYFARM_CONFIG", "debug", ) == "debug":
+    __secret_key__ = read_env(
+        "PYFARM_SECRET_KEY", "4n)Z\xc2\xde\xdd\x17\xdd\xf7\xa6)>{\xfc\xff",
+        log_result=False)
+
     CONFIG = ImmutableDict({
         "DEBUG": True,
-        #"LOGIN_DISABLED": True,
-        "PYFARM_JSON_PRETTY": get_json_pretty(),
-        "SQLALCHEMY_ECHO": False,
-        "SECRET_KEY": get_secret_key(warning=False),
-        "SQLALCHEMY_DATABASE_URI": get_database_uri(warning=False),
-        "CSRF_SESSION_KEY": get_session_key(warning=False),
-        "CACHE_TYPE": "simple",
+        "SECRET_KEY": __secret_key__,
+        "LOGIN_DISABLED":
+            read_env("PYFARM_LOGIN_DISABLED", False, eval_literal=True),
+        "PYFARM_JSON_PRETTY":
+            read_env("PYFARM_JSON_PRETTY", True, eval_literal=True),
+        "SQLALCHEMY_ECHO":
+            read_env("PYFARM_SQL_ECHO", False, eval_literal=True),
+        "SQLALCHEMY_DATABASE_URI":
+            read_env("PYFARM_DATABASE_URI", "sqlite:///pyfarm.sqlite",
+                     log_result=False),
+        "CSRF_SESSION_KEY":
+            read_env("PYFARM_CSRF_SESSION_KEY", __secret_key__,
+                     log_result=False),
+        "CACHE_TYPE":
+            read_env("PYFARM_CACHE_TYPE", "simple"),
         "REMEMBER_COOKIE_DURATION": timedelta(hours=1)})
 
 else:
+    __secret_key__ = read_env("PYFARM_SECRET_KEY", log_result=False)
+    
     CONFIG = ImmutableDict({
         "DEBUG": False,
-        "PYFARM_JSON_PRETTY": get_json_pretty(),
-        "SQLALCHEMY_ECHO": False,
-        "SECRET_KEY": get_secret_key(warning=True),
-        "SQLALCHEMY_DATABASE_URI": get_database_uri(warning=True),
-        "CSRF_SESSION_KEY": get_session_key(warning=True),
-        "CACHE_TYPE": "simple",  # TODO: should probably be server based
+        "SECRET_KEY": __secret_key__,
+        "LOGIN_DISABLED":
+            read_env("PYFARM_LOGIN_DISABLED", False, eval_literal=True),
+        "PYFARM_JSON_PRETTY":
+            read_env("PYFARM_JSON_PRETTY", False, eval_literal=True),
+        "SQLALCHEMY_ECHO":
+            read_env("PYFARM_SQL_ECHO", False, eval_literal=True),
+        "SQLALCHEMY_DATABASE_URI":
+            read_env("PYFARM_DATABASE_URI", "sqlite:///pyfarm.sqlite",
+                     log_result=False),
+        "CSRF_SESSION_KEY":
+            read_env("PYFARM_CSRF_SESSION_KEY", __secret_key__,
+                     log_result=False),
+        "CACHE_TYPE":
+            read_env("PYFARM_CACHE_TYPE", "simple"),
         "REMEMBER_COOKIE_DURATION": timedelta(hours=12)})
+
+
+del __secret_key__  # should not be visible on the module
 
 app = Flask("pyfarm.master")
 
