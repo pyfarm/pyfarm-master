@@ -26,6 +26,7 @@ class AgentsIndex(MethodView):
     """
     Endpoint for /agents
     """
+    # TODO: add filtering via url /api/v1/agents/1
     def get(self):
         # TODO: add filtering
         data = dict(
@@ -38,3 +39,11 @@ class AgentsIndex(MethodView):
         db.session.add(model)
         db.session.commit()
         return JSONResponse(model.to_dict())
+
+    # TODO: decorator
+    # TODO: id MUST be provided
+    # TODO: be sure not to null non-nullables by providing a null
+    # TODO: if STATE is changed to offline, STOP other tasks/related activity
+    def post(self, data, model):
+
+        pass
