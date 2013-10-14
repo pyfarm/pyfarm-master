@@ -10,12 +10,12 @@ env:
   - TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
   - TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
   - TDB_TYPE=mysql TDB_DRIVER=mysql-connector-python PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-  - TDB_TYPE=sqlite PYFARM_DATABASE_URI="sqlite:///:memory:" PYFARM_CONFIG="prod"
-  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 PYFARM_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod"
-  - TDB_TYPE=postgres TDB_DRIVER=pg8000 PYFARM_DATABASE_URI="postgresql+pg8000://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod"
-  - TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod"
-  - TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod"
-  - TDB_TYPE=mysql TDB_DRIVER=mysql-connector-python PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod"
+  - TDB_TYPE=sqlite PYFARM_DATABASE_URI="sqlite:///:memory:" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 PYFARM_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+  - TDB_TYPE=postgres TDB_DRIVER=pg8000 PYFARM_DATABASE_URI="postgresql+pg8000://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+  - TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+  - TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+  - TDB_TYPE=mysql TDB_DRIVER=mysql-connector-python PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
 
 before_script:
   - if [[ $TDB_TYPE == "postgres" ]]; then psql -c "create database pyfarm;" -U postgres; fi
