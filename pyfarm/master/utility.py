@@ -45,7 +45,10 @@ def dumps(*args, **kwargs):
 
 
 def get_column_sets(model):
-    """returns a set of required and all columns as sets"""
+    """
+    returns a tuple of two sets containing all columns and required columns
+    for the model provided
+    """
     all_columns = set()
     required_columns = set()
 
@@ -70,11 +73,14 @@ class JSONResponse(Response):
     """
     content_type = "application/json"
 
-    def __init__(self, data, **kwargs):
+    def __init__(self, data=None, **kwargs):
         if isinstance(data, ReducibleDictionary):
             data.reduce()
 
-        super(JSONResponse, self).__init__(dumps(data), **kwargs)
+        if data is not None:
+            super(JSONResponse, self).__init__(dumps(data), **kwargs)
+        else:
+            super(JSONResponse, self).__init__(**kwargs)
 
 
 class ReducibleDictionary(dict):
