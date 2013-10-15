@@ -21,6 +21,8 @@ Utility
 General utility which are not view or tool specific
 """
 
+from httplib import BAD_REQUEST
+
 try:
     from json import dumps as _dumps
 except ImportError:
@@ -28,6 +30,7 @@ except ImportError:
 
 from werkzeug.datastructures import ImmutableDict
 from flask import Response
+from pyfarm.core.enums import APIError
 from pyfarm.master.application import app
 
 PRETTY_JSON = app.config["PYFARM_JSON_PRETTY"]
@@ -152,3 +155,54 @@ class column_cache(object):
         all_columns, required_columns = cls.get_columns(model)
         return required_columns
 
+
+def json_from_request(request, all_keys=None, required_keys=None,
+                      disallowed_keys=None):
+    """
+    Returns the json data from the request or a :class:`.JSONResponse` object
+    on failure.
+
+    :keyword set all_keys:
+        a set of all possible keys which may be present in the json request
+
+    :keyword set required_keys:
+        a set of keys which must be present in the json request
+
+    :keyword set disallowed_keys:
+        a set of keys which cannot be part of the request
+    """
+    try:
+        data = request.get_json()
+
+    except ValueError, e:
+        errorno, msg = APIError.JSON_DECODE_FAILED
+        msg += ": %s" % e
+        return JSONResponse((errorno, msg), status=BAD_REQUEST)
+
+    if isinstance(data, dict) and (all_keys or required_keys or disallowed_keys):
+        request_keys = set(data)
+
+        # make sure that we don't have more request keys
+        # than there are total keys
+        if all_keys is not None and not request_keys.issubset(all_keys):
+            errorno, msg = APIError.EXTRA_FIELDS_ERROR
+            msg += ".  Extra fields were: %s" % list(request_keys - all_keys)
+            return JSONResponse((errorno, msg), status=BAD_REQUEST)
+
+        # if required keys were provided, make sure the
+        # request has at least those fields
+        if required_keys is not None and not \
+            request_keys.issuperset(required_keys):
+            missing_keys = list(required_keys-request_keys)
+            errorno, msg = APIError.MISSING_FIELDS
+            msg += ".  Missing fields are: %s" % missing_keys
+            return JSONResponse((errorno, msg), status=BAD_REQUEST)
+
+        if disallowed_keys is not None and \
+            request_keys.issuperset(disallowed_keys):
+            errorno, msg = APIError.EXTRA_FIELDS_ERROR
+            disallowed_extras = request_keys.intersection(disallowed_keys)
+            msg += ".  Extra fields were: %s" % disallowed_extras
+            return JSONResponse((errorno, msg), status=BAD_REQUEST)
+
+    return data
