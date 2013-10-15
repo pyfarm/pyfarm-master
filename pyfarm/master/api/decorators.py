@@ -30,8 +30,9 @@ class RequestDecorator(object):
         self.model = model
         self.data_class = data_class
         self.all_columns, self.required_columns = get_column_sets(model)
+        self.all_request_columns = None
 
-    def to_json(self):
+    def from_json(self):
         # before doing anything else, make sure we can
         # decode the json data
         try:
@@ -51,7 +52,45 @@ class RequestDecorator(object):
             return JSONResponse(
                 APIError.UNEXPECTED_DATATYPE, status=BAD_REQUEST)
 
+        if isinstance(data, dict):
+            self.all_request_columns = set(data)
+
+            # more fields were provided than we have columns for
+            if not self.all_request_columns.issubset(self.all_columns):
+                extra_columns = list(self.all_request_columns-self.all_columns)
+                errorno, msg = APIError.EXTRA_FIELDS_ERROR
+                msg = "unknown columns were included with " \
+                      "the request: %s" % extra_columns
+                return JSONResponse((errorno, msg), status=BAD_REQUEST)
+
         return data
+
+    def get_model(self, **kwargs):
+        return self.model(**kwargs)
+
+    def __call__(self, func):
+        @wraps(func)
+        def caller(self_):
+            data = self.from_json()
+            if isinstance(data, JSONResponse):
+                return data
+
+            model = self.get_model(**data)
+            if model is None:
+                errorno, msg = APIError.DATABASE_ERROR
+                msg = "failed to find model using %s" % data
+                return JSONResponse((errorno, msg), status=BAD_REQUEST)
+
+            try:
+                return func(self_, data, model)
+
+            except (StatementError, ValueError), e:
+                errorno, msg = APIError.DATABASE_ERROR
+                msg += ": %s" % e
+                return JSONResponse(
+                    (errorno, msg), status=INTERNAL_SERVER_ERROR)
+
+        return caller
 
 
 class put_model(RequestDecorator):
@@ -59,51 +98,61 @@ class put_model(RequestDecorator):
     Decorator used for validating PUT data including required fields,
     non-nullable information, and ensuring we're not trying to add extra fields
     """
-    def to_json(self):
-        data = super(put_model, self).to_json()
+    def from_json(self):
+        data = super(put_model, self).from_json()
 
-        # since we're working with a dictionary from the request
-        # compare its data against the table
-        if isinstance(data, dict):
-            # create sets of all required columns from the request
-            # which are null (as well as a complete set of all columns)
-            nulled_required_columns = set()
-            all_request_columns = set()
-            for key, value in data.iteritems():
-                all_request_columns.add(key)
-                if value is None and key in self.required_columns:
-                    nulled_required_columns.add(key)
+        if not isinstance(data, dict):
+            return data
 
-            # error out if we found any columns in the request which are
-            # required but not provided
-            if nulled_required_columns:
-                errorno, msg = APIError.UNEXPECTED_NULL
-                msg = "the following required columns " \
-                      "were null: %s" % nulled_required_columns
-                return JSONResponse((errorno, msg), status=BAD_REQUEST)
+        # create sets of all required columns from the request
+        # which are null (as well as a complete set of all columns)
+        nulled_required_columns = set()
+        all_request_columns = set()
+        for key, value in data.iteritems():
+            all_request_columns.add(key)
+            if value is None and key in self.required_columns:
+                nulled_required_columns.add(key)
 
-            # more fields were provided than we have columns for
-            if all_request_columns > self.all_columns:
-                extra_fields = all_request_columns - self.all_columns
-                errorno, msg = APIError.EXTRA_FIELDS_ERROR
-                msg = "extra fields were included with " \
-                      "the request: %s" % extra_fields
-                return JSONResponse((errorno, msg), status=BAD_REQUEST)
+        # error out if we found any columns in the request which are
+        # required but not provided
+        if nulled_required_columns:
+            errorno, msg = APIError.UNEXPECTED_NULL
+            msg = "the following required columns " \
+                  "were null: %s" % nulled_required_columns
+            return JSONResponse((errorno, msg), status=BAD_REQUEST)
 
         return data
 
-    def __call__(self, func):
-        @wraps(func)
-        def caller(self_):
-            data = self.to_json()
-            if isinstance(data, JSONResponse):
-                return data
 
-            try:
-                return func(self_, data, self.model(**data))
+class post_model(RequestDecorator):
+    """
+    Decorator which will runs a few checks on the incoming
+    request against the table.
+    """
+    def __init__(self, model, data_class=dict):
+        super(post_model, self).__init__(model, data_class=data_class)
+        self.all_columns.add("id")
 
-            except StatementError:
-                return JSONResponse(
-                    APIError.DATABASE_ERROR, status=INTERNAL_SERVER_ERROR)
+    def from_json(self):
+        data = super(post_model, self).from_json()
 
-        return caller
+        if not isinstance(data, dict):
+            return data
+
+        # id not provided
+        elif "id" not in data:
+            errorno, msg = APIError.MISSING_FIELDS
+            msg = "id field is missing"
+            return JSONResponse((errorno, msg), status=BAD_REQUEST)
+
+        # empty id provided
+        elif not data["id"] and data["id"] != 0:
+            errorno, msg = APIError.MISSING_FIELDS
+            msg = "id field is not populated"
+            return JSONResponse((errorno, msg), status=BAD_REQUEST)
+
+        else:
+            return data
+
+    def get_model(self, **kwargs):
+        return self.model.query.filter_by(id=kwargs["id"]).first()
