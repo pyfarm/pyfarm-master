@@ -14,125 +14,227 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Agents
+------
+
+Contained within this module are API handling functions which can
+    * create new agents
+    * update existing agent data
+    * delete existing agents
+"""
+
+from functools import partial
+from httplib import NOT_FOUND, NO_CONTENT, OK
+from flask import request
 from flask.views import MethodView
+from pyfarm.core.enums import APIError
 from pyfarm.models.agent import AgentModel
-from pyfarm.master.api.decorators import put_model, post_model
 from pyfarm.master.application import db
-from pyfarm.master.utility import JSONResponse
+from pyfarm.master.utility import JSONResponse, column_cache, json_from_request
 
 
-#TODO: documentation
-class AgentsIndex(MethodView):
+to_json = partial(json_from_request,
+                  all_keys=column_cache.all_columns(AgentModel),
+                  disallowed_keys=set(["id"]))
+
+
+# TODO: add endpoint for /agents/new
+def create_agent():
+    pass
+
+
+# TODO: add endpoint for /agents<query parameters> [state|ram|cpus|etc]
+# TODO: check docs, there's probably a standard way for providing typed args
+def query_agents():
+    pass
+
+
+class AgentTasksAPI(MethodView):
     """
-    Endpoint for /agents
+    API view which is used for modifying, adding, or removing tasks
+    for a specific agent
+
+    .. note::
+        This view is mainly for querying tasks, modification of tasking
+        is usually done via the queue endpoints.
     """
-    # TODO: add filtering via url /api/v1/agents/1
-    def get(self):
-        # TODO: add filtering
-        data = dict(
-            (i.hostname, (i.id, i.state, i.freeram, i.ram, i.cpus))
-            for i in AgentModel.query)
-        return JSONResponse(data)
-
-    @put_model(AgentModel)
-    def put(self, data, model):
-        db.session.add(model)
-        db.session.commit()
-        return JSONResponse(model.to_dict())
+    pass
 
 
-    # TODO: be sure not to null non-nullables by providing a null
-    # TODO: if STATE is changed to offline, STOP other tasks/related activity
-    @post_model(AgentModel)
-    def post(self, data, model):
+class AgentAPI(MethodView):
+    """
+    API view which is used for retrieving information about and updating
+    single agents.
+    """
+    def get(self, agent_id=None):
         """
-        .. http:post:: /agents
+        Return basic information about a single agent
 
-            * update column (or columns)
+        .. http:get:: /api/v1/(int:agent_id) HTTP/1.1
 
-                **Request**
+            **Request (agent exists)**
 
-                .. sourcecode:: http
+            .. sourcecode:: http
 
-                    POST /<prefix>/agents HTTP/1.1
-                    Accept: application/json
+                GET /api/v1/agents/1 HTTP/1.1
+                Accept: application/json
 
-                    {"id": 2, "ram": 256}
+            **Response**
 
-                **Response**
+            .. sourcecode:: http
 
-                .. sourcecode:: http
+                HTTP/1.1 200 OK
+                Content-Type: application/json
 
-                    HTTP/1.1 200 OK
-                    Content-Type: application/json
+                {
+                    "cpu_allocation": 1.0,
+                    "cpus": 14,
+                    "freeram": 133,
+                    "hostname": "agent1",
+                    "id": 1,
+                    "ip": "10.196.200.115",
+                    "port": 64994,
+                    "ram": 2157,
+                    "ram_allocation": 0.8,
+                    "state": 8
+                 }
 
-                    {
-                        "cpu_allocation": 1.0,
-                        "cpus": 4,
-                        "freeram": 2294,
-                        "hostname": "agent",
-                        "id": 2,
-                        "ip": "10.190.195.156",
-                        "port": 16207,
-                        "ram": 256,
-                        "ram_allocation": 0.8,
-                        "state": 8
-                     }
+            **Request (no such agent)**
 
-            * update unknown column(s)
+            .. sourcecode:: http
 
-                **Request**
+                GET /api/v1/agents/1234 HTTP/1.1
+                Accept: application/json
 
-                .. sourcecode:: http
+            **Response**
 
-                    POST /<prefix>/agents HTTP/1.1
-                    Accept: application/json
+            .. sourcecode:: http
 
-                    {"id": 2, "foo": 256}
+                HTTP/1.1 404 NOT FOUND
+                Content-Type: application/json
 
-                **Response**
+                [4, "no agent found for `1234`"]
 
-                .. sourcecode:: http
-
-                    HTTP/1.1 400 BAD REQUEST
-                    Content-Type: application/json
-
-                    [5, "unknown columns were included with the request: ['foo']"]
-
-            * update without ID
-
-                **Request**
-
-                .. sourcecode:: http
-
-                    POST /<prefix>/agents HTTP/1.1
-                    Accept: application/json
-
-                    {"ram": 256}
-
-                **Response**
-
-                .. sourcecode:: http
-
-                    HTTP/1.1 400 BAD REQUEST
-                    Content-Type: application/json
-
-                    [2, "id field is missing"]
+        :statuscode 200: no error
+        :statuscode 404: no agent could be found using the given id
         """
-        update_data = data.copy()
-        update_data.pop("id")
+        agent = AgentModel.query.filter_by(id=agent_id).first()
+        if agent is not None:
+            return JSONResponse(agent.to_dict())
+        else:
+            errorno, msg = APIError.DATABASE_ERROR
+            msg = "no agent found for `%s`" % agent_id
+            return JSONResponse((errorno, msg), status=NOT_FOUND)
 
-        # add the model to the session and update it
-        updated = False
-        db.session.add(model)
-        for key, value in update_data.iteritems():
-            current_value = getattr(model, key)
+    # TODO: docs need a few more examples here
+    def post(self, agent_id=None):
+        """
+        Update an agent's columns with new information
 
-            if value != current_value:
+        .. http:post:: /api/v1/(int:agent_id) HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/agents/1 HTTP/1.1
+                Accept: application/json
+
+                {"ram": 1234}
+
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "cpu_allocation": 1.0,
+                    "cpus": 14,
+                    "freeram": 133,
+                    "hostname": "agent1",
+                    "id": 1,
+                    "ip": "10.196.200.115",
+                    "port": 64994,
+                    "ram": 1234,
+                    "ram_allocation": 0.8,
+                    "state": 8
+                }
+
+        :statuscode 200: no error
+        :statuscode 400: something within the request is invalid
+        :statuscode 404: no agent could be found using the given id
+        """
+        # get json data
+        data = to_json(request)
+        if isinstance(data, JSONResponse):
+            return data
+
+        # get model
+        model = AgentModel.query.filter_by(id=agent_id).first()
+        if model is None:
+            errorno, msg = APIError.DATABASE_ERROR
+            msg = "no agent found for `%s`" % agent_id
+            return JSONResponse((errorno, msg), status=NOT_FOUND)
+
+        # update model
+        modified = False
+        for key, value in data.iteritems():
+            if value != getattr(model, key):
                 setattr(model, key, value)
-                updated = True
+                modified = True
 
-        if updated:
+        if modified:
+            db.session.add(model)
             db.session.commit()
 
-        return JSONResponse(model.to_dict())
+        return JSONResponse(model.to_dict(), status=OK)
+
+    def delete(self, agent_id=None):
+        """
+        Delete a single agent
+
+        .. http:delete:: /api/v1/agents/(int:agent_id) HTTP/1.1
+
+            **Request (agent exists)**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/1 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+
+            **Request (agent does not exist)**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/agents/1 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 204 NO CONTENT
+                Content-Type: application/json
+
+        :statuscode 200: the agent existed and was deleted
+        :statuscode 204: the agent did not exist, nothing to delete
+        """
+        agent = AgentModel.query.filter_by(id=agent_id).first()
+        if agent is None:
+            return JSONResponse(status=NO_CONTENT)
+        else:
+            db.session.delete(agent)
+            db.session.commit()
+            return JSONResponse(status=OK)
