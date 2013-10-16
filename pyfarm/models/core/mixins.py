@@ -100,7 +100,15 @@ class DictMixins(object):
         """Produce a dictionary of existing data in the table"""
         result = {}
         for column_name in self.__table__.c.keys():
-            result[column_name] = getattr(self, column_name)
+            function_name = "serialize_%s" % column_name
+            value = getattr(self, column_name)
+
+            # if the class has a function to serialize the specific
+            # column then we'll use that to produce the final value
+            if hasattr(self, function_name):
+                value = getattr(self, function_name)(value)
+
+            result[column_name] = value
 
         return result
 
