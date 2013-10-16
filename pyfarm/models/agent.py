@@ -289,12 +289,23 @@ class AgentModel(db.Model, WorkValidationMixin, DictMixins):
 
     @validates("ip")
     def validate_address_column(self, key, value):
+        """validates the ip column"""
         return self.validate_ip_address(key, value)
 
     @validates("hostname")
     def validate_hostname_column(self, key, value):
+        """validates the hostname column"""
         return self.validate_hostname(key, value)
 
     @validates("ram", "cpus", "port")
     def validate_resource_column(self, key, value):
+        """validates the ram, cpus, and port columns"""
         return self.validate_resource(key, value)
+
+    @classmethod
+    def serialize_ip(cls, value):
+        """
+        Convert an ip address into a string.  Provided as a classmethod
+        for use by :class:`.DictMixin`
+        """
+        return str(value)
