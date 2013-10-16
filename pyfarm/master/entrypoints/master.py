@@ -74,12 +74,18 @@ def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
     assert app_instance is app
     assert api_instance is api
-    from pyfarm.master.api.agents import AgentAPI
+    from pyfarm.master.api.agents import SingleAgentAPI, AgentIndexAPI
 
-    api_instance.add_url_rule(  # single agent management
-        "/agents/<int:agent_id>", view_func=AgentAPI.as_view("agent_api"))
+    # add api methods
+    api_instance.add_url_rule(
+        "/agents/new",
+        view_func=AgentIndexAPI.as_view("agent_index_api"))
+    api_instance.add_url_rule(
+        "/agents/<int:agent_id>",
+        view_func=SingleAgentAPI.as_view("single_agent_api"))
 
-    app_instance.register_blueprint(api)
+    # register the api blueprint
+    app_instance.register_blueprint(api_instance)
 
 
 def load_admin(admin_instance):

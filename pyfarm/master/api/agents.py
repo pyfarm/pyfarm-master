@@ -33,36 +33,36 @@ from pyfarm.models.agent import AgentModel
 from pyfarm.master.application import db
 from pyfarm.master.utility import JSONResponse, column_cache, json_from_request
 
-
+# partial function(s) to assist in data conversion
 to_json = partial(json_from_request,
                   all_keys=column_cache.all_columns(AgentModel),
                   disallowed_keys=set(["id"]))
 
 
-# TODO: add endpoint for /agents/new
-def create_agent():
-    pass
+class AgentIndexAPI(MethodView):
+    def post(self):
+        """
+        Creates a new agent or updates and returns an existing one based on:
+
+            * ip address (or hostname if address is not provided)
+            * amount of ram
+            * number of cpus
+        """
+        # get json data from the request
+        data = to_json(request)
+        if isinstance(data, JSONResponse):
+            return data
+
+        # TODO: check for existing hosts
+        # TODO: if host exists, update host
+        # TODO: if host does NOT exist, create new host
+        # TODO: return data
+
+        print data
+        return ""
 
 
-# TODO: add endpoint for /agents<query parameters> [state|ram|cpus|etc]
-# TODO: check docs, there's probably a standard way for providing typed args
-def query_agents():
-    pass
-
-
-class AgentTasksAPI(MethodView):
-    """
-    API view which is used for modifying, adding, or removing tasks
-    for a specific agent
-
-    .. note::
-        This view is mainly for querying tasks, modification of tasking
-        is usually done via the queue endpoints.
-    """
-    pass
-
-
-class AgentAPI(MethodView):
+class SingleAgentAPI(MethodView):
     """
     API view which is used for retrieving information about and updating
     single agents.
@@ -71,7 +71,7 @@ class AgentAPI(MethodView):
         """
         Return basic information about a single agent
 
-        .. http:get:: /api/v1/(int:agent_id) HTTP/1.1
+        .. http:get:: /api/v1/agents/(int:agent_id) HTTP/1.1
 
             **Request (agent exists)**
 
@@ -132,7 +132,7 @@ class AgentAPI(MethodView):
         """
         Update an agent's columns with new information
 
-        .. http:post:: /api/v1/(int:agent_id) HTTP/1.1
+        .. http:post:: /api/v1/agents/(int:agent_id) HTTP/1.1
 
             **Request**
 
