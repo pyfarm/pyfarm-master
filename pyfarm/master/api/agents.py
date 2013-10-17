@@ -45,6 +45,46 @@ to_json = partial(json_from_request,
 logger = getLogger("api.agents")
 
 
+def schema():
+    """
+    Returns the basic schema of :class:`.AgentModel`
+
+    .. http:get:: /api/v1/agents/schema HTTP/1.1
+
+        **Request**
+
+        .. sourcecode:: http
+
+            GET /api/v1/agents/schema HTTP/1.1
+            Accept: application/json
+
+        **Response**
+
+        .. sourcecode:: http
+
+            HTTP/1.1 200 OK
+            Content-Type: application/json
+
+            {
+                "ram": "INTEGER",
+                "freeram": "INTEGER",
+                "use_address": "INTEGER",
+                "ip": "IPv4Address",
+                "hostname": "VARCHAR(255)",
+                "cpus": "INTEGER",
+                "port": "INTEGER",
+                "state": "INTEGER",
+                "ram_allocation": "FLOAT",
+                "cpu_allocation": "FLOAT",
+                "id": "INTEGER",
+                "remote_ip": "IPv4Address"
+            }
+
+    :statuscode 200: no error
+    """
+    return JSONResponse(AgentModel().to_schema())
+
+
 class AgentIndexAPI(MethodView):
     # TODO: should return agent
     def post(self):
