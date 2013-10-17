@@ -78,7 +78,7 @@ def load_api(app_instance, api_instance):
 
     # add api methods
     api_instance.add_url_rule(
-        "/agents/new",
+        "/agents",
         view_func=AgentIndexAPI.as_view("agent_index_api"))
     api_instance.add_url_rule(
         "/agents/<int:agent_id>",
