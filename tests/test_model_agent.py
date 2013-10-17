@@ -76,6 +76,7 @@ class AgentTestCase(unittest.TestCase):
             agent = AgentModel()
             agent.hostname = hostname
             agent.ip = ip
+            agent.remote_ip = ip
             agent.port = port
             agent.cpus = cpus
             agent.freeram = agent.ram = ram

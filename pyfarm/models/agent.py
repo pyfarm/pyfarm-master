@@ -28,7 +28,7 @@ import netaddr
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
 from netaddr import AddrFormatError
-from pyfarm.core.enums import AgentState
+from pyfarm.core.enums import AgentState, UseAgentAddress
 from pyfarm.core.config import cfg
 from pyfarm.master.application import db
 from pyfarm.models.core.mixins import WorkValidationMixin, DictMixins
@@ -154,6 +154,13 @@ class AgentModel(db.Model, WorkValidationMixin, DictMixins):
                          name instead of the base hostname alone."""))
     ip = db.Column(IPv4Address, nullable=True,
                    doc="The IPv4 network address this host resides on")
+    remote_ip = db.Column(IPv4Address, nullable=False,
+                          doc="the remote address which came in with the "
+                              "request")
+    use_address = db.Column(db.Integer, nullable=False,
+                            default=UseAgentAddress.HOSTNAME,
+                            doc="The address we should use when communicating "
+                                "with the agent")
     ram = db.Column(db.Integer, nullable=False,
                     doc="The amount of ram installed on the agent in megabytes")
     freeram = db.Column(db.Integer, nullable=False,
