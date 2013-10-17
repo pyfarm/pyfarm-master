@@ -27,7 +27,7 @@ from textwrap import dedent
 import netaddr
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
-from netaddr import AddrFormatError
+from netaddr import AddrFormatError, IPAddress
 from pyfarm.core.enums import AgentState, UseAgentAddress
 from pyfarm.core.config import cfg
 from pyfarm.master.application import db
@@ -309,10 +309,8 @@ class AgentModel(db.Model, WorkValidationMixin, DictMixins):
         """validates the ram, cpus, and port columns"""
         return self.validate_resource(key, value)
 
-    @classmethod
-    def serialize_ip(cls, value):
-        """
-        Convert an ip address into a string.  Provided as a classmethod
-        for use by :class:`.DictMixin`
-        """
-        return str(value)
+    def serialize_column(self, column):
+        """serializes a single column, typically used by a dictionary mixin"""
+        if isinstance(column, IPAddress):
+            return str(column)
+        return column

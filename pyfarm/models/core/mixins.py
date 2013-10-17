@@ -99,14 +99,16 @@ class DictMixins(object):
     def to_dict(self):
         """Produce a dictionary of existing data in the table"""
         result = {}
+        try:
+            serialize_column = self.serialize_column
+        except AttributeError:
+            serialize_column = None
+
         for column_name in self.__table__.c.keys():
-            function_name = "serialize_%s" % column_name
             value = getattr(self, column_name)
 
-            # if the class has a function to serialize the specific
-            # column then we'll use that to produce the final value
-            if hasattr(self, function_name):
-                value = getattr(self, function_name)(value)
+            if serialize_column is not None:
+                value = serialize_column(value)
 
             result[column_name] = value
 
