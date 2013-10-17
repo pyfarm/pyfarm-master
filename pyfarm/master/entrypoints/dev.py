@@ -95,6 +95,7 @@ def dbdata():
         agent.hostname = agent_name
         agent.ip = ".".join(map(
             str, (10, randint(0, 255), randint(0, 255), randint(0, 255))))
+        agent.remote_ip = agent.ip
         agent.ram = randint(2048, 4096)
         agent.freeram = randint(0, 4096)
         agent.cpus = randint(2, 24)
