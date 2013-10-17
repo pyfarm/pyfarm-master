@@ -154,7 +154,7 @@ class AgentModel(db.Model, WorkValidationMixin, DictMixins):
                          name instead of the base hostname alone."""))
     ip = db.Column(IPv4Address, nullable=True,
                    doc="The IPv4 network address this host resides on")
-    remote_ip = db.Column(IPv4Address, nullable=False,
+    remote_ip = db.Column(IPv4Address, nullable=True,
                           doc="the remote address which came in with the "
                               "request")
     use_address = db.Column(db.Integer, nullable=False,
