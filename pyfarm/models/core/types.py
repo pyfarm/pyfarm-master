@@ -26,7 +26,7 @@ from textwrap import dedent
 from uuid import uuid4, UUID
 from UserDict import UserDict
 from UserList import UserList
-from netaddr import IPAddress, AddrFormatError
+from netaddr import AddrFormatError, IPAddress as _IPAddress
 
 try:
     from json import dumps, loads
@@ -183,6 +183,25 @@ class JSONDict(JSONSerializable):
     serialize_types = (dict, UserDict)
 
 
+class IPAddress(_IPAddress):
+    """
+    Custom version of :class:`netaddr.IPAddress` which can match against
+    strings using the ``==`` and ``!=`` operators.
+    """
+    def __eq__(self, other):
+        if isinstance(other, basestring):
+            return str(self) == other
+        else:
+            return super(IPAddress, self).__eq__(other)
+
+    def __ne__(self, other):
+        if isinstance(other, basestring):
+            return str(self) != other
+        else:
+            return super(IPAddress, self).__ne__(other)
+
+
+
 class IPv4Address(TypeDecorator):
     """
     Column type which can store and retrieve IPv4 addresses in a more
@@ -203,7 +222,6 @@ class IPv4Address(TypeDecorator):
             return self.checkInteger(value)
 
         elif isinstance(value, basestring):
-            original_value = value
             try:
                 return self.checkInteger(int(IPAddress(value.replace("%", ""))))
             except AddrFormatError:
