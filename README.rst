@@ -22,13 +22,10 @@ PyFarm Master
 .. image:: https://travis-ci.org/pyfarm/pyfarm-master.png?branch=master
     :target: https://travis-ci.org/pyfarm/pyfarm-master
     :align: left
-    
 
-
-.. TODO: add coverage
-.. .. image:: https://coveralls.io/repos/pyfarm/pyfarm-models/badge.png?branch=master
-..    :target: https://coveralls.io/r/pyfarm/pyfarm-models?branch=master
-..    :align: left
+.. image:: https://coveralls.io/repos/pyfarm/pyfarm-master/badge.png?branch=master
+    :target: https://coveralls.io/r/pyfarm/pyfarm-master?branch=master
+    :align: left
 
 
 Sub-library which contains the code necessary to run an instance of the master
