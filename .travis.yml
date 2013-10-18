@@ -31,5 +31,5 @@ script:
   - pip freeze
   - nosetests -s --verbose --with-coverage --cover-package=pyfarm.master tests
 
-#after_success:
-#  - coveralls
+after_success:
+ - coveralls
