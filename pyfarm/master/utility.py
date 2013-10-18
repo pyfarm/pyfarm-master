@@ -25,7 +25,7 @@ from httplib import BAD_REQUEST
 
 try:
     from json import dumps as _dumps
-except ImportError:
+except ImportError: # pragma: no cover
     from simplejson import dumps as _dumps
 
 from werkzeug.datastructures import ImmutableDict
@@ -167,7 +167,7 @@ def json_from_request(request, all_keys=None, required_keys=None,
         if disallowed_keys is not None and \
             request_keys.issuperset(disallowed_keys):
             errorno, msg = APIError.EXTRA_FIELDS_ERROR
-            disallowed_extras = request_keys.intersection(disallowed_keys)
+            disallowed_extras = list(request_keys.intersection(disallowed_keys))
             msg += ".  Extra fields were: %s" % disallowed_extras
             return JSONResponse((errorno, msg), status=BAD_REQUEST)
 
