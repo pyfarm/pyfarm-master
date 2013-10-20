@@ -34,8 +34,7 @@ def favicon():
         On deployment, /favicon.ico should really be handled by
         the frontend server and **not** the application.
     """
-    path = os.path.join(
-        app.root_path, "pyfarm", "master", "static", "favicon.ico")
+    path = os.path.join(app.static_folder, "favicon.ico")
 
     try:
         with open(path, "rb") as stream:
