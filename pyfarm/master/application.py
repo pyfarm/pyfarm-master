@@ -22,9 +22,9 @@ Contains the functions necessary to construct the application layer classes
 necessary to run the master.
 """
 
+import os
 from functools import partial
 from datetime import timedelta
-from werkzeug.datastructures import ImmutableDict
 from flask import Flask, Blueprint
 from flask.ext.cache import Cache
 from flask.ext.admin import Admin
@@ -93,7 +93,7 @@ def get_application(**configuration_keywords):
 
     else:
         secret_key = read_env("PYFARM_SECRET_KEY", log_result=False)
-        app_config = ImmutableDict({
+        app_config = {
             "DEBUG": False,
             "SECRET_KEY": secret_key,
             "LOGIN_DISABLED":
@@ -110,9 +110,15 @@ def get_application(**configuration_keywords):
                          log_result=False),
             "CACHE_TYPE":
                 read_env("PYFARM_CACHE_TYPE", "simple"),
-            "REMEMBER_COOKIE_DURATION": timedelta(hours=12)})
+            "REMEMBER_COOKIE_DURATION": timedelta(hours=12)}
 
-    app = Flask("pyfarm.master")
+    static_folder = configuration_keywords.pop("static_folder", None)
+    if static_folder is None:  # static folder not provided
+        import pyfarm.master
+        static_folder = os.path.join(
+            os.path.dirname(pyfarm.master.__file__), "static")
+
+    app = Flask("pyfarm.master", static_folder=static_folder)
     app.config.update(app_config)
     app.config.update(configuration_keywords)
     return app
@@ -170,6 +176,7 @@ def get_login_manager(**kwargs):
     manager = LoginManager(**kwargs)
     manager.login_view = login_view
     return manager
+
 
 def get_login_serializer(secret_key):
     """
