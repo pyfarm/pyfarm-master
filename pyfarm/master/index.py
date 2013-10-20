@@ -45,10 +45,10 @@ def favicon():
                 response=stream.read(),
                 headers={"Cache-Control": "max-age=2628000"})
     except OSError:
-        abort(404, path=path)
+        abort(404)
 
     except IOError:
-        abort(500, error="failed to open %s" % path)
+        abort(500)
 
 
 def index_page():
