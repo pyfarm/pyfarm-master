@@ -18,11 +18,10 @@
 Application
 ===========
 
-Contains the base application classes and functions necessary to
-configure it.
+Contains the functions necessary to construct the application layer classes
+necessary to run the master.
 """
 
-import os
 from functools import partial
 from datetime import timedelta
 from werkzeug.datastructures import ImmutableDict
@@ -57,77 +56,136 @@ cfg.update({
     "job.ram": eval_env("PYFARM_JOB_DEFAULT_RAM", 32)})
 
 
-# build the configuration
-if read_env("PYFARM_CONFIG", "debug", ) == "debug":
-    __secret_key__ = read_env(
-        "PYFARM_SECRET_KEY", "4n)Z\xc2\xde\xdd\x17\xdd\xf7\xa6)>{\xfc\xff",
-        log_result=False)
+def get_application(**configuration_keywords):
+    """
+    Returns a new application context.  If keys and values are provided
+    to ``config_values`` they will be used to override the default
+    configuration values or create new ones
 
-    CONFIG = ImmutableDict({
-        "DEBUG": True,
-        "SECRET_KEY": __secret_key__,
-        "LOGIN_DISABLED":
-            read_env("PYFARM_LOGIN_DISABLED", False, eval_literal=True),
-        "PYFARM_JSON_PRETTY":
-            read_env("PYFARM_JSON_PRETTY", True, eval_literal=True),
-        "SQLALCHEMY_ECHO":
-            read_env("PYFARM_SQL_ECHO", False, eval_literal=True),
-        "SQLALCHEMY_DATABASE_URI":
-            read_env("PYFARM_DATABASE_URI", "sqlite:///pyfarm.sqlite",
-                     log_result=False),
-        "CSRF_SESSION_KEY":
-            read_env("PYFARM_CSRF_SESSION_KEY", __secret_key__,
-                     log_result=False),
-        "CACHE_TYPE":
-            read_env("PYFARM_CACHE_TYPE", "simple"),
-        "REMEMBER_COOKIE_DURATION": timedelta(hours=1)})
+    >>> app = get_application(TESTING=True)
+    >>> assert app.testing is True
+    """
 
-else:
-    __secret_key__ = read_env("PYFARM_SECRET_KEY", log_result=False)
-    
-    CONFIG = ImmutableDict({
-        "DEBUG": False,
-        "SECRET_KEY": __secret_key__,
-        "LOGIN_DISABLED":
-            read_env("PYFARM_LOGIN_DISABLED", False, eval_literal=True),
-        "PYFARM_JSON_PRETTY":
-            read_env("PYFARM_JSON_PRETTY", False, eval_literal=True),
-        "SQLALCHEMY_ECHO":
-            read_env("PYFARM_SQL_ECHO", False, eval_literal=True),
-        "SQLALCHEMY_DATABASE_URI":
-            read_env("PYFARM_DATABASE_URI", "sqlite:///pyfarm.sqlite",
-                     log_result=False),
-        "CSRF_SESSION_KEY":
-            read_env("PYFARM_CSRF_SESSION_KEY", __secret_key__,
-                     log_result=False),
-        "CACHE_TYPE":
-            read_env("PYFARM_CACHE_TYPE", "simple"),
-        "REMEMBER_COOKIE_DURATION": timedelta(hours=12)})
+    # build the configuration
+    if read_env("PYFARM_CONFIG", "debug", ) == "debug":
+        secret_key = read_env(
+            "PYFARM_SECRET_KEY", "4n)Z\xc2\xde\xdd\x17\xdd\xf7\xa6)>{\xfc\xff",
+            log_result=False)
+
+        app_config = {
+            "DEBUG": True,
+            "SECRET_KEY": secret_key,
+            "LOGIN_DISABLED":
+                read_env("PYFARM_LOGIN_DISABLED", False, eval_literal=True),
+            "PYFARM_JSON_PRETTY":
+                read_env("PYFARM_JSON_PRETTY", True, eval_literal=True),
+            "SQLALCHEMY_ECHO":
+                read_env("PYFARM_SQL_ECHO", False, eval_literal=True),
+            "SQLALCHEMY_DATABASE_URI":
+                read_env("PYFARM_DATABASE_URI", "sqlite:///pyfarm.sqlite",
+                         log_result=False),
+            "CSRF_SESSION_KEY":
+                read_env("PYFARM_CSRF_SESSION_KEY", secret_key,
+                         log_result=False),
+            "CACHE_TYPE":
+                read_env("PYFARM_CACHE_TYPE", "simple"),
+            "REMEMBER_COOKIE_DURATION": timedelta(hours=1)}
+
+    else:
+        secret_key = read_env("PYFARM_SECRET_KEY", log_result=False)
+        app_config = ImmutableDict({
+            "DEBUG": False,
+            "SECRET_KEY": secret_key,
+            "LOGIN_DISABLED":
+                read_env("PYFARM_LOGIN_DISABLED", False, eval_literal=True),
+            "PYFARM_JSON_PRETTY":
+                read_env("PYFARM_JSON_PRETTY", False, eval_literal=True),
+            "SQLALCHEMY_ECHO":
+                read_env("PYFARM_SQL_ECHO", False, eval_literal=True),
+            "SQLALCHEMY_DATABASE_URI":
+                read_env("PYFARM_DATABASE_URI", "sqlite:///pyfarm.sqlite",
+                         log_result=False),
+            "CSRF_SESSION_KEY":
+                read_env("PYFARM_CSRF_SESSION_KEY", secret_key,
+                         log_result=False),
+            "CACHE_TYPE":
+                read_env("PYFARM_CACHE_TYPE", "simple"),
+            "REMEMBER_COOKIE_DURATION": timedelta(hours=12)})
+
+    app = Flask("pyfarm.master")
+    app.config.update(app_config)
+    app.config.update(configuration_keywords)
+    return app
 
 
-del __secret_key__  # should not be visible on the module
+def get_api_blueprint(url_prefix=None):
+    """
+    Constructs and returns an instance of :class:`.Blueprint` for routing api
+    requests.
 
-app = Flask("pyfarm.master")
+    :param string url_prefix:
+        The url prefix for the api such as ``/api/v1``.  If not provided then
+        value will be derived from :envvar:`PYFARM_API_PREFIX` and/or
+        :envvar:`PYFARM_API_VERSION`
+    """
+    if url_prefix is None:
+        url_prefix = read_env("PYFARM_API_PREFIX",
+                              "/api/v%s" % read_env("PYFARM_API_VERSION", "1"))
 
-# configure the application
-app.config.update(CONFIG)
+    return Blueprint("api", "pyfarm.master.api", url_prefix=url_prefix)
 
-# api blueprint
-api_version = os.environ.get("PYFARM_API_VERSION", "1")
-api = Blueprint(
-    "api", "pyfarm.master.api",
-    url_prefix=os.environ.get("PYFARM_API_PREFIX", "/api/v%s" % api_version))
+
+def get_admin(**kwargs):
+    """
+    Constructs and returns an instance of :class:`.Admin`.  Any keyword
+    arguments provided will be passed to the constructor of :class:`.Admin`
+    """
+    kwargs.setdefault("index_view", AdminIndex())
+    return Admin(**kwargs)
+
+
+def get_sqlalchemy(**kwargs):
+    """
+    Constructs and returns an instance of :class:`.SQLAlchemy`.  Any keyword
+    arguments provided will be passed to the constructor of :class:`.SQLAlchemy`
+    """
+    return SQLAlchemy(**kwargs)
+
+
+def get_cache(**kwargs):
+    """
+    Constructs and returns an instance of :class:`.Cache`.  Any keyword
+    arguments provided will be passed to the constructor of :class:`.Cache`
+    """
+    return Cache(**kwargs)
+
+
+def get_login_manager(**kwargs):
+    """
+    Constructs and returns an instance of :class:`.LoginManager`.  Any keyword
+    arguments provided will be passed to the constructor of
+    :class:`LoginManager`
+    """
+    login_view = kwargs.pop("login_view", "/login/")
+    manager = LoginManager(**kwargs)
+    manager.login_view = login_view
+    return manager
+
+def get_login_serializer(secret_key):
+    """
+    Constructs and returns and instance of :class:`.URLSafeTimedSerializer`
+    """
+    return URLSafeTimedSerializer(secret_key)
+
+
+app = get_application()
+api = get_api_blueprint()
 app.register_blueprint(api)
-
-# admin, database, and cache
-admin = Admin(app, index_view=AdminIndex())
-db = SQLAlchemy(app)
-cache = Cache(app)
-
-# login system
-login_manager = LoginManager(app)
-login_manager.login_view = "/login/"
-login_serializer = URLSafeTimedSerializer(app.secret_key)
+admin = get_admin(app=app)
+db = get_sqlalchemy(app=app)
+cache = get_cache(app=app)
+login_manager = get_login_manager(app=app, login_view="/login/")
+login_serializer = get_login_serializer(app.secret_key)
 
 
 class SessionMixin(object):
