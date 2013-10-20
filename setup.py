@@ -27,7 +27,7 @@ install_requires = [
     "pyfarm.core", "pyfarm.models",
     "flask-login", "flask-admin",
     "flask-sqlalchemy", "flask-cache",
-    "itsdangerous"]
+    "itsdangerous", "blinker", "flask-testing"]
 
 if sys.version_info[0:2] < (2, 7):
     install_requires.append("simplejson")
@@ -38,6 +38,7 @@ if isfile("README.rst"):
         long_description = readme.read()
 else:
     long_description = ""
+
 
 def get_package_data():
     master_root = join("pyfarm", "master")
