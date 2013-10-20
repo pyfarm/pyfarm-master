@@ -31,11 +31,13 @@ from pyfarm.models.agent import (
     AgentSoftwareDependencies, AgentTagDependencies)
 from pyfarm.models.users import User, Role
 
-from pyfarm.master.application import db, app, admin, api
+from pyfarm.master.application import api, app
 
-# when debugging we should create the database tables
-if app.debug:
-    app.before_first_request_funcs.append(db.create_all)
+
+def load_before_first(app_instance, database_instance):
+    if app_instance.debug:
+        app_instance.before_first_request_funcs.append(
+            database_instance.create_all)
 
 
 def load_error_handlers(app_instance):
@@ -49,7 +51,6 @@ def load_error_handlers(app_instance):
 
 def load_setup(app_instance):
     """configures flask to serve the endpoint used for setting up the system"""
-    assert app_instance is app
     from pyfarm.master.initial import setup_page
     app_instance.add_url_rule("/setup/",
                               "setup_page", setup_page, methods=("GET", "POST"))
@@ -57,7 +58,6 @@ def load_setup(app_instance):
 
 def load_authentication(app_instance):
     """configures flask to serve the authentication endpoints"""
-    assert app_instance is app
     from pyfarm.master.login import login_page, logout_page
     app_instance.add_url_rule("/logout/", "logout_page", logout_page)
     app_instance.add_url_rule(
@@ -66,7 +66,6 @@ def load_authentication(app_instance):
 
 def load_index(app_instance):
     """configures flask to serve the main index and favicon"""
-    assert app_instance is app
     from pyfarm.master.index import index_page, favicon
     app_instance.add_url_rule("/", "index_page", index_page)
     app_instance.add_url_rule("/favicon.ico", "favicon", favicon)
@@ -74,8 +73,6 @@ def load_index(app_instance):
 
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
-    assert app_instance is app
-    assert api_instance is api
     from pyfarm.master.api.agents import SingleAgentAPI, AgentIndexAPI, schema
 
     # add api methods
@@ -94,7 +91,6 @@ def load_api(app_instance, api_instance):
 
 def load_admin(admin_instance):
     """serves the administrative interface endpoints"""
-    assert admin_instance is admin
     from flask.ext.admin.base import MenuLink
     from pyfarm.master.admin.users import UserView, RoleView
     from pyfarm.master.admin.agents import (
