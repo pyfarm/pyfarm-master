@@ -32,17 +32,19 @@ from pyfarm.models.agent import (
 from pyfarm.models.users import User, Role
 
 from pyfarm.master.application import db, app, admin, api
-from pyfarm.master.errors import error_400, error_401, error_404, error_500
 
 # when debugging we should create the database tables
 if app.debug:
     app.before_first_request_funcs.append(db.create_all)
 
-# register error handlers
-app.register_error_handler(400, error_400)
-app.register_error_handler(401, error_401)
-app.register_error_handler(404, error_404)
-app.register_error_handler(500, error_500)
+
+def load_error_handlers(app_instance):
+    """loads the error handlers onto application instance"""
+    from pyfarm.master.errors import error_400, error_401, error_404, error_500
+    app_instance.register_error_handler(400, error_400)
+    app_instance.register_error_handler(401, error_401)
+    app_instance.register_error_handler(404, error_404)
+    app_instance.register_error_handler(500, error_500)
 
 
 def load_setup(app_instance):
@@ -127,6 +129,7 @@ def load_admin(admin_instance):
 
 def run_master():
     """runs the application server and all end points except for /setup"""
+    load_error_handlers(app)
     load_index(app)
     load_authentication(app)
     load_admin(admin)
