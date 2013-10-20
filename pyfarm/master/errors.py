@@ -25,12 +25,12 @@ those requests will be responded to directly instead of calling
 """
 
 from flask import render_template, request
-from pyfarm.master.utility import JSONResponse, TemplateDictionary
+from pyfarm.master.utility import JSONResponse
 
-ERROR_400_JSON = {"errorno": 400, "error": "BAD REQUEST"}
-ERROR_401_JSON = {"errorno": 401, "error": "UNAUTHORIZED"}
-ERROR_404_JSON = {"errorno": 404, "error": "NOT FOUND"}
-ERROR_500_JSON = {"errorno": 500, "error": "INTERNAL SERVER ERROR"}
+ERROR_400_JSON = {u"errorno": 400, u"error": u"BAD REQUEST"}
+ERROR_401_JSON = {u"errorno": 401, u"error": u"UNAUTHORIZED"}
+ERROR_404_JSON = {u"errorno": 404, u"error": u"NOT FOUND"}
+ERROR_500_JSON = {u"errorno": 500, u"error": u"INTERNAL SERVER ERROR"}
 
 
 def error_400(e):
