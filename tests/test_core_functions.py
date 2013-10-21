@@ -18,7 +18,8 @@ from uuid import uuid4
 from sqlalchemy import Column, Integer, DateTime
 from utcore import ModelTestCase
 from pyfarm.models.core.types import IDTypeWork
-from pyfarm.models.core.functions import modelfor, getuuid, WorkColumns
+from pyfarm.models.core.functions import (
+    modelfor, getuuid, WorkColumns, split_and_extend)
 
 
 class Foo(object):
@@ -67,3 +68,9 @@ class TestFunctionsModule(ModelTestCase):
         self.assertIsInstance(time_submitted.type, DateTime)
         self.assertIsInstance(time_started.type, DateTime)
         self.assertIsInstance(time_finished.type, DateTime)
+
+    def test_split_and_extend(self):
+        self.assertSetEqual(
+            split_and_extend(["a.b.c.d"]),
+            set(["a", "a.b", "a.b.c", "a.b.c.d"]))
+
