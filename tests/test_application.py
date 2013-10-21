@@ -14,14 +14,66 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
+import os
+from flask import Flask, Blueprint
+from flask.ext.admin import Admin, AdminIndexView
+from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.cache import Cache
+from flask.ext.login import LoginManager
+from itsdangerous import URLSafeTimedSerializer
+from utcore import BaseTestCase
+from pyfarm.master.admin.baseview import AdminIndex
+from pyfarm.master.application import (
+    get_application, get_api_blueprint, get_admin, get_sqlalchemy, get_cache,
+    get_login_manager, get_login_serializer)
 
-if sys.version_info[0:2] < (2, 7):
-    from unittest2 import TestCase
-else:
-    from unittest import TestCase
 
+class TestApplicationFunctions(BaseTestCase):
+    def test_get_application(self):
+        app = get_application(SOME_VARIABLE=True)
+        self.assertIsInstance(app, Flask)
+        self.assertTrue(app.config["SOME_VARIABLE"])
+        self.assertEqual(app.name, "pyfarm.master")
+        import pyfarm.master
+        static_folder = os.path.join(
+            os.path.dirname(pyfarm.master.__file__), "static")
+        self.assertEqual(app.static_folder, static_folder)
 
-class TestApplicationModule(TestCase):
-    pass
+    def test_get_api_blueprint(self):
+        api = get_api_blueprint(url_prefix="/foo")
+        self.assertIsInstance(api, Blueprint)
+        self.assertEqual(api.url_prefix, "/foo")
+        self.assertEqual(api.name, "api")
+        self.assertEqual(api.import_name, "pyfarm.master.api")
 
+    def test_get_admin(self):
+        admin = get_admin()
+        self.assertIsInstance(admin, Admin)
+        self.assertIsInstance(admin.index_view, AdminIndex)
+
+        class NewAdminIndexView(AdminIndexView):
+            pass
+
+        admin = get_admin(index_view=NewAdminIndexView())
+        self.assertIsInstance(admin.index_view, NewAdminIndexView)
+
+    def test_get_sqlalchemy(self):
+        db = get_sqlalchemy()
+        self.assertIsInstance(db, SQLAlchemy)
+
+    def test_get_cache(self):
+        cache = get_cache()
+        self.assertIsInstance(cache, Cache)
+
+    def test_get_login_manager(self):
+        lm = get_login_manager()
+        self.assertIsInstance(lm, LoginManager)
+        self.assertEqual(lm.login_view, "/login/")
+        lm = get_login_manager(login_view="/new_login_view/")
+        self.assertEqual(lm.login_view, "/new_login_view/")
+
+    def test_get_login_serializer(self):
+        secret_key = os.urandom(32)
+        ls = get_login_serializer(secret_key)
+        self.assertIsInstance(ls, URLSafeTimedSerializer)
+        self.assertEqual(ls.secret_key, secret_key)
