@@ -185,18 +185,22 @@ class JSONDict(JSONSerializable):
 
 class IPAddress(_IPAddress):
     """
-    Custom version of :class:`netaddr.IPAddress` which can match against
-    strings using the ``==`` and ``!=`` operators.
+    Custom version of :class:`netaddr.IPAddress` which can match itself
+    against other instance of the same class, a string, or an integer.
     """
     def __eq__(self, other):
         if isinstance(other, basestring):
             return str(self) == other
+        elif isinstance(other, int):
+            return int(self) == other
         else:
             return super(IPAddress, self).__eq__(other)
 
     def __ne__(self, other):
         if isinstance(other, basestring):
             return str(self) != other
+        elif isinstance(other, int):
+            return int(self) != other
         else:
             return super(IPAddress, self).__ne__(other)
 
@@ -223,7 +227,7 @@ class IPv4Address(TypeDecorator):
         elif isinstance(value, basestring):
             try:
                 return self.checkInteger(int(IPAddress(value.replace("%", ""))))
-            except AddrFormatError:
+            except AddrFormatError:  # pragma: no cover
                 # value provided is coming from a form search
                 if "%" in value:
                     return None
