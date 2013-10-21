@@ -137,7 +137,8 @@ class User(db.Model, UserMixin):
 
     def check_password(self, password):
         """checks the password provided against the stored password"""
-        return self.hash_password(str(password)) == self.password
+        assert isinstance(password, basestring)
+        return self.hash_password(password) == self.password
 
     @cache.memoize(timeout=120)
     def is_active(self):
@@ -177,10 +178,15 @@ class User(db.Model, UserMixin):
             return bool(
                 User.query.filter(
                     User.roles.any(
-                        Role.name.in_(split_and_extend(allowed)))).count())
+                        Role.name.in_(allowed))).count())
 
         if required:
-            return required.issubset(split_and_extend(required))
+            # Ask the database for all roles matching ``required``.  In order
+            # for this to return True is the number of entries found must
+            # be equal to len(required).
+            count = Role.query.filter(
+                Role.name.in_(required)).filter(User.id == self.id).count()
+            return count == len(required)
 
 
 class Role(db.Model):
@@ -223,6 +229,7 @@ class Role(db.Model):
         if role is None:
             role = cls(name=name, description=description)
             db.session.add(role)
+            db.session.commit()
 
         return role
 
