@@ -35,6 +35,9 @@ except ImportError:
     import simplejson as json
 
 from nose.plugins.skip import SkipTest
+from pyfarm.core.logger import disable_logging
+disable_logging(True)
+
 from pyfarm.core.config import cfg
 
 if "PYFARM_DATABASE_URI" not in os.environ:
