@@ -73,4 +73,5 @@ class TestFunctionsModule(ModelTestCase):
         self.assertSetEqual(
             split_and_extend(["a.b.c.d"]),
             set(["a", "a.b", "a.b.c", "a.b.c.d"]))
+        self.assertIsNone(split_and_extend(None))
 
