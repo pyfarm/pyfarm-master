@@ -58,7 +58,7 @@ class MixinModel(db.Model, DictMixins):
     __tablename__ = "%s_mixin_test" % TABLE_PREFIX
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     a = db.Column(db.Integer)
-    b = db.Column(db.String)
+    b = db.Column(db.String(512))
     c = db.Column(IPv4Address)
 
     def serialize_column(self, column):
