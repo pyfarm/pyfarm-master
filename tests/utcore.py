@@ -20,14 +20,9 @@ used by the unittests.
 """
 
 import os
-import sys
 import time
 from functools import wraps
-
-if sys.version_info[0:2] < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
+from flask.ext.testing import TestCase as FlaskTestCase
 
 try:
     import json
@@ -35,7 +30,13 @@ except ImportError:
     import simplejson as json
 
 from nose.plugins.skip import SkipTest
+
+# disable logging
+from pyfarm.core.logger import disable_logging
+disable_logging(True)
+
 from pyfarm.core.config import cfg
+
 
 # Some initial configuration values before we load the models.  Some values,
 # such as the table prefix are included here just so two tests don't step
@@ -64,8 +65,8 @@ cfg.update({
 from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
 from pyfarm.models.task import TaskModel
 from pyfarm.models.job import JobModel, JobSoftwareModel, JobTagsModel
-
-from pyfarm.master.application import db
+from pyfarm.master.application import get_application, get_admin, db, app
+from pyfarm.master.entrypoints.master import load_admin
 
 
 def skip_on_ci(func):
@@ -77,10 +78,28 @@ def skip_on_ci(func):
     return wrapper
 
 
-class ModelTestCase(unittest.TestCase):
-    ORIGINAL_ENVIRONMENT = dict(os.environ.data)
+class TestCase(FlaskTestCase):
+    def assert500(self, response):
+        self.assertStatus(response, 500)
+
+    def create_app(self):
+        return get_application()
 
     def setUp(self):
+        super(TestCase, self).setUp()
+        self.app = self.client.application
+        self.admin = get_admin(app=self.client.application)
+        load_admin(self.admin)
+
+
+class ModelTestCase(TestCase):
+    ORIGINAL_ENVIRONMENT = dict(os.environ.data)
+
+    def create_app(self):
+        return app
+
+    def setUp(self):
+        super(ModelTestCase, self).setUp()
         db.session.rollback()
         os.environ.clear()
         os.environ.update(self.ORIGINAL_ENVIRONMENT)
