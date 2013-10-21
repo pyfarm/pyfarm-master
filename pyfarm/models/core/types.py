@@ -201,7 +201,6 @@ class IPAddress(_IPAddress):
             return super(IPAddress, self).__ne__(other)
 
 
-
 class IPv4Address(TypeDecorator):
     """
     Column type which can store and retrieve IPv4 addresses in a more
@@ -230,8 +229,8 @@ class IPv4Address(TypeDecorator):
                     return None
                 raise
 
-        elif isinstance(value, IPAddress):
-            return self.checkInteger(int(value))
+        elif isinstance(value, _IPAddress):
+            return int(value)
 
         elif value is None:
             return value
