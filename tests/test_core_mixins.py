@@ -16,6 +16,7 @@
 
 from random import choice
 from datetime import datetime
+
 from sqlalchemy import event
 from sqlalchemy.types import Integer, DateTime
 
@@ -24,7 +25,9 @@ from pyfarm.core.config import cfg
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
-from pyfarm.models.core.mixins import StateChangedMixin, WorkValidationMixin
+from pyfarm.models.core.types import IPv4Address
+from pyfarm.models.core.mixins import (
+    StateChangedMixin, WorkValidationMixin, DictMixins)
 
 rand_state = lambda: choice(list(WorkState))
 
@@ -49,6 +52,17 @@ class StateChangedModel(db.Model, StateChangedMixin):
 
 event.listen(
     StateChangedModel.state, "set", StateChangedModel.stateChangedEvent)
+
+
+class MixinModel(db.Model, DictMixins):
+    __tablename__ = "%s_mixin_test" % TABLE_PREFIX
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    a = db.Column(db.Integer)
+    b = db.Column(db.String)
+    c = db.Column(IPv4Address)
+
+    def serialize_column(self, column):
+        return column
 
 
 class TestMixins(ModelTestCase):
@@ -105,3 +119,20 @@ class TestMixins(ModelTestCase):
         model.state = model.STATE_ENUM.DONE
         self.assertNotEqual(model.time_finished, first_finished)
         self.assertLessEqual(model.time_finished, datetime.now())
+
+    def test_to_dict(self):
+        model = MixinModel(a=1, b="hello")
+        db.session.add(model)
+        db.session.commit()
+        self.assertDictEqual(
+            {"a": model.a, "b": model.b, "id": model.id, "c": None},
+            model.to_dict())
+
+    def test_to_schema(self):
+        model = MixinModel(a=1, b="hello")
+        db.session.add(model)
+        db.session.commit()
+        self.assertDictEqual(
+            {"a": "INTEGER", "b": "VARCHAR",
+             "id": "INTEGER", "c": "IPv4Address"},
+            model.to_schema())
