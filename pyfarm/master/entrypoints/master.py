@@ -31,8 +31,6 @@ from pyfarm.models.agent import (
     AgentSoftwareDependencies, AgentTagDependencies)
 from pyfarm.models.users import User, Role
 
-from pyfarm.master.application import api, app, admin
-
 
 def load_before_first(app_instance, database_instance):
     if app_instance.debug:
@@ -123,15 +121,20 @@ def load_admin(admin_instance):
         JobTagsModelView(name="Jobs - Tags", endpoint="jobs/tags"))
 
 
-def run_master():
-    """runs the application server and all end points except for /setup"""
+def load_master(app, admin, api):
+    """loads and attaches all endpints needed to run the master"""
     load_error_handlers(app)
     load_index(app)
     load_authentication(app)
     load_admin(admin)
     load_api(app, api)
-    app.run()
 
+
+def run_master():
+    """Runs :func:`load_master` then runs the application"""
+    from pyfarm.master.application import app, admin, api
+    load_master(app, admin, api)
+    app.run()
 
 if __name__ == "__main__":
     run_master()
