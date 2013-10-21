@@ -142,7 +142,7 @@ class TestIPAddressType(ModelTestCase):
         self.assertEqual(IPAddress("0.0.0.0"), int(IPAddress("0.0.0.0")))
         self.assertNotEqual(IPAddress("0.0.0.0"), int(IPAddress("0.0.0.1")))
         self.assertEqual(IPAddress("0.0.0.0"), IPAddress("0.0.0.0"))
-        self.assertNotEqual(IPAddress("0.0.0.0"), IPAddress("0.0.0.1")
+        self.assertNotEqual(IPAddress("0.0.0.0"), IPAddress("0.0.0.1"))
 
     def test_insert_int(self):
         ipvalue = int(IPAddress("192.168.1.1"))
