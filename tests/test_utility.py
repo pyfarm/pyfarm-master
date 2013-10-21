@@ -22,7 +22,7 @@ except ImportError:
     from simplejson import loads
 
 from flask import Response
-from utcore import ModelTestCase
+from utcore import ModelTestCase, TestCase
 from pyfarm.core.enums import APIError
 from pyfarm.master.utility import (
     dumps, get_column_sets, JSONResponse, ReducibleDictionary,
@@ -50,18 +50,20 @@ class FakeRequest(object):
         return self.data
 
 
-class TestUtility(ModelTestCase):
+class TestUtilityDB(ModelTestCase):
+    def test_get_column_sets(self):
+        all_columns, required_columns = get_column_sets(ColumnSetTest)
+        self.assertSetEqual(all_columns, set(["b", "c", "d"]))
+        self.assertSetEqual(required_columns, set(["c"]))
+
+
+class TestUtility(TestCase):
     def test_dumps(self):
         data = {"a": 0, "b": 1, "c": 2, "d": 4}
         for indent in (2, 4, None):
             dumped = dumps(data, indent=indent)
             self.assertIsInstance(dumped, str)
             self.assertDictEqual(loads(dumped), data)
-
-    def test_get_column_sets(self):
-        all_columns, required_columns = get_column_sets(ColumnSetTest)
-        self.assertSetEqual(all_columns, set(["b", "c", "d"]))
-        self.assertSetEqual(required_columns, set(["c"]))
 
     def test_json_response(self):
         data = {"a": 0, "b": 1, "c": 2, "d": 4}

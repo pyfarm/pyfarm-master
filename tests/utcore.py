@@ -21,8 +21,14 @@ used by the unittests.
 
 import os
 import time
+import sys
 from functools import wraps
 from flask.ext.testing import TestCase as FlaskTestCase
+
+if sys.version_info[0:2] < (2, 7):
+    from unittest2 import TestCase as BaseTestCase
+else:
+    from unittest import TestCase as BaseTestCase
 
 try:
     import json
@@ -65,8 +71,9 @@ cfg.update({
 from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
 from pyfarm.models.task import TaskModel
 from pyfarm.models.job import JobModel, JobSoftwareModel, JobTagsModel
-from pyfarm.master.application import get_application, get_admin, db, app
-from pyfarm.master.entrypoints.master import load_admin
+from pyfarm.master.application import (
+    get_application, get_api_blueprint, get_admin, db, app, admin)
+from pyfarm.master.entrypoints.master import load_admin, load_api, load_master
 
 
 def skip_on_ci(func):
@@ -78,7 +85,7 @@ def skip_on_ci(func):
     return wrapper
 
 
-class TestCase(FlaskTestCase):
+class TestCase(FlaskTestCase, BaseTestCase):
     def assert500(self, response):
         self.assertStatus(response, 500)
 
@@ -87,16 +94,13 @@ class TestCase(FlaskTestCase):
 
     def setUp(self):
         super(TestCase, self).setUp()
-        self.app = self.client.application
-        self.admin = get_admin(app=self.client.application)
-        load_admin(self.admin)
+        self.admin = get_admin(app=self.app)
+        self.api = get_api_blueprint()
+        load_master(self.app, self.admin, self.api)
 
 
 class ModelTestCase(TestCase):
     ORIGINAL_ENVIRONMENT = dict(os.environ.data)
-
-    def create_app(self):
-        return app
 
     def setUp(self):
         super(ModelTestCase, self).setUp()
