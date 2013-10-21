@@ -133,6 +133,6 @@ class TestMixins(ModelTestCase):
         db.session.add(model)
         db.session.commit()
         self.assertDictEqual(
-            {"a": "INTEGER", "b": "VARCHAR",
+            {"a": "INTEGER", "b": "VARCHAR(512)",
              "id": "INTEGER", "c": "IPv4Address"},
             model.to_schema())
