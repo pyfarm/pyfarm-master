@@ -98,12 +98,12 @@ class DictMixins(object):
     """
     def to_dict(self):
         """Produce a dictionary of existing data in the table"""
-        result = {}
         try:
             serialize_column = self.serialize_column
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             serialize_column = None
 
+        result = {}
         for column_name in self.__table__.c.keys():
             value = getattr(self, column_name)
 
