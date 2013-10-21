@@ -31,7 +31,7 @@ from pyfarm.models.agent import (
     AgentSoftwareDependencies, AgentTagDependencies)
 from pyfarm.models.users import User, Role
 
-from pyfarm.master.application import api, app
+from pyfarm.master.application import api, app, admin
 
 
 def load_before_first(app_instance, database_instance):
