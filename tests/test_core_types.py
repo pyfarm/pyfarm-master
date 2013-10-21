@@ -18,10 +18,10 @@ from os import urandom
 from uuid import uuid4
 from random import randint, choice
 from binascii import b2a_hex
+
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.types import Integer, BigInteger, CHAR
 from sqlalchemy.exc import StatementError
-from netaddr.ip import IPAddress
 
 from utcore import ModelTestCase, unittest
 from pyfarm.models.core.cfg import TABLE_PREFIX
@@ -30,7 +30,7 @@ from pyfarm.models.core.types import (
     JSONDict as JSONDictType,
     JSONList as JSONListType,
     JSONSerializable, IDColumn, GUID,
-    IDTypeWork, IDTypeAgent, IDTypeTag)
+    IDTypeWork, IDTypeAgent, IDTypeTag, IPAddress)
 from pyfarm.master.application import db
 
 class JSONDictModel(db.Model):
@@ -135,6 +135,14 @@ class TestIPAddressType(ModelTestCase):
         with self.assertRaises(ValueError):
             instance = IPv4AddressType()
             instance.checkInteger(IPv4AddressType.MAX_INT + 1)
+
+    def test_comparison(self):
+        self.assertEqual(IPAddress("0.0.0.0"), "0.0.0.0")
+        self.assertNotEqual(IPAddress("0.0.0.0"), "0.0.0.1")
+        self.assertEqual(IPAddress("0.0.0.0"), int(IPAddress("0.0.0.0")))
+        self.assertNotEqual(IPAddress("0.0.0.0"), int(IPAddress("0.0.0.1")))
+        self.assertEqual(IPAddress("0.0.0.0"), IPAddress("0.0.0.0"))
+        self.assertNotEqual(IPAddress("0.0.0.0"), IPAddress("0.0.0.1")
 
     def test_insert_int(self):
         ipvalue = int(IPAddress("192.168.1.1"))
