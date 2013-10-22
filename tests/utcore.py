@@ -24,7 +24,6 @@ import time
 import sys
 from functools import wraps
 from flask.ext.testing import TestCase as FlaskTestCase
-
 if sys.version_info[0:2] < (2, 7):
     from unittest2 import TestCase as BaseTestCase
 else:
@@ -36,6 +35,11 @@ except ImportError:
     import simplejson as json
 
 from nose.plugins.skip import SkipTest
+
+# silence SAWarning (this only comes up during testing)
+import warnings
+from sqlalchemy.exc import SAWarning
+warnings.simplefilter("ignore", category=SAWarning)
 
 # disable logging
 from pyfarm.core.logger import disable_logging
