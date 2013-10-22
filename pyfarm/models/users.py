@@ -178,7 +178,8 @@ class User(db.Model, UserMixin):
             return bool(
                 User.query.filter(
                     User.roles.any(
-                        Role.name.in_(allowed))).count())
+                        Role.name.in_(allowed))
+                ).filter(User.id == self.id).count())
 
         if required:
             # Ask the database for all roles matching ``required``.  In order
