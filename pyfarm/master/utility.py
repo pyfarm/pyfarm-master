@@ -74,11 +74,11 @@ class JSONResponse(Response):
     Wrapper around :class:`.Response` which will set the proper content type
     and serialize any input
     """
-    content_type = "application/json"
-
     def __init__(self, data=None, **kwargs):
         if isinstance(data, ReducibleDictionary):
             data.reduce()
+
+        kwargs.setdefault("content_type", "application/json")
 
         if data is not None:
             super(JSONResponse, self).__init__(dumps(data), **kwargs)
