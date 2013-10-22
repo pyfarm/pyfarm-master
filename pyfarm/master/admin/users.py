@@ -27,12 +27,6 @@ from pyfarm.models.users import User, Role
 from flask.ext.admin.contrib.sqla.form import AdminModelConverter
 
 
-class TestConverter(AdminModelConverter):
-    def post_process(self, form_class, info):
-        print form_class
-        return form_class
-
-
 class UserRolesMixin(object):
     access_roles = ("admin.db.user", )
 
@@ -43,7 +37,6 @@ class UserView(SessionMixin, UserRolesMixin, SQLModelView):
     model = User
     column_searchable_list = ('username', 'email')
     column_filters = ('username', 'email')
-    inline_model_form_converter = TestConverter  # not always working?
 
 
 class RoleView(SessionMixin, UserRolesMixin, SQLModelView):
