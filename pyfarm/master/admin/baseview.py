@@ -61,7 +61,6 @@ class AuthMixins(object):
         requested.  If logins have been disabled this will always return
         True otherwise check for access using :meth:`.current_user.has_roles`
         """
-
         if current_app.login_manager._login_disabled:
             return True
         elif current_user.is_authenticated():
