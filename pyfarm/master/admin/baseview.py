@@ -28,26 +28,6 @@ from flask.ext.admin.contrib import sqla
 from flask.ext.admin import AdminIndexView
 
 
-def current_user_authorized(required=None, allowed=None, redirect=True):
-    """
-    Simple function which take into account roles, enabled/disabled login system
-    and various other bits of information.  In the event a user does not
-    have access when this function is call a 401 will e raised using
-    :func:`abort`
-    """
-    if current_app.login_manager._login_disabled:
-        return True
-
-    if not current_user.is_authenticated():
-        return False
-
-    if not (current_user.has_roles(allowed=allowed, required=required)
-              and redirect):
-            abort(401)
-
-    return False
-
-
 class AuthMixins(object):
     """
     Mixin which adds overrides methods used to checking if a view or
