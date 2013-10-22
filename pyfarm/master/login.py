@@ -23,13 +23,13 @@ services
 """
 
 from httplib import UNAUTHORIZED, BAD_REQUEST
-from functools import wraps
 from wtforms import Form, TextField, PasswordField, validators, ValidationError
 from itsdangerous import BadTimeSignature
 from flask import Response, request, redirect, render_template, abort
-from flask.ext.login import login_user, logout_user, current_app, current_user
-from pyfarm.master.application import app, login_manager, login_serializer
+from flask.ext.login import login_user, logout_user, current_user
 from pyfarm.models.users import User
+from pyfarm.master.application import app, login_manager, login_serializer
+from pyfarm.master.utility import JSONResponse
 
 try:
     import json
@@ -106,12 +106,9 @@ def login_page():
 
         if user and user.check_password(data["password"]):
             login_user(user, remember=True)
-            return redirect(request.args.get("next") or "/")
+            return JSONResponse()
 
-        return Response(
-            response=json.dumps({"error": "invalid user or password"}),
-            content_type=request.content_type,
-            status=UNAUTHORIZED)
+        return JSONResponse(status=UNAUTHORIZED)
 
     form = LoginForm(request.form)
     if request.method == "POST" and form.validate():
@@ -133,57 +130,3 @@ def logout_page():
 
     # TODO: this should probably have a configuration value for seconds
     return render_template("pyfarm/logout.html", logged_in=logged_in, seconds=3)
-
-
-def login_role(allow_roles=None, require_roles=None):
-    """
-    Decorator which operates in the same manner that
-    :func:`flask_login.login_required` does but can also check for the user's
-    membership in one or more roles.
-
-    :type allow_roles: set or str or list or tuple
-    :param allow_roles:
-        if provided the user must have at least one of these roles
-
-    :type require_roles: set or str or list or or tuple
-    :param require_roles:
-        if provided the user must have all of these roles
-    """
-    def construct_data(data, varname):
-        if isinstance(data, (list, tuple)):
-            return set(data)
-
-        elif isinstance(data, basestring):
-            return set([data])
-
-        elif data is None:
-            return set()
-
-        else:
-            raise TypeError(
-                "expected list, tuple, or string for `%s`" % varname)
-
-    def wrap(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            if current_app.login_manager._login_disabled:
-                return func(*args, **kwargs)
-            elif not current_user.is_authenticated():
-                return current_app.login_login_manager.unauthorized()
-            else:
-                # construct the data we're doing to operate on
-                # and rename the variable so we don't have to have to
-                # use 'global'
-                allowed = construct_data(allow_roles, "allow_roles")
-                required = construct_data(require_roles, "require_roles")
-                if required and allowed:
-                    raise ValueError(
-                        "please use either allow_roles or require_roles")
-
-                if not current_user.has_roles(
-                        allowed=allowed, required=required):
-                    return current_app.login_login_manager.unauthorized()
-
-                return func(*args, **kwargs)
-        return wrapper
-    return wrap
