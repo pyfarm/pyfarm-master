@@ -22,11 +22,12 @@ except ImportError:
     from simplejson import loads
 
 from flask import Response
+from werkzeug.datastructures import ImmutableDict
 from utcore import ModelTestCase, TestCase
 from pyfarm.core.enums import APIError
 from pyfarm.master.utility import (
     dumps, get_column_sets, JSONResponse, ReducibleDictionary,
-    json_from_request)
+    json_from_request, TemplateDictionary)
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 
@@ -68,9 +69,8 @@ class TestUtility(TestCase):
     def test_json_response(self):
         data = {"a": 0, "b": 1, "c": 2, "d": 4}
         self.assertTrue(issubclass(JSONResponse, Response))
-        self.assertEqual(JSONResponse.content_type, "application/json")
-        self.assertEqual(JSONResponse.content_type, "application/json")
         response = JSONResponse()
+        self.assertEqual(response.content_type, "application/json")
         self.assertEqual(response.status_code, OK)
         response = JSONResponse(status=BAD_REQUEST)
         self.assertEqual(response.status_code, BAD_REQUEST)
@@ -126,3 +126,9 @@ class TestUtility(TestCase):
             APIError.EXTRA_FIELDS_ERROR[0],
             "an unexpected number of fields or columns were provided.  Extra fields were: ['a']"]
         self.assertListEqual(loads(response.data), error_data)
+
+    def test_template_dictionary(self):
+        template = TemplateDictionary()
+        self.assertIsInstance(template, ImmutableDict)
+        self.assertIsInstance(template(), ReducibleDictionary)
+        self.assertIsInstance(template(reducible=False), dict)
