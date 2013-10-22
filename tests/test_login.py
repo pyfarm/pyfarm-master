@@ -15,6 +15,12 @@
 # limitations under the License.
 
 from os import urandom
+
+try:
+    from json import dumps
+except ImportError:
+    from simplejson import dumps
+
 from utcore import ModelTestCase
 from flask.ext.admin import BaseView, expose
 from pyfarm.master.admin.baseview import AuthMixins
@@ -122,6 +128,18 @@ class TestLogin(ModelTestCase):
             "/admin/admin_required_test/", follow_redirects=True)
         self.assert200(response)
         self.assertIn("Hello world!", response.data)
+
+    def test_post_login_json(self):
+        response = self.client.open(
+            "/login/", method="POST",
+            headers=[("Content-Type", "application/json")],
+            follow_redirects=True,
+            data=dumps({
+                "username": self.normal_username,
+                "password": self.normal_password}))
+        self.assert200(response)
+        self.assertIn("Set-Cookie", response.headers)
+        self.assertEqual(response.content_type, "application/json")
 
     def test_logout(self):
         response = self.client.get("/logout/")
