@@ -22,11 +22,11 @@ View and code necessary for providing the basic login and authentication
 services
 """
 
-from httplib import UNAUTHORIZED
+from httplib import UNAUTHORIZED, BAD_REQUEST
 from functools import wraps
 from wtforms import Form, TextField, PasswordField, validators, ValidationError
 from itsdangerous import BadTimeSignature
-from flask import Response, request, redirect, render_template
+from flask import Response, request, redirect, render_template, abort
 from flask.ext.login import login_user, logout_user, current_app, current_user
 from pyfarm.master.application import app, login_manager, login_serializer
 from pyfarm.models.users import User
@@ -117,6 +117,9 @@ def login_page():
     if request.method == "POST" and form.validate():
         login_user(form.dbuser, remember=True)
         return redirect(request.args.get("next") or "/")
+
+    if request.content_type == "application/json":
+        abort(BAD_REQUEST)
 
     return render_template("pyfarm/login.html", form=form,
                            next=request.args.get("next") or "/")
