@@ -12,4 +12,4 @@ omit =
     *pyfarm/master/templates/*
     *pyfarm/master/static/*
     *pyfarm/master/entrypoints/*
-    *pyfarm/master/admin/baseview.py
+    *pyfarm/master/admin/baseview.py*
