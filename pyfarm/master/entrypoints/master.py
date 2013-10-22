@@ -122,7 +122,7 @@ def load_admin(admin_instance):
 
 
 def load_master(app, admin, api):
-    """loads and attaches all endpints needed to run the master"""
+    """loads and attaches all endpoints needed to run the master"""
     load_error_handlers(app)
     load_index(app)
     load_authentication(app)
@@ -130,7 +130,7 @@ def load_master(app, admin, api):
     load_api(app, api)
 
 
-def run_master():
+def run_master():  # pragma: no cover
     """Runs :func:`load_master` then runs the application"""
     from pyfarm.master.application import app, admin, api
     load_master(app, admin, api)
