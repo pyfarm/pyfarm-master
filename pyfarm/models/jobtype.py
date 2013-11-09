@@ -35,7 +35,7 @@ from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH, TABLE_JOB
 JOBTYPE_BASECLASS = "JobType"
 
 
-class JobTypeModel(db.Model):
+class JobType(db.Model):
     """
     Stores the unique information necessary to execute a task
     """
@@ -45,7 +45,7 @@ class JobTypeModel(db.Model):
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                       nullable=False,
                       doc=dedent("""
-                      The foreign key which stores :class:`JobModel.id`"""))
+                      The foreign key which stores :class:`Job.id`"""))
     name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
                      doc=dedent("""
                      The name of the job type.  This can be either a human
@@ -126,4 +126,4 @@ def jobtype_before_insert(mapper, connection, jobtype):
     except Exception:
         raise
 
-event.listen(JobTypeModel, "before_insert", jobtype_before_insert)
+event.listen(JobType, "before_insert", jobtype_before_insert)

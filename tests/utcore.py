@@ -71,9 +71,9 @@ cfg.update({
 
 # import all model objects into this space so relationships, foreign keys,
 # and the the mapper won't have problems finding the required classes
-from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
+from pyfarm.models.agent import Agent, AgentSoftware, AgentTag
 from pyfarm.models.task import TaskModel
-from pyfarm.models.job import JobModel, JobSoftwareModel, JobTagsModel
+from pyfarm.models.job import Job, JobSoftware, JobTag
 
 from pyfarm.master.application import db
 

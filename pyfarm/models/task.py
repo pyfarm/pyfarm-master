@@ -68,9 +68,9 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins):
 
     # relationships
     agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
-                        doc="Foreign key which stores :attr:`JobModel.id`")
+                        doc="Foreign key which stores :attr:`Job.id`")
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
-                      doc="Foreign key which stores :attr:`JobModel.id`")
+                      doc="Foreign key which stores :attr:`Job.id`")
 
     parents = db.relationship("TaskModel",
                               secondary=TaskDependencies,

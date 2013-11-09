@@ -26,13 +26,13 @@ from pyfarm.core.enums import WorkState
 from pyfarm.core.config import cfg
 from pyfarm.master.application import db
 from pyfarm.models.job import (
-    JobTagsModel, JobSoftwareModel, JobModel, getJobId)
+    JobTag, JobSoftware, Job, get_job_id)
 
 
 class TestTags(ModelTestCase):
     def test_insert(self):
-        job = JobModel()
-        tag = JobTagsModel()
+        job = Job()
+        tag = JobTag()
         tag.job = job
         tag.tag = "foo"
         db.session.add_all([tag, job])
@@ -40,28 +40,28 @@ class TestTags(ModelTestCase):
         model_id = tag.id
         job_id = job.id
         db.session.remove()
-        result = JobTagsModel.query.filter_by(id=model_id).first()
+        result = JobTag.query.filter_by(id=model_id).first()
         self.assertEqual(result.tag, "foo")
         self.assertEqual(result.job.id, job_id)
 
     def test_null(self):
         with self.assertRaises(DatabaseError):
-            model = JobTagsModel()
+            model = JobTag()
             db.session.add(model)
             db.session.commit()
 
         db.session.remove()
 
         with self.assertRaises(DatabaseError):
-            tag = JobTagsModel()
+            tag = JobTag()
             tag.tag = "foo"
             db.session.add(model)
             db.session.commit()
 
     def test_unique(self):
-        job = JobModel()
-        tagA = JobTagsModel()
-        tagB = JobTagsModel()
+        job = Job()
+        tagA = JobTag()
+        tagB = JobTag()
         tagA.job = job
         tagA.tag = "foo"
         tagB.job = job
@@ -74,8 +74,8 @@ class TestTags(ModelTestCase):
 
 class TestSoftware(ModelTestCase):
     def test_insert(self):
-        job = JobModel()
-        software = JobSoftwareModel()
+        job = Job()
+        software = JobSoftware()
         software.job = job
         software.software = "foo"
         db.session.add_all([job, software])
@@ -83,29 +83,29 @@ class TestSoftware(ModelTestCase):
         job_id = job.id
         software_id = software.id
         db.session.remove()
-        software = JobSoftwareModel.query.filter_by(id=software_id).first()
+        software = JobSoftware.query.filter_by(id=software_id).first()
         self.assertEqual(software.job.id, job_id)
         self.assertEqual(software.software, "foo")
         self.assertEqual(software.version, "any")
 
     def test_null(self):
         with self.assertRaises(DatabaseError):
-            model = JobSoftwareModel()
+            model = JobSoftware()
             db.session.add(model)
             db.session.commit()
 
         db.session.remove()
 
         with self.assertRaises(DatabaseError):
-            tag = JobSoftwareModel()
+            tag = JobSoftware()
             tag.software = "foo"
             db.session.add(model)
             db.session.commit()
 
     def test_unique(self):
-        job = JobModel()
-        softwareA = JobSoftwareModel()
-        softwareB = JobSoftwareModel()
+        job = Job()
+        softwareA = JobSoftware()
+        softwareB = JobSoftware()
         softwareA.job = job
         softwareA.software = "foo"
         softwareB.job = job
@@ -125,7 +125,7 @@ class TestJobEventsAndValidation(unittest.TestCase):
             column = full_name.split("agent.special_")[-1]
             for special_value in cfg.get(full_name):
 
-                model = JobModel()
+                model = Job()
 
                 # set it to the special case
                 setattr(model, column, special_value)
@@ -139,7 +139,7 @@ class TestJobEventsAndValidation(unittest.TestCase):
                     self.fail("unhandled type %s" % type(special_value))
 
     def test_ram(self):
-        model = JobModel()
+        model = Job()
         model.ram = cfg.get("agent.min_ram")
         model.ram = cfg.get("agent.max_ram")
         with self.assertRaises(ValueError):
@@ -148,7 +148,7 @@ class TestJobEventsAndValidation(unittest.TestCase):
             model.ram = cfg.get("agent.max_ram") + 10
 
     def test_cpus(self):
-        model = JobModel()
+        model = Job()
         model.cpus = cfg.get("agent.min_cpus")
         model.cpus = cfg.get("agent.max_cpus")
         with self.assertRaises(ValueError):
@@ -157,7 +157,7 @@ class TestJobEventsAndValidation(unittest.TestCase):
             model.cpus = cfg.get("agent.max_cpus") + 10
 
     def test_priority(self):
-        model = JobModel()
+        model = Job()
         model.priority = cfg.get("job.min_priority")
         model.priority = cfg.get("job.max_priority")
         with self.assertRaises(ValueError):
@@ -167,7 +167,7 @@ class TestJobEventsAndValidation(unittest.TestCase):
             model.priority = cfg.get("job.max_priority") + 10
 
     def test_state_change_event(self):
-        model = JobModel()
+        model = Job()
         self.assertIsNone(model.time_started)
         self.assertIsNone(model.attempts)
         model.state = WorkState.RUNNING
@@ -177,8 +177,8 @@ class TestJobEventsAndValidation(unittest.TestCase):
 
 class TestJob(ModelTestCase):
     def test_getid(self):
-        self.assertNotEqual(getJobId(), getJobId())
-        job_id = getJobId()
-        job = JobModel.query.filter_by(id=job_id).first()
+        self.assertNotEqual(get_job_id(), get_job_id())
+        job_id = get_job_id()
+        job = Job.query.filter_by(id=job_id).first()
         self.assertEqual(job.state, WorkState.ALLOC)
         self.assertTrue(job.hidden)

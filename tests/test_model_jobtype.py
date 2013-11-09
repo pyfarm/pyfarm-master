@@ -18,13 +18,13 @@ from textwrap import dedent
 from utcore import ModelTestCase
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.master.application import db
-from pyfarm.models.job import JobModel
-from pyfarm.models.jobtype import JobTypeModel
+from pyfarm.models.job import Job
+from pyfarm.models.jobtype import JobType
 
 
 class JobTypeTest(ModelTestCase):
     def test_validate_mode(self):
-        jobtype = JobTypeModel()
+        jobtype = JobType()
         with self.assertRaises(ValueError):
             jobtype.mode = -1
 
@@ -38,12 +38,12 @@ class JobTypeTest(ModelTestCase):
         value_mode = JobTypeLoadMode.OPEN
 
         # create job
-        job = JobModel()
+        job = Job()
         db.session.add(job)
         db.session.commit()
 
         # create jobtype
-        jobtype = JobTypeModel()
+        jobtype = JobType()
         jobtype.job = job
         jobtype.name = value_name
         jobtype.description = value_description
@@ -58,7 +58,7 @@ class JobTypeTest(ModelTestCase):
         jobtypeid = jobtype.id
         db.session.remove()
 
-        jobtype = JobTypeModel.query.filter_by(id=jobtypeid).first()
+        jobtype = JobType.query.filter_by(id=jobtypeid).first()
         self.assertEqual(jobtype.name, value_name)
         self.assertEqual(jobtype.description, value_description)
         self.assertEqual(jobtype.classname, value_classname)
@@ -77,12 +77,12 @@ class JobTypeTest(ModelTestCase):
                 b = False""" % value_classname))
 
         # create job
-        job = JobModel()
+        job = Job()
         db.session.add(job)
         db.session.commit()
 
         # create jobtype
-        jobtype = JobTypeModel()
+        jobtype = JobType()
         jobtype.job = job
         jobtype.name = value_name
         jobtype.description = value_description
@@ -103,12 +103,12 @@ class JobTypeTest(ModelTestCase):
             pass""" % value_classname))
 
         # create job
-        job = JobModel()
+        job = Job()
         db.session.add(job)
         db.session.commit()
 
         # create jobtype
-        jobtype = JobTypeModel()
+        jobtype = JobType()
         jobtype.job = job
         jobtype.name = value_name
         jobtype.description = value_description

@@ -48,12 +48,12 @@ from pyfarm.models.core.cfg import (
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH,
     TABLE_JOB_DEPENDENCIES)
 from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
-from pyfarm.models.jobtype import JobTypeModel  # relationship import
+from pyfarm.models.jobtype import JobType  # relationship import
 
 
-class JobTagsModel(db.Model):
+class JobTag(db.Model):
     """
-    Model which provides tagging for :class:`.JobModel` objects
+    Model which provides tagging for :class:`.Job` objects
 
     .. note::
         This table enforces two forms of uniqueness.  The :attr:`id` column
@@ -73,15 +73,15 @@ class JobTagsModel(db.Model):
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                        nullable=False,
                        doc=dedent("""
-                       Foreign key which stores :attr:`JobModel.id`"""))
+                       Foreign key which stores :attr:`Job.id`"""))
 
     tag = db.Column(db.String(MAX_TAG_LENGTH), nullable=False)
 
 
-class JobSoftwareModel(db.Model):
+class JobSoftware(db.Model):
     """
     Model which allows specific software to be associated with a
-    :class:`.JobModel` object.
+    :class:`.Job` object.
 
     .. note::
         This table enforces two forms of uniqueness.  The :attr:`id` column
@@ -102,7 +102,7 @@ class JobSoftwareModel(db.Model):
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                        nullable=False,
                        doc=dedent("""
-                       The foreign key which stores :attr:`JobModel.id`"""))
+                       The foreign key which stores :attr:`Job.id`"""))
     software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
                          doc=dedent("""
                          The name of the software required to run a job"""))
@@ -122,7 +122,7 @@ JobDependencies = db.Table(
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
 
 
-class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
+class Job(db.Model, WorkValidationMixin, StateChangedMixin):
     """
     Defines the attributes and environment for a job.  Individual commands
     are kept track of by |TaskModel|
@@ -161,7 +161,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                     command like `ping` will work on any platform it's
                     assigned to.  The full commend could be provided here,
                     but then the job must be tagged using
-                    :class:`.JobSoftwareModel` to limit which agent(s) it will
+                    :class:`.JobSoftware` to limit which agent(s) it will
                     run on."""))
     start = db.Column(db.Float,
                       doc=dedent("""
@@ -288,7 +288,7 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
                         applied to the session."""))
 
     # self-referential many-to-many relationship
-    parents = db.relationship("JobModel",
+    parents = db.relationship("Job",
                               secondary=JobDependencies,
                               primaryjoin=id==JobDependencies.c.parentid,
                               secondaryjoin=id==JobDependencies.c.childid,
@@ -302,38 +302,38 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
 
     tasks_done = db.relationship("TaskModel", lazy="dynamic",
         primaryjoin="(TaskModel.state == %s) & "
-                    "(TaskModel.jobid == JobModel.id)" % STATE_ENUM.DONE,
+                    "(TaskModel.jobid == Job.id)" % STATE_ENUM.DONE,
         doc=dedent("""
         Relationship between this job and any |TaskModel| objects which are
         done."""))
 
     tasks_failed = db.relationship("TaskModel", lazy="dynamic",
         primaryjoin="(TaskModel.state == %s) & "
-                    "(TaskModel.jobid == JobModel.id)" % STATE_ENUM.FAILED,
+                    "(TaskModel.jobid == Job.id)" % STATE_ENUM.FAILED,
         doc=dedent("""
         Relationship between this job and any |TaskModel| objects which have
         failed."""))
 
     tasks_queued = db.relationship("TaskModel", lazy="dynamic",
         primaryjoin="(TaskModel.state == %s) & "
-                    "(TaskModel.jobid == JobModel.id)" % STATE_ENUM.QUEUED,
+                    "(TaskModel.jobid == Job.id)" % STATE_ENUM.QUEUED,
         doc=dedent("""
         Relationship between this job and any |TaskModel| objects which
         are queued."""))
 
-    tags = db.relationship("JobTagsModel", backref="job", lazy="dynamic",
+    tags = db.relationship("JobTag", backref="job", lazy="dynamic",
                            doc=dedent("""
                            Relationship between this job and
-                           :class:`.JobTagsModel` objects"""))
-    software = db.relationship("JobSoftwareModel", backref="job",
+                           :class:`.JobTag` objects"""))
+    software = db.relationship("JobSoftware", backref="job",
                                lazy="dynamic",
                                doc=dedent("""
                                Relationship between this job and
-                               :class:`.JobSoftwareModel` objects"""))
-    jobtype = db.relationship("JobTypeModel", backref="job", lazy="dynamic",
+                               :class:`.JobSoftware` objects"""))
+    jobtype = db.relationship("JobType", backref="job", lazy="dynamic",
                               doc=dedent("""
                               Relationship between this job and
-                              :class:`.JobTypeModel` objects."""))
+                              :class:`.JobType` objects."""))
 
     @validates("ram", "cpus")
     def validate_resource(self, key, value):
@@ -362,10 +362,10 @@ class JobModel(db.Model, WorkValidationMixin, StateChangedMixin):
         return value
 
 
-event.listen(JobModel.state, "set", JobModel.stateChangedEvent)
+event.listen(Job.state, "set", Job.stateChangedEvent)
 
 
-def getJobId():
+def get_job_id():
     """
     Creates a new job without any data and inserts it into the
     database.
@@ -378,7 +378,7 @@ def getJobId():
     if db.session.dirty:
         raise ValueError("session is dirty, cannot proceed")
 
-    model = JobModel()
+    model = Job()
     model.state = WorkState.ALLOC
     model.hidden = True
 

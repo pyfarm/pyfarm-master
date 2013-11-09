@@ -21,7 +21,7 @@ from utcore import ModelTestCase, unittest
 from pyfarm.core.enums import AgentState
 from pyfarm.core.config import cfg
 from pyfarm.master.application import db
-from pyfarm.models.agent import AgentModel, AgentSoftwareModel, AgentTagsModel
+from pyfarm.models.agent import Agent, AgentSoftware, AgentTag
 
 try:
     from itertools import product
@@ -73,7 +73,7 @@ class AgentTestCase(unittest.TestCase):
         generator = self.modelArguments(limit=limit)
         for (hostname, ip, port, cpus, ram, state,
              ram_allocation, cpu_allocation) in generator:
-            agent = AgentModel()
+            agent = Agent()
             agent.hostname = hostname
             agent.ip = ip
             agent.remote_ip = ip
@@ -94,7 +94,7 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
             # create some software tags
             software_objects = []
             for software_name in ("foo", "bar", "baz"):
-                software = AgentSoftwareModel()
+                software = AgentSoftware()
                 software.agent = agent_foobar
                 software.software = software_name
                 software.version = urandom(5).encode("hex")
@@ -105,7 +105,7 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
             agent_id = agent_foobar.id
             db.session.remove()
 
-            agent = AgentModel.query.filter_by(id=agent_id).first()
+            agent = Agent.query.filter_by(id=agent_id).first()
             self.assertIsNotNone(agent)
 
             agent_software = list(
@@ -116,11 +116,11 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
 
     def test_software_unique(self):
         for agent_foobar in self.models(limit=1):
-            softwareA = AgentSoftwareModel()
+            softwareA = AgentSoftware()
             softwareA.agent = agent_foobar
             softwareA.software = "foo"
             softwareA.version = "1.0.0"
-            softwareB = AgentSoftwareModel()
+            softwareB = AgentSoftware()
             softwareB.agent = agent_foobar
             softwareB.software = "foo"
             softwareB.version = "1.0.0"
@@ -134,7 +134,7 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
 class TestAgentTags(AgentTestCase, ModelTestCase):
     def test_tags_validation(self):
         for agent_foobar in self.models(limit=1):
-            tag = AgentTagsModel()
+            tag = AgentTag()
             tag.agent = agent_foobar
             tag.tag = "foo"
             db.session.add(tag)
@@ -143,7 +143,7 @@ class TestAgentTags(AgentTestCase, ModelTestCase):
 
     def test_tags_validation_error(self):
         for agent_foobar in self.models(limit=1):
-            tag = AgentTagsModel()
+            tag = AgentTag()
             tag.agent = agent_foobar
             with self.assertRaises(ValueError):
                 tag.tag = None
@@ -155,7 +155,7 @@ class TestAgentTags(AgentTestCase, ModelTestCase):
             tags = []
             rand = lambda: urandom(6).encode("hex")
             for tag_name in (rand(), rand(), rand()):
-                tag = AgentTagsModel()
+                tag = AgentTag()
                 tag.tag = tag_name
                 tags.append(tag_name)
                 agent_foobar.tags.append(tag)
@@ -163,7 +163,7 @@ class TestAgentTags(AgentTestCase, ModelTestCase):
             db.session.commit()
             agent_id = agent_foobar.id
             db.session.remove()
-            agent = AgentModel.query.filter_by(id=agent_id).first()
+            agent = Agent.query.filter_by(id=agent_id).first()
             self.assertIsNotNone(agent)
             tags.sort()
             agent_tags = list(str(tag.tag) for tag in agent.tags)
@@ -177,7 +177,7 @@ class TestAgentModel(AgentTestCase, ModelTestCase):
         db.session.add_all(agents)
         db.session.commit()
         agents = dict(
-            (AgentModel.query.filter_by(id=agent.id).first(), agent)
+            (Agent.query.filter_by(id=agent.id).first(), agent)
             for agent in agents)
 
         for result, agent, in agents.iteritems():
@@ -193,11 +193,11 @@ class TestAgentModel(AgentTestCase, ModelTestCase):
     def test_basic_insert_nonunique(self):
         for (hostname, ip, port, cpus, ram, state,
              ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
-            modelA = AgentModel()
+            modelA = Agent()
             modelA.hostname = hostname
             modelA.ip = ip
             modelA.port = port
-            modelB = AgentModel()
+            modelB = Agent()
             modelB.hostname = hostname
             modelB.ip = ip
             modelB.port = port

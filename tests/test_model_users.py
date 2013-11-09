@@ -19,7 +19,7 @@ import time
 from datetime import datetime, timedelta
 from utcore import ModelTestCase
 from pyfarm.master.application import db, login_serializer, cache
-from pyfarm.models.users import User, Role
+from pyfarm.models.user import User, Role
 
 
 class UserTest(ModelTestCase):

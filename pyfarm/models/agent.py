@@ -44,14 +44,14 @@ REGEX_HOSTNAME = re.compile("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*"
                             "[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9]"
                             "[A-Za-z0-9\-]*[A-Za-z0-9])$")
 
-AgentTagDependencies = db.Table(
+AgentTagDependency = db.Table(
     TABLE_AGENT_TAGS_DEPENDENCIES, db.metadata,
     db.Column("agent_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
     db.Column("tag_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_AGENT_TAGS), primary_key=True))
 
-AgentSoftwareDependencies = db.Table(
+AgentSoftwareDependency = db.Table(
     TABLE_AGENT_SOFTWARE_DEPENDENCIES, db.metadata,
     db.Column("agent_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
@@ -62,7 +62,7 @@ AgentSoftwareDependencies = db.Table(
 class AgentTaggingMixin(object):
     """
     Mixin used which provides some common structures to
-    :class:`.AgentTagsModel` and :class:`.AgentSoftwareModel`
+    :class:`.AgentTag` and :class:`.AgentSoftware`
     """
     @validates("tag", "software")
     def validate_string_column(self, key, value):
@@ -78,7 +78,7 @@ class AgentTaggingMixin(object):
         return value
 
 
-class AgentTagsModel(db.Model, AgentTaggingMixin):
+class AgentTag(db.Model, AgentTaggingMixin):
     """
     Table model used to store tags for an agent.
 
@@ -97,7 +97,7 @@ class AgentTagsModel(db.Model, AgentTaggingMixin):
                     requirement."""))
 
 
-class AgentSoftwareModel(db.Model, AgentTaggingMixin):
+class AgentSoftware(db.Model, AgentTaggingMixin):
     """
     Stores information about an the software installed on
     an agent.
@@ -125,7 +125,7 @@ class AgentSoftwareModel(db.Model, AgentTaggingMixin):
                         because the format depends on the 3rd party."""))
 
 
-class AgentModel(db.Model, WorkValidationMixin, DictMixins):
+class Agent(db.Model, WorkValidationMixin, DictMixins):
     """
     Stores information about an agent include its network address,
     state, allocation configuration, etc.
@@ -212,15 +212,15 @@ class AgentModel(db.Model, WorkValidationMixin, DictMixins):
     # relationships
     tasks = db.relationship("TaskModel", backref="agent", lazy="dynamic",
                             doc=dedent("""
-                            Relationship between an :class:`AgentModel`
+                            Relationship between an :class:`Agent`
                             and any :class:`pyfarm.models.TaskModel`
                             objects"""))
-    tags = db.relationship("AgentTagsModel", secondary=AgentTagDependencies,
+    tags = db.relationship("AgentTag", secondary=AgentTagDependency,
                             backref=db.backref("agents", lazy="dynamic"),
                             lazy="dynamic",
                             doc="Tag(s) assigned to this agent")
-    software = db.relationship("AgentSoftwareModel",
-                               secondary=AgentSoftwareDependencies,
+    software = db.relationship("AgentSoftware",
+                               secondary=AgentSoftwareDependency,
                                backref=db.backref("agents", lazy="dynamic"),
                                lazy="dynamic",
                                doc="software this agent has installed or is "
