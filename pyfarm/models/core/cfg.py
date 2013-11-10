@@ -19,7 +19,7 @@ Configuration Variables
 =======================
 
 Stores basic configuration data related to tables and models.  Most of these
-variables have defaults defined in the configuration under `db.<value>`
+variables have defaults defined in the configuration under `PYFARM_DB_<value>`
 
 :const string TABLE_PREFIX:
     Prefix for all tables
@@ -75,10 +75,10 @@ variables have defaults defined in the configuration under `db.<value>`
         multiple values at a later time
 """
 
-from pyfarm.core.config import cfg
+from pyfarm.core.config import read_env, read_env_int
 
 # table names
-TABLE_PREFIX = cfg.get("db.table_prefix", "pyfarm_")
+TABLE_PREFIX = read_env("PYFARM_DB_PREFIX", "pyfarm_")
 TABLE_AGENT = "%sagents" % TABLE_PREFIX
 TABLE_AGENT_TAGS = "%s_tags" % TABLE_AGENT
 TABLE_AGENT_TAGS_DEPENDENCIES = "%s_dependencies" % TABLE_AGENT
@@ -103,11 +103,11 @@ TABLES = (TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE, TABLE_AGENT_SOFTWARE,
           TABLE_JOB_TAG, TABLE_JOB_SOFTWARE, TABLE_JOB, TABLE_PROJECT)
 
 # column lengths
-MAX_HOSTNAME_LENGTH = cfg.get("db.MAX_COMMAND_LENGTH", 255)
-MAX_JOBTYPE_LENGTH = cfg.get("db.MAX_JOBTYPE_LENGTH", 64)
-MAX_COMMAND_LENGTH = cfg.get("db.MAX_COMMAND_LENGTH", 64)
-MAX_USERNAME_LENGTH = cfg.get("db.MAX_USERNAME_LENGTH", 255)
-MAX_EMAILADDR_LENGTH = cfg.get("db.MAX_EMAILADDR_LENGTH", 255)
-SHA256_ASCII_LENGTH = cfg.get("db.SHA256_ASCII_LENGTH", 255)
-MAX_ROLE_LENGTH = cfg.get("db.MAX_ROLE_LENGTH", 128)
-MAX_TAG_LENGTH = cfg.get("db.MAX_TAG_LENGTH", 32)  # used by multiple columns
+MAX_HOSTNAME_LENGTH = read_env_int("PYFARM_DB_MAX_HOSTNANE_LENGTH", 255)
+MAX_JOBTYPE_LENGTH = read_env_int("PYFARM_DB_MAX_JOBTYPE_LENGTH", 64)
+MAX_COMMAND_LENGTH = read_env_int("PYFARM_DB_MAX_COMMAND_LENGTH", 64)
+MAX_USERNAME_LENGTH = read_env_int("PYFARM_DB_MAX_USERNAME_LENGTH", 255)
+MAX_EMAILADDR_LENGTH = read_env_int("PYFARM_DB_MAX_EMAILADDR_LENGTH", 255)
+SHA256_ASCII_LENGTH = 64  # static length of a sha256 string
+MAX_ROLE_LENGTH = read_env_int("PYFARM_DB_MAX_ROLE_LENGTH", 128)
+MAX_TAG_LENGTH = read_env_int("PYFARM_DB_MAX_TAG_LENGTH", 64)
