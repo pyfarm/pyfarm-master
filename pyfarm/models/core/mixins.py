@@ -25,7 +25,7 @@ from warnings import warn
 from datetime import datetime
 from sqlalchemy.orm import validates
 from pyfarm.core.warning import ColumnStateChangeWarning
-from pyfarm.core.config import cfg
+from pyfarm.core.config import read_env_int
 
 
 class WorkValidationMixin(object):
@@ -33,6 +33,12 @@ class WorkValidationMixin(object):
     Mixin that adds a `state` column and uses a class
     level `STATE_ENUM` attribute to assist in validation.
     """
+    MIN_PRIORITY = read_env_int("PYFARM_QUEUE_MIN_PRIORITY", -1000)
+    MAX_PRIORITY = read_env_int("PYFARM_QUEUE_MAX_PRIORITY", 1000)
+
+    # quick check of the configured data
+    assert MAX_PRIORITY >= MIN_PRIORITY, "MIN_PRIORITY must be <= MAX_PRIORITY"
+
     @validates("state")
     def validate_state(self, key, value):
         """
@@ -47,13 +53,10 @@ class WorkValidationMixin(object):
     @validates("priority")
     def validate_priority(self, key, value):
         """ensures the value provided to priority is valid"""
-        min_priority = cfg.get("job.min_priority")
-        max_priority = cfg.get("job.max_priority")
-
-        if min_priority <= value <= max_priority:
+        if self.MIN_PRIORITY <= value <= self.MAX_PRIORITY:
             return value
 
-        err_args = (key, min_priority, max_priority)
+        err_args = (key, self.MIN_PRIORITY, self.MAX_PRIORITY)
         raise ValueError("%s must be between %s and %s" % err_args)
 
     @validates("attempts")
