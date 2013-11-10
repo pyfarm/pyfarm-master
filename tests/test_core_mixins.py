@@ -21,7 +21,6 @@ from sqlalchemy import event
 from sqlalchemy.types import Integer, DateTime
 
 from utcore import ModelTestCase
-from pyfarm.core.config import cfg
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
@@ -77,8 +76,8 @@ class TestMixins(ModelTestCase):
         self.assertEqual(model.state, state)
 
     def test_priority_validation(self):
-        min_priority = cfg.get("job.min_priority")
-        max_priority = cfg.get("job.max_priority")
+        min_priority = WorkValidationMixin.MIN_PRIORITY
+        max_priority = WorkValidationMixin.MAX_PRIORITY
         model = ValidationModel()
         for value in (min_priority-1, max_priority+1):
             with self.assertRaises(ValueError):
