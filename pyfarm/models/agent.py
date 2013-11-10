@@ -59,17 +59,12 @@ AgentSoftwareDependency = db.Table(
               db.ForeignKey("%s.id" % TABLE_AGENT_SOFTWARE), primary_key=True))
 
 
-class AgentProjects(db.Model):
-    """
-    Association table used for a many-to-many relationship between
-    agents and projects
-    """
-    __tablename__ = TABLE_PROJECT_AGENTS
-    agent_id = db.Column(
-        db.Integer, db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True)
-    project_id = db.Column(
-        db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT), primary_key=True)
-
+AgentProjects = db.Table(
+    TABLE_PROJECT_AGENTS, db.metadata,
+    db.Column("agent_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
+    db.Column("project_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_PROJECT), primary_key=True))
 
 
 class AgentTaggingMixin(object):
