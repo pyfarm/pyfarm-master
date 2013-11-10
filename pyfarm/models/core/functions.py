@@ -27,9 +27,11 @@ Contains core functions and data for use by :mod:`pyfarm.models`
 from uuid import UUID
 from datetime import datetime
 from textwrap import dedent
-from pyfarm.core.config import cfg
+from pyfarm.core.config import read_env_int
 from pyfarm.master.application import db
 from pyfarm.models.core.types import id_column, IDTypeWork
+
+DEFAULT_PRIORITY = read_env_int("PYFARM_QUEUE_DEFAULT_PRIORITY", 0)
 
 
 def modelfor(model, table):
@@ -38,7 +40,7 @@ def modelfor(model, table):
     expected `table`.
 
     >>> from pyfarm.models.core.cfg import TABLE_AGENT
-    >>> from pyfarm.models import Agent
+    >>> from pyfarm.models.agent import Agent
     >>> modelfor(Agent("foo", "10.56.0.0", "255.0.0.0"), TABLE_AGENT)
     True
     """
@@ -101,7 +103,7 @@ def getuuid(value, table, table_attrib, error_tail):
         raise ValueError("failed to determine %s" % error_tail)
 
 
-def WorkColumns(state_default, priority_default, priority_alt=500):
+def WorkColumns(state_default, priority_default):
     """
     Produces some default columns which are used by models which produce
     work.  Currently this includes |Job| and |TaskModel|
@@ -117,7 +119,8 @@ def WorkColumns(state_default, priority_default, priority_alt=500):
                   :class:`.WorkState`""")),
 
         # priority
-        db.Column(db.Integer, default=lambda: cfg.get(priority_default, priority_alt),
+        db.Column(db.Integer,
+                  default=DEFAULT_PRIORITY,
                   doc=dedent("""
                   The priority of the job relative to others in the
                   queue.  This is not the same as task priority.
@@ -125,13 +128,14 @@ def WorkColumns(state_default, priority_default, priority_alt=500):
                   **configured by**: `%s`""" % priority_default)),
 
         # time_submitted
-        db.Column(db.DateTime, default=datetime.now,
-                               doc=dedent("""
-                               The time the job was submitted.  By default this
-                               defaults to using :meth:`datetime.datetime.now`
-                               as the source of submission time.  This value
-                               will not be set more than once and will not
-                               change even after a job is requeued.""")),
+        db.Column(db.DateTime,
+                  default=datetime.now,
+                  doc=dedent("""
+                  The time the job was submitted.  By default this
+                  defaults to using :meth:`datetime.datetime.now`
+                  as the source of submission time.  This value
+                  will not be set more than once and will not
+                  change even after a job is requeued.""")),
 
         # time_started
         db.Column(db.DateTime,
