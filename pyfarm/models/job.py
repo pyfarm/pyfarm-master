@@ -41,7 +41,7 @@ from sqlalchemy.schema import UniqueConstraint
 from pyfarm.core.config import read_env, read_env_int
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
-from pyfarm.models.core.functions import WorkColumns
+from pyfarm.models.core.functions import work_columns
 from pyfarm.models.core.types import id_column, JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TAG, TABLE_JOB_SOFTWARE,
@@ -147,7 +147,7 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin):
 
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
-        WorkColumns(STATE_ENUM.QUEUED, "job.priority")
+        work_columns(STATE_ENUM.QUEUED, "job.priority")
     user = db.Column(db.String(MAX_USERNAME_LENGTH),
                      doc=dedent("""
                      The user this job should execute as.  The agent

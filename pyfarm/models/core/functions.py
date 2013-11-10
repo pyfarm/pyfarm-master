@@ -29,7 +29,7 @@ from datetime import datetime
 from textwrap import dedent
 from pyfarm.core.config import read_env_int
 from pyfarm.master.application import db
-from pyfarm.models.core.types import id_column, IDTypeWork
+from pyfarm.models.core.types import id_column, IDTypeWork, IPAddress
 
 DEFAULT_PRIORITY = read_env_int("PYFARM_QUEUE_DEFAULT_PRIORITY", 0)
 
@@ -103,7 +103,7 @@ def getuuid(value, table, table_attrib, error_tail):
         raise ValueError("failed to determine %s" % error_tail)
 
 
-def WorkColumns(state_default, priority_default):
+def work_columns(state_default, priority_default):
     """
     Produces some default columns which are used by models which produce
     work.  Currently this includes |Job| and |Task|
@@ -174,3 +174,10 @@ def split_and_extend(items):
             output.add(".".join(current))
 
     return output
+
+
+def repr_ip(value):
+    """properly formats an :class:`.IPAddress` object"""
+    if isinstance(value, IPAddress):
+        value = value.format()
+    return repr(value)

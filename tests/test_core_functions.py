@@ -19,7 +19,7 @@ from sqlalchemy import Column, Integer, DateTime
 from utcore import ModelTestCase
 from pyfarm.models.core.types import IDTypeWork
 from pyfarm.models.core.functions import (
-    modelfor, getuuid, WorkColumns, split_and_extend)
+    modelfor, getuuid, work_columns, split_and_extend)
 
 
 class Foo(object):
@@ -54,7 +54,7 @@ class TestFunctionsModule(ModelTestCase):
             getuuid(Foo, Foo.__tablename__, "none", None)
 
     def test_work_columns(self):
-        columns = WorkColumns(0, 0)
+        columns = work_columns(0, 0)
         self.assertEqual(len(columns), 6)
         self.assertTrue(
             all(map(lambda column: isinstance(column, Column), columns)))

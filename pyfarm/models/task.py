@@ -26,7 +26,7 @@ from sqlalchemy import event
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
-from pyfarm.models.core.functions import WorkColumns
+from pyfarm.models.core.functions import work_columns
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_TASK, TABLE_AGENT, TABLE_TASK_DEPENDENCIES)
 from pyfarm.models.core.mixins import (
@@ -51,7 +51,7 @@ class Task(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins):
 
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
-        WorkColumns(STATE_DEFAULT, "job.priority")
+        work_columns(STATE_DEFAULT, "job.priority")
 
     hidden = db.Column(db.Boolean, default=False,
                        doc=dedent("""
