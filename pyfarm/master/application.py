@@ -31,29 +31,11 @@ from flask.ext.admin import Admin
 from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
 from itsdangerous import URLSafeTimedSerializer
-from pyfarm.core.config import cfg, read_env
+from pyfarm.core.config import read_env
 from pyfarm.master.admin.baseview import AdminIndex
 
 # default configuration values
 eval_env = partial(read_env, eval_literal=True)
-cfg.update({
-    "db.table_prefix": eval_env("PYFARM_TABLE_PREFIX", "pyfarm_"),
-    "agent.min_port": eval_env("PYFARM_AGENT_MIN_PORT", 1025),
-    "agent.max_port": eval_env("PYFARM_AGENT_MAX_PORT", 65535),
-    "agent.min_cpus": eval_env("PYFARM_AGENT_MIN_CPUS", 1),
-    "agent.max_cpus": eval_env("PYFARM_AGENT_MAX_CPUS", 2147483647),
-    "agent.special_cpus": [0],
-    "agent.min_ram": eval_env("PYFARM_AGENT_MIN_RAM", 32),
-    "agent.max_ram": read_env("PYFARM_AGENT_MAX_RAM", 2147483647),
-    "agent.special_ram": [0],
-    "job.max_username_length": eval_env("PYFARM_MAX_USERNAME_LENGTH", 254),
-    "job.priority": eval_env("PYFARM_JOB_DEFAULT_PRIORITY", 500),
-    "job.min_priority": eval_env("PYFARM_JOB_MIN_PRIORITY", 0),
-    "job.max_priority": eval_env("PYFARM_JOB_MAX_PRIORITY", 1000),
-    "job.batch": eval_env("PYFARM_JOB_DEFAULT_BATCH", 1),
-    "job.requeue": eval_env("PYFARM_JOB_DEFAULT_REQUEUE", 1),
-    "job.cpus": eval_env("PYFARM_JOB_DEFAULT_CPUS", 4),
-    "job.ram": eval_env("PYFARM_JOB_DEFAULT_RAM", 32)})
 
 
 def get_application(**configuration_keywords):
