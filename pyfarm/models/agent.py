@@ -33,7 +33,7 @@ from pyfarm.core.config import cfg
 from pyfarm.master.application import db
 from pyfarm.models.core.mixins import WorkValidationMixin, DictMixins
 from pyfarm.models.core.types import (
-    IDColumn, IPv4Address, IDTypeAgent, IDTypeTag)
+    id_column, IPv4Address, IDTypeAgent, IDTypeTag)
 from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE,
     MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH, TABLE_AGENT_SOFTWARE_DEPENDENCIES,
@@ -88,7 +88,7 @@ class AgentTag(db.Model, AgentTaggingMixin):
         unique to limit the frequency of duplicate data:
     """
     __tablename__ = TABLE_AGENT_TAGS
-    id = IDColumn(IDTypeTag)
+    id = id_column(IDTypeTag)
     tag = db.Column(db.String(MAX_TAG_LENGTH),
                     doc=dedent("""
                     A string value to tag an agent with. Generally this value
@@ -112,7 +112,7 @@ class AgentSoftware(db.Model, AgentTaggingMixin):
     """
     __tablename__ = TABLE_AGENT_SOFTWARE
     __table_args__ = (UniqueConstraint("version", "software"), )
-    id = IDColumn(IDTypeTag)
+    id = id_column(IDTypeTag)
     software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
                          doc=dedent("""
                          The name of the software installed.  No normalization
@@ -144,7 +144,7 @@ class Agent(db.Model, WorkValidationMixin, DictMixins):
     __table_args__ = (UniqueConstraint("hostname", "ip", "port"), )
     STATE_ENUM = AgentState
     STATE_DEFAULT = STATE_ENUM.ONLINE
-    id = IDColumn(IDTypeAgent)
+    id = id_column(IDTypeAgent)
 
     # basic host attribute information
     hostname = db.Column(db.String(MAX_HOSTNAME_LENGTH), nullable=False,

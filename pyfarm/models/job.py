@@ -42,7 +42,7 @@ from pyfarm.core.config import cfg
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.functions import WorkColumns
-from pyfarm.models.core.types import IDColumn, JSONDict, JSONList, IDTypeWork
+from pyfarm.models.core.types import id_column, JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TAG, TABLE_JOB_SOFTWARE,
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH,
@@ -69,7 +69,7 @@ class JobTag(db.Model):
     __table_args__ = (
         UniqueConstraint("jobid", "tag"), )
 
-    id = IDColumn()
+    id = id_column()
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                        nullable=False,
                        doc=dedent("""
@@ -98,7 +98,7 @@ class JobSoftware(db.Model):
     __table_args__ = (
         UniqueConstraint("jobid", "software", "version"), )
 
-    id = IDColumn()
+    id = id_column()
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                        nullable=False,
                        doc=dedent("""

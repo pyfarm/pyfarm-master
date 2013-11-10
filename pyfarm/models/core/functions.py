@@ -29,7 +29,7 @@ from datetime import datetime
 from textwrap import dedent
 from pyfarm.core.config import cfg
 from pyfarm.master.application import db
-from pyfarm.models.core.types import IDColumn, IDTypeWork
+from pyfarm.models.core.types import id_column, IDTypeWork
 
 
 def modelfor(model, table):
@@ -108,7 +108,7 @@ def WorkColumns(state_default, priority_default, priority_alt=500):
     """
     return (
         # id
-        IDColumn(IDTypeWork),
+        id_column(IDTypeWork),
 
         # state
         db.Column(db.Integer, default=state_default,

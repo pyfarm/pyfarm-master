@@ -249,7 +249,7 @@ class IPv4Address(TypeDecorator):
             return value
 
 
-def IDColumn(column_type=None):
+def id_column(column_type=None):
     """
     Produces a column used for `id` on each table.  Typically this is done
     using a class in :mod:`pyfarm.models.mixins` however because of the ORM

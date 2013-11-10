@@ -29,7 +29,7 @@ from sqlalchemy import event
 from sqlalchemy.orm import validates
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.master.application import db
-from pyfarm.models.core.types import IDColumn, IDTypeWork
+from pyfarm.models.core.types import id_column, IDTypeWork
 from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH, TABLE_JOB
 
 JOBTYPE_BASECLASS = "JobType"
@@ -41,7 +41,7 @@ class JobType(db.Model):
     """
     __tablename__ = TABLE_JOB_TYPE
 
-    id = IDColumn(db.Integer)
+    id = id_column(db.Integer)
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                       nullable=False,
                       doc=dedent("""

@@ -29,7 +29,7 @@ from pyfarm.models.core.types import (
     IPv4Address as IPv4AddressType,
     JSONDict as JSONDictType,
     JSONList as JSONListType,
-    JSONSerializable, IDColumn, GUID,
+    JSONSerializable, id_column, GUID,
     IDTypeWork, IDTypeAgent, IDTypeTag, IPAddress)
 from pyfarm.master.application import db
 
@@ -195,7 +195,7 @@ class TestIPAddressType(ModelTestCase):
 
 class TestIDColumn(ModelTestCase):
     def test_integer(self):
-        column = IDColumn(db.Integer)
+        column = id_column(db.Integer)
         self.assertIsInstance(column.type, db.Integer)
         self.assertTrue(column.primary_key)
         self.assertFalse(column.nullable)
@@ -226,7 +226,7 @@ class TestGUIDImpl(unittest.TestCase):
         return str(value).replace("-", "")
 
     def test_id_column(self):
-        column = IDColumn(GUID)
+        column = id_column(GUID)
         self.assertIsInstance(column.type, GUID)
         self.assertTrue(column.primary_key)
         self.assertFalse(column.nullable)
