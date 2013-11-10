@@ -38,8 +38,6 @@ from nose.plugins.skip import SkipTest
 from pyfarm.core.logger import disable_logging
 disable_logging(True)
 
-from pyfarm.core.config import cfg
-
 if "PYFARM_DATABASE_URI" not in os.environ:
     os.environ["PYFARM_DATABASE_URI"] = "sqlite:///:memory:"
 
@@ -50,24 +48,50 @@ if "PYFARM_CONFIG" not in os.environ:
 # Some initial configuration values before we load the models.  Some values,
 # such as the table prefix are included here just so two tests don't step
 # on each other (though in production it would be better to use a different DB).
-cfg.update({
-    "db.table_prefix": "pyfarm_unittest_%s_" % time.strftime("%M%d%Y%H%M%S"),
-    "agent.min_port": 1025,
-    "agent.max_port": 65535,
-    "agent.min_cpus": 1,
-    "agent.max_cpus": 2147483647,
-    "agent.special_cpus": [0],
-    "agent.min_ram": 32,
-    "agent.max_ram": 2147483647,
-    "agent.special_ram": [0],
-    "job.priority": 500,
-    "job.max_username_length": 254,
-    "job.min_priority": 0,
-    "job.max_priority": 1000,
-    "job.batch": 1,
-    "job.requeue": 1,
-    "job.cpus": 4,
-    "job.ram": 32})
+os.environ.update(
+
+    PYFARM_DB_PREFIX="pyfarm_unittest_%s_" % time.strftime("%M%d%Y%H%M%S"),
+    PYFARM_DB_MAX_USERNAME_LENGTH="254",
+
+    # agent port
+    PYFARM_AGENT_MIN_PORT="1024",
+    PYFARM_AGENT_MAX_PORT="65535",
+
+    # agent cpus
+    PYFARM_AGENT_MIN_CPUS="1",
+    PYFARM_AGENT_MAX_CPUS="256",
+    PYFARM_AGENT_SPECIAL_CPUS="[0]",
+
+    # agent ram
+    PYFARM_AGENT_MIN_RAM="16",
+    PYFARM_AGENT_MAX_RAM="262144",
+    PYFARM_AGENT_SPECIAL_RAM="[0]",
+
+    # priority
+    PYFARM_QUEUE_DEFAULT_PRIORITY="0",
+    PYFARM_QUEUE_MIN_PRIORITY="-1000",
+    PYFARM_QUEUE_MAX_PRIORITY="1000",
+
+    # batching
+    PYFARM_QUEUE_DEFAULT_BATCH="1",
+    PYFARM_QUEUE_MIN_BATCH="1",
+    PYFARM_QUEUE_MAX_BATCH="64",
+
+    # requeue
+    PYFARM_QUEUE_DEFAULT_REQUEUE="3",
+    PYFARM_QUEUE_MIN_REQUEUE="0",
+    PYFARM_QUEUE_MAX_REQUEUE="10",
+
+    # cpus
+    PYFARM_QUEUE_DEFAULT_CPUS="1",
+    PYFARM_QUEUE_MIN_CPUS="1",  # copied from above
+    PYFARM_QUEUE_MAX_CPUS="256",  # copied from above
+
+    # ram
+    PYFARM_QUEUE_DEFAULT_RAM="32",
+    PYFARM_QUEUE_MIN_RAM="16",  # copied from above
+    PYFARM_QUEUE_MAX_RAM="262144"  # copied from above
+)
 
 # import all model objects into this space so relationships, foreign keys,
 # and the the mapper won't have problems finding the required classes
