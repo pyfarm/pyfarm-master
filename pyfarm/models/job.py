@@ -38,7 +38,7 @@ from sqlalchemy import event
 from sqlalchemy.exc import DatabaseError
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
-from pyfarm.core.config import cfg
+from pyfarm.core.config import read_env, read_env_int
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.functions import WorkColumns
@@ -48,7 +48,7 @@ from pyfarm.models.core.cfg import (
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH,
     TABLE_JOB_DEPENDENCIES)
 from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
-from pyfarm.models.jobtype import JobType  # relationship import
+from pyfarm.models.jobtype import JobType  # required for a relationship
 
 
 class JobTag(db.Model):
@@ -129,6 +129,21 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin):
     """
     __tablename__ = TABLE_JOB
     STATE_ENUM = WorkState
+    MIN_CPUS = read_env_int("PYFARM_QUEUE_MIN_CPUS", 1)
+    MAX_CPUS = read_env_int("PYFARM_QUEUE_MAX_CPUS", 256)
+    MIN_RAM = read_env_int("PYFARM_QUEUE_MIN_RAM", 16)
+    MAX_RAM = read_env_int("PYFARM_QUEUE_MAX_RAM", 262144)
+    SPECIAL_RAM = read_env("PYFARM_AGENT_SPECIAL_RAM", [0], eval_literal=True)
+    SPECIAL_CPUS = read_env("PYFARM_AGENT_SPECIAL_CPUS", [0], eval_literal=True)
+
+    # quick check of the configured data
+    assert MIN_CPUS >= 1, "$PYFARM_QUEUE_MIN_CPUS must be > 0"
+    assert MAX_CPUS >= 1, "$PYFARM_QUEUE_MAX_CPUS must be > 0"
+    assert MAX_CPUS >= MIN_CPUS, "MIN_CPUS must be <= MAX_CPUS"
+    assert MIN_RAM >= 1, "$PYFARM_QUEUE_MIN_RAM must be > 0"
+    assert MAX_RAM >= 1, "$PYFARM_QUEUE_MAX_RAM must be > 0"
+    assert MAX_RAM >= MIN_RAM, "MIN_RAM must be <= MAX_RAM"
+
 
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
@@ -176,7 +191,8 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin):
                    The number of frames to count by between `start` and
                    `end`.  This column may also sometimes be referred to
                    as 'step' by other software."""))
-    batch = db.Column(db.Integer, default=lambda: cfg.get("job.batch", 1),
+    batch = db.Column(db.Integer,
+                      default=read_env_int("PYFARM_QUEUE_DEFAULT_BATCH", 1),
                       doc=dedent("""
                       Number of tasks to run on a single agent at once.
                       Depending on the capabilities of the software being run
@@ -184,7 +200,8 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin):
                       the agent or multiple processes on after the other.
 
                       **configured by**: `job.batch`"""))
-    requeue = db.Column(db.Integer, default=lambda: cfg.get("job.requeue", 1),
+    requeue = db.Column(db.Integer,
+                        default=read_env_int("PYFARM_QUEUE_DEFAULT_REQUEUE", 3),
                         doc=dedent("""
                         Number of times to requeue failed tasks
 
@@ -196,7 +213,8 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin):
                             -1, requeue failed tasks indefinitely
 
                         **configured by**: `job.requeue`"""))
-    cpus = db.Column(db.Integer, default=lambda: cfg.get("job.cpus", 0),
+    cpus = db.Column(db.Integer,
+                     default=read_env_int("PYFARM_QUEUE_DEFAULT_CPUS", 1),
                      doc=dedent("""
                      Number of cpus or threads each task should consume on
                      each agent.  Depending on the job type being executed
@@ -212,7 +230,8 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin):
                         -1, agent cpu is exclusive for a task from this job
 
                      **configured by**: `job.cpus`"""))
-    ram = db.Column(db.Integer, default=lambda: cfg.get("job.ram", 0),
+    ram = db.Column(db.Integer,
+                    default=read_env_int("PYFARM_QUEUE_DEFAULT_RAM", 32),
                     doc=dedent("""
                     Amount of ram a task from this job will require to be
                     free in order to run.  A task exceeding this value will
@@ -341,11 +360,14 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin):
         Validation that ensures that the value provided for either
         :attr:`.ram` or :attr:`.cpus` is a valid value with a given range
         """
-        if value is None or value in cfg.get("agent.special_%s" % key, ()):
+        key_upper = key.upper()
+        special = getattr(self, "SPECIAL_%s" % key_upper)
+
+        if value is None or value in special:
             return value
 
-        min_value = cfg.get("agent.min_%s" % key)
-        max_value = cfg.get("agent.max_%s" % key)
+        min_value = getattr(self, "MIN_%s" % key_upper)
+        max_value = getattr(self, "MAX_%s" % key_upper)
 
         # quick sanity check of the incoming config
         assert isinstance(min_value, int), "db.min_%s must be an integer" % key
