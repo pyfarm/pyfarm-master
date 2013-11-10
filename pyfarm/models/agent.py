@@ -29,7 +29,7 @@ from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
 from netaddr import AddrFormatError, IPAddress
 from pyfarm.core.enums import AgentState, UseAgentAddress
-from pyfarm.core.config import cfg
+from pyfarm.core.config import read_env_number, read_env_int
 from pyfarm.master.application import db
 from pyfarm.models.core.mixins import WorkValidationMixin, DictMixins
 from pyfarm.models.core.types import (
@@ -144,6 +144,24 @@ class Agent(db.Model, WorkValidationMixin, DictMixins):
     __table_args__ = (UniqueConstraint("hostname", "ip", "port"), )
     STATE_ENUM = AgentState
     STATE_DEFAULT = STATE_ENUM.ONLINE
+    MIN_PORT = read_env_int("PYFARM_AGENT_MIN_PORT", 1024)
+    MAX_PORT = read_env_int("PYFARM_AGENT_MAX_PORT", 65535)
+    MIN_CPUS = read_env_int("PYFARM_AGENT_MIN_CPUS", 1)
+    MAX_CPUS = read_env_int("PYFARM_AGENT_MAX_CPUS", 256)
+    MIN_RAM = read_env_int("PYFARM_AGENT_MIN_RAM", 16)
+    MAX_RAM = read_env_int("PYFARM_AGENT_MAX_RAM", 262144)
+
+    # quick check of the configured data
+    assert MIN_PORT >= 1, "$PYFARM_AGENT_MIN_PORT must be > 0"
+    assert MAX_PORT >= 1, "$PYFARM_AGENT_MAX_PORT must be > 0"
+    assert MAX_PORT >= MIN_PORT, "MIN_PORT must be <= MAX_PORT"
+    assert MIN_CPUS >= 1, "$PYFARM_AGENT_MIN_CPUS must be > 0"
+    assert MAX_CPUS >= 1, "$PYFARM_AGENT_MAX_CPUS must be > 0"
+    assert MAX_CPUS >= MIN_CPUS, "MIN_CPUS must be <= MAX_CPUS"
+    assert MIN_RAM >= 1, "$PYFARM_AGENT_MIN_RAM must be > 0"
+    assert MAX_RAM >= 1, "$PYFARM_AGENT_MAX_RAM must be > 0"
+    assert MAX_RAM >= MIN_RAM, "MIN_RAM must be <= MAX_RAM"
+
     id = id_column(IDTypeAgent)
 
     # basic host attribute information
@@ -190,7 +208,8 @@ class Agent(db.Model, WorkValidationMixin, DictMixins):
     # allocation.  For `cpu_allocation` 100% allocation typically means
     # one task per cpu.
     ram_allocation = db.Column(db.Float,
-                               default=cfg.get("agent.ram_allocation", .8),
+                               default=read_env_number(
+                                   "PYFARM_AGENT_RAM_ALLOCATION", .8),
                                doc=dedent("""
                                The amount of ram the agent is allowed to
                                allocate towards work.  A value of 1.0 would
@@ -198,7 +217,8 @@ class Agent(db.Model, WorkValidationMixin, DictMixins):
                                installed on the system when assigning work."""))
 
     cpu_allocation = db.Column(db.Float,
-                               default=cfg.get("agent.cpu_allocation", 1.0),
+                               default=read_env_number(
+                                   "PYFARM_AGENT_CPU_ALLOCATION", 1.0),
                                doc=dedent("""
                                The total amount of cpu space an agent is
                                allowed to process work in.  A value of 1.0
@@ -244,14 +264,8 @@ class Agent(db.Model, WorkValidationMixin, DictMixins):
         Ensure the `value` provided for `key` is within an expected range as
         specified in `agent.yml`
         """
-        min_value = cfg.get("agent.min_%s" % key)
-        max_value = cfg.get("agent.max_%s" % key)
-
-        # quick sanity check of the incoming config
-        assert isinstance(min_value, int), "db.min_%s must be an integer" % key
-        assert isinstance(max_value, int), "db.max_%s must be an integer" % key
-        assert min_value >= 1, "db.min_%s must be > 0" % key
-        assert max_value >= 1, "db.max_%s must be > 0" % key
+        min_value = getattr(cls, "MIN_%s" % key.upper())
+        max_value = getattr(cls, "MAX_%s" % key.upper())
 
         # check the provided input
         if min_value > value or value > max_value:
