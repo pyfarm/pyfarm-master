@@ -19,7 +19,6 @@ from os import urandom
 from sqlalchemy.exc import DatabaseError
 from utcore import ModelTestCase, unittest
 from pyfarm.core.enums import AgentState
-from pyfarm.core.config import cfg
 from pyfarm.master.application import db
 from pyfarm.models.agent import Agent, AgentSoftware, AgentTag
 
@@ -31,9 +30,9 @@ except ImportError:
 
 class AgentTestCase(unittest.TestCase):
     hostnamebase = "foobar"
-    ports = (cfg.get("agent.min_port"), cfg.get("agent.max_port"))
-    cpus = (cfg.get("agent.min_cpus"), cfg.get("agent.max_cpus"))
-    ram = (cfg.get("agent.min_ram"), cfg.get("agent.max_ram"))
+    ports = (Agent.MIN_PORT, Agent.MAX_PORT)
+    cpus = (Agent.MIN_CPUS, Agent.MAX_CPUS)
+    ram = (Agent.MIN_RAM, Agent.MAX_RAM)
     states = (AgentState.ONLINE, AgentState.OFFLINE)
     ram_allocation = (0, .5, 1)
     cpu_allocation = (0, .5, 1)
@@ -240,37 +239,37 @@ class TestModelValidation(AgentTestCase):
         for model in self.models(limit=1):
             break
 
-        model.port = cfg.get("agent.min_port")
-        model.port = cfg.get("agent.max_port")
+        model.port = Agent.MIN_PORT
+        model.port = Agent.MAX_PORT
 
         with self.assertRaises(ValueError):
-            model.port = cfg.get("agent.min_port") - 10
+            model.port = Agent.MIN_PORT - 10
 
         with self.assertRaises(ValueError):
-            model.port = cfg.get("agent.max_port") + 10
+            model.port = Agent.MAX_PORT + 10
 
     def test_cpu_validation(self):
         for model in self.models(limit=1):
             break
 
-        model.cpus = cfg.get("agent.min_cpus")
-        model.cpus = cfg.get("agent.max_cpus")
+        model.cpus = Agent.MIN_CPUS
+        model.cpus = Agent.MAX_CPUS
 
         with self.assertRaises(ValueError):
-            model.cpus = cfg.get("agent.min_cpus") - 10
+            model.cpus = Agent.MIN_CPUS - 10
 
         with self.assertRaises(ValueError):
-            model.cpus = cfg.get("agent.max_cpus") + 10
+            model.cpus = Agent.MAX_CPUS + 10
 
     def test_ram_validation(self):
         for model in self.models(limit=1):
             break
 
-        model.ram = cfg.get("agent.min_ram")
-        model.ram = cfg.get("agent.max_ram")
+        model.ram = Agent.MIN_RAM
+        model.ram = Agent.MAX_RAM
 
         with self.assertRaises(ValueError):
-            model.ram = cfg.get("agent.min_ram") - 10
+            model.ram = Agent.MIN_RAM - 10
 
         with self.assertRaises(ValueError):
-            model.ram = cfg.get("agent.max_ram") + 10
+            model.ram = Agent.MAX_RAM + 10
