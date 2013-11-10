@@ -78,7 +78,7 @@ class AgentTestCase(unittest.TestCase):
             agent.remote_ip = ip
             agent.port = port
             agent.cpus = cpus
-            agent.freeram = agent.ram = ram
+            agent.free_ram = agent.ram = ram
             agent.state = state
             agent.ram_allocation = ram_allocation
             agent.cpu_allocation = cpu_allocation
