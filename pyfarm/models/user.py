@@ -235,7 +235,6 @@ class Role(db.Model):
         return role
 
     def is_active(self):
-        now = datetime.now()
         if self.expiration is None:
             return self.active
-        return self.active and now < self.expiration
+        return self.active and datetime.now() < self.expiration
