@@ -28,6 +28,10 @@ from pyfarm.models.core.cfg import TABLE_PROJECT
 
 
 class Project(db.Model):
+    """
+    Stores the top level projects which jobs, tasks, users, roles, etc
+    can attach to.
+    """
     __tablename__ = TABLE_PROJECT
     id = id_column()
     name = db.Column(db.String)
