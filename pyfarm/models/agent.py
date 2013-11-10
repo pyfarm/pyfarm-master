@@ -37,7 +37,7 @@ from pyfarm.models.core.types import (
 from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE,
     MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH, TABLE_AGENT_SOFTWARE_DEPENDENCIES,
-    TABLE_AGENT_TAGS_DEPENDENCIES)
+    TABLE_AGENT_TAGS_DEPENDENCIES, TABLE_PROJECT_AGENTS, TABLE_PROJECT)
 
 
 REGEX_HOSTNAME = re.compile("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*"
@@ -57,6 +57,19 @@ AgentSoftwareDependency = db.Table(
               db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
     db.Column("software_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_AGENT_SOFTWARE), primary_key=True))
+
+
+class AgentProjects(db.Model):
+    """
+    Association table used for a many-to-many relationship between
+    agents and projects
+    """
+    __tablename__ = TABLE_PROJECT_AGENTS
+    agent_id = db.Column(
+        db.Integer, db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True)
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT), primary_key=True)
+
 
 
 class AgentTaggingMixin(object):
@@ -230,10 +243,10 @@ class Agent(db.Model, WorkValidationMixin, DictMixins):
                                on the system."""))
 
     # relationships
-    tasks = db.relationship("TaskModel", backref="agent", lazy="dynamic",
+    tasks = db.relationship("Task", backref="agent", lazy="dynamic",
                             doc=dedent("""
                             Relationship between an :class:`Agent`
-                            and any :class:`pyfarm.models.TaskModel`
+                            and any :class:`pyfarm.models.Task`
                             objects"""))
     tags = db.relationship("AgentTag", secondary=AgentTagDependency,
                             backref=db.backref("agents", lazy="dynamic"),
@@ -245,6 +258,14 @@ class Agent(db.Model, WorkValidationMixin, DictMixins):
                                lazy="dynamic",
                                doc="software this agent has installed or is "
                                    "configured for")
+    projects = db.relationship("Project",
+                               secondary=AgentProjects,
+                               backref=db.backref("agents", lazy="dynamic"),
+                               lazy="dynamic",
+                               doc="The project or projects this agent is "
+                                   "associated with.  By default an agent "
+                                   "which is not associated with any projects "
+                                   "will be a member of all projects.")
 
     @classmethod
     def validate_hostname(cls, key, value):
