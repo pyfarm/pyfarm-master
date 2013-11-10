@@ -24,8 +24,11 @@ Module containing mixins which can be used by multiple models.
 from warnings import warn
 from datetime import datetime
 from sqlalchemy.orm import validates
+from pyfarm.core.logger import getLogger
 from pyfarm.core.warning import ColumnStateChangeWarning
 from pyfarm.core.config import read_env_int
+
+logger = getLogger("models.mixin")
 
 
 class WorkValidationMixin(object):
@@ -134,4 +137,37 @@ class DictMixins(object):
             result[name] = column_type
 
         return result
+
+
+class ReprMixin(object):
+    """
+    Mixin which allows model classes to to convert columns into a more
+    easily read object format.
+
+    :cvar tuple REPR_COLUMNS:
+        the columns to convert
+
+    :cvar dict REPR_CONVERT_COLUMN:
+        optional dictionary containing columns names and functions
+        for converting to a more readable string format
+    """
+    REPR_COLUMNS = NotImplemented
+    REPR_CONVERT_COLUMN = {}
+
+    def __repr__(self):
+        if self.REPR_COLUMNS is NotImplemented:
+            return super(ReprMixin, self).__repr__()
+
+        column_data = []
+        for name in self.REPR_COLUMNS:
+            convert = self.REPR_CONVERT_COLUMN.get(name, repr)
+            try:
+                column_data.append(
+                    "%s=%s" % (name, convert(getattr(self, name))))
+
+            except AttributeError, e:
+                logger.warning("%s has no such column %s" % (
+                    self.__class__.__name__, repr(name)))
+
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(column_data))
 

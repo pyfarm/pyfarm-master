@@ -31,7 +31,7 @@ from netaddr import AddrFormatError, IPAddress
 from pyfarm.core.enums import AgentState, UseAgentAddress
 from pyfarm.core.config import read_env_number, read_env_int
 from pyfarm.master.application import db
-from pyfarm.models.core.mixins import WorkValidationMixin, DictMixins
+from pyfarm.models.core.mixins import WorkValidationMixin, DictMixins, ReprMixin
 from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, IDTypeTag)
 from pyfarm.models.core.cfg import (
@@ -133,7 +133,10 @@ class AgentSoftware(db.Model, AgentTaggingMixin):
                         because the format depends on the 3rd party."""))
 
 
-class Agent(db.Model, WorkValidationMixin, DictMixins):
+_format_ip = lambda v: repr(v.format()) if isinstance(v, IPAddress) else repr(v)
+
+
+class Agent(db.Model, WorkValidationMixin, DictMixins, ReprMixin):
     """
     Stores information about an agent include its network address,
     state, allocation configuration, etc.
@@ -152,6 +155,10 @@ class Agent(db.Model, WorkValidationMixin, DictMixins):
     __table_args__ = (UniqueConstraint("hostname", "ip", "port"), )
     STATE_ENUM = AgentState
     STATE_DEFAULT = STATE_ENUM.ONLINE
+    REPR_COLUMNS = (
+        "id", "hostname", "ip", "remote_ip", "port", "cpus", "ram", "free_ram")
+    REPR_CONVERT_COLUMN = {
+        "ip": _format_ip, "remote_ip": _format_ip}
     MIN_PORT = read_env_int("PYFARM_AGENT_MIN_PORT", 1024)
     MAX_PORT = read_env_int("PYFARM_AGENT_MAX_PORT", 65535)
     MIN_CPUS = read_env_int("PYFARM_AGENT_MIN_CPUS", 1)
