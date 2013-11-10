@@ -181,3 +181,15 @@ def repr_ip(value):
     if isinstance(value, IPAddress):
         value = value.format()
     return repr(value)
+
+
+def repr_enum(value, enum=None):
+    """produces the string representation of an enum value"""
+    assert enum is not None, "`enum` required"
+
+    for key, value in enum._asdict().iteritems():
+        if value == value:
+            return repr(key)
+
+    raise KeyError(
+        "%s does not map to a key in %s" % (repr(value), enum.__class__))
