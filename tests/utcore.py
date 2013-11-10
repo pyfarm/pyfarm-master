@@ -50,7 +50,7 @@ if "PYFARM_CONFIG" not in os.environ:
 # on each other (though in production it would be better to use a different DB).
 os.environ.update(
 
-    PYFARM_DB_PREFIX="pyfarm_unittest_%s_" % time.strftime("%M%d%Y%H%M%S"),
+    PYFARM_DB_PREFIX="test%s_" % time.strftime("%M%d%Y%H%M%S"),
     PYFARM_DB_MAX_USERNAME_LENGTH="254",
 
     # agent port
