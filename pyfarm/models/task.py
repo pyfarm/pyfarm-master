@@ -40,7 +40,7 @@ TaskDependencies = db.Table(
               db.ForeignKey("%s.id" % TABLE_TASK), primary_key=True))
 
 
-class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins):
+class Task(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins):
     """
     Defines a task which a child of a :class:`Job`.  This table represents
     rows which contain the individual work unit(s) for a job.
@@ -64,7 +64,7 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins):
                          running state."""))
     frame = db.Column(db.Float, nullable=False,
                       doc=dedent("""
-                      The frame the :class:`TaskModel` will be executing."""))
+                      The frame the :class:`Task` will be executing."""))
 
     # relationships
     agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
@@ -72,7 +72,7 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins):
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                       doc="Foreign key which stores :attr:`Job.id`")
 
-    parents = db.relationship("TaskModel",
+    parents = db.relationship("Task",
                               secondary=TaskDependencies,
                               primaryjoin=id==TaskDependencies.c.parent_id,
                               secondaryjoin=id==TaskDependencies.c.child_id,
@@ -85,5 +85,5 @@ class TaskModel(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins):
             target.state = target.STATE_ENUM.ASSIGN
 
 
-event.listen(TaskModel.agentid, "set", TaskModel.agentChangedEvent)
-event.listen(TaskModel.state, "set", TaskModel.stateChangedEvent)
+event.listen(Task.agentid, "set", Task.agentChangedEvent)
+event.listen(Task.state, "set", Task.stateChangedEvent)

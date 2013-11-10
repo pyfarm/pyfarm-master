@@ -125,7 +125,7 @@ JobDependencies = db.Table(
 class Job(db.Model, WorkValidationMixin, StateChangedMixin):
     """
     Defines the attributes and environment for a job.  Individual commands
-    are kept track of by |TaskModel|
+    are kept track of by |Task|
     """
     __tablename__ = TABLE_JOB
     STATE_ENUM = WorkState
@@ -313,31 +313,31 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin):
                               secondaryjoin=id==JobDependencies.c.childid,
                               backref="children")
 
-    tasks = db.relationship("TaskModel", backref="job", lazy="dynamic",
+    tasks = db.relationship("Task", backref="job", lazy="dynamic",
                             doc=dedent("""
                             Relationship between this job and and child
-                            |TaskModel| objects
+                            |Task| objects
                             """))
 
-    tasks_done = db.relationship("TaskModel", lazy="dynamic",
-        primaryjoin="(TaskModel.state == %s) & "
-                    "(TaskModel.jobid == Job.id)" % STATE_ENUM.DONE,
+    tasks_done = db.relationship("Task", lazy="dynamic",
+        primaryjoin="(Task.state == %s) & "
+                    "(Task.jobid == Job.id)" % STATE_ENUM.DONE,
         doc=dedent("""
-        Relationship between this job and any |TaskModel| objects which are
+        Relationship between this job and any |Task| objects which are
         done."""))
 
-    tasks_failed = db.relationship("TaskModel", lazy="dynamic",
-        primaryjoin="(TaskModel.state == %s) & "
-                    "(TaskModel.jobid == Job.id)" % STATE_ENUM.FAILED,
+    tasks_failed = db.relationship("Task", lazy="dynamic",
+        primaryjoin="(Task.state == %s) & "
+                    "(Task.jobid == Job.id)" % STATE_ENUM.FAILED,
         doc=dedent("""
-        Relationship between this job and any |TaskModel| objects which have
+        Relationship between this job and any |Task| objects which have
         failed."""))
 
-    tasks_queued = db.relationship("TaskModel", lazy="dynamic",
-        primaryjoin="(TaskModel.state == %s) & "
-                    "(TaskModel.jobid == Job.id)" % STATE_ENUM.QUEUED,
+    tasks_queued = db.relationship("Task", lazy="dynamic",
+        primaryjoin="(Task.state == %s) & "
+                    "(Task.jobid == Job.id)" % STATE_ENUM.QUEUED,
         doc=dedent("""
-        Relationship between this job and any |TaskModel| objects which
+        Relationship between this job and any |Task| objects which
         are queued."""))
 
     tags = db.relationship("JobTag", backref="job", lazy="dynamic",

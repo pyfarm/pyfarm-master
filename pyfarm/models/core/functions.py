@@ -106,7 +106,7 @@ def getuuid(value, table, table_attrib, error_tail):
 def WorkColumns(state_default, priority_default):
     """
     Produces some default columns which are used by models which produce
-    work.  Currently this includes |Job| and |TaskModel|
+    work.  Currently this includes |Job| and |Task|
     """
     return (
         # id
