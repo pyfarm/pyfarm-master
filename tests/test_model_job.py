@@ -23,10 +23,9 @@ from datetime import datetime
 from sqlalchemy.exc import DatabaseError
 from utcore import ModelTestCase, unittest
 from pyfarm.core.enums import WorkState
-from pyfarm.core.config import cfg
 from pyfarm.master.application import db
-from pyfarm.models.job import (
-    JobTag, JobSoftware, Job, get_job_id)
+from pyfarm.models.agent import Agent
+from pyfarm.models.job import JobTag, JobSoftware, Job, get_job_id
 
 
 class TestTags(ModelTestCase):
@@ -117,54 +116,34 @@ class TestSoftware(ModelTestCase):
 
 
 class TestJobEventsAndValidation(unittest.TestCase):
-    def test_special_cases(self):
-        special_keys = filter(
-            lambda item: item.startswith("agent.special"), list(cfg))
-
-        for full_name in special_keys:
-            column = full_name.split("agent.special_")[-1]
-            for special_value in cfg.get(full_name):
-
-                model = Job()
-
-                # set it to the special case
-                setattr(model, column, special_value)
-                self.assertEqual(getattr(model, column), special_value)
-
-                # try something else
-                if isinstance(special_value, int):
-                    with self.assertRaises(ValueError):
-                        setattr(model, column, -1)
-                else:
-                    self.fail("unhandled type %s" % type(special_value))
-
     def test_ram(self):
         model = Job()
-        model.ram = cfg.get("agent.min_ram")
-        model.ram = cfg.get("agent.max_ram")
+        model.ram = Agent.MIN_RAM
+        model.ram = Agent.MAX_RAM
+
         with self.assertRaises(ValueError):
-            model.ram = cfg.get("agent.min_ram") - 10
+            model.ram = Agent.MIN_RAM - 10
         with self.assertRaises(ValueError):
-            model.ram = cfg.get("agent.max_ram") + 10
+            model.ram = Agent.MAX_RAM + 10
 
     def test_cpus(self):
         model = Job()
-        model.cpus = cfg.get("agent.min_cpus")
-        model.cpus = cfg.get("agent.max_cpus")
+        model.cpus = Agent.MIN_CPUS
+        model.cpus = Agent.MAX_CPUS
         with self.assertRaises(ValueError):
-            model.cpus = cfg.get("agent.min_cpus") - 10
+            model.cpus = Agent.MIN_CPUS - 10
         with self.assertRaises(ValueError):
-            model.cpus = cfg.get("agent.max_cpus") + 10
+            model.cpus = Agent.MAX_CPUS + 10
 
     def test_priority(self):
         model = Job()
-        model.priority = cfg.get("job.min_priority")
-        model.priority = cfg.get("job.max_priority")
+        model.priority = Job.MIN_PRIORITY
+        model.priority = Job.MAX_PRIORITY
         with self.assertRaises(ValueError):
-            model.priority = cfg.get("job.min_priority") - 10
+            model.priority = Job.MIN_PRIORITY - 10
 
         with self.assertRaises(ValueError):
-            model.priority = cfg.get("job.max_priority") + 10
+            model.priority = Job.MAX_PRIORITY + 10
 
     def test_state_change_event(self):
         model = Job()
