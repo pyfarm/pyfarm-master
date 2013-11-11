@@ -74,7 +74,7 @@ class JobTag(db.Model):
         UniqueConstraint("job_id", "tag"), )
 
     id = id_column()
-    jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+    job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                        nullable=False,
                        doc=dedent("""
                        Foreign key which stores :attr:`Job.id`"""))
@@ -103,7 +103,7 @@ class JobSoftware(db.Model):
         UniqueConstraint("job_id", "software", "version"), )
 
     id = id_column()
-    jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+    job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                        nullable=False,
                        doc=dedent("""
                        The foreign key which stores :attr:`Job.id`"""))

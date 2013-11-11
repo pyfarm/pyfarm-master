@@ -82,17 +82,12 @@ class Task(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins,
                               secondary=TaskDependencies,
                               primaryjoin=id==TaskDependencies.c.parent_id,
                               secondaryjoin=id==TaskDependencies.c.child_id,
-                              backref="children")
+                              backref=db.backref("children", lazy="dynamic"))
     project = db.relationship("Project",
                               backref=db.backref("tasks", lazy="dynamic"),
                               doc=dedent("""
                               relationship attribute which retrieves the
                               associated project for the task"""))
-    agent = db.relationship("Agent",
-                            backref=db.backref("tasks", lazy="dynamic"),
-                            doc=dedent("""
-                            relationship attribute which retrieves the
-                            associated agent for this task"""))
     job = db.relationship("Job",
                           backref=db.backref("tasks", lazy="dynamic"),
                           doc=dedent("""
