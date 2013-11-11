@@ -24,7 +24,6 @@ before_script:
 install:
   - if [[ $TRAVIS_PYTHON_VERSION != "2.7" ]]; then pip install unittest2 simplejson --use-mirrors; fi
   - if [[ $TDB_DRIVER != "" ]]; then pip install $TDB_DRIVER; fi
-  - pip install git+git://github.com/mrjoes/flask-admin.git#egg=flask-admin # TODO: remove dev install
   - pip install git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg # TODO: remove dev install
   - pip install git+git://github.com/pyfarm/pyfarm-master.git#egg=pyfarm.master --egg # TODO: remove dev install
   - pip install coverage python-coveralls --use-mirrors
