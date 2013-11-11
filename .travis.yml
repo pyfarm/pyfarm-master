@@ -22,7 +22,6 @@ before_script:
   - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
 
 install:
-  - easy_install https://github.com/mrjoes/flask-admin/archive/master.zip  # TODO: remove once deployed
   - if [[ $TRAVIS_PYTHON_VERSION != "2.7" ]]; then pip install unittest2 simplejson --use-mirrors; fi
   - if [[ $TDB_DRIVER != "" ]]; then pip install $TDB_DRIVER; fi
   - pip install coverage python-coveralls --use-mirrors
