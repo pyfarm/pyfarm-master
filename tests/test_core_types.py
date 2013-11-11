@@ -24,6 +24,7 @@ from sqlalchemy.types import Integer, BigInteger, CHAR
 from sqlalchemy.exc import StatementError
 
 from utcore import ModelTestCase, unittest
+from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.types import (
     IPv4Address as IPv4AddressType,
@@ -31,7 +32,7 @@ from pyfarm.models.core.types import (
     JSONList as JSONListType,
     JSONSerializable, id_column, GUID,
     IDTypeWork, IDTypeAgent, IDTypeTag, IPAddress)
-from pyfarm.master.application import db
+
 
 class JSONDictModel(db.Model):
     __tablename__ = "%s_jsondict_model_test" % TABLE_PREFIX

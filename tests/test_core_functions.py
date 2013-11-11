@@ -15,7 +15,9 @@
 # limitations under the License.
 
 from uuid import uuid4
+
 from sqlalchemy import Column, Integer, DateTime
+
 from utcore import ModelTestCase
 from pyfarm.models.core.types import IDTypeWork
 from pyfarm.models.core.functions import (

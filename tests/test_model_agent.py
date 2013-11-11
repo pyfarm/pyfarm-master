@@ -16,7 +16,9 @@
 
 from __future__ import with_statement
 from os import urandom
+
 from sqlalchemy.exc import DatabaseError
+
 from utcore import ModelTestCase, unittest
 from pyfarm.core.enums import AgentState
 from pyfarm.master.application import db

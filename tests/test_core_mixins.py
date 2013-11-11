@@ -28,6 +28,7 @@ from pyfarm.models.core.types import IPv4Address
 from pyfarm.models.core.mixins import (
     StateChangedMixin, WorkValidationMixin, DictMixins)
 
+
 rand_state = lambda: choice(list(WorkState))
 
 

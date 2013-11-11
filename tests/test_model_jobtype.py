@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from textwrap import dedent
+
 from utcore import ModelTestCase
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.master.application import db

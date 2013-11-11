@@ -21,6 +21,7 @@ relationships.
 
 from datetime import datetime
 from sqlalchemy.exc import DatabaseError
+
 from utcore import ModelTestCase, unittest
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db

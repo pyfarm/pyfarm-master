@@ -93,13 +93,14 @@ os.environ.update(
     PYFARM_QUEUE_MAX_RAM="262144"  # copied from above
 )
 
+from pyfarm.master.application import db
+
 # import all model objects into this space so relationships, foreign keys,
 # and the the mapper won't have problems finding the required classes
 from pyfarm.models.agent import Agent, AgentSoftware, AgentTag
 from pyfarm.models.task import Task
 from pyfarm.models.job import Job, JobSoftware, JobTag
-
-from pyfarm.master.application import db
+from pyfarm.models.project import Project
 
 
 def skip_on_ci(func):
