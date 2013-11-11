@@ -27,14 +27,16 @@ from textwrap import dedent
 from flask.ext.login import UserMixin
 from pyfarm.core.logger import getLogger
 from pyfarm.master.application import app, db, login_serializer, cache
+from pyfarm.models.core.mixins import ReprMixin
 from pyfarm.models.core.functions import split_and_extend
 from pyfarm.models.core.cfg import (
     TABLE_USERS_USER, TABLE_USERS_ROLE, TABLE_USERS_USER_ROLES,
     MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
-    MAX_ROLE_LENGTH)
+    MAX_ROLE_LENGTH, TABLE_USERS_PROJECTS, TABLE_PROJECT)
 
 logger = getLogger("models.users")
 
+# roles the user is a member of
 UserRoles = db.Table(
     TABLE_USERS_USER_ROLES,
     db.Column("user_id", db.Integer,
@@ -42,12 +44,21 @@ UserRoles = db.Table(
     db.Column("role_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_USERS_ROLE)))
 
+# projects the user is a member of
+UserProjects = db.Table(
+    TABLE_USERS_PROJECTS,
+    db.Column("user_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_USERS_USER), primary_key=True),
+    db.Column("project_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_PROJECT), primary_key=True))
 
-class User(db.Model, UserMixin):
+
+class User(db.Model, UserMixin, ReprMixin):
     """
     Stores information about a user including the roles they belong to
     """
     __tablename__ = TABLE_USERS_USER
+    REPR_COLUMNS = ("id", "username")
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
@@ -86,8 +97,14 @@ class User(db.Model, UserMixin):
     roles = db.relationship("Role", secondary=UserRoles,
                             backref=db.backref("users", lazy="dynamic"))
 
-    def __repr__(self):  # override provided for caching purposes
-        return "%s(id=%s)" % (self.__class__.__name__, self.id)
+    projects = db.relationship("Project",
+                               secondary=UserProjects,
+                               backref=db.backref("users", lazy="dynamic"),
+                               lazy="dynamic",
+                               doc="The project or projects this user is "
+                                   "associated with.  By default an agent "
+                                   "which is not associated with any projects "
+                                   "will be a member of all projects.")
 
     @classmethod
     def create(cls, username, password, email=None, roles=None):
