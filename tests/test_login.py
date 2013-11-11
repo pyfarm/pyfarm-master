@@ -26,7 +26,7 @@ from flask.ext.admin import BaseView, expose
 from pyfarm.master.admin.baseview import AuthMixins
 from pyfarm.master.login import login_page, load_token, load_user
 from pyfarm.master.application import db, get_login_manager
-from pyfarm.models.users import User, Role
+from pyfarm.models.user import User, Role
 
 
 class AdminRequiredView(AuthMixins, BaseView):

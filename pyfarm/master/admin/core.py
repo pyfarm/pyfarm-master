@@ -31,7 +31,7 @@ from flask.ext.admin.contrib.sqla.filters import BaseSQLAFilter
 from sqlalchemy.orm.exc import MultipleResultsFound
 from wtforms.validators import StopValidation
 from wtforms.fields import SelectField
-from pyfarm.models.agent import AgentModel
+from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
 
 
@@ -66,9 +66,9 @@ def validate_model_field(form, field, function=None):
     Typically,  this is done using a partial function
 
     >>> from functools import partial
-    >>> from pyfarm.models.agent import AgentModel
+    >>> from pyfarm.models.agent import Agent
     >>> validate_state = partial(validate_model_field,
-    ...     function=AgentModel.validate_state)
+    ...     function=Agent.validate_state)
     """
     try:
         return function(field.name, field.data)
@@ -77,11 +77,11 @@ def validate_model_field(form, field, function=None):
 
 # resource validation wrappers
 validate_address = partial(
-    validate_model_field, function=AgentModel.validate_ip_address)
+    validate_model_field, function=Agent.validate_ip_address)
 validate_hostname = partial(
-    validate_model_field, function=AgentModel.validate_hostname)
+    validate_model_field, function=Agent.validate_hostname)
 validate_resource = partial(
-    validate_model_field, function=AgentModel.validate_resource)
+    validate_model_field, function=Agent.validate_resource)
 
 
 def check_dns_mapping(form, field):

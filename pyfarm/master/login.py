@@ -25,9 +25,9 @@ services
 from httplib import UNAUTHORIZED, BAD_REQUEST
 from wtforms import Form, TextField, PasswordField, validators, ValidationError
 from itsdangerous import BadTimeSignature
-from flask import Response, request, redirect, render_template, abort
+from flask import request, redirect, render_template, abort
 from flask.ext.login import login_user, logout_user, current_user
-from pyfarm.models.users import User
+from pyfarm.models.user import User
 from pyfarm.master.application import app, login_manager, login_serializer
 from pyfarm.master.utility import JSONResponse
 

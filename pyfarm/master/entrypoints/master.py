@@ -23,13 +23,13 @@ of PyFarm's master.
 """
 
 from pyfarm.models.core.cfg import TABLES
-from pyfarm.models.task import TaskModel, TaskDependencies
-from pyfarm.models.job import JobModel, JobTagsModel, JobDependencies
-from pyfarm.models.jobtype import JobTypeModel
+from pyfarm.models.task import Task, TaskDependencies
+from pyfarm.models.job import Job, JobTag, JobDependencies
+from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import (
-    AgentModel, AgentSoftwareModel, AgentTagsModel,
-    AgentSoftwareDependencies, AgentTagDependencies)
-from pyfarm.models.users import User, Role
+    Agent, AgentSoftware, AgentTag,
+    AgentSoftwareDependency, AgentSoftwareDependency)
+from pyfarm.models.user import User, Role
 
 
 def load_before_first(app_instance, database_instance):
@@ -92,9 +92,9 @@ def load_admin(admin_instance):
     from flask.ext.admin.base import MenuLink
     from pyfarm.master.admin.users import UserView, RoleView
     from pyfarm.master.admin.agents import (
-        AgentModelView, AgentSoftwareModelView, AgentTagsModelView)
+        AgentView, AgentSoftwareView, AgentTagView)
     from pyfarm.master.admin.work import (
-        JobModelView, JobSoftwareModelView, JobTagsModelView, TaskModelView)
+        JobView, JobSoftwareView, JobTagView, TaskView)
 
     # admin links
     admin_instance.add_link(MenuLink("Preferences", "/preferences"))
@@ -106,19 +106,19 @@ def load_admin(admin_instance):
     admin_instance.add_view(
         RoleView(name="Users - Role", endpoint="users/role"))
     admin_instance.add_view(
-        AgentModelView(name="Agents - Host", endpoint="agents/agent"))
+        AgentView(name="Agents - Host", endpoint="agents/agent"))
     admin_instance.add_view(
-        AgentSoftwareModelView(name="Agents - Software", endpoint="agents/software"))
+        AgentSoftwareView(name="Agents - Software", endpoint="agents/software"))
     admin_instance.add_view(
-        AgentTagsModelView(name="Agents - Tags", endpoint="agents/tags"))
+        AgentTagView(name="Agents - Tags", endpoint="agents/tags"))
     admin_instance.add_view(
-        JobModelView(name="Jobs - Job", endpoint="jobs/job"))
+        JobView(name="Jobs - Job", endpoint="jobs/job"))
     admin_instance.add_view(
-        TaskModelView(name="Jobs - Task", endpoint="jobs/task"))
+        TaskView(name="Jobs - Task", endpoint="jobs/task"))
     admin_instance.add_view(
-        JobSoftwareModelView(name="Jobs - Software", endpoint="jobs/software"))
+        JobSoftwareView(name="Jobs - Software", endpoint="jobs/software"))
     admin_instance.add_view(
-        JobTagsModelView(name="Jobs - Tags", endpoint="jobs/tags"))
+        JobTagView(name="Jobs - Tags", endpoint="jobs/tags"))
 
 
 def load_master(app, admin, api):

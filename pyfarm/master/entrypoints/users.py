@@ -17,7 +17,7 @@ def user_management(args=None):
     from getpass import getpass
     from textwrap import dedent
     from argparse import ArgumentParser, RawDescriptionHelpFormatter
-    from pyfarm.models.users import User, Role
+    from pyfarm.models.user import User, Role
     from pyfarm.master.application import db
 
     parser = ArgumentParser()

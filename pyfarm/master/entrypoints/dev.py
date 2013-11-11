@@ -41,13 +41,13 @@ def dbdata():
     from random import randint
     from pyfarm.master.application import db
     from pyfarm.models.core.cfg import TABLES
-    from pyfarm.models.task import TaskModel, TaskDependencies
-    from pyfarm.models.job import JobModel, JobTagsModel, JobDependencies
-    from pyfarm.models.jobtype import JobTypeModel
+    from pyfarm.models.task import Task, TaskDependencies
+    from pyfarm.models.job import Job, JobTag, JobDependencies
+    from pyfarm.models.jobtype import JobType
     from pyfarm.models.agent import (
-        AgentModel, AgentSoftwareModel, AgentTagsModel,
-        AgentSoftwareDependencies, AgentTagDependencies)
-    from pyfarm.models.users import User, Role
+        Agent, AgentSoftware, AgentTag,
+        AgentSoftwareDependency, AgentSoftwareDependency)
+    from pyfarm.models.user import User, Role
 
     print "recreating tables"
     db.drop_all()
@@ -62,42 +62,42 @@ def dbdata():
     db.session.commit()
 
     print "creating agent tags"
-    tag_agents_all = AgentTagsModel()
-    tag_agents_even = AgentTagsModel()
-    tag_agents_odd = AgentTagsModel()
+    tag_agents_all = AgentTag()
+    tag_agents_even = AgentTag()
+    tag_agents_odd = AgentTag()
     tag_agents_all.tag = "all"
     tag_agents_even.tag = "even"
     tag_agents_odd.tag = "odd"
 
     print "creating agent software"
-    software_any = AgentSoftwareModel()
+    software_any = AgentSoftware()
     software_any.software = "any"
     software_any.version = "any"
-    software_any1 = AgentSoftwareModel()
+    software_any1 = AgentSoftware()
     software_any1.software = "any"
     software_any1.version = "1.0.0"
-    software_ping = AgentSoftwareModel()
+    software_ping = AgentSoftware()
     software_ping.software = "ping"
     software_ping.version = "1.0.0"
 
     print "creating agents"
-    first_two = AgentTagsModel()
+    first_two = AgentTag()
     first_two.tag = "two"
-    first_four = AgentTagsModel()
+    first_four = AgentTag()
     first_four.tag = "four"
-    first_eight = AgentTagsModel()
+    first_eight = AgentTag()
     first_eight.tag = "eight"
 
     for i in xrange(1, parsed.host_count):
         agent_name = "agent%s" % i
         print "   %s:" % agent_name
-        agent = AgentModel()
+        agent = Agent()
         agent.hostname = agent_name
         agent.ip = ".".join(map(
             str, (10, randint(0, 255), randint(0, 255), randint(0, 255))))
         agent.remote_ip = agent.ip
         agent.ram = randint(2048, 4096)
-        agent.freeram = randint(0, 4096)
+        agent.free_ram = randint(0, 4096)
         agent.cpus = randint(2, 24)
         agent.port = randint(1024, 65535)
         agent.tags.append(tag_agents_all)

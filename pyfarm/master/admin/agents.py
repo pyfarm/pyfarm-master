@@ -25,7 +25,7 @@ from wtforms import TextField
 from sqlalchemy import not_
 from pyfarm.core.enums import AgentState
 from pyfarm.models.agent import (
-    AgentTagsModel, AgentSoftwareModel, AgentModel)
+    AgentTag, AgentSoftware, Agent)
 from pyfarm.master.application import SessionMixin
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.admin.core import (
@@ -47,104 +47,104 @@ def repr_agent(model):
 class AgentRolesMixin(object):
     """
     Mixin which declares what role(s) are allowed access to
-    :class:`AgentModelView`
+    :class:`AgentView`
     """
     access_roles = ("admin.db.agent", )
 
 
 class FilterTagsContains(BaseFilter):
     """
-    Filter for :class:`AgentModelView` which allows specific tags
+    Filter for :class:`AgentView` which allows specific tags
     to be included from the view.
     """
     operation_text = "includes"
 
     def apply(self, query, value):
         if value.strip():
-            return query.filter(AgentModel.tags.any(tag=value))
+            return query.filter(Agent.tags.any(tag=value))
         return query
 
 
 class FilterTagsNotContains(BaseFilter):
     """
-    Filter for :class:`AgentModelView` which allows specific tags
+    Filter for :class:`AgentView` which allows specific tags
     to be excluded from the view.
     """
     operation_text = "excludes"
 
     def apply(self, query, value):
         if value.strip():
-            return query.filter(not_(AgentModel.tags.any(tag=value)))
+            return query.filter(not_(Agent.tags.any(tag=value)))
         return query
 
 
 class FilterSoftwareContains(BaseFilter):
     """
-    Filter for :class:`AgentModelView` which allows specific software
+    Filter for :class:`AgentView` which allows specific software
     to be included in the view.
     """
     operation_text = "includes"
 
     def apply(self, query, value):
         if value.strip():
-            return query.filter(AgentModel.software.any(software=value))
+            return query.filter(Agent.software.any(software=value))
         return query
 
 
 class FilterSoftwareNotContains(BaseFilter):
     """
-    Filter for :class:`AgentModelView` which allows specific software
+    Filter for :class:`AgentView` which allows specific software
     to be excluded from the view.
     """
     operation_text = "excludes"
 
     def apply(self, query, value):
         if value.strip():
-            return query.filter(not_(AgentModel.software.any(software=value)))
+            return query.filter(not_(Agent.software.any(software=value)))
         return query
 
 
 class FilterSoftwareContainsVersion(BaseFilter):
     """
-    Filter for :class:`AgentModelView` which allows specific software versions
+    Filter for :class:`AgentView` which allows specific software versions
     to be included in the view.
     """
     operation_text = "includes version"
 
     def apply(self, query, value):
         if value.strip():
-            return query.filter(AgentModel.software.any(version=value))
+            return query.filter(Agent.software.any(version=value))
         return query
 
 
 class FilterSoftwareNotContainsVersion(BaseFilter):
     """
-    Filter for :class:`AgentModelView` which allows specific software versions
+    Filter for :class:`AgentView` which allows specific software versions
     to be excluded in the view.
     """
     operation_text = "excludes version"
 
     def apply(self, query, value):
         if value.strip():
-            return query.filter(not_(AgentModel.software.any(version=value)))
+            return query.filter(not_(Agent.software.any(version=value)))
         return query
 
 
-class AgentModelView(SessionMixin, AgentRolesMixin, SQLModelView):
+class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     """
     Administrative view which allows users to view, create, or edit agents.
     """
-    model = AgentModel
+    model = Agent
 
     # column setup
     column_searchable_list = ("hostname",)
-    column_filters = ("hostname", "ram", "freeram", "cpus", "state",
-                      FilterTagsContains(AgentModel.tags, "Tag"),
-                      FilterTagsNotContains(AgentModel.tags, "Tag"),
-                      FilterSoftwareContains(AgentModel.software, "Software"),
-                      FilterSoftwareNotContains(AgentModel.software, "Software"),
-                      FilterSoftwareContainsVersion(AgentModel.software, "Software"),
-                      FilterSoftwareNotContainsVersion(AgentModel.software, "Software"))
+    column_filters = ("hostname", "ram", "free_ram", "cpus", "state",
+                      FilterTagsContains(Agent.tags, "Tag"),
+                      FilterTagsNotContains(Agent.tags, "Tag"),
+                      FilterSoftwareContains(Agent.software, "Software"),
+                      FilterSoftwareNotContains(Agent.software, "Software"),
+                      FilterSoftwareContainsVersion(Agent.software, "Software"),
+                      FilterSoftwareNotContainsVersion(Agent.software, "Software"))
 
     column_choices = {
         "state": [(value, key.title()) for key, value in
@@ -152,7 +152,7 @@ class AgentModelView(SessionMixin, AgentRolesMixin, SQLModelView):
 
     # columns the form should display
     form_columns = (
-        "state", "hostname", "port", "cpus", "ram", "freeram",
+        "state", "hostname", "port", "cpus", "ram", "free_ram",
         "tags", "software", "ip", "ram_allocation", "cpu_allocation")
 
     # custom type columns need overrides
@@ -164,7 +164,7 @@ class AgentModelView(SessionMixin, AgentRolesMixin, SQLModelView):
     column_labels = {
         "ip": "IPv4 Address",
         "ram": "RAM",
-        "freeram": "RAM (free)",
+        "free_ram": "RAM (free)",
         "cpus": "CPUs",
         "ram_allocation": "RAM Allocation",
         "cpu_allocation": "CPU Allocation"}
@@ -182,45 +182,45 @@ class AgentModelView(SessionMixin, AgentRolesMixin, SQLModelView):
                        AgentState.OFFLINE)},
         "hostname": {
             "validators": [validate_hostname],
-            "description": AgentModel.hostname.__doc__},
+            "description": Agent.hostname.__doc__},
         "port": {
             "validators": [validate_resource],
-            "description": AgentModel.port.__doc__},
+            "description": Agent.port.__doc__},
         "cpus": {
             "validators": [validate_resource],
-            "description": AgentModel.cpus.__doc__},
+            "description": Agent.cpus.__doc__},
         "ram": {
             "validators": [validate_resource],
-            "description": AgentModel.ram.__doc__},
-        "freeram": {
-            "description": AgentModel.freeram.__doc__},
+            "description": Agent.ram.__doc__},
+        "free_ram": {
+            "description": Agent.free_ram.__doc__},
         "ip": {
             "validators": [validate_address, check_dns_mapping],
-            "description": AgentModel.ip.__doc__},
+            "description": Agent.ip.__doc__},
         "tags": {
-            "description": AgentModel.tags.__doc__},
+            "description": Agent.tags.__doc__},
         "software": {
-            "description": AgentModel.software.__doc__},
+            "description": Agent.software.__doc__},
         "ram_allocation": {
-            "description": AgentModel.ram_allocation.__doc__},
+            "description": Agent.ram_allocation.__doc__},
         "cpu_allocation": {
-            "description": AgentModel.cpu_allocation.__doc__}}
+            "description": Agent.cpu_allocation.__doc__}}
 
     # create ajax loaders for the relationships
     form_ajax_refs = {
-        "tags": AjaxLoader("tags", AgentTagsModel,
+        "tags": AjaxLoader("tags", AgentTag,
                            fields=("tag", ), fmt=lambda model: model.tag),
-        "software": AjaxLoader("software", AgentSoftwareModel,
+        "software": AjaxLoader("software", AgentSoftware,
                                fields=("software", "version"),
                                fmt=lambda model: "%s (%s)" % (
                                    model.software, model.version))}
 
 
-class AgentTagsModelView(SessionMixin, AgentRolesMixin, SQLModelView):
+class AgentTagView(SessionMixin, AgentRolesMixin, SQLModelView):
     """
     Administrative view which allows users to view, create, or edit agent tags.
     """
-    model = AgentTagsModel
+    model = AgentTag
 
     # column setup
     column_searchable_list = ("tag", )
@@ -229,22 +229,22 @@ class AgentTagsModelView(SessionMixin, AgentRolesMixin, SQLModelView):
     # arguments to pass into the fields
     form_args = {
         "tag": {
-            "description": AgentTagsModel.tag.__doc__},
+            "description": AgentTag.tag.__doc__},
         "agents": {
             "description": "Agents(s) which are tagged with this string"}}
 
     # create ajax loaders for the relationships
     form_ajax_refs = {
-        "agents": AjaxLoader("agents", AgentModel,
+        "agents": AjaxLoader("agents", Agent,
                              fields=("hostname", ), fmt=repr_agent)}
 
 
-class AgentSoftwareModelView(SessionMixin, AgentRolesMixin, SQLModelView):
+class AgentSoftwareView(SessionMixin, AgentRolesMixin, SQLModelView):
     """
     Administrative view which allows users to view, create, or edit agent
     software.
     """
-    model = AgentSoftwareModel
+    model = AgentSoftware
 
     # search setup
     column_searchable_list = ("software", "version")
@@ -253,13 +253,13 @@ class AgentSoftwareModelView(SessionMixin, AgentRolesMixin, SQLModelView):
     # arguments to pass into the fields
     form_args = {
         "software": {
-            "description": AgentSoftwareModel.software.__doc__},
+            "description": AgentSoftware.software.__doc__},
         "version": {
-            "description": AgentSoftwareModel.version.__doc__},
+            "description": AgentSoftware.version.__doc__},
         "agents": {
             "description": "Agent(s) which are tagged with this software"}}
 
     # create ajax loaders for the relationships
     form_ajax_refs = {
-        "agents": AjaxLoader("agents", AgentModel,
+        "agents": AjaxLoader("agents", Agent,
                              fields=("hostname", ), fmt=repr_agent)}

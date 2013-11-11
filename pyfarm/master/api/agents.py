@@ -30,12 +30,12 @@ from flask import request
 from flask.views import MethodView
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import APIError
-from pyfarm.models.agent import AgentModel
+from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     JSONResponse, json_from_request, get_column_sets)
 
-ALL_AGENT_COLUMNS, REQUIRED_AGENT_COLUMNS = get_column_sets(AgentModel)
+ALL_AGENT_COLUMNS, REQUIRED_AGENT_COLUMNS = get_column_sets(Agent)
 
 # partial function(s) to assist in data conversion
 to_json = partial(json_from_request,
@@ -47,7 +47,7 @@ logger = getLogger("api.agents")
 
 def schema():
     """
-    Returns the basic schema of :class:`.AgentModel`
+    Returns the basic schema of :class:`.Agent`
 
     .. http:get:: /api/v1/agents/schema HTTP/1.1
 
@@ -67,7 +67,7 @@ def schema():
 
             {
                 "ram": "INTEGER",
-                "freeram": "INTEGER",
+                "free_ram": "INTEGER",
                 "use_address": "INTEGER",
                 "ip": "IPv4Address",
                 "hostname": "VARCHAR(255)",
@@ -82,7 +82,7 @@ def schema():
 
     :statuscode 200: no error
     """
-    return JSONResponse(AgentModel().to_schema())
+    return JSONResponse(Agent().to_schema())
 
 
 class AgentIndexAPI(MethodView):
@@ -121,7 +121,7 @@ class AgentIndexAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
-                    "freeram": 133,
+                    "free_ram": 133,
                     "hostname": "agent1",
                     "ip": "10.196.200.115",
                     "port": 64994,
@@ -141,7 +141,7 @@ class AgentIndexAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
-                    "freeram": 133,
+                    "free_ram": 133,
                     "hostname": "agent1",
                     "id": 1,
                     "ip": "10.196.200.115",
@@ -161,7 +161,7 @@ class AgentIndexAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
-                    "freeram": 133,
+                    "free_ram": 133,
                     "hostname": "agent1",
                     "ip": "10.196.200.115",
                     "port": 64994,
@@ -180,7 +180,7 @@ class AgentIndexAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
-                    "freeram": 133,
+                    "free_ram": 133,
                     "hostname": "agent1",
                     "id": 1,
                     "ip": "10.196.200.115",
@@ -221,7 +221,7 @@ class AgentIndexAPI(MethodView):
 
         # check to see if there's already an existing agent with
         # this information
-        existing_agent = AgentModel.query.filter_by(
+        existing_agent = Agent.query.filter_by(
             hostname=data["hostname"], port=data["port"],
             ram=data["ram"], cpus=data["cpus"]).first()
 
@@ -245,7 +245,7 @@ class AgentIndexAPI(MethodView):
         # didn't find an agent that matched the incoming data
         # so we'll create one
         else:
-            new_agent = AgentModel(**data)
+            new_agent = Agent(**data)
             db.session.add(new_agent)
             db.session.commit()
             agent_data = new_agent.to_dict()
@@ -281,7 +281,7 @@ class SingleAgentAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
-                    "freeram": 133,
+                    "free_ram": 133,
                     "hostname": "agent1",
                     "id": 1,
                     "ip": "10.196.200.115",
@@ -310,7 +310,7 @@ class SingleAgentAPI(MethodView):
         :statuscode 200: no error
         :statuscode 404: no agent could be found using the given id
         """
-        agent = AgentModel.query.filter_by(id=agent_id).first()
+        agent = Agent.query.filter_by(id=agent_id).first()
         if agent is not None:
             return JSONResponse(agent.to_dict())
         else:
@@ -345,7 +345,7 @@ class SingleAgentAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
-                    "freeram": 133,
+                    "free_ram": 133,
                     "hostname": "agent1",
                     "id": 1,
                     "ip": "10.196.200.115",
@@ -365,7 +365,7 @@ class SingleAgentAPI(MethodView):
             return data
 
         # get model
-        model = AgentModel.query.filter_by(id=agent_id).first()
+        model = Agent.query.filter_by(id=agent_id).first()
         if model is None:
             errorno, msg = APIError.DATABASE_ERROR
             msg = "no agent found for `%s`" % agent_id
@@ -422,7 +422,7 @@ class SingleAgentAPI(MethodView):
         :statuscode 200: the agent existed and was deleted
         :statuscode 204: the agent did not exist, nothing to delete
         """
-        agent = AgentModel.query.filter_by(id=agent_id).first()
+        agent = Agent.query.filter_by(id=agent_id).first()
         if agent is None:
             return JSONResponse(status=NO_CONTENT)
         else:

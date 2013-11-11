@@ -23,7 +23,6 @@ necessary to run the master.
 """
 
 import os
-from functools import partial
 from datetime import timedelta
 from flask import Flask, Blueprint
 from flask.ext.cache import Cache
@@ -33,9 +32,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from itsdangerous import URLSafeTimedSerializer
 from pyfarm.core.config import read_env
 from pyfarm.master.admin.baseview import AdminIndex
-
-# default configuration values
-eval_env = partial(read_env, eval_literal=True)
 
 
 def get_application(**configuration_keywords):

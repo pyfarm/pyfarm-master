@@ -23,8 +23,8 @@ Objects and classes for working with the job models.
 
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.application import SessionMixin
-from pyfarm.models.job import JobModel, JobTagsModel, JobSoftwareModel
-from pyfarm.models.task import TaskModel
+from pyfarm.models.job import Job, JobTag, JobSoftware
+from pyfarm.models.task import Task
 
 
 class JobRolesMixin(object):
@@ -32,19 +32,19 @@ class JobRolesMixin(object):
 
 
 # TODO: !!! add display override for STATE field
-class JobModelView(SessionMixin, JobRolesMixin, SQLModelView):
-    model = JobModel
+class JobView(SessionMixin, JobRolesMixin, SQLModelView):
+    model = Job
 
 
 # TODO: !!! add display override for STATE field
-class TaskModelView(SessionMixin, SQLModelView):
+class TaskView(SessionMixin, SQLModelView):
     access_roles = ("admin.db.work.task", )
-    model = TaskModel
+    model = Task
 
 
-class JobTagsModelView(SessionMixin, JobRolesMixin, SQLModelView):
-    model = JobTagsModel
+class JobTagView(SessionMixin, JobRolesMixin, SQLModelView):
+    model = JobTag
 
 
-class JobSoftwareModelView(SessionMixin, JobRolesMixin, SQLModelView):
-    model = JobSoftwareModel
+class JobSoftwareView(SessionMixin, JobRolesMixin, SQLModelView):
+    model = JobSoftware

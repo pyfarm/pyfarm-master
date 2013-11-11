@@ -23,7 +23,7 @@ Objects and classes for working with the user models.
 
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.application import SessionMixin
-from pyfarm.models.users import User, Role
+from pyfarm.models.user import User, Role
 from flask.ext.admin.contrib.sqla.form import AdminModelConverter
 
 
