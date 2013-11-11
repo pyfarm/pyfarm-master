@@ -60,6 +60,10 @@ class Task(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins,
         work_columns(STATE_DEFAULT, "job.priority")
     project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
                            doc="stores the project id")
+    agent_id = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
+                         doc="Foreign key which stores :attr:`Job.id`")
+    job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+                       doc="Foreign key which stores :attr:`Job.id`")
     hidden = db.Column(db.Boolean, default=False,
                        doc=dedent("""
                        hides the task from queue and web ui"""))
@@ -74,11 +78,6 @@ class Task(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins,
                       The frame the :class:`Task` will be executing."""))
 
     # relationships
-    agentid = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
-                        doc="Foreign key which stores :attr:`Job.id`")
-    jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
-                      doc="Foreign key which stores :attr:`Job.id`")
-
     parents = db.relationship("Task",
                               secondary=TaskDependencies,
                               primaryjoin=id==TaskDependencies.c.parent_id,
@@ -89,6 +88,16 @@ class Task(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins,
                               doc=dedent("""
                               relationship attribute which retrieves the
                               associated project for the task"""))
+    agent = db.relationship("Agent",
+                            backref=db.backref("tasks", lazy="dynamic"),
+                            doc=dedent("""
+                            relationship attribute which retrieves the
+                            associated agent for this task"""))
+    job = db.relationship("Job",
+                          backref=db.backref("tasks", lazy="dynamic"),
+                          doc=dedent("""
+                          relationship attribute which retrieves the
+                          associated job for this task"""))
 
     @staticmethod
     def agentChangedEvent(target, new_value, old_value, initiator):
@@ -97,5 +106,5 @@ class Task(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins,
             target.state = target.STATE_ENUM.ASSIGN
 
 
-event.listen(Task.agentid, "set", Task.agentChangedEvent)
+event.listen(Task.agent_id, "set", Task.agentChangedEvent)
 event.listen(Task.state, "set", Task.stateChangedEvent)

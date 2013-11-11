@@ -64,14 +64,14 @@ class JobTag(db.Model):
         must be unique and the combination of these columns must also be
         unique to limit the frequency of duplicate data:
 
-            * :attr:`jobid`
+            * :attr:`job_id`
             * :attr:`tag`
 
-    .. autoattribute:: jobid
+    .. autoattribute:: job_id
     """
     __tablename__ = TABLE_JOB_TAG
     __table_args__ = (
-        UniqueConstraint("jobid", "tag"), )
+        UniqueConstraint("job_id", "tag"), )
 
     id = id_column()
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
@@ -92,15 +92,15 @@ class JobSoftware(db.Model):
         must be unique and the combination of these columns must also be
         unique to limit the frequency of duplicate data:
 
-            * :attr:`jobid`
+            * :attr:`job_id`
             * :attr:`software`
             * :attr:`version`
 
-    .. autoattribute:: jobid
+    .. autoattribute:: job_id
     """
     __tablename__ = TABLE_JOB_SOFTWARE
     __table_args__ = (
-        UniqueConstraint("jobid", "software", "version"), )
+        UniqueConstraint("job_id", "software", "version"), )
 
     id = id_column()
     jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
@@ -328,29 +328,23 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin, ReprMixin):
                               secondaryjoin=id==JobDependencies.c.childid,
                               backref="children")
 
-    tasks = db.relationship("Task", backref="job", lazy="dynamic",
-                            doc=dedent("""
-                            Relationship between this job and and child
-                            |Task| objects
-                            """))
-
     tasks_done = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
-                    "(Task.jobid == Job.id)" % STATE_ENUM.DONE,
+                    "(Task.job_id == Job.id)" % STATE_ENUM.DONE,
         doc=dedent("""
         Relationship between this job and any |Task| objects which are
         done."""))
 
     tasks_failed = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
-                    "(Task.jobid == Job.id)" % STATE_ENUM.FAILED,
+                    "(Task.job_id == Job.id)" % STATE_ENUM.FAILED,
         doc=dedent("""
         Relationship between this job and any |Task| objects which have
         failed."""))
 
     tasks_queued = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
-                    "(Task.jobid == Job.id)" % STATE_ENUM.QUEUED,
+                    "(Task.job_id == Job.id)" % STATE_ENUM.QUEUED,
         doc=dedent("""
         Relationship between this job and any |Task| objects which
         are queued."""))
