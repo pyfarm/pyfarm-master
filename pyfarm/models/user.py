@@ -102,7 +102,7 @@ class User(db.Model, UserMixin, ReprMixin):
                                backref=db.backref("users", lazy="dynamic"),
                                lazy="dynamic",
                                doc="The project or projects this user is "
-                                   "associated with.  By default an agent "
+                                   "associated with.  By default a user "
                                    "which is not associated with any projects "
                                    "will be a member of all projects.")
 
