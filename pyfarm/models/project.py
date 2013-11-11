@@ -25,13 +25,16 @@ Top level table used as a grouping mechanism for many components of PyFarm
 from pyfarm.master.application import db
 from pyfarm.models.core.types import id_column
 from pyfarm.models.core.cfg import TABLE_PROJECT
+from pyfarm.models.core.mixins import ReprMixin
 
 
-class Project(db.Model):
+class Project(db.Model, ReprMixin):
     """
     Stores the top level projects which jobs, tasks, users, roles, etc
     can attach to.
     """
     __tablename__ = TABLE_PROJECT
+    REPR_COLUMNS = ("id", "name")
+
     id = id_column()
     name = db.Column(db.String)

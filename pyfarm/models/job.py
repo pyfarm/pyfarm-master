@@ -33,21 +33,25 @@ try:
 except ImportError:  # pragma: no cover
     import simplejson as json
 
+from functools import partial
 from textwrap import dedent
+
 from sqlalchemy import event
 from sqlalchemy.exc import DatabaseError
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
+
 from pyfarm.core.config import read_env, read_env_int
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
-from pyfarm.models.core.functions import work_columns
+from pyfarm.models.core.functions import work_columns, repr_enum
 from pyfarm.models.core.types import id_column, JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TAG, TABLE_JOB_SOFTWARE,
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH,
-    TABLE_JOB_DEPENDENCIES)
-from pyfarm.models.core.mixins import WorkValidationMixin, StateChangedMixin
+    TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
+from pyfarm.models.core.mixins import (
+    WorkValidationMixin, StateChangedMixin, ReprMixin)
 from pyfarm.models.jobtype import JobType  # required for a relationship
 
 
@@ -122,13 +126,16 @@ JobDependencies = db.Table(
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
 
 
-class Job(db.Model, WorkValidationMixin, StateChangedMixin):
+class Job(db.Model, WorkValidationMixin, StateChangedMixin, ReprMixin):
     """
     Defines the attributes and environment for a job.  Individual commands
     are kept track of by |Task|
     """
     __tablename__ = TABLE_JOB
     STATE_ENUM = WorkState
+    REPR_COLUMNS = ("id", "state", "project")
+    REPR_CONVERT_COLUMN = {
+        "state": partial(repr_enum, enum=STATE_ENUM)}
     MIN_CPUS = read_env_int("PYFARM_QUEUE_MIN_CPUS", 1)
     MAX_CPUS = read_env_int("PYFARM_QUEUE_MAX_CPUS", 256)
     MIN_RAM = read_env_int("PYFARM_QUEUE_MIN_RAM", 16)
@@ -148,6 +155,8 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin):
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
         work_columns(STATE_ENUM.QUEUED, "job.priority")
+    project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
+                           doc="stores the project id")
     user = db.Column(db.String(MAX_USERNAME_LENGTH),
                      doc=dedent("""
                      The user this job should execute as.  The agent
@@ -306,6 +315,12 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin):
                         Changes made directly to this object are **not**
                         applied to the session."""))
 
+    project = db.relationship("Project",
+                              backref=db.backref("jobs", lazy="dynamic"),
+                              doc=dedent("""
+                              relationship attribute which retrieves the
+                              associated project for the job"""))
+
     # self-referential many-to-many relationship
     parents = db.relationship("Job",
                               secondary=JobDependencies,
@@ -340,6 +355,7 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin):
         Relationship between this job and any |Task| objects which
         are queued."""))
 
+    # resource relationships
     tags = db.relationship("JobTag", backref="job", lazy="dynamic",
                            doc=dedent("""
                            Relationship between this job and

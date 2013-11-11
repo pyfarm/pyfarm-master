@@ -21,16 +21,19 @@ Task Models
 Models and interface classes related to tasks
 """
 
+from functools import partial
 from textwrap import dedent
+
 from sqlalchemy import event
+
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
-from pyfarm.models.core.functions import work_columns
+from pyfarm.models.core.functions import work_columns, repr_enum
 from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_TASK, TABLE_AGENT, TABLE_TASK_DEPENDENCIES)
+    TABLE_JOB, TABLE_TASK, TABLE_AGENT, TABLE_TASK_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
-    WorkValidationMixin, StateChangedMixin, DictMixins)
+    WorkValidationMixin, StateChangedMixin, DictMixins, ReprMixin)
 
 TaskDependencies = db.Table(
     TABLE_TASK_DEPENDENCIES, db.metadata,
@@ -40,7 +43,8 @@ TaskDependencies = db.Table(
               db.ForeignKey("%s.id" % TABLE_TASK), primary_key=True))
 
 
-class Task(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins):
+class Task(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins,
+           ReprMixin):
     """
     Defines a task which a child of a :class:`Job`.  This table represents
     rows which contain the individual work unit(s) for a job.
@@ -48,11 +52,14 @@ class Task(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins):
     __tablename__ = TABLE_TASK
     STATE_ENUM = WorkState
     STATE_DEFAULT = STATE_ENUM.QUEUED
+    REPR_COLUMNS = ("id", "state", "frame", "project")
+    REPR_CONVERT_COLUMN = {"state": partial(repr_enum, enum=STATE_ENUM)}
 
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
         work_columns(STATE_DEFAULT, "job.priority")
-
+    project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
+                           doc="stores the project id")
     hidden = db.Column(db.Boolean, default=False,
                        doc=dedent("""
                        hides the task from queue and web ui"""))
@@ -77,6 +84,11 @@ class Task(db.Model, WorkValidationMixin, StateChangedMixin, DictMixins):
                               primaryjoin=id==TaskDependencies.c.parent_id,
                               secondaryjoin=id==TaskDependencies.c.child_id,
                               backref="children")
+    project = db.relationship("Project",
+                              backref=db.backref("tasks", lazy="dynamic"),
+                              doc=dedent("""
+                              relationship attribute which retrieves the
+                              associated project for the task"""))
 
     @staticmethod
     def agentChangedEvent(target, new_value, old_value, initiator):
