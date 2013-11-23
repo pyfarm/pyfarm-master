@@ -40,6 +40,7 @@ def dbdata():
 
     from random import randint
     from pyfarm.master.application import db
+    from pyfarm.models.project import Project
     from pyfarm.models.core.cfg import TABLES
     from pyfarm.models.task import Task, TaskDependencies
     from pyfarm.models.job import Job, JobTag, JobDependencies

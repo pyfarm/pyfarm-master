@@ -90,6 +90,7 @@ def load_api(app_instance, api_instance):
 def load_admin(admin_instance):
     """serves the administrative interface endpoints"""
     from flask.ext.admin.base import MenuLink
+    from pyfarm.master.admin.projects import ProjectView
     from pyfarm.master.admin.users import UserView, RoleView
     from pyfarm.master.admin.agents import (
         AgentView, AgentSoftwareView, AgentTagView)
@@ -119,6 +120,8 @@ def load_admin(admin_instance):
         JobSoftwareView(name="Jobs - Software", endpoint="jobs/software"))
     admin_instance.add_view(
         JobTagView(name="Jobs - Tags", endpoint="jobs/tags"))
+    admin_instance.add_view(
+        ProjectView(name="Projects", endpoint="projects"))
 
 
 def load_master(app, admin, api):

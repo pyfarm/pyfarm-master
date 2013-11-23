@@ -98,7 +98,7 @@ class SQLModelView(AuthMixins, sqla.ModelView):
         super(SQLModelView, self).__init__(
             self.model, self._session, name=name,
             category=(category or "Database"),
-            endpoint="db/%s" % (endpoint or self.model.__name__),
+            endpoint="database/%s" % (endpoint or self.model.__name__),
             url=url)
 
     def get_create_form(self):
