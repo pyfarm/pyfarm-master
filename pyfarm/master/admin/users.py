@@ -24,7 +24,6 @@ Objects and classes for working with the user models.
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.application import SessionMixin
 from pyfarm.models.user import User, Role
-from flask.ext.admin.contrib.sqla.form import AdminModelConverter
 
 
 class UserRolesMixin(object):
@@ -35,11 +34,11 @@ class UserRolesMixin(object):
 # TODO: don't display password, or other security related fields
 class UserView(SessionMixin, UserRolesMixin, SQLModelView):
     model = User
-    column_searchable_list = ('username', 'email')
-    column_filters = ('username', 'email')
+    column_searchable_list = ("username", "email")
+    column_filters = ("username", "email")
 
 
 class RoleView(SessionMixin, UserRolesMixin, SQLModelView):
     model = Role
-    column_searchable_list = ('name',)
-    column_filters = ('name', )
+    column_searchable_list = ("name",)
+    column_filters = ("name", )
