@@ -44,7 +44,7 @@ from pyfarm.models.core.cfg import (
 
 REGEX_HOSTNAME = re.compile("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*"
                             "[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9]"
-                            "[A-Za-z0-9\-]*[A-Za-z0-9])$")
+                            "[A-Za-z0-9\-]*[A-Za-z0-9])[\.]$")
 
 AgentTagDependency = db.Table(
     TABLE_AGENT_TAGS_DEPENDENCIES, db.metadata,
