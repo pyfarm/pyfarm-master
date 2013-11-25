@@ -24,9 +24,10 @@ General utility which are not view or tool specific
 from httplib import BAD_REQUEST
 
 try:
-    from json import dumps as _dumps
+    from json import dumps as _dumps, loads as _loads
+
 except ImportError: # pragma: no cover
-    from simplejson import dumps as _dumps
+    from simplejson import dumps as _dumps, loads as _loads
 
 from werkzeug.datastructures import ImmutableDict
 from flask import Response
@@ -138,7 +139,15 @@ def json_from_request(request, all_keys=None, required_keys=None,
         a set of keys which cannot be part of the request
     """
     try:
-        data = request.get_json()
+        data = request.get_json(force=True)
+
+        # though unlikely it's possible to_json didn't fully resolve
+        # the data
+        if isinstance(data, unicode):
+            try:
+                data = _loads(data)
+            except ValueError:  # it's also possible this was not json data
+                pass
 
     except ValueError, e:
         errorno, msg = APIError.JSON_DECODE_FAILED
