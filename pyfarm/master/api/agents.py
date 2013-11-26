@@ -40,6 +40,7 @@ ALL_AGENT_COLUMNS, REQUIRED_AGENT_COLUMNS = get_column_sets(Agent)
 # partial function(s) to assist in data conversion
 to_json = partial(json_from_request,
                   all_keys=ALL_AGENT_COLUMNS,
+                  required_keys=REQUIRED_AGENT_COLUMNS,
                   disallowed_keys=set(["id"]))
 
 logger = getLogger("api.agents")
