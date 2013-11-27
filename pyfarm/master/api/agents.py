@@ -223,8 +223,7 @@ class AgentIndexAPI(MethodView):
         # check to see if there's already an existing agent with
         # this information
         existing_agent = Agent.query.filter_by(
-            hostname=data["hostname"], port=data["port"],
-            ram=data["ram"], cpus=data["cpus"]).first()
+            hostname=data["hostname"], port=data["port"]).first()
 
         # agent already exists, try to update it
         if existing_agent:
