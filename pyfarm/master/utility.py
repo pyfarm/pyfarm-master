@@ -139,7 +139,7 @@ def json_from_request(request, all_keys=None, required_keys=None,
         a set of keys which cannot be part of the request
     """
     try:
-        data = request.get_json(force=True)
+        data = request.get_json()
 
         # though unlikely it's possible to_json didn't fully resolve
         # the data
