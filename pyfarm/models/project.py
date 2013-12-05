@@ -39,3 +39,32 @@ class Project(db.Model, ReprMixin):
     id = id_column()
     name = db.Column(
         db.String(MAX_PROJECT_NAME_LENGTH), doc="the name of the project")
+
+    @classmethod
+    def get(cls, name, create=True):
+        """
+        Returns a :class:`.Project` object matching ``name``.
+
+        :param str name:
+            the name of the project to look for
+
+        :param bool create:
+            if True and a project by ``name`` does not exist, create it
+            before returning
+        """
+        assert isinstance(name, basestring), "expected string for `name`"
+        project = cls.query.filter_by(name=name).first()
+
+        # create the project if necessary
+        if project is None and create:
+            commit = db.session.dirty
+            project = cls(name=name)
+            db.session.add(project)
+
+            # only commit if there are not any
+            # other pending operations
+            if commit:
+                db.session.commit()
+
+        return project
+
