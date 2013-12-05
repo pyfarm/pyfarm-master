@@ -38,7 +38,7 @@ class Project(db.Model, ReprMixin):
 
     id = id_column()
     name = db.Column(
-        db.String(MAX_PROJECT_NAME_LENGTH), doc="the name of the project")
+        db.Unicode(MAX_PROJECT_NAME_LENGTH), doc="the name of the project")
 
     @classmethod
     def get(cls, name, create=True):
