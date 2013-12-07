@@ -30,7 +30,7 @@ from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
 from netaddr import AddrFormatError, IPAddress
 from pyfarm.core.enums import AgentState, UseAgentAddress
-from pyfarm.core.config import read_env_number, read_env_int
+from pyfarm.core.config import read_env_number, read_env_int, read_env_bool
 from pyfarm.master.application import db
 from pyfarm.models.core.functions import repr_ip, repr_enum
 from pyfarm.models.core.mixins import WorkValidationMixin, DictMixins, ReprMixin
@@ -42,9 +42,9 @@ from pyfarm.models.core.cfg import (
     TABLE_AGENT_TAGS_DEPENDENCIES, TABLE_PROJECT_AGENTS, TABLE_PROJECT)
 
 
-REGEX_HOSTNAME = re.compile("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*"
-                            "[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9]"
-                            "[A-Za-z0-9\-]*[A-Za-z0-9])[\.]$")
+REGEX_HOSTNAME = re.compile("^(?!-)[A-Z\d-]{1,63}(?<!-)"
+                            "(\.(?!-)[A-Z\d-]{1,63}(?<!-))*\.?$"
+                            , re.IGNORECASE)
 
 AgentTagDependency = db.Table(
     TABLE_AGENT_TAGS_DEPENDENCIES, db.metadata,
@@ -323,13 +323,17 @@ class Agent(db.Model, WorkValidationMixin, DictMixins, ReprMixin):
             raise ValueError(
                 "%s is not a valid address format: %s" % (value, e))
 
+        require_private_ip = read_env_bool(
+                             "PYFARM_REQUIRE_PRIVATE_IP", False)
+
+        if(require_private_ip and not ip.is_private()):
+            raise ValueError("%s is not a private ip address" % value)
         if not all([
             not ip.is_hostmask(), not ip.is_link_local(),
             not ip.is_loopback(), not ip.is_multicast(),
-            not ip.is_netmask(), ip.is_private(),
-            not ip.is_reserved()
+            not ip.is_netmask(), not ip.is_reserved()
         ]):
-            raise ValueError("%s it not a private ip address" % value)
+            raise ValueError("%s is not a usable ip address" % value)
 
         return value
 
