@@ -193,7 +193,7 @@ class Agent(db.Model, WorkValidationMixin, DictMixins, ReprMixin):
                           doc="the remote address which came in with the "
                               "request")
     use_address = db.Column(db.Integer, nullable=False,
-                            default=UseAgentAddress.HOSTNAME,
+                            default=UseAgentAddress.REMOTE,
                             doc="The address we should use when communicating "
                                 "with the agent")
     ram = db.Column(db.Integer, nullable=False,
