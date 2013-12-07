@@ -252,6 +252,48 @@ class AgentIndexAPI(MethodView):
             logger.info("created agent %s: %s" % (new_agent.id, agent_data))
             return JSONResponse(agent_data, status=CREATED)
 
+    def get(self):
+        """
+        A ``GET`` to this endpoint will return a list of known agents, with id
+        and name.
+
+        .. http:get:: /api/v1/agents HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/agents HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "hostname": "agent1",
+                        "id": 1
+                    },
+                    {
+                        "hostname": "agent2",
+                        "id": 2
+                    },
+                    {
+                        "hostname": "agent3.local",
+                        "id": 3
+                    }
+                ]
+
+        """
+        out = list()
+        for id, hostname in db.session.query(Agent.id, Agent.hostname):
+            out.append({'id': id, 'hostname' : hostname})
+        return JSONResponse(out, status=OK)
+
 
 class SingleAgentAPI(MethodView):
     """
