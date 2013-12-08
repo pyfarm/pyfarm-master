@@ -416,13 +416,15 @@ class SingleAgentAPI(MethodView):
             return JSONResponse((errorno, msg), status=NOT_FOUND)
 
         # update model
-        modified = False
+        modified = {}
         for key, value in data.iteritems():
             if value != getattr(model, key):
                 setattr(model, key, value)
-                modified = True
+                modified[key] = value
 
         if modified:
+            logger.debug(
+                "updated agent %s: %s" % (model.id, modified))
             db.session.add(model)
             db.session.commit()
 
