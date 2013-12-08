@@ -329,8 +329,9 @@ class Agent(db.Model, WorkValidationMixin, DictMixins, ReprMixin):
         require_private_ip = read_env_bool(
                              "PYFARM_REQUIRE_PRIVATE_IP", False)
 
-        if(require_private_ip and not ip.is_private()):
+        if require_private_ip and not ip.is_private():
             raise ValueError("%s is not a private ip address" % value)
+
         if not all([
             not ip.is_hostmask(), not ip.is_link_local(),
             not ip.is_loopback(), not ip.is_multicast(),
