@@ -48,7 +48,7 @@ def dumps(*args, **kwargs):
     return _dumps(*args, **kwargs)
 
 
-def get_column_sets(model):
+def get_column_sets(model, primary_key=False):
     """
     returns a tuple of two sets containing all columns and required columns
     for the model provided
@@ -58,7 +58,7 @@ def get_column_sets(model):
 
     for name, column in model.__table__.c.items():
         # skip autoincremented primary keys
-        if column.primary_key and column.autoincrement:
+        if not primary_key and column.primary_key and column.autoincrement:
             continue
 
         all_columns.add(name)
@@ -154,7 +154,8 @@ def json_from_request(request, all_keys=None, required_keys=None,
         msg += ": %s" % e
         return JSONResponse((errorno, msg), status=BAD_REQUEST)
 
-    if isinstance(data, dict) and (all_keys or required_keys or disallowed_keys):
+    if isinstance(data, dict) and "id" not in data and \
+            (all_keys or required_keys or disallowed_keys):
         request_keys = set(data)
 
         # make sure that we don't have more request keys
