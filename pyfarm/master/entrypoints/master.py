@@ -23,6 +23,7 @@ of PyFarm's master.
 """
 
 from pyfarm.models.core.cfg import TABLES
+from pyfarm.models.project import Project
 from pyfarm.models.task import Task, TaskDependencies
 from pyfarm.models.job import Job, JobTag, JobDependencies
 from pyfarm.models.jobtype import JobType
@@ -30,6 +31,7 @@ from pyfarm.models.agent import (
     Agent, AgentSoftware, AgentTag,
     AgentSoftwareDependency, AgentSoftwareDependency)
 from pyfarm.models.user import User, Role
+from pyfarm.master.application import db
 
 
 def load_before_first(app_instance, database_instance):
@@ -135,7 +137,26 @@ def load_master(app, admin, api):
 
 def run_master():  # pragma: no cover
     """Runs :func:`load_master` then runs the application"""
+    import os
+    from argparse import ArgumentParser
     from pyfarm.master.application import app, admin, api
+
+    parser = ArgumentParser()
+    if app.debug:
+        parser.add_argument("--drop-all", "-D", action="store_true",
+                            help="drop the existing tables before starting")
+
+    parser.add_argument("--create-all", "-C", action="store_true",
+                        help="create all tables before starting")
+    parser.add_argument("--confirm-drop")
+    parsed = parser.parse_args()
+
+    if app.debug and parsed.drop_all:
+        db.drop_all()
+
+    if parsed.create_all:
+        db.create_all()
+
     load_master(app, admin, api)
     app.run()
 
