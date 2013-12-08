@@ -26,14 +26,19 @@ Contained within this module are API handling functions which can
 
 from functools import partial
 from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
+
 from flask import request
 from flask.views import MethodView
+
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import APIError
+from pyfarm.core.config import read_env_bool
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     JSONResponse, json_from_request, get_column_sets)
+
+PYFARM_AGENT_POST_DEBUG = read_env_bool("PYFARM_AGENT_POST_DEBUG", db.app.debug)
 
 ALL_AGENT_COLUMNS, REQUIRED_AGENT_COLUMNS = get_column_sets(Agent)
 
@@ -202,6 +207,9 @@ class AgentIndexAPI(MethodView):
             return data
 
         request_columns = set(data)
+
+        if PYFARM_AGENT_POST_DEBUG:
+            logger.debug(data)
 
         # request did not include at least the required columns
         if (request_columns != REQUIRED_AGENT_COLUMNS
