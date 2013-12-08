@@ -32,13 +32,10 @@ from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import APIError
-from pyfarm.core.config import read_env_bool
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     JSONResponse, json_from_request, get_column_sets)
-
-PYFARM_AGENT_POST_DEBUG = read_env_bool("PYFARM_AGENT_POST_DEBUG", db.app.debug)
 
 ALL_AGENT_COLUMNS, REQUIRED_AGENT_COLUMNS = get_column_sets(Agent)
 
@@ -208,9 +205,6 @@ class AgentIndexAPI(MethodView):
 
         request_columns = set(data)
 
-        if PYFARM_AGENT_POST_DEBUG:
-            logger.debug(data)
-
         # request did not include at least the required columns
         if (request_columns != REQUIRED_AGENT_COLUMNS
                 and request_columns.issubset(REQUIRED_AGENT_COLUMNS)):
@@ -297,9 +291,9 @@ class AgentIndexAPI(MethodView):
                 ]
 
         """
-        out = list()
-        for id, hostname in db.session.query(Agent.id, Agent.hostname):
-            out.append({'id': id, 'hostname' : hostname})
+        out = []
+        for agent_id, hostname in db.session.query(Agent.id, Agent.hostname):
+            out.append({"id": agent_id, "hostname": hostname})
         return JSONResponse(out, status=OK)
 
 
