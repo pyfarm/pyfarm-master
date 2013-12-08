@@ -41,7 +41,7 @@ from pyfarm.models.core.cfg import (
     MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH, TABLE_AGENT_SOFTWARE_DEPENDENCIES,
     TABLE_AGENT_TAGS_DEPENDENCIES, TABLE_PROJECT_AGENTS, TABLE_PROJECT)
 
-
+PYFARM_REQUIRE_PRIVATE_IP = read_env_bool("PYFARM_REQUIRE_PRIVATE_IP", False)
 REGEX_HOSTNAME = re.compile("^(?!-)[A-Z\d-]{1,63}(?<!-)"
                             "(\.(?!-)[A-Z\d-]{1,63}(?<!-))*\.?$"
                             , re.IGNORECASE)
@@ -326,10 +326,7 @@ class Agent(db.Model, WorkValidationMixin, DictMixins, ReprMixin):
             raise ValueError(
                 "%s is not a valid address format: %s" % (value, e))
 
-        require_private_ip = read_env_bool(
-                             "PYFARM_REQUIRE_PRIVATE_IP", False)
-
-        if require_private_ip and not ip.is_private():
+        if PYFARM_REQUIRE_PRIVATE_IP and not ip.is_private():
             raise ValueError("%s is not a private ip address" % value)
 
         if not all([
