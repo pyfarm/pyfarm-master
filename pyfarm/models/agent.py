@@ -205,7 +205,7 @@ class Agent(db.Model, WorkValidationMixin, DictMixins, ReprMixin):
     port = db.Column(db.Integer, nullable=False,
                      doc="The port the agent is currently running on")
     time_offset = db.Column(db.Integer, nullable=False, default=0,
-                            dob="the offset in seconds the agent is from "
+                            doc="the offset in seconds the agent is from "
                                 "an official time server")
 
     # host state
