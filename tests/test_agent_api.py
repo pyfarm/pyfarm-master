@@ -18,6 +18,7 @@
 import os
 from utcore import ModelTestCase
 from pyfarm.master.utility import dumps
+from pyfarm.core.enums import AgentState, UseAgentAddress
 try:
     from json import loads
 except ImportError:
@@ -52,7 +53,7 @@ class TestAgentAPI(ModelTestCase):
                                         "port": 64994,
                                         "ram": 2048,
                                         "ram_allocation": 0.8,
-                                        "state": 8
+                                        "state": 202
                                         }))
         self.assertStatus(response1, 201)
         id = loads(response1.data)['id']
@@ -64,14 +65,14 @@ class TestAgentAPI(ModelTestCase):
         assert response2.json == {
                                     "ram": 2048,
                                     "cpu_allocation": 1.0,
-                                    "use_address": 21,
+                                    "use_address": 311,
                                     "ip": "10.0.200.1",
                                     "hostname": "testagent1",
                                     "cpus": 16,
                                     "ram_allocation": 0.8,
                                     "port": 64994,
                                     "time_offset": 0,
-                                    "state": 8,
+                                    "state": 202,
                                     "free_ram": 133,
                                     "id": id,
                                     "remote_ip": None
