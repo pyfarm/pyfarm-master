@@ -322,6 +322,7 @@ class SingleAgentAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
+                    "use_address": 22,
                     "free_ram": 133,
                     "hostname": "agent1",
                     "id": 1,
@@ -330,6 +331,7 @@ class SingleAgentAPI(MethodView):
                     "ram": 2157,
                     "ram_allocation": 0.8,
                     "state": 8
+                    "remote_ip": "10.196.200.115"
                  }
 
             **Request (no such agent)**
