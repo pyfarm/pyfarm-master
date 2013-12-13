@@ -18,10 +18,8 @@
 Agents
 ------
 
-Contained within this module are API handling functions which can
-    * create new agents
-    * update existing agent data
-    * delete existing agents
+Contained within this module are an API handling functions which can
+manage or query agents using JSON.
 """
 
 from functools import partial
@@ -89,7 +87,6 @@ def schema():
 
 
 class AgentIndexAPI(MethodView):
-    # TODO: should return agent
     def post(self):
         """
         A ``POST`` to this endpoint will do one of two things:
