@@ -34,6 +34,7 @@ class TestAgentAPI(ModelTestCase):
                                           "hostname": "VARCHAR(255)",
                                           "cpus": "INTEGER",
                                           "port": "INTEGER",
+                                          "time_offset": "INTEGER",
                                           "state": "INTEGER",
                                           "ram_allocation": "FLOAT",
                                           "cpu_allocation": "FLOAT",
@@ -59,16 +60,17 @@ class TestAgentAPI(ModelTestCase):
         response2 = self.client.get("/api/v1/agents/%d" % id)
         self.assert200(response2)
         agent_data = loads(response2.data)
-        assert len(agent_data) == 12
+        assert len(agent_data) == 13
         assert response2.json == {
                                     "ram": 2048,
                                     "cpu_allocation": 1.0,
-                                    "use_address": 22,
+                                    "use_address": 21,
                                     "ip": "10.0.200.1",
                                     "hostname": "testagent1",
                                     "cpus": 16,
                                     "ram_allocation": 0.8,
                                     "port": 64994,
+                                    "time_offset": 0,
                                     "state": 8,
                                     "free_ram": 133,
                                     "id": id,
