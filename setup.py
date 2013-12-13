@@ -23,8 +23,7 @@ from os.path import isfile
 from setuptools import setup
 
 install_requires = [
-    "pyfarm.core",
-    "sqlalchemy", "netaddr", "flask"]
+    "pyfarm.core", "sqlalchemy", "netaddr", "flask", "voluptuous"]
 
 if sys.version_info[0:2] < (2, 7):
     install_requires.append("simplejson")
