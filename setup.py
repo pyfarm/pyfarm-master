@@ -27,7 +27,7 @@ install_requires = [
     "pyfarm.core", "pyfarm.models",
     "flask-login", "flask-admin>=1.0.7",
     "flask-sqlalchemy", "flask-cache", "flask",
-    "itsdangerous", "blinker", "flask-testing", "voluptuous"]
+    "itsdangerous", "blinker", "flask-testing"]
 
 if sys.version_info[0:2] < (2, 7):
     install_requires.append("simplejson")
