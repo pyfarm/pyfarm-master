@@ -316,20 +316,20 @@ class AgentIndexAPI(MethodView):
 
         :statuscode 200: no error
         """
-        out = []
-        q = db.session.query(Agent.id, Agent.hostname)
+        out=[]
+        q=db.session.query(Agent.id, Agent.hostname)
 
-        if(request.args.get('min_ram') != None):
-            q = q.filter(Agent.ram >= request.args.get('min_ram', type=int))
+        if request.args.get("min_ram") is not None:
+            q=q.filter(Agent.ram >= request.args.get("min_ram", type=int))
 
-        if(request.args.get('max_ram') != None):
-            q = q.filter(Agent.ram <= request.args.get('max_ram', type=int))
+        if request.args.get("max_ram") is not None:
+            q=q.filter(Agent.ram <= request.args.get("max_ram", type=int))
 
-        if(request.args.get('min_cpus') != None):
-            q = q.filter(Agent.cpus >= request.args.get('min_cpus', type=int))
+        if request.args.get("min_cpus") is not None:
+            q=q.filter(Agent.cpus >= request.args.get("min_cpus", type=int))
 
-        if(request.args.get('max_cpus') != None):
-            q = q.filter(Agent.cpus <= request.args.get('max_cpus', type=int))
+        if request.args.get("max_cpus") is not None:
+            q=q.filter(Agent.cpus <= request.args.get("max_cpus", type=int))
 
         for agent_id, hostname in q:
             out.append({"id": agent_id, "hostname": hostname})
