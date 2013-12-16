@@ -28,7 +28,7 @@ from pyfarm.core.enums import AgentState, UseAgentAddress
 
 class TestAgentAPI(ModelTestCase):
     def test_agents_schema(self):
-        response = self.client.get("/api/v1/agents/schema")
+        response=self.client.get("/api/v1/agents/schema")
         self.assert200(response)
         self.assertEquals(response.json, {"ram": "INTEGER",
                                           "free_ram": "INTEGER",
@@ -45,9 +45,9 @@ class TestAgentAPI(ModelTestCase):
                                           "remote_ip": "IPv4Address"})
 
     def test_agent_read_write(self):
-        response1 = self.client.post("/api/v1/agents",
+        response1=self.client.post("/api/v1/agents",
                                     content_type="application/json",
-                                    data = dumps({"cpu_allocation": 1.0,
+                                    data=dumps({"cpu_allocation": 1.0,
                                         "cpus": 16,
                                         "free_ram": 133,
                                         "hostname": "testagent1",
@@ -58,11 +58,11 @@ class TestAgentAPI(ModelTestCase):
                                         "state": 202
                                         }))
         self.assertStatus(response1, 201)
-        id = loads(response1.data)['id']
+        id=loads(response1.data)['id']
 
-        response2 = self.client.get("/api/v1/agents/%d" % id)
+        response2=self.client.get("/api/v1/agents/%d" % id)
         self.assert200(response2)
-        agent_data = loads(response2.data)
+        agent_data=loads(response2.data)
         self.assertEquals(len(agent_data), 13)
         self.assertEquals(response2.json, {
                                     "ram": 2048,
