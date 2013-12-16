@@ -16,13 +16,15 @@
 # limitations under the License.
 
 import os
-from utcore import ModelTestCase
-from pyfarm.master.utility import dumps
-from pyfarm.core.enums import AgentState, UseAgentAddress
+
 try:
     from json import loads
 except ImportError:
     from simplejson import loads
+
+from utcore import ModelTestCase
+from pyfarm.master.utility import dumps
+from pyfarm.core.enums import AgentState, UseAgentAddress
 
 class TestAgentAPI(ModelTestCase):
     def test_agents_schema(self):
