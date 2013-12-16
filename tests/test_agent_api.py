@@ -63,8 +63,8 @@ class TestAgentAPI(ModelTestCase):
         response2 = self.client.get("/api/v1/agents/%d" % id)
         self.assert200(response2)
         agent_data = loads(response2.data)
-        assert len(agent_data) == 13
-        assert response2.json == {
+        self.assertEquals(len(agent_data), 13)
+        self.assertEquals(response2.json, {
                                     "ram": 2048,
                                     "cpu_allocation": 1.0,
                                     "use_address": 311,
@@ -78,5 +78,5 @@ class TestAgentAPI(ModelTestCase):
                                     "free_ram": 133,
                                     "id": id,
                                     "remote_ip": None
-                                    }
+                                    })
         # TODO Test updating an agent
