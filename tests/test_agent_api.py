@@ -79,4 +79,143 @@ class TestAgentAPI(ModelTestCase):
                                     "id": id,
                                     "remote_ip": None
                                     })
-        # TODO Test updating an agent
+
+    # There are two ways to update an agent, with a POST to /api/v1/agents
+    # or with a POST to /api/v1/agents/<id>
+    # Those are two different endpoints, and we have to test them both
+    def test_agent_update1(self):
+        response1=self.client.post("/api/v1/agents",
+                                    content_type="application/json",
+                                    data=dumps({
+                                        "cpu_allocation": 1.0,
+                                        "cpus": 16,
+                                        "free_ram": 133,
+                                        "hostname": "testagent2",
+                                        "ip": "10.0.200.2",
+                                        "port": 64994,
+                                        "ram": 2048,
+                                        "ram_allocation": 0.8,
+                                        "state": 202
+                                        }))
+        self.assertStatus(response1, 201)
+        id=loads(response1.data)['id']
+
+        # When doing POST to /api/v1/agents with an already existing
+        # hostname+port combination, the existing agent should be updated
+        response2=self.client.post("/api/v1/agents",
+                                   content_type="application/json",
+                                   data=dumps({
+                                        "cpu_allocation": 1.1,
+                                        "cpus": 32,
+                                        "free_ram": 128,
+                                        "hostname": "testagent2",
+                                        "ip": "10.0.200.2",
+                                        "port": 64994,
+                                        "ram": 4096,
+                                        "ram_allocation": 0.7,
+                                        "state": 203
+                                        }))
+        self.assert200(response2)
+
+        # See if we get the updated data back
+        response3=self.client.get("/api/v1/agents/%d" % id)
+        self.assert200(response3)
+        updated_agent_data=loads(response3.data)
+        self.assertEquals(len(updated_agent_data), 13)
+        self.assertEquals(response3.json, {
+                                    "ram": 4096,
+                                    "cpu_allocation": 1.1,
+                                    "use_address": 311,
+                                    "ip": "10.0.200.2",
+                                    "hostname": "testagent2",
+                                    "cpus": 32,
+                                    "ram_allocation": 0.7,
+                                    "port": 64994,
+                                    "time_offset": 0,
+                                    "state": 203,
+                                    "free_ram": 128,
+                                    "id": id,
+                                    "remote_ip": None
+                                    })
+
+    def test_agent_update2(self):
+        response1=self.client.post("/api/v1/agents",
+                                    content_type="application/json",
+                                    data=dumps({
+                                        "cpu_allocation": 1.0,
+                                        "cpus": 16,
+                                        "free_ram": 133,
+                                        "hostname": "testagent3",
+                                        "ip": "10.0.200.3",
+                                        "port": 64994,
+                                        "ram": 2048,
+                                        "ram_allocation": 0.8,
+                                        "state": 202
+                                        }))
+        self.assertStatus(response1, 201)
+        id=loads(response1.data)['id']
+
+        # Using this endpoint, we should be able to change everything about an
+        # agent except its id
+        response2=self.client.post("/api/v1/agents/%d" % id,
+                                   content_type="application/json",
+                                   data=dumps({
+                                        "cpu_allocation": 1.2,
+                                        "ram": 8192,
+                                        "use_address": 312,
+                                        "ip": "10.0.200.4",
+                                        "hostname": "testagent3-1",
+                                        "cpus": 64,
+                                        "ram_allocation": 0.2,
+                                        "port": 64995,
+                                        "time_offset": 5,
+                                        "state": 203,
+                                        "free_ram": 4096,
+                                        "id": id,
+                                        }))
+        self.assert200(response2)
+
+        # See if we get the updated data back
+        response3=self.client.get("/api/v1/agents/%d" % id)
+        self.assert200(response3)
+        updated_agent_data=loads(response3.data)
+        self.assertEquals(len(updated_agent_data), 13)
+        self.assertEquals(response3.json, {
+                                    "ram": 8192,
+                                    "cpu_allocation": 1.2,
+                                    "use_address": 312,
+                                    "ip": "10.0.200.4",
+                                    "hostname": "testagent3-1",
+                                    "cpus": 64,
+                                    "ram_allocation": 0.2,
+                                    "port": 64995,
+                                    "time_offset": 5,
+                                    "state": 203,
+                                    "free_ram": 4096,
+                                    "id": id,
+                                    "remote_ip": None
+                                    })
+
+    def test_agent_delete(self):
+        response1=self.client.post("/api/v1/agents",
+                                    content_type="application/json",
+                                    data=dumps({
+                                        "cpu_allocation": 1.0,
+                                        "cpus": 16,
+                                        "free_ram": 133,
+                                        "hostname": "testagent3",
+                                        "ip": "10.0.200.3",
+                                        "port": 64994,
+                                        "ram": 2048,
+                                        "ram_allocation": 0.8,
+                                        "state": 202
+                                        }))
+        self.assertStatus(response1, 201)
+        id=loads(response1.data)['id']
+
+        response2=self.client.delete("/api/v1/agents/%d" % id)
+        self.assert200(response2)
+        response3=self.client.delete("/api/v1/agents/%d" % id)
+        self.assertStatus(response3, 204)
+        response4=self.client.get("/api/v1/agents/%d" % id)
+        self.assert404(response4)
