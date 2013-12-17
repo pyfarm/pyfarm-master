@@ -28,7 +28,7 @@ from pyfarm.core.enums import AgentState, UseAgentAddress
 
 class TestAgentAPI(ModelTestCase):
     def test_agents_schema(self):
-        response=self.client.get("/api/v1/agents/schema")
+        response = self.client.get("/api/v1/agents/schema")
         self.assert200(response)
         self.assertEquals(response.json, {"ram": "INTEGER",
                                           "free_ram": "INTEGER",
@@ -45,9 +45,10 @@ class TestAgentAPI(ModelTestCase):
                                           "remote_ip": "IPv4Address"})
 
     def test_agent_read_write(self):
-        response1=self.client.post("/api/v1/agents",
-                                    content_type="application/json",
-                                    data=dumps({"cpu_allocation": 1.0,
+        response1 = self.client.post("/api/v1/agents",
+                                     content_type="application/json",
+                                     data=dumps({
+                                        "cpu_allocation": 1.0,
                                         "cpus": 16,
                                         "free_ram": 133,
                                         "hostname": "testagent1",
@@ -58,11 +59,11 @@ class TestAgentAPI(ModelTestCase):
                                         "state": 202
                                         }))
         self.assertStatus(response1, 201)
-        id=loads(response1.data)['id']
+        id = loads(response1.data)['id']
 
-        response2=self.client.get("/api/v1/agents/%d" % id)
+        response2 = self.client.get("/api/v1/agents/%d" % id)
         self.assert200(response2)
-        agent_data=loads(response2.data)
+        agent_data = loads(response2.data)
         self.assertEquals(len(agent_data), 13)
         self.assertEquals(response2.json, {
                                     "ram": 2048,
@@ -84,9 +85,9 @@ class TestAgentAPI(ModelTestCase):
     # or with a POST to /api/v1/agents/<id>
     # Those are two different endpoints, and we have to test them both
     def test_agent_update1(self):
-        response1=self.client.post("/api/v1/agents",
-                                    content_type="application/json",
-                                    data=dumps({
+        response1 = self.client.post("/api/v1/agents",
+                                     content_type="application/json",
+                                     data=dumps({
                                         "cpu_allocation": 1.0,
                                         "cpus": 16,
                                         "free_ram": 133,
@@ -98,13 +99,13 @@ class TestAgentAPI(ModelTestCase):
                                         "state": 202
                                         }))
         self.assertStatus(response1, 201)
-        id=loads(response1.data)['id']
+        id = loads(response1.data)['id']
 
         # When doing POST to /api/v1/agents with an already existing
         # hostname+port combination, the existing agent should be updated
-        response2=self.client.post("/api/v1/agents",
-                                   content_type="application/json",
-                                   data=dumps({
+        response2 = self.client.post("/api/v1/agents",
+                                     content_type="application/json",
+                                     data=dumps({
                                         "cpu_allocation": 1.1,
                                         "cpus": 32,
                                         "free_ram": 128,
@@ -118,9 +119,9 @@ class TestAgentAPI(ModelTestCase):
         self.assert200(response2)
 
         # See if we get the updated data back
-        response3=self.client.get("/api/v1/agents/%d" % id)
+        response3 = self.client.get("/api/v1/agents/%d" % id)
         self.assert200(response3)
-        updated_agent_data=loads(response3.data)
+        updated_agent_data = loads(response3.data)
         self.assertEquals(len(updated_agent_data), 13)
         self.assertEquals(response3.json, {
                                     "ram": 4096,
@@ -139,9 +140,9 @@ class TestAgentAPI(ModelTestCase):
                                     })
 
     def test_agent_update2(self):
-        response1=self.client.post("/api/v1/agents",
-                                    content_type="application/json",
-                                    data=dumps({
+        response1 = self.client.post("/api/v1/agents",
+                                     content_type="application/json",
+                                     data=dumps({
                                         "cpu_allocation": 1.0,
                                         "cpus": 16,
                                         "free_ram": 133,
@@ -153,13 +154,13 @@ class TestAgentAPI(ModelTestCase):
                                         "state": 202
                                         }))
         self.assertStatus(response1, 201)
-        id=loads(response1.data)['id']
+        id = loads(response1.data)['id']
 
         # Using this endpoint, we should be able to change everything about an
         # agent except its id
-        response2=self.client.post("/api/v1/agents/%d" % id,
-                                   content_type="application/json",
-                                   data=dumps({
+        response2 = self.client.post("/api/v1/agents/%d" % id,
+                                     content_type="application/json",
+                                     data=dumps({
                                         "cpu_allocation": 1.2,
                                         "ram": 8192,
                                         "use_address": 312,
@@ -176,9 +177,9 @@ class TestAgentAPI(ModelTestCase):
         self.assert200(response2)
 
         # See if we get the updated data back
-        response3=self.client.get("/api/v1/agents/%d" % id)
+        response3 = self.client.get("/api/v1/agents/%d" % id)
         self.assert200(response3)
-        updated_agent_data=loads(response3.data)
+        updated_agent_data = loads(response3.data)
         self.assertEquals(len(updated_agent_data), 13)
         self.assertEquals(response3.json, {
                                     "ram": 8192,
@@ -197,9 +198,9 @@ class TestAgentAPI(ModelTestCase):
                                     })
 
     def test_agent_delete(self):
-        response1=self.client.post("/api/v1/agents",
-                                    content_type="application/json",
-                                    data=dumps({
+        response1 = self.client.post("/api/v1/agents",
+                                     content_type="application/json",
+                                     data=dumps({
                                         "cpu_allocation": 1.0,
                                         "cpus": 16,
                                         "free_ram": 133,
@@ -211,11 +212,11 @@ class TestAgentAPI(ModelTestCase):
                                         "state": 202
                                         }))
         self.assertStatus(response1, 201)
-        id=loads(response1.data)['id']
+        id = loads(response1.data)['id']
 
-        response2=self.client.delete("/api/v1/agents/%d" % id)
+        response2 = self.client.delete("/api/v1/agents/%d" % id)
         self.assert200(response2)
-        response3=self.client.delete("/api/v1/agents/%d" % id)
+        response3 = self.client.delete("/api/v1/agents/%d" % id)
         self.assertStatus(response3, 204)
-        response4=self.client.get("/api/v1/agents/%d" % id)
+        response4 = self.client.get("/api/v1/agents/%d" % id)
         self.assert404(response4)
