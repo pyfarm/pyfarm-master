@@ -141,14 +141,17 @@ class AgentIndexAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
+                    "use_address": 311,
                     "free_ram": 133,
+                    "time_offset": 0,
                     "hostname": "agent1",
                     "id": 1,
                     "ip": "10.196.200.115",
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
-                    "state": 8
+                    "state": 202,
+                    "remote_ip": "10.196.200.115"
                  }
 
             **Request**
@@ -180,14 +183,17 @@ class AgentIndexAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
+                    "use_address": 311,
                     "free_ram": 133,
+                    "time_offset": 0,
                     "hostname": "agent1",
                     "id": 1,
                     "ip": "10.196.200.115",
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
-                    "state": 8
+                    "state": 202,
+                    "remote_ip": "10.196.200.115"
                  }
 
         :statuscode 200: an existing agent was updated
@@ -322,15 +328,16 @@ class SingleAgentAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
-                    "use_address": 22,
+                    "use_address": 311,
                     "free_ram": 133,
+                    "time_offset": 0,
                     "hostname": "agent1",
                     "id": 1,
                     "ip": "10.196.200.115",
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
-                    "state": 8
+                    "state": 202,
                     "remote_ip": "10.196.200.115"
                  }
 
@@ -388,14 +395,17 @@ class SingleAgentAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
+                    "use_address": 311,
                     "free_ram": 133,
+                    "time_offset": 0,
                     "hostname": "agent1",
                     "id": 1,
                     "ip": "10.196.200.115",
                     "port": 64994,
                     "ram": 1234,
                     "ram_allocation": 0.8,
-                    "state": 8
+                    "state": 202,
+                    "remote_ip": "10.196.200.115"
                 }
 
         :statuscode 200: no error
