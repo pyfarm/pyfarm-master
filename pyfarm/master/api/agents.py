@@ -69,6 +69,7 @@ def schema():
             {
                 "ram": "INTEGER",
                 "free_ram": "INTEGER",
+                "time_offset": "INTEGER",
                 "use_address": "INTEGER",
                 "ip": "IPv4Address",
                 "hostname": "VARCHAR(255)",
