@@ -294,9 +294,51 @@ class AgentIndexAPI(MethodView):
                     }
                 ]
 
+              **Request (with filters)**
+
+            .. sourcecode:: http
+
+                GET /api/v1/agents?min_ram=4096&min_cpus=4 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "hostname": "agent1",
+                        "id": 1
+                    }
+                ]
+
+
+        :qparam min_ram: If set, list only agents with min_ram ram or more
+        :qparam max_ram: If set, list only agents with max_ram ram or less
+        :qparam min_cpus: If set, list only agents with min_cpus cpus or more
+        :qparam max_cpus: If set, list only agents with max_cpus cpus or less
+
+        :statuscode 200: no error
         """
         out = []
-        for agent_id, hostname in db.session.query(Agent.id, Agent.hostname):
+        q = db.session.query(Agent.id, Agent.hostname)
+
+        if request.args.get("min_ram") is not None:
+            q = q.filter(Agent.ram >= request.args.get("min_ram", type=int))
+
+        if request.args.get("max_ram") is not None:
+            q = q.filter(Agent.ram <= request.args.get("max_ram", type=int))
+
+        if request.args.get("min_cpus") is not None:
+            q = q.filter(Agent.cpus >= request.args.get("min_cpus", type=int))
+
+        if request.args.get("max_cpus") is not None:
+            q = q.filter(Agent.cpus <= request.args.get("max_cpus", type=int))
+
+        for agent_id, hostname in q:
             out.append({"id": agent_id, "hostname": hostname})
         return JSONResponse(out, status=OK)
 
