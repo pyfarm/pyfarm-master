@@ -38,14 +38,8 @@ class JobTypeTest(ModelTestCase):
             pass""" % value_classname))
         value_mode = JobTypeLoadMode.OPEN
 
-        # create job
-        job = Job()
-        db.session.add(job)
-        db.session.commit()
-
         # create jobtype
         jobtype = JobType()
-        jobtype.job = job
         jobtype.name = value_name
         jobtype.description = value_description
         jobtype.classname = value_classname
@@ -54,8 +48,7 @@ class JobTypeTest(ModelTestCase):
         db.session.add(jobtype)
         db.session.commit()
 
-        # store ids and remove the session
-        jobid = job.id
+        # store id and remove the session
         jobtypeid = jobtype.id
         db.session.remove()
 
@@ -65,8 +58,6 @@ class JobTypeTest(ModelTestCase):
         self.assertEqual(jobtype.classname, value_classname)
         self.assertEqual(jobtype.code, value_code)
         self.assertEqual(jobtype.mode, value_mode)
-        self.assertEqual(jobtype.jobid, jobid)
-        self.assertEqual(jobtype.job.id, jobid)
 
     def test_before_insert_syntax(self):
         value_name = "foo"
@@ -77,14 +68,8 @@ class JobTypeTest(ModelTestCase):
             a = True
                 b = False""" % value_classname))
 
-        # create job
-        job = Job()
-        db.session.add(job)
-        db.session.commit()
-
         # create jobtype
         jobtype = JobType()
-        jobtype.job = job
         jobtype.name = value_name
         jobtype.description = value_description
         jobtype.classname = value_classname
@@ -103,14 +88,8 @@ class JobTypeTest(ModelTestCase):
         class %s(object):
             pass""" % value_classname))
 
-        # create job
-        job = Job()
-        db.session.add(job)
-        db.session.commit()
-
         # create jobtype
         jobtype = JobType()
-        jobtype.job = job
         jobtype.name = value_name
         jobtype.description = value_description
         jobtype.classname = value_classname

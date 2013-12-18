@@ -19,6 +19,8 @@ Basic job model testing, the majority of testing for jobs is tested using
 relationships.
 """
 
+from textwrap import dedent
+
 from datetime import datetime
 from sqlalchemy.exc import DatabaseError
 
@@ -27,11 +29,25 @@ from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.agent import Agent
 from pyfarm.models.job import JobTag, JobSoftware, Job, get_job_id
+from pyfarm.core.enums import JobTypeLoadMode
+from pyfarm.models.jobtype import JobType
 
 
 class TestTags(ModelTestCase):
     def test_insert(self):
+        # A job can not be created without a jobtype, create one first
+        jobtype = JobType()
+        jobtype.name = "foo"
+        jobtype.description = "this is a job type"
+        jobtype.classname = "Foobar"
+        jobtype.code = unicode(dedent("""
+        class Foobar(JobType):
+            pass"""))
+        jobtype.mode = JobTypeLoadMode.OPEN
+        db.session.add(jobtype)
+
         job = Job()
+        job.job_type = jobtype
         tag = JobTag()
         tag.job = job
         tag.tag = "foo"
@@ -74,7 +90,19 @@ class TestTags(ModelTestCase):
 
 class TestSoftware(ModelTestCase):
     def test_insert(self):
+        # A job can not be created without a jobtype, create one first
+        jobtype = JobType()
+        jobtype.name = "foo"
+        jobtype.description = "this is a job type"
+        jobtype.classname = "Foobar"
+        jobtype.code = unicode(dedent("""
+        class Foobar(JobType):
+            pass"""))
+        jobtype.mode = JobTypeLoadMode.OPEN
+        db.session.add(jobtype)
+
         job = Job()
+        job.job_type = jobtype
         software = JobSoftware()
         software.job = job
         software.software = "foo"
