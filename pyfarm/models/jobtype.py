@@ -42,10 +42,6 @@ class JobType(db.Model):
     __tablename__ = TABLE_JOB_TYPE
 
     id = id_column(db.Integer)
-    jobid = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
-                      nullable=False,
-                      doc=dedent("""
-                      The foreign key which stores :class:`Job.id`"""))
     name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
                      doc=dedent("""
                      The name of the job type.  This can be either a human
@@ -82,6 +78,11 @@ class JobType(db.Model):
                         DOWNLOAD, job type will be downloaded remotely
                         IMPORT, the remote agent will import the job type
                         OPEN, code is loaded directly from a file on disk"""))
+
+    jobs = db.relationship("Job", backref="job_type", lazy="dynamic",
+                           doc=dedent("""
+                           Relationship between this job and
+                           :class:`.Job` objects."""))
 
     @validates("mode")
     def validates_mode(self, key, value):
