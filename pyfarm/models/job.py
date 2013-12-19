@@ -47,7 +47,7 @@ from pyfarm.master.application import db
 from pyfarm.models.core.functions import work_columns, repr_enum
 from pyfarm.models.core.types import id_column, JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_JOB_TAG, TABLE_JOB_SOFTWARE,
+    TABLE_JOB, TABLE_JOB_TAG, TABLE_JOB_SOFTWARE, TABLE_JOB_TYPE,
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH,
     TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
@@ -157,6 +157,10 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin, ReprMixin):
         work_columns(STATE_ENUM.QUEUED, "job.priority")
     project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
                            doc="stores the project id")
+    job_type_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_JOB_TYPE),
+                            nullable=False,
+                            doc=dedent("""
+                            The foreign key which stores :class:`JobType.id`"""))
     user = db.Column(db.String(MAX_USERNAME_LENGTH),
                      doc=dedent("""
                      The user this job should execute as.  The agent
@@ -359,11 +363,6 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin, ReprMixin):
                                doc=dedent("""
                                Relationship between this job and
                                :class:`.JobSoftware` objects"""))
-    jobtype = db.relationship("JobType", backref="job", lazy="dynamic",
-                              doc=dedent("""
-                              Relationship between this job and
-                              :class:`.JobType` objects."""))
-
     @validates("ram", "cpus")
     def validate_resource(self, key, value):
         """
@@ -395,32 +394,3 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin, ReprMixin):
 
 
 event.listen(Job.state, "set", Job.stateChangedEvent)
-
-
-def get_job_id():
-    """
-    Creates a new job without any data and inserts it into the
-    database.
-
-    :exception ValueError:
-        raised if the session is dirty before trying to create
-        and commit a job model
-    """
-    # TODO: we should create a new session instead
-    if db.session.dirty:
-        raise ValueError("session is dirty, cannot proceed")
-
-    model = Job()
-    model.state = WorkState.ALLOC
-    model.hidden = True
-
-    try:
-        db.session.add(model)
-        db.session.commit()
-
-    except DatabaseError:
-        db.session.rollback()
-        raise
-
-    else:
-        return model.id

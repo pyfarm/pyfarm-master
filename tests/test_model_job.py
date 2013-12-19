@@ -19,6 +19,8 @@ Basic job model testing, the majority of testing for jobs is tested using
 relationships.
 """
 
+from textwrap import dedent
+
 from datetime import datetime
 from sqlalchemy.exc import DatabaseError
 
@@ -26,12 +28,26 @@ from utcore import ModelTestCase, unittest
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.agent import Agent
-from pyfarm.models.job import JobTag, JobSoftware, Job, get_job_id
+from pyfarm.models.job import JobTag, JobSoftware, Job
+from pyfarm.core.enums import JobTypeLoadMode
+from pyfarm.models.jobtype import JobType
 
 
 class TestTags(ModelTestCase):
     def test_insert(self):
+        # A job can not be created without a jobtype, create one first
+        jobtype = JobType()
+        jobtype.name = "foo"
+        jobtype.description = "this is a job type"
+        jobtype.classname = "Foobar"
+        jobtype.code = unicode(dedent("""
+        class Foobar(JobType):
+            pass"""))
+        jobtype.mode = JobTypeLoadMode.OPEN
+        db.session.add(jobtype)
+
         job = Job()
+        job.job_type = jobtype
         tag = JobTag()
         tag.job = job
         tag.tag = "foo"
@@ -74,7 +90,19 @@ class TestTags(ModelTestCase):
 
 class TestSoftware(ModelTestCase):
     def test_insert(self):
+        # A job can not be created without a jobtype, create one first
+        jobtype = JobType()
+        jobtype.name = "foo"
+        jobtype.description = "this is a job type"
+        jobtype.classname = "Foobar"
+        jobtype.code = unicode(dedent("""
+        class Foobar(JobType):
+            pass"""))
+        jobtype.mode = JobTypeLoadMode.OPEN
+        db.session.add(jobtype)
+
         job = Job()
+        job.job_type = jobtype
         software = JobSoftware()
         software.job = job
         software.software = "foo"
@@ -153,12 +181,3 @@ class TestJobEventsAndValidation(unittest.TestCase):
         model.state = WorkState.RUNNING
         self.assertIsInstance(model.time_started, datetime)
         self.assertEqual(model.attempts, 1)
-
-
-class TestJob(ModelTestCase):
-    def test_getid(self):
-        self.assertNotEqual(get_job_id(), get_job_id())
-        job_id = get_job_id()
-        job = Job.query.filter_by(id=job_id).first()
-        self.assertEqual(job.state, WorkState.ALLOC)
-        self.assertTrue(job.hidden)
