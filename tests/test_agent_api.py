@@ -220,3 +220,249 @@ class TestAgentAPI(ModelTestCase):
         self.assertStatus(response3, 204)
         response4 = self.client.get("/api/v1/agents/%d" % id)
         self.assert404(response4)
+
+    def test_agent_filter(self):
+        create_response1 = self.client.post("/api/v1/agents",
+                                            content_type="application/json",
+                                            data=dumps({
+                                                "cpu_allocation": 1.0,
+                                                "cpus": 8,
+                                                "free_ram": 133,
+                                                "hostname": "lowcpu-lowram",
+                                                "ip": "10.0.200.6",
+                                                "port": 64994,
+                                                "ram": 1024,
+                                                "ram_allocation": 0.8,
+                                                "state": 202
+                                                }))
+        self.assertStatus(create_response1, 201)
+        low_cpu_low_ram_id = loads(create_response1.data)['id']
+
+        create_response2 = self.client.post("/api/v1/agents",
+                                            content_type="application/json",
+                                            data=dumps({
+                                                "cpu_allocation": 1.0,
+                                                "cpus": 8,
+                                                "free_ram": 133,
+                                                "hostname": "lowcpu-highram",
+                                                "ip": "10.0.200.7",
+                                                "port": 64994,
+                                                "ram": 4096,
+                                                "ram_allocation": 0.8,
+                                                "state": 202
+                                                }))
+        self.assertStatus(create_response2, 201)
+        low_cpu_high_ram_id = loads(create_response2.data)['id']
+
+        create_response3 = self.client.post("/api/v1/agents",
+                                            content_type="application/json",
+                                            data=dumps({
+                                                "cpu_allocation": 1.0,
+                                                "cpus": 16,
+                                                "free_ram": 133,
+                                                "hostname": "highcpu-lowram",
+                                                "ip": "10.0.200.8",
+                                                "port": 64994,
+                                                "ram": 1024,
+                                                "ram_allocation": 0.8,
+                                                "state": 202
+                                                }))
+        self.assertStatus(create_response3, 201)
+        high_cpu_low_ram_id = loads(create_response3.data)['id']
+
+        create_response4 = self.client.post("/api/v1/agents",
+                                            content_type="application/json",
+                                            data=dumps({
+                                                "cpu_allocation": 1.0,
+                                                "cpus": 16,
+                                                "free_ram": 133,
+                                                "hostname": "highcpu-highram",
+                                                "ip": "10.0.200.9",
+                                                "port": 64994,
+                                                "ram": 4096,
+                                                "ram_allocation": 0.8,
+                                                "state": 202
+                                                }))
+        self.assertStatus(create_response4, 201)
+        high_cpu_high_ram_id = loads(create_response4.data)['id']
+
+        create_response5 = self.client.post("/api/v1/agents",
+                                            content_type="application/json",
+                                            data=dumps({
+                                                "cpu_allocation": 1.0,
+                                                "cpus": 12,
+                                                "free_ram": 133,
+                                                "hostname":
+                                                    "middlecpu-middleram",
+                                                "ip": "10.0.200.10",
+                                                "port": 64994,
+                                                "ram": 2048,
+                                                "ram_allocation": 0.8,
+                                                "state": 202
+                                                }))
+        self.assertStatus(create_response5, 201)
+        middle_cpu_middle_ram_id = loads(create_response5.data)['id']
+
+        get_response1 = self.client.get("/api/v1/agents?min_cpus=9")
+        self.assert200(get_response1)
+        self.assertNotIn(
+            {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
+            loads(get_response1.data))
+        self.assertNotIn(
+            {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
+            loads(get_response1.data))
+        self.assertIn(
+            {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
+            loads(get_response1.data))
+        self.assertIn(
+            {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
+            loads(get_response1.data))
+        self.assertIn(
+            {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
+            loads(get_response1.data))
+
+        get_response2 = self.client.get("/api/v1/agents?min_cpus=8")
+        self.assert200(get_response2)
+        self.assertIn(
+            {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
+            loads(get_response2.data))
+        self.assertIn(
+            {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
+            loads(get_response2.data))
+        self.assertIn(
+            {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
+            loads(get_response2.data))
+        self.assertIn(
+            {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
+            loads(get_response2.data))
+        self.assertIn(
+            {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
+            loads(get_response2.data))
+
+        get_response3 = self.client.get("/api/v1/agents?max_cpus=12")
+        self.assert200(get_response3)
+        self.assertIn(
+            {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
+            loads(get_response3.data))
+        self.assertIn(
+            {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
+            loads(get_response3.data))
+        self.assertNotIn(
+            {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
+            loads(get_response3.data))
+        self.assertNotIn(
+            {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
+            loads(get_response3.data))
+        self.assertIn(
+            {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
+            loads(get_response3.data))
+
+        get_response4 = self.client.get("/api/v1/agents?min_cpus=10&max_cpus=14")
+        self.assert200(get_response4)
+        self.assertNotIn(
+            {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
+            loads(get_response4.data))
+        self.assertNotIn(
+            {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
+            loads(get_response4.data))
+        self.assertNotIn(
+            {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
+            loads(get_response4.data))
+        self.assertNotIn(
+            {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
+            loads(get_response4.data))
+        self.assertIn(
+            {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
+            loads(get_response3.data))
+
+        get_response5 = self.client.get("/api/v1/agents?min_ram=1024")
+        self.assert200(get_response5)
+        self.assertIn(
+            {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
+            loads(get_response5.data))
+        self.assertIn(
+            {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
+            loads(get_response5.data))
+        self.assertIn(
+            {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
+            loads(get_response5.data))
+        self.assertIn(
+            {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
+            loads(get_response5.data))
+        self.assertIn(
+            {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
+            loads(get_response5.data))
+
+        get_response6 = self.client.get("/api/v1/agents?min_ram=2048")
+        self.assert200(get_response6)
+        self.assertNotIn(
+            {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
+            loads(get_response6.data))
+        self.assertIn(
+            {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
+            loads(get_response6.data))
+        self.assertNotIn(
+            {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
+            loads(get_response6.data))
+        self.assertIn(
+            {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
+            loads(get_response6.data))
+        self.assertIn(
+            {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
+            loads(get_response6.data))
+
+        get_response7 = self.client.get("/api/v1/agents?max_ram=2048")
+        self.assert200(get_response7)
+        self.assertIn(
+            {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
+            loads(get_response7.data))
+        self.assertNotIn(
+            {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
+            loads(get_response7.data))
+        self.assertIn(
+            {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
+            loads(get_response7.data))
+        self.assertNotIn(
+            {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
+            loads(get_response7.data))
+        self.assertIn(
+            {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
+            loads(get_response7.data))
+
+        get_response8 = self.client.get(
+            "/api/v1/agents?min_ram=1025&max_ram=2049")
+        self.assert200(get_response8)
+        self.assertNotIn(
+            {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
+            loads(get_response8.data))
+        self.assertNotIn(
+            {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
+            loads(get_response8.data))
+        self.assertNotIn(
+            {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
+            loads(get_response8.data))
+        self.assertNotIn(
+            {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
+            loads(get_response8.data))
+        self.assertIn(
+            {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
+            loads(get_response8.data))
+
+        get_response9 = self.client.get(
+            "/api/v1/agents?min_ram=2048&min_cpus=16")
+        self.assert200(get_response9)
+        self.assertNotIn(
+            {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
+            loads(get_response9.data))
+        self.assertNotIn(
+            {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
+            loads(get_response9.data))
+        self.assertNotIn(
+            {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
+            loads(get_response9.data))
+        self.assertIn(
+            {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
+            loads(get_response9.data))
+        self.assertNotIn(
+            {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
+            loads(get_response9.data))
