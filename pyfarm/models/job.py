@@ -394,32 +394,3 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin, ReprMixin):
 
 
 event.listen(Job.state, "set", Job.stateChangedEvent)
-
-
-def get_job_id():
-    """
-    Creates a new job without any data and inserts it into the
-    database.
-
-    :exception ValueError:
-        raised if the session is dirty before trying to create
-        and commit a job model
-    """
-    # TODO: we should create a new session instead
-    if db.session.dirty:
-        raise ValueError("session is dirty, cannot proceed")
-
-    model = Job()
-    model.state = WorkState.ALLOC
-    model.hidden = True
-
-    try:
-        db.session.add(model)
-        db.session.commit()
-
-    except DatabaseError:
-        db.session.rollback()
-        raise
-
-    else:
-        return model.id

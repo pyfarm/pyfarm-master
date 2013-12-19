@@ -28,7 +28,7 @@ from utcore import ModelTestCase, unittest
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.agent import Agent
-from pyfarm.models.job import JobTag, JobSoftware, Job, get_job_id
+from pyfarm.models.job import JobTag, JobSoftware, Job
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.models.jobtype import JobType
 
@@ -181,12 +181,3 @@ class TestJobEventsAndValidation(unittest.TestCase):
         model.state = WorkState.RUNNING
         self.assertIsInstance(model.time_started, datetime)
         self.assertEqual(model.attempts, 1)
-
-
-class TestJob(ModelTestCase):
-    def test_getid(self):
-        self.assertNotEqual(get_job_id(), get_job_id())
-        job_id = get_job_id()
-        job = Job.query.filter_by(id=job_id).first()
-        self.assertEqual(job.state, WorkState.ALLOC)
-        self.assertTrue(job.hidden)
