@@ -23,7 +23,7 @@ Objects and classes for working with the agent models.
 
 from wtforms import TextField, SelectField
 from sqlalchemy import not_
-from pyfarm.core.enums import AgentState, AgentStateMap
+from pyfarm.core.enums import AgentState, AgentStateMap, UseAgentAddressMap
 from pyfarm.models.agent import (
     AgentTag, AgentSoftware, Agent)
 from pyfarm.master.application import SessionMixin
@@ -154,17 +154,21 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
 
     column_choices = {
         "state": [(value, value) for key, value in
-                  AgentStateMap.items()]}
+                  AgentStateMap.items()],
+        "use_address": [(value, value) for key, value in
+                  UseAgentAddressMap.items()]}
 
     # columns the form should display
     form_columns = (
         "state", "hostname", "port", "cpus", "ram", "free_ram",
-        "tags", "software", "ip", "ram_allocation", "cpu_allocation")
+        "tags", "software", "ip", "use_address", "ram_allocation",
+        "cpu_allocation")
 
     # custom type columns need overrides
     form_overrides = {
         "ip": TextField,
-        "state": SelectField}
+        "state": SelectField,
+        "use_address": SelectField}
 
     # more human readable labels
     column_labels = {
@@ -201,6 +205,10 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
         "ip": {
             "validators": [validate_address, check_dns_mapping],
             "description": Agent.ip.__doc__},
+        "use_address": {
+            "description": Agent.use_address.__doc__,
+            "default": "remote",
+            "choices": column_choices["use_address"]},
         "tags": {
             "description": Agent.tags.__doc__},
         "software": {
