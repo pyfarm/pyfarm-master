@@ -12,3 +12,4 @@
 .setup.py.last
 build
 dist
+*.kdev4
