@@ -35,7 +35,8 @@ from pyfarm.master.application import db
 from pyfarm.models.core.functions import repr_ip, repr_enum
 from pyfarm.models.core.mixins import WorkValidationMixin, DictMixins, ReprMixin
 from pyfarm.models.core.types import (
-    id_column, IPv4Address, IDTypeAgent, IDTypeTag)
+    id_column, IPv4Address, IDTypeAgent, IDTypeTag, UseAgentAddressEnum,
+    AgentStateEnum)
 from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE,
     MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH, TABLE_AGENT_SOFTWARE_DEPENDENCIES,
@@ -153,7 +154,7 @@ class Agent(db.Model, WorkValidationMixin, DictMixins, ReprMixin):
     __tablename__ = TABLE_AGENT
     __table_args__ = (UniqueConstraint("hostname", "ip", "port"), )
     STATE_ENUM = AgentState
-    STATE_DEFAULT = STATE_ENUM.ONLINE
+    STATE_DEFAULT = "online"
     REPR_COLUMNS = (
         "id", "hostname", "state", "ip", "remote_ip", "port", "cpus",
         "ram", "free_ram")
@@ -192,8 +193,8 @@ class Agent(db.Model, WorkValidationMixin, DictMixins, ReprMixin):
     remote_ip = db.Column(IPv4Address, nullable=True,
                           doc="the remote address which came in with the "
                               "request")
-    use_address = db.Column(db.Integer, nullable=False,
-                            default=UseAgentAddress.REMOTE,
+    use_address = db.Column(UseAgentAddressEnum, nullable=False,
+                            default="remote",
                             doc="The address we should use when communicating "
                                 "with the agent")
     ram = db.Column(db.Integer, nullable=False,
@@ -209,20 +210,11 @@ class Agent(db.Model, WorkValidationMixin, DictMixins, ReprMixin):
                                 "an official time server")
 
     # host state
-    state = db.Column(db.Integer, default=STATE_DEFAULT, nullable=False,
+    state = db.Column(AgentStateEnum, default=STATE_DEFAULT, nullable=False,
                       doc=dedent("""
                       Stores the current state of the host.  This value can be
                       changed either by a master telling the host to do
-                      something with a task or from the host via REST api.
-
-                      .. csv-table:: **Values (from enum.yml:AgentState)**
-                          :header: Integer, Description
-                          :widths: 10, 50
-
-                          16,Offline - host is unreachable
-                          17,Online - ready to receive work
-                          18,Disabled - same as online but cannot receive work
-                          19,Running - currently processing work"""))
+                      something with a task or from the host via REST api."""))
 
     # Max allocation of the two primary resources which `1.0` is 100%
     # allocation.  For `cpu_allocation` 100% allocation typically means

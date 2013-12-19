@@ -37,6 +37,7 @@ from sqlalchemy.types import (
     TypeDecorator, CHAR, BigInteger, Integer, UnicodeText)
 from sqlalchemy.dialects.postgresql import UUID as PGUuid
 from pyfarm.master.application import db
+from pyfarm.core.enums import UseAgentAddressMap, AgentStateMap
 
 ID_GUID_DEFAULT = lambda: str(uuid4()).replace("-", "")
 ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should
@@ -247,6 +248,44 @@ class IPv4Address(TypeDecorator):
             value = IPAddress(value)
             self.checkInteger(int(value))
             return value
+
+
+class EnumType(TypeDecorator):
+    impl = Integer
+    enum = NotImplemented
+
+    def __init__(self, *args, **kwargs):
+        super(EnumType, self).__init__(*args, **kwargs)
+        assert self.enum is not NotImplemented, "`enum` not set"
+
+        # Generate a mapping of keys and values from the enum.  For
+        # example `Foo = FooEnum(A=1, B=2)` would produce
+        # {"A": 1, "B": 2, 1: "A", 2: "B"}
+
+        self.map = {}
+        for keyname, value in self.enum.iteritems():
+            self.map[keyname] = value.lower()
+            self.map[value.lower()] = keyname
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            value = value.lower() if isinstance(value, basestring) else value
+            try:
+                return self.map[value]
+            except KeyError:
+                raise ValueError(
+                    "unexpected value for %s" % self.enum.__class__.__name__)
+
+    def process_result_value(self, value, dialect):
+        return self.process_bind_param(value, dialect)
+
+
+class UseAgentAddressEnum(EnumType):
+    enum = UseAgentAddressMap
+
+
+class AgentStateEnum(EnumType):
+    enum = AgentStateMap
 
 
 def id_column(column_type=None):
