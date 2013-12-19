@@ -214,16 +214,7 @@ class Agent(db.Model, WorkValidationMixin, DictMixins, ReprMixin):
                       doc=dedent("""
                       Stores the current state of the host.  This value can be
                       changed either by a master telling the host to do
-                      something with a task or from the host via REST api.
-
-                      .. csv-table:: **Values (from enum.yml:AgentState)**
-                          :header: Integer, Description
-                          :widths: 10, 50
-
-                          16,Offline - host is unreachable
-                          17,Online - ready to receive work
-                          18,Disabled - same as online but cannot receive work
-                          19,Running - currently processing work"""))
+                      something with a task or from the host via REST api."""))
 
     # Max allocation of the two primary resources which `1.0` is 100%
     # allocation.  For `cpu_allocation` 100% allocation typically means
