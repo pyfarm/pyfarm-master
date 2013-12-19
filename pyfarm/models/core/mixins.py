@@ -42,17 +42,6 @@ class WorkValidationMixin(object):
     # quick check of the configured data
     assert MAX_PRIORITY >= MIN_PRIORITY, "MIN_PRIORITY must be <= MAX_PRIORITY"
 
-    @validates("state")
-    def validate_state(self, key, value):
-        """
-        Validates the `value` being provided for `state` is within
-        the range provided by `STATE_ENUM`
-        """
-        if value not in self.STATE_ENUM:
-            raise ValueError("%s is not a valid state" % repr(value))
-
-        return value
-
     @validates("priority")
     def validate_priority(self, key, value):
         """ensures the value provided to priority is valid"""
