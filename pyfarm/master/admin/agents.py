@@ -21,9 +21,9 @@ Agent
 Objects and classes for working with the agent models.
 """
 
-from wtforms import TextField
+from wtforms import TextField, SelectField
 from sqlalchemy import not_
-from pyfarm.core.enums import AgentState
+from pyfarm.core.enums import AgentState, AgentStateMap, UseAgentAddressMap
 from pyfarm.models.agent import (
     AgentTag, AgentSoftware, Agent)
 from pyfarm.master.application import SessionMixin
@@ -129,6 +129,11 @@ class FilterSoftwareNotContainsVersion(BaseFilter):
             return query.filter(not_(Agent.software.any(version=value)))
         return query
 
+class FilterState(BaseFilter):
+    operation_text = "equals"
+
+    def apply(self, query, value):
+        return query.filter(Agent.state == value)
 
 class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     """
@@ -138,7 +143,8 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
 
     # column setup
     column_searchable_list = ("hostname",)
-    column_filters = ("hostname", "ram", "free_ram", "cpus", "state",
+    column_filters = ("hostname", "ram", "free_ram", "cpus",
+                      FilterState(Agent.state, "State"),
                       FilterTagsContains(Agent.tags, "Tag"),
                       FilterTagsNotContains(Agent.tags, "Tag"),
                       FilterSoftwareContains(Agent.software, "Software"),
@@ -147,18 +153,22 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
                       FilterSoftwareNotContainsVersion(Agent.software, "Software"))
 
     column_choices = {
-        "state": [(value, key.title()) for key, value in
-                  AgentState._asdict().items()]}
+        "state": [(value, value) for key, value in
+                  AgentStateMap.items()],
+        "use_address": [(value, value) for key, value in
+                  UseAgentAddressMap.items()]}
 
     # columns the form should display
     form_columns = (
         "state", "hostname", "port", "cpus", "ram", "free_ram",
-        "tags", "software", "ip", "ram_allocation", "cpu_allocation")
+        "tags", "software", "ip", "use_address", "ram_allocation",
+        "cpu_allocation")
 
     # custom type columns need overrides
     form_overrides = {
         "ip": TextField,
-        "state": EnumList}
+        "state": SelectField,
+        "use_address": SelectField}
 
     # more human readable labels
     column_labels = {
@@ -172,14 +182,12 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     # arguments to pass into the fields
     form_args = {
         "state": {
-            "enum": AgentState,
             "description": "Stores the current state of the host.  This value "
                            "can be changed either by a master telling the host "
                            "to do something with a task or from the host via "
                            "REST api.",
-            "default": AgentState.ONLINE,
-            "values": (AgentState.ONLINE, AgentState.DISABLED,
-                       AgentState.OFFLINE)},
+            "default": "online",
+            "choices": column_choices["state"]},
         "hostname": {
             "validators": [validate_hostname],
             "description": Agent.hostname.__doc__},
@@ -197,6 +205,10 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
         "ip": {
             "validators": [validate_address, check_dns_mapping],
             "description": Agent.ip.__doc__},
+        "use_address": {
+            "description": Agent.use_address.__doc__,
+            "default": "remote",
+            "choices": column_choices["use_address"]},
         "tags": {
             "description": Agent.tags.__doc__},
         "software": {
