@@ -63,7 +63,7 @@ class JobType(db.Model):
                           not provided :attr:`name` will be used instead."""))
     code = db.Column(db.UnicodeText, nullable=False,
                      doc=dedent("""
-                     General field containing the 'code' the retrieve the job
+                     General field containing the 'code' to retrieve the job
                      type.  See below for information on what this field will
                      contain depending on how the job will be loaded.
 
