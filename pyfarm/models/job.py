@@ -37,12 +37,11 @@ from functools import partial
 from textwrap import dedent
 
 from sqlalchemy import event
-from sqlalchemy.exc import DatabaseError
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.core.config import read_env, read_env_int
-from pyfarm.core.enums import WorkState
+from pyfarm.core.enums import WorkState, DBWorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.functions import work_columns, repr_enum
 from pyfarm.models.core.types import id_column, JSONDict, JSONList, IDTypeWork
@@ -334,21 +333,21 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin, ReprMixin):
 
     tasks_done = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
-                    "(Task.job_id == Job.id)" % STATE_ENUM.DONE,
+                    "(Task.job_id == Job.id)" % DBWorkState.DONE,
         doc=dedent("""
         Relationship between this job and any |Task| objects which are
         done."""))
 
     tasks_failed = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
-                    "(Task.job_id == Job.id)" % STATE_ENUM.FAILED,
+                    "(Task.job_id == Job.id)" % DBWorkState.FAILED,
         doc=dedent("""
         Relationship between this job and any |Task| objects which have
         failed."""))
 
     tasks_queued = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
-                    "(Task.job_id == Job.id)" % STATE_ENUM.QUEUED,
+                    "(Task.job_id == Job.id)" % DBWorkState.QUEUED,
         doc=dedent("""
         Relationship between this job and any |Task| objects which
         are queued."""))
@@ -363,6 +362,7 @@ class Job(db.Model, WorkValidationMixin, StateChangedMixin, ReprMixin):
                                doc=dedent("""
                                Relationship between this job and
                                :class:`.JobSoftware` objects"""))
+
     @validates("ram", "cpus")
     def validate_resource(self, key, value):
         """
