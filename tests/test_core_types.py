@@ -17,39 +17,30 @@
 from os import urandom
 from uuid import uuid4
 from random import randint, choice
-from binascii import b2a_hex
 
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.types import Integer, BigInteger, CHAR
+from sqlalchemy.types import BigInteger, CHAR
 from sqlalchemy.exc import StatementError
 
 from utcore import ModelTestCase, unittest
+from pyfarm.core.enums import AgentState, DBAgentState, WorkState, DBWorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.types import (
-    IPv4Address as IPv4AddressType,
-    JSONDict as JSONDictType,
-    JSONList as JSONListType,
-    JSONSerializable, id_column, GUID,
-    IDTypeWork, IDTypeAgent, IDTypeTag, IPAddress)
+    IPv4Address, UseAgentAddressEnum, JSONDict, JSONList,
+    JSONSerializable, id_column, GUID, AgentStateEnum,
+    IDTypeWork, IDTypeAgent, IDTypeTag, IPAddress, WorkStateEnum)
 
 
-class JSONDictModel(db.Model):
-    __tablename__ = "%s_jsondict_model_test" % TABLE_PREFIX
-    id = db.Column(Integer, primary_key=True, autoincrement=True)
-    data = db.Column(JSONDictType)
-
-
-class JSONListModel(db.Model):
-    __tablename__ = "%s_jsonlist_model_test" % TABLE_PREFIX
-    id = db.Column(Integer, primary_key=True, autoincrement=True)
-    data = db.Column(JSONListType)
-
-
-class IPv4AddressModel(db.Model):
-    __tablename__ = "%s_ipaddress_model_test" % TABLE_PREFIX
-    id = db.Column(Integer, primary_key=True, autoincrement=True)
-    data = db.Column(IPv4AddressType)
+class TypeModel(db.Model):
+    __tablename__ = "%s_test_types" % TABLE_PREFIX
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    ipv4 = db.Column(IPv4Address)
+    json_dict = db.Column(JSONDict)
+    json_list = db.Column(JSONList)
+    agent_addr = db.Column(UseAgentAddressEnum)
+    agent_state = db.Column(AgentStateEnum)
+    work_state = db.Column(WorkStateEnum)
 
 
 class TestJsonTypes(ModelTestCase):
@@ -61,62 +52,59 @@ class TestJsonTypes(ModelTestCase):
             TestType()
 
     def test_dict(self):
-        for test_type in JSONDictType.serialize_types:
+        for test_type in JSONDict.serialize_types:
             for i in xrange(10):
                 test_data = test_type({
-                    "str": b2a_hex(urandom(1024)),
+                    "str": urandom(1024).encode("hex"),
                     "int": randint(-1024, 1024),
                     "list": [
-                        b2a_hex(urandom(1024)), -1024, 1024, True, None],
+                        urandom(1024).encode("hex"), -1024, 1024, True, None],
                     "bool": choice([True, False]), "none": None,
                     "dict": {
-                        "str": b2a_hex(urandom(1024)),
+                        "str": urandom(1024).encode("hex"),
                         "true": True, "false": False,
                         "int": randint(-1024, 1024),
                         "list": [
-                            b2a_hex(urandom(1024)), -1024, 1024, True, None]}})
+                            urandom(1024).encode("hex"),
+                            -1024, 1024, True, None]}})
 
-                model = JSONDictModel()
-                model.data = test_data
-                self.assertIsInstance(model.data, test_type)
+                model = TypeModel(json_dict=test_data)
+                self.assertIsInstance(model.json_dict, test_type)
                 db.session.add(model)
                 db.session.commit()
                 insert_id = model.id
                 db.session.remove()
-                result = JSONDictModel.query.filter_by(id=insert_id).first()
+                result = TypeModel.query.filter_by(id=insert_id).first()
                 self.assertIsNot(model, result)
-                self.assertIsInstance(model.data, dict)
-                self.assertDictEqual(model.data, result.data)
+                self.assertIsInstance(model.json_dict, dict)
+                self.assertEqual(model.json_dict, result.json_dict)
 
     def test_dict_error(self):
-        data = JSONDictModel()
-        data.data = []
-        db.session.add(data)
+        model = TypeModel(json_dict=[])
+        db.session.add(model)
 
         with self.assertRaises(StatementError):
             db.session.commit()
 
     def test_list(self):
-        for test_type in JSONListType.serialize_types:
+        for test_type in JSONList.serialize_types:
             for i in xrange(10):
                 test_data = test_type(
-                    [b2a_hex(urandom(1024)), -1024, 1024, True, None])
+                    [urandom(1024).encode("hex"), -1024, 1024, True, None])
 
-                model = JSONListModel()
-                model.data = test_data
-                self.assertIsInstance(model.data, test_type)
+                model = TypeModel(json_list=test_data)
+                self.assertIsInstance(model.json_list, test_type)
                 db.session.add(model)
                 db.session.commit()
                 insert_id = model.id
                 db.session.remove()
-                result = JSONListModel.query.filter_by(id=insert_id).first()
+                result = TypeModel.query.filter_by(id=insert_id).first()
                 self.assertIsNot(model, result)
-                self.assertIsInstance(model.data, list)
-                self.assertListEqual(model.data, result.data)
+                self.assertIsInstance(model.json_list, list)
+                self.assertEqual(model.json_list, result.json_list)
 
     def test_list_error(self):
-        data = JSONListModel()
-        data.data = {}
+        data = TypeModel(json_list={})
         db.session.add(data)
 
         with self.assertRaises(StatementError):
@@ -126,16 +114,16 @@ class TestJsonTypes(ModelTestCase):
 class TestIPAddressType(ModelTestCase):
     def test_implementation(self):
         # IP addrs are a spec, we need to be specific
-        self.assertIs(IPv4AddressType.impl, BigInteger)
-        self.assertEqual(IPv4AddressType.MAX_INT, 4294967295)
+        self.assertIs(IPv4Address.impl, BigInteger)
+        self.assertEqual(IPv4Address.MAX_INT, 4294967295)
 
         with self.assertRaises(ValueError):
-            instance = IPv4AddressType()
+            instance = IPv4Address()
             instance.checkInteger(-1)
 
         with self.assertRaises(ValueError):
-            instance = IPv4AddressType()
-            instance.checkInteger(IPv4AddressType.MAX_INT + 1)
+            instance = IPv4Address()
+            instance.checkInteger(IPv4Address.MAX_INT + 1)
 
     def test_comparison(self):
         self.assertEqual(IPAddress("0.0.0.0"), "0.0.0.0")
@@ -147,48 +135,44 @@ class TestIPAddressType(ModelTestCase):
 
     def test_insert_int(self):
         ipvalue = int(IPAddress("192.168.1.1"))
-        model = IPv4AddressModel()
-        model.data = ipvalue
-        self.assertEqual(model.data, ipvalue)
+        model = TypeModel(ipv4=ipvalue)
+        self.assertEqual(model.ipv4, ipvalue)
         db.session.add(model)
         db.session.commit()
         insert_id = model.id
         db.session.remove()
-        result = IPv4AddressModel.query.filter_by(id=insert_id).first()
-        self.assertIsInstance(result.data, IPAddress)
-        self.assertEqual(int(result.data), ipvalue)
+        result = TypeModel.query.filter_by(id=insert_id).first()
+        self.assertIsInstance(result.ipv4, IPAddress)
+        self.assertEqual(int(result.ipv4), ipvalue)
 
     def test_insert_string(self):
         ipvalue = "192.168.1.1"
-        model = IPv4AddressModel()
-        model.data = ipvalue
-        self.assertEqual(model.data, ipvalue)
+        model = TypeModel(ipv4=ipvalue)
+        self.assertEqual(model.ipv4, ipvalue)
         db.session.add(model)
         db.session.commit()
         insert_id = model.id
         db.session.remove()
-        result = IPv4AddressModel.query.filter_by(id=insert_id).first()
-        self.assertIsInstance(result.data, IPAddress)
-        self.assertEqual(str(result.data), ipvalue)
+        result = TypeModel.query.filter_by(id=insert_id).first()
+        self.assertIsInstance(result.ipv4, IPAddress)
+        self.assertEqual(str(result.ipv4), ipvalue)
 
     def test_insert_ipclass(self):
         ipvalue = IPAddress("192.168.1.1")
-        model = IPv4AddressModel()
-        model.data = ipvalue
-        self.assertEqual(model.data, ipvalue)
+        model = TypeModel(ipv4=ipvalue)
+        self.assertEqual(model.ipv4, ipvalue)
         db.session.add(model)
         db.session.commit()
         insert_id = model.id
         db.session.remove()
-        result = IPv4AddressModel.query.filter_by(id=insert_id).first()
-        self.assertIsInstance(result.data, IPAddress)
-        self.assertEqual(result.data, ipvalue)
+        result = TypeModel.query.filter_by(id=insert_id).first()
+        self.assertIsInstance(result.ipv4, IPAddress)
+        self.assertEqual(result.ipv4, ipvalue)
 
     def test_insert_float(self):
         ipvalue = 3.14
-        model = IPv4AddressModel()
-        model.data = ipvalue
-        self.assertEqual(model.data, ipvalue)
+        model = TypeModel(ipv4=ipvalue)
+        self.assertEqual(model.ipv4, ipvalue)
         db.session.add(model)
         with self.assertRaises(StatementError):
             db.session.commit()
