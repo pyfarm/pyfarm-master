@@ -196,6 +196,56 @@ class TestIDColumn(ModelTestCase):
         self.assertIs(IDTypeTag, db.Integer)
 
 
+class TestAgentStateEnumTypes(ModelTestCase):
+    def test_invalid(self):
+        model = TypeModel(agent_state=1e10)
+        db.session.add(model)
+
+        with self.assertRaises(StatementError):
+            db.session.commit()
+
+        db.session.remove()
+
+        model = TypeModel(agent_state=urandom(10).encode("hex"))
+        db.session.add(model)
+
+        with self.assertRaises(StatementError):
+            db.session.commit()
+
+    def test_integer(self):
+        for i in DBAgentState:
+            model = TypeModel(agent_state=i)
+            self.assertEqual(model.agent_state, i)
+            db.session.add(model)
+            db.session.commit()
+            model_id = model.id
+            db.session.remove()
+            result = TypeModel.query.filter_by(id=model_id).first()
+            self.assertEqual(result.agent_state, i)
+
+    def test_string(self):
+        for i in AgentState:
+            model = TypeModel(agent_state=i)
+            self.assertEqual(model.agent_state, i)
+            db.session.add(model)
+            db.session.commit()
+            model_id = model.id
+            db.session.remove()
+            result = TypeModel.query.filter_by(id=model_id).first()
+            self.assertEqual(result.agent_state, i)
+
+    def test_ge(self):
+        print "START"
+        model = TypeModel(agent_state=AgentState.RUNNING)
+        print type(model.agent_state)
+        db.session.add(model)
+        db.session.commit()
+        print type(model.agent_state)
+
+
+
+
+
 class TestGUIDImpl(unittest.TestCase):
     def _dialect(self, name, driver):
         """

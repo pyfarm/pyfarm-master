@@ -34,10 +34,10 @@ except ImportError:  # pragma: no cover
     from simplejson import dumps, loads
 
 from sqlalchemy.types import (
-    TypeDecorator, CHAR, BigInteger, Integer, UnicodeText)
+    TypeDecorator, CHAR, BigInteger, Integer, UnicodeText, TypeEngine)
 from sqlalchemy.dialects.postgresql import UUID as PGUuid
 from pyfarm.master.application import db
-from pyfarm.core.enums import UseAgentAddressMap, AgentStateMap
+from pyfarm.core.enums import AgentState, UseAgentAddress, WorkState, EnumValue
 
 ID_GUID_DEFAULT = lambda: str(uuid4()).replace("-", "")
 ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should
@@ -250,7 +250,22 @@ class IPv4Address(TypeDecorator):
             return value
 
 
+# TODO: implement custom types for the enum data
+# class EnumDBtype(TypeEngine):
+#     def
+
 class EnumType(TypeDecorator):
+    """
+    Special column type which handles translation from a human
+    readable enum into an integer that the database can use.
+
+    :cvar enum:
+        required class level variable which defines what enum
+        this custom column handles
+
+    :raises AssertionError:
+        raised if :cvar:`.enum` is not set
+    """
     impl = Integer
     enum = NotImplemented
 
@@ -258,34 +273,42 @@ class EnumType(TypeDecorator):
         super(EnumType, self).__init__(*args, **kwargs)
         assert self.enum is not NotImplemented, "`enum` not set"
 
-        # Generate a mapping of keys and values from the enum.  For
-        # example `Foo = FooEnum(A=1, B=2)` would produce
-        # {"A": 1, "B": 2, 1: "A", 2: "B"}
-
-        self.map = {}
-        for keyname, value in self.enum.iteritems():
-            self.map[keyname] = value.lower()
-            self.map[value.lower()] = keyname
-
     def process_bind_param(self, value, dialect):
-        if value is not None:
-            value = value.lower() if isinstance(value, basestring) else value
-            try:
-                return self.map[value]
-            except KeyError:
-                raise ValueError(
-                    "unexpected value for %s" % self.enum.__class__.__name__)
+        """
+        Takes ``value`` and maps it to the internal integer.
+
+        :raises ValueError:
+            raised if ``value`` is not part of :cvar:`.enum`'s mapping
+        """
+        if value is not None and value not in self.enum._map:
+            args = (repr(value), self.__class__.__name__, self.enum._map.keys())
+            raise ValueError(
+                "%s is not a valid value for %s, valid values are %s" % args)
+
+        else:
+            return value
 
     def process_result_value(self, value, dialect):
-        return self.process_bind_param(value, dialect)
+        if value is not None:
+            return EnumValue(self.enum, value)
+
+    # TODO: implement comparison?
+    # def compare_values(self, x, y):
 
 
 class UseAgentAddressEnum(EnumType):
-    enum = UseAgentAddressMap
+    """custom column type for working with :class:`.UseAgentAddress`"""
+    enum = UseAgentAddress
 
 
 class AgentStateEnum(EnumType):
-    enum = AgentStateMap
+    """custom column type for working with :class:`.AgentState`"""
+    enum = AgentState
+
+
+class WorkStateEnum(EnumType):
+    """custom column type for working with :class:`.WorkState`"""
+    enum = WorkState
 
 
 def id_column(column_type=None):
