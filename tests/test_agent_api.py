@@ -46,7 +46,7 @@ class TestAgentAPI(ModelTestCase):
                 "port": 64994,
                 "ram": 2048,
                 "ram_allocation": 0.8,
-                "state": 202}))
+                "state": "running"}))
         self.assertStatus(response1, CREATED)
         id = loads(response1.data)['id']
 
@@ -65,7 +65,7 @@ class TestAgentAPI(ModelTestCase):
                 "ram_allocation": 0.8,
                 "port": 64994,
                 "time_offset": 0,
-                "state": 202,
+                "state": "running",
                 "free_ram": 133,
                 "id": id,
                 "remote_ip": None})
@@ -104,7 +104,7 @@ class TestAgentAPI(ModelTestCase):
                 "port": 64994,
                 "ram": 4096,
                 "ram_allocation": 0.7,
-                "state": 203}))
+                "state": "running"}))
         self.assert200(response2)
 
         # See if we get the updated data back
@@ -115,14 +115,14 @@ class TestAgentAPI(ModelTestCase):
         self.assertEqual(response3.json, {
             "ram": 4096,
             "cpu_allocation": 1.1,
-            "use_address": 311,
+            "use_address": "remote",
             "ip": "10.0.200.2",
             "hostname": "testagent2",
             "cpus": 32,
             "ram_allocation": 0.7,
             "port": 64994,
             "time_offset": 0,
-            "state": 203,
+            "state": "running",
             "free_ram": 128,
             "id": id,
             "remote_ip": None})
@@ -140,7 +140,7 @@ class TestAgentAPI(ModelTestCase):
                 "port": 64994,
                 "ram": 2048,
                 "ram_allocation": 0.8,
-                "state": 202}))
+                "state": "running"}))
         self.assertStatus(response1, CREATED)
         id = loads(response1.data)['id']
 
@@ -152,14 +152,14 @@ class TestAgentAPI(ModelTestCase):
             data=dumps({
                 "cpu_allocation": 1.2,
                 "ram": 8192,
-                "use_address": 312,
+                "use_address": "hostname",
                 "ip": "10.0.200.4",
                 "hostname": "testagent3-1",
                 "cpus": 64,
                 "ram_allocation": 0.2,
                 "port": 64995,
                 "time_offset": 5,
-                "state": 203,
+                "state": "running",
                 "free_ram": 4096,
                 "id": id}))
         self.assert200(response2)
@@ -172,14 +172,14 @@ class TestAgentAPI(ModelTestCase):
         self.assertEqual(response3.json, {
             "ram": 8192,
             "cpu_allocation": 1.2,
-            "use_address": 312,
+            "use_address": "hostname",
             "ip": "10.0.200.4",
             "hostname": "testagent3-1",
             "cpus": 64,
             "ram_allocation": 0.2,
             "port": 64995,
             "time_offset": 5,
-            "state": 203,
+            "state": "running",
             "free_ram": 4096,
             "id": id,
             "remote_ip": None})
