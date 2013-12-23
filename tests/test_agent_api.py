@@ -86,7 +86,7 @@ class TestAgentAPI(ModelTestCase):
                 "port": 64994,
                 "ram": 2048,
                 "ram_allocation": 0.8,
-                "state": 202}))
+                "state": "running"}))
         self.assertStatus(response1, CREATED)
         id = loads(response1.data)['id']
 
@@ -197,7 +197,7 @@ class TestAgentAPI(ModelTestCase):
                 "port": 64994,
                 "ram": 2048,
                 "ram_allocation": 0.8,
-                "state": 202}))
+                "state": "running"}))
         self.assertStatus(response1, CREATED)
         id = loads(response1.data)['id']
 
@@ -221,7 +221,7 @@ class TestAgentAPI(ModelTestCase):
                 "port": 64994,
                 "ram": 1024,
                 "ram_allocation": 0.8,
-                "state": 202}))
+                "state": "running"}))
         self.assertStatus(create_response1, CREATED)
         low_cpu_low_ram_id = loads(create_response1.data)['id']
 
@@ -237,7 +237,7 @@ class TestAgentAPI(ModelTestCase):
                 "port": 64994,
                 "ram": 4096,
                 "ram_allocation": 0.8,
-                "state": 202}))
+                "state": "running"}))
         self.assertStatus(create_response2, CREATED)
         low_cpu_high_ram_id = loads(create_response2.data)['id']
 
@@ -253,7 +253,7 @@ class TestAgentAPI(ModelTestCase):
                 "port": 64994,
                 "ram": 1024,
                 "ram_allocation": 0.8,
-                "state": 202}))
+                "state": "running"}))
         self.assertStatus(create_response3, CREATED)
         high_cpu_low_ram_id = loads(create_response3.data)['id']
 
@@ -269,7 +269,7 @@ class TestAgentAPI(ModelTestCase):
                 "port": 64994,
                 "ram": 4096,
                 "ram_allocation": 0.8,
-                "state": 202}))
+                "state": "running"}))
         self.assertStatus(create_response4, CREATED)
         high_cpu_high_ram_id = loads(create_response4.data)['id']
 
@@ -286,7 +286,7 @@ class TestAgentAPI(ModelTestCase):
                 "port": 64994,
                 "ram": 2048,
                 "ram_allocation": 0.8,
-                "state": 202}))
+                "state": "running"}))
         self.assertStatus(create_response5, CREATED)
         middle_cpu_middle_ram_id = loads(create_response5.data)['id']
 
