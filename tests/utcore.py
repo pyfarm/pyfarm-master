@@ -25,9 +25,9 @@ import sys
 from functools import wraps
 from flask.ext.testing import TestCase as FlaskTestCase
 if sys.version_info[0:2] < (2, 7):
-    from unittest2 import TestCase as BaseTestCase
+    from unittest2 import TestCase as BaseTestCase, skipIf
 else:
-    from unittest import TestCase as BaseTestCase
+    from unittest import TestCase as BaseTestCase, skipIf
 
 try:
     import json

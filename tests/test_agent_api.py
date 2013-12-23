@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from httplib import CREATED, NO_CONTENT
 
 try:
@@ -22,10 +23,12 @@ try:
 except ImportError:
     from simplejson import loads
 
-from utcore import ModelTestCase
+from utcore import ModelTestCase, skipIf
 from pyfarm.models.agent import Agent
 
 
+@skipIf(os.environ.get("TDB_DRIVER") == "mysql-python",
+        "mysql-python driver error, see pyfarm/pyfarm-master#36")
 class TestAgentAPI(ModelTestCase):
     def test_agents_schema(self):
         response = self.client.get("/api/v1/agents/schema")
