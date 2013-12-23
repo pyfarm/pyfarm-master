@@ -128,7 +128,7 @@ class AgentIndexAPI(MethodView):
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
-                    "state": 8
+                    "state": "running"
                  }
 
 
@@ -151,7 +151,7 @@ class AgentIndexAPI(MethodView):
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
-                    "state": 202,
+                    "state": "running",
                     "remote_ip": "10.196.200.115"
                  }
 
@@ -184,7 +184,7 @@ class AgentIndexAPI(MethodView):
                 {
                     "cpu_allocation": 1.0,
                     "cpus": 14,
-                    "use_address": 311,
+                    "use_address": "remote",
                     "free_ram": 133,
                     "time_offset": 0,
                     "hostname": "agent1",
@@ -193,7 +193,7 @@ class AgentIndexAPI(MethodView):
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
-                    "state": 202,
+                    "state": "online",
                     "remote_ip": "10.196.200.115"
                  }
 
@@ -447,7 +447,7 @@ class SingleAgentAPI(MethodView):
                     "port": 64994,
                     "ram": 1234,
                     "ram_allocation": 0.8,
-                    "state": 202,
+                    "state": "running",
                     "remote_ip": "10.196.200.115"
                 }
 
