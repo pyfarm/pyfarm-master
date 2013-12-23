@@ -18,13 +18,12 @@
 from httplib import CREATED, NO_CONTENT
 
 try:
-    from json import loads
+    from json import loads, dumps
 except ImportError:
     from simplejson import loads
 
 from utcore import ModelTestCase
 from pyfarm.models.agent import Agent
-from pyfarm.master.utility import dumps
 
 
 class TestAgentAPI(ModelTestCase):
