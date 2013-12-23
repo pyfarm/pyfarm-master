@@ -21,37 +21,36 @@ from sqlalchemy import event
 from sqlalchemy.types import Integer, DateTime
 
 from utcore import ModelTestCase
-from pyfarm.core.enums import WorkState
+from pyfarm.core.enums import _WorkState, WorkState, DBWorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
-from pyfarm.models.core.types import IPv4Address
+from pyfarm.models.core.types import IPv4Address, WorkStateEnum
 from pyfarm.models.core.mixins import (
-    StateChangedMixin, WorkValidationMixin, DictMixins)
+    WorkStateChangedMixin, ValidatePriorityMixin, DictMixins,
+    ValidateWorkStateMixin)
 
 
 rand_state = lambda: choice(list(WorkState))
 
 
-class ValidationModel(db.Model, WorkValidationMixin):
+class ValidationModel(db.Model, ValidateWorkStateMixin, ValidatePriorityMixin):
     __tablename__ = "%s_validation_mixin_test" % TABLE_PREFIX
-    STATE_ENUM = WorkState
     id = db.Column(Integer, primary_key=True, autoincrement=True)
-    state = db.Column(Integer)
+    state = db.Column(WorkStateEnum)
     attempts = db.Column(Integer)
     priority = db.Column(Integer)
 
 
-class StateChangedModel(db.Model, StateChangedMixin):
+class WorkStateChangedModel(db.Model, WorkStateChangedMixin):
     __tablename__ = "%s_state_change_test" % TABLE_PREFIX
-    STATE_ENUM = WorkState
     id = db.Column(Integer, primary_key=True, autoincrement=True)
-    state = db.Column(Integer)
-    attempts = db.Column(Integer)
+    state = db.Column(WorkStateEnum)
+    attempts = db.Column(Integer, default=0)
     time_started = db.Column(DateTime)
     time_finished = db.Column(DateTime)
 
 event.listen(
-    StateChangedModel.state, "set", StateChangedModel.stateChangedEvent)
+    WorkStateChangedModel.state, "set", WorkStateChangedModel.stateChangedEvent)
 
 
 class MixinModel(db.Model, DictMixins):
@@ -68,6 +67,7 @@ class MixinModel(db.Model, DictMixins):
 class TestMixins(ModelTestCase):
     def test_state_validation(self):
         model = ValidationModel()
+        db.session.add(model)
         with self.assertRaises(ValueError):
             model.state = None
         with self.assertRaises(ValueError):
@@ -75,11 +75,13 @@ class TestMixins(ModelTestCase):
         state = rand_state()
         model.state = state
         self.assertEqual(model.state, state)
+        db.session.commit()
 
     def test_priority_validation(self):
-        min_priority = WorkValidationMixin.MIN_PRIORITY
-        max_priority = WorkValidationMixin.MAX_PRIORITY
+        min_priority = ValidatePriorityMixin.MIN_PRIORITY
+        max_priority = ValidatePriorityMixin.MAX_PRIORITY
         model = ValidationModel()
+        db.session.add(model)
         for value in (min_priority-1, max_priority+1):
             with self.assertRaises(ValueError):
                 model.priority = value
@@ -87,6 +89,7 @@ class TestMixins(ModelTestCase):
         self.assertEqual(model.priority, min_priority)
         model.priority = max_priority
         self.assertEqual(model.priority, max_priority)
+        db.session.commit()
 
     def test_attempts_validation(self):
         model = ValidationModel()
@@ -94,31 +97,35 @@ class TestMixins(ModelTestCase):
             model.attempts = 0
         model.attempts = 1
         self.assertEqual(model.attempts, 1)
+        db.session.commit()
 
     def test_state_changed_event(self):
-        model = StateChangedModel()
-        self.assertIsNone(model.time_started)
-        self.assertIsNone(model.time_finished)
-        self.assertIsNone(model.time_finished)
-        self.assertIsNone(model.attempts)
-        model.state = model.STATE_ENUM.RUNNING
-        self.assertEqual(model.state, model.STATE_ENUM.RUNNING)
-        self.assertEqual(model.attempts, 1)
-        self.assertLessEqual(model.time_started, datetime.now())
-        first_started = model.time_started
-        self.assertIsNone(model.time_finished)
-        model.state = model.STATE_ENUM.DONE
-        self.assertIsNotNone(model.time_finished)
-        self.assertLessEqual(model.time_finished, datetime.now())
-        first_finished = model.time_finished
-        model.state = model.STATE_ENUM.RUNNING
-        self.assertEqual(model.state, model.STATE_ENUM.RUNNING)
-        self.assertIsNone(model.time_finished)
-        self.assertNotEqual(model.time_started, first_started)
-        self.assertEqual(model.attempts, 2)
-        model.state = model.STATE_ENUM.DONE
-        self.assertNotEqual(model.time_finished, first_finished)
-        self.assertLessEqual(model.time_finished, datetime.now())
+        for state_enum in (WorkState, _WorkState, DBWorkState):
+            model = WorkStateChangedModel()
+            db.session.add(model)
+            self.assertIsNone(model.time_started)
+            self.assertIsNone(model.time_finished)
+            self.assertIsNone(model.time_finished)
+            model.state = state_enum.RUNNING
+            self.assertEqual(model.attempts, 1)
+            self.assertEqual(model.state, state_enum.RUNNING)
+            self.assertEqual(model.attempts, 1)
+            self.assertLessEqual(model.time_started, datetime.now())
+            first_started = model.time_started
+            self.assertIsNone(model.time_finished)
+            model.state = state_enum.DONE
+            self.assertIsNotNone(model.time_finished)
+            self.assertLessEqual(model.time_finished, datetime.now())
+            first_finished = model.time_finished
+            model.state = state_enum.RUNNING
+            self.assertEqual(model.state, state_enum.RUNNING)
+            self.assertIsNone(model.time_finished)
+            self.assertNotEqual(model.time_started, first_started)
+            self.assertEqual(model.attempts, 2)
+            model.state = state_enum.DONE
+            self.assertNotEqual(model.time_finished, first_finished)
+            self.assertLessEqual(model.time_finished, datetime.now())
+            db.session.commit()
 
     def test_to_dict(self):
         model = MixinModel(a=1, b="hello")
