@@ -21,11 +21,12 @@ Mixin Classes
 Module containing mixins which can be used by multiple models.
 """
 
-from warnings import warn
 from datetime import datetime
+
 from sqlalchemy.orm import validates
+
+from pyfarm.core.enums import DBWorkState, _WorkState
 from pyfarm.core.logger import getLogger
-from pyfarm.core.warning import ColumnStateChangeWarning
 from pyfarm.core.config import read_env_int
 
 logger = getLogger("models.mixin")
@@ -60,7 +61,16 @@ class ValidatePriorityMixin(object):
         raise ValueError("%s cannot be less than zero" % key)
 
 
-class StateChangedMixin(object):
+class ValidateWorkStateMixin(object):
+    @validates("state")
+    def validate_state(self, key, value):
+        if value not in DBWorkState._map:
+            raise ValueError(
+                "%s is not a valid value for `%s`" % (repr(value), key))
+        return value
+
+
+class WorkStateChangedMixin(object):
     """
     Mixin which adds a static method to be used when the model
     state changes
@@ -68,7 +78,7 @@ class StateChangedMixin(object):
     @staticmethod
     def stateChangedEvent(target, new_value, old_value, initiator):
         """update the datetime objects depending on the new value"""
-        if new_value == target.STATE_ENUM.RUNNING:
+        if new_value == _WorkState.RUNNING:
             target.time_started = datetime.now()
             target.time_finished = None
 
@@ -77,11 +87,11 @@ class StateChangedMixin(object):
             else:
                 target.attempts += 1
 
-        elif new_value in (target.STATE_ENUM.DONE, target.STATE_ENUM.FAILED):
+        elif new_value == _WorkState.DONE or new_value == _WorkState.FAILED:
             if target.time_started is None:  # pragma: no cover
                 msg = "job %s has not been started yet, state is " % target.id
-                msg += "being set to %s" % target.STATE_ENUM.get(new_value)
-                warn(msg,  ColumnStateChangeWarning)
+                msg += "being set to %s" % DBWorkState._map[new_value]
+                logger.warning(msg)
 
             target.time_finished = datetime.now()
 
