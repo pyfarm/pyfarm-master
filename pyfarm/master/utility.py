@@ -41,7 +41,10 @@ COLUMN_CACHE = {}
 
 def json_dumps_default(value):
     if isinstance(value, (EnumValue, Values)):
-        return str(value)
+        try:
+            return str(value)
+        except TypeError:
+            return int(value)
     else:
         raise TypeError("don't know how to handle %s" % value)
 
