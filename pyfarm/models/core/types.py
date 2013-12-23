@@ -39,7 +39,7 @@ from netaddr import AddrFormatError, IPAddress as _IPAddress
 
 from pyfarm.master.application import db
 from pyfarm.core.enums import (
-    AgentState, UseAgentAddress, WorkState, JobTypeLoadMode, EnumValue, Values)
+    _AgentState, _UseAgentAddress, _WorkState, _JobTypeLoadMode, Values)
 
 ID_GUID_DEFAULT = lambda: str(uuid4()).replace("-", "")
 ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should
@@ -281,49 +281,43 @@ class EnumType(TypeDecorator):
         if value is None:
             return None
 
-        elif value in self.enum._enum:
-            if isinstance(value, int):
-                return value
-
-            elif isinstance(value, basestring):
-                return self.enum._map[value]
-
-            elif isinstance(value, Values):
-                return value.int
-
-            else:
-                value = type(value)
-                raise AssertionError(
-                    "type %s was an enum value but did not have a mapping" % value)
+        elif isinstance(value, Values):
+            return value.int
 
         else:
-            args = (repr(value), self.__class__.__name__, self.enum._map.keys())
-            raise ValueError(
-                "%s is not a valid value for %s, valid values are %s" % args)
+            return self.process_result_value(value, dialect).int
 
     def process_result_value(self, value, dialect):
         if value is not None:
-            return EnumValue(self.enum, value)
+            for enum_value in self.enum:
+                if value == enum_value:
+                    return enum_value
+            else:
+                error_args = (repr(value), repr(self.enum))
+                raise ValueError(
+                    "failed to map %s to an enum value in %s" % error_args)
+
+        return value
 
 
 class UseAgentAddressEnum(EnumType):
     """custom column type for working with :class:`.UseAgentAddress`"""
-    enum = UseAgentAddress
+    enum = _UseAgentAddress
 
 
 class AgentStateEnum(EnumType):
     """custom column type for working with :class:`.AgentState`"""
-    enum = AgentState
+    enum = _AgentState
 
 
 class WorkStateEnum(EnumType):
     """custom column type for working with :class:`.WorkState`"""
-    enum = WorkState
+    enum = _WorkState
 
 
 class JobTypeLoadModeEnum(EnumType):
     """custom column type for working with :class:`.JobTypeLoadMode`"""
-    enum = JobTypeLoadMode
+    enum = _JobTypeLoadMode
 
 
 def id_column(column_type=None):
