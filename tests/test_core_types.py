@@ -234,17 +234,6 @@ class TestAgentStateEnumTypes(ModelTestCase):
             result = TypeModel.query.filter_by(id=model_id).first()
             self.assertEqual(result.agent_state, i)
 
-    def test_ge(self):
-        print "START"
-        model = TypeModel(agent_state=AgentState.RUNNING)
-        print type(model.agent_state)
-        db.session.add(model)
-        db.session.commit()
-        print type(model.agent_state)
-
-
-
-
 
 class TestGUIDImpl(unittest.TestCase):
     def _dialect(self, name, driver):
