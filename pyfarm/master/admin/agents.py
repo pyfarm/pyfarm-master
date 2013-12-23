@@ -23,13 +23,13 @@ Objects and classes for working with the agent models.
 
 from wtforms import TextField, SelectField
 from sqlalchemy import not_
-from pyfarm.core.enums import AgentState, AgentStateMap, UseAgentAddressMap
+from pyfarm.core.enums import AgentState, UseAgentAddress
 from pyfarm.models.agent import (
     AgentTag, AgentSoftware, Agent)
 from pyfarm.master.application import SessionMixin
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.admin.core import (
-    EnumList, validate_resource, validate_address, validate_hostname,
+    validate_resource, validate_address, validate_hostname,
     check_dns_mapping, AjaxLoader, BaseFilter)
 
 
@@ -129,11 +129,13 @@ class FilterSoftwareNotContainsVersion(BaseFilter):
             return query.filter(not_(Agent.software.any(version=value)))
         return query
 
+
 class FilterState(BaseFilter):
     operation_text = "equals"
 
     def apply(self, query, value):
         return query.filter(Agent.state == value)
+
 
 class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     """
@@ -143,20 +145,19 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
 
     # column setup
     column_searchable_list = ("hostname",)
-    column_filters = ("hostname", "ram", "free_ram", "cpus",
-                      FilterState(Agent.state, "State"),
-                      FilterTagsContains(Agent.tags, "Tag"),
-                      FilterTagsNotContains(Agent.tags, "Tag"),
-                      FilterSoftwareContains(Agent.software, "Software"),
-                      FilterSoftwareNotContains(Agent.software, "Software"),
-                      FilterSoftwareContainsVersion(Agent.software, "Software"),
-                      FilterSoftwareNotContainsVersion(Agent.software, "Software"))
+    column_filters = (
+        "hostname", "ram", "free_ram", "cpus",
+        FilterState(Agent.state, "State"),
+        FilterTagsContains(Agent.tags, "Tag"),
+        FilterTagsNotContains(Agent.tags, "Tag"),
+        FilterSoftwareContains(Agent.software, "Software"),
+        FilterSoftwareNotContains(Agent.software, "Software"),
+        FilterSoftwareContainsVersion(Agent.software, "Software"),
+        FilterSoftwareNotContainsVersion(Agent.software, "Software"))
 
     column_choices = {
-        "state": [(value, value) for key, value in
-                  AgentStateMap.items()],
-        "use_address": [(value, value) for key, value in
-                  UseAgentAddressMap.items()]}
+        "state": [(_.str, _.int) for _ in AgentState._enum],
+        "use_address": [(_.str, _.int) for _ in UseAgentAddress._enum]}
 
     # columns the form should display
     form_columns = (
