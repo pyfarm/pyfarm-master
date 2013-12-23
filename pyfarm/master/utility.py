@@ -21,35 +21,20 @@ Utility
 General utility which are not view or tool specific
 """
 
-from functools import partial
 from httplib import BAD_REQUEST
 
 try:
-    from json import dumps as _dumps, loads as _loads
+    import json
+except ImportError:
+    import simplejson as json
 
-except ImportError: # pragma: no cover
-    from simplejson import dumps as _dumps, loads as _loads
-
-from werkzeug.datastructures import ImmutableDict
 from flask import Response
-from pyfarm.core.enums import Values, EnumValue, APIError
-from pyfarm.master.application import app
+from werkzeug.datastructures import ImmutableDict
 
-PRETTY_JSON = app.config["PYFARM_JSON_PRETTY"]
+from pyfarm.core.enums import APIError
+from pyfarm.core.utility import dumps
+
 COLUMN_CACHE = {}
-
-
-def json_dumps_default(value):
-    if isinstance(value, (EnumValue, Values)):
-        return str(value)
-    else:
-        raise TypeError("don't know how to handle %s" % value)
-
-
-dumps = partial(
-    _dumps,
-    indent=4 if PRETTY_JSON else None,
-    default=json_dumps_default)
 
 
 def get_column_sets(model, primary_key=False):
@@ -149,7 +134,7 @@ def json_from_request(request, all_keys=None, required_keys=None,
         # the data
         if isinstance(data, unicode):
             try:
-                data = _loads(data)
+                data = json.loads(data)
             except ValueError:  # it's also possible this was not json data
                 pass
 
