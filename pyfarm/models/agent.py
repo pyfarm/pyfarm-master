@@ -22,17 +22,16 @@ Models and interface classes related to the agent.
 """
 
 import re
-from functools import partial
 from textwrap import dedent
 
 import netaddr
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
 from netaddr import AddrFormatError, IPAddress
-from pyfarm.core.enums import AgentState, UseAgentAddress
+from pyfarm.core.enums import AgentState
 from pyfarm.core.config import read_env_number, read_env_int, read_env_bool
 from pyfarm.master.application import db
-from pyfarm.models.core.functions import repr_ip, repr_enum
+from pyfarm.models.core.functions import repr_ip
 from pyfarm.models.core.mixins import ValidatePriorityMixin, DictMixins, ReprMixin
 from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, IDTypeTag, UseAgentAddressEnum,
@@ -153,7 +152,6 @@ class Agent(db.Model, ValidatePriorityMixin, DictMixins, ReprMixin):
     """
     __tablename__ = TABLE_AGENT
     __table_args__ = (UniqueConstraint("hostname", "ip", "port"), )
-    STATE_ENUM = AgentState
     STATE_DEFAULT = "online"
     REPR_COLUMNS = (
         "id", "hostname", "state", "ip", "remote_ip", "port", "cpus",
@@ -161,7 +159,7 @@ class Agent(db.Model, ValidatePriorityMixin, DictMixins, ReprMixin):
     REPR_CONVERT_COLUMN = {
         "ip": repr_ip,
         "remote_ip": repr_ip,
-        "state": partial(repr_enum, enum=STATE_ENUM)}
+        "state": repr}
     MIN_PORT = read_env_int("PYFARM_AGENT_MIN_PORT", 1024)
     MAX_PORT = read_env_int("PYFARM_AGENT_MAX_PORT", 65535)
     MIN_CPUS = read_env_int("PYFARM_AGENT_MIN_CPUS", 1)
@@ -210,7 +208,8 @@ class Agent(db.Model, ValidatePriorityMixin, DictMixins, ReprMixin):
                                 "an official time server")
 
     # host state
-    state = db.Column(AgentStateEnum, default=STATE_DEFAULT, nullable=False,
+    state = db.Column(AgentStateEnum, default=AgentState.ONLINE,
+                      nullable=False,
                       doc=dedent("""
                       Stores the current state of the host.  This value can be
                       changed either by a master telling the host to do

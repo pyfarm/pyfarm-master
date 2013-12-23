@@ -69,7 +69,7 @@ class JobType(db.Model):
                      cross-platform safe)"""))
     mode = db.Column(JobTypeLoadModeEnum,
                      default=JobTypeLoadMode.IMPORT,
-                     nullable=True,
+                     nullable=False,
                      doc=dedent("""
                      Indicates how the job type should be retrieved.
 

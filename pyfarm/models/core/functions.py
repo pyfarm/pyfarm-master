@@ -29,7 +29,8 @@ from datetime import datetime
 from textwrap import dedent
 from pyfarm.core.config import read_env_int
 from pyfarm.master.application import db
-from pyfarm.models.core.types import id_column, IDTypeWork, IPAddress
+from pyfarm.models.core.types import (
+    id_column, IDTypeWork, IPAddress, WorkStateEnum)
 
 DEFAULT_PRIORITY = read_env_int("PYFARM_QUEUE_DEFAULT_PRIORITY", 0)
 
@@ -113,7 +114,7 @@ def work_columns(state_default, priority_default):
         id_column(IDTypeWork),
 
         # state
-        db.Column(db.Integer, default=state_default,
+        db.Column(WorkStateEnum, default=state_default,
                   doc=dedent("""
                   The state of the job with a value provided by
                   :class:`.WorkState`""")),

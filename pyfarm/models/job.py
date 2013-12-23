@@ -33,7 +33,6 @@ try:
 except ImportError:  # pragma: no cover
     import simplejson as json
 
-from functools import partial
 from textwrap import dedent
 
 from sqlalchemy import event
@@ -43,7 +42,7 @@ from sqlalchemy.schema import UniqueConstraint
 from pyfarm.core.config import read_env, read_env_int
 from pyfarm.core.enums import WorkState, DBWorkState
 from pyfarm.master.application import db
-from pyfarm.models.core.functions import work_columns, repr_enum
+from pyfarm.models.core.functions import work_columns
 from pyfarm.models.core.types import id_column, JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TAG, TABLE_JOB_SOFTWARE, TABLE_JOB_TYPE,
@@ -131,10 +130,9 @@ class Job(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin):
     are kept track of by |Task|
     """
     __tablename__ = TABLE_JOB
-    STATE_ENUM = WorkState
     REPR_COLUMNS = ("id", "state", "project")
     REPR_CONVERT_COLUMN = {
-        "state": partial(repr_enum, enum=STATE_ENUM)}
+        "state": repr}
     MIN_CPUS = read_env_int("PYFARM_QUEUE_MIN_CPUS", 1)
     MAX_CPUS = read_env_int("PYFARM_QUEUE_MAX_CPUS", 256)
     MIN_RAM = read_env_int("PYFARM_QUEUE_MIN_RAM", 16)
@@ -153,7 +151,7 @@ class Job(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin):
 
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
-        work_columns(STATE_ENUM.QUEUED, "job.priority")
+        work_columns(WorkState.QUEUED, "job.priority")
     project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
                            doc="stores the project id")
     job_type_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_JOB_TYPE),

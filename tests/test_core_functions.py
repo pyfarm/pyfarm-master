@@ -19,7 +19,7 @@ from uuid import uuid4
 from sqlalchemy import Column, Integer, DateTime
 
 from utcore import ModelTestCase
-from pyfarm.models.core.types import IDTypeWork
+from pyfarm.models.core.types import IDTypeWork, WorkStateEnum
 from pyfarm.models.core.functions import (
     modelfor, getuuid, work_columns, split_and_extend)
 
@@ -65,7 +65,7 @@ class TestFunctionsModule(ModelTestCase):
             columns
 
         self.assertIsInstance(id.type, IDTypeWork)
-        self.assertIsInstance(state.type, Integer)
+        self.assertIsInstance(state.type, WorkStateEnum)
         self.assertIsInstance(priority.type, Integer)
         self.assertIsInstance(time_submitted.type, DateTime)
         self.assertIsInstance(time_started.type, DateTime)
