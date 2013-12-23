@@ -21,6 +21,7 @@ Utility
 General utility which are not view or tool specific
 """
 
+from functools import partial
 from httplib import BAD_REQUEST
 
 try:
@@ -31,21 +32,24 @@ except ImportError: # pragma: no cover
 
 from werkzeug.datastructures import ImmutableDict
 from flask import Response
-from pyfarm.core.enums import APIError
+from pyfarm.core.enums import Values, EnumValue, APIError
 from pyfarm.master.application import app
 
 PRETTY_JSON = app.config["PYFARM_JSON_PRETTY"]
 COLUMN_CACHE = {}
 
 
-def dumps(*args, **kwargs):
-    """
-    Wrapper around :func:`._dumps` which does some work to respect any
-    application settings.
-    """
-    if PRETTY_JSON:
-        kwargs.setdefault("indent", 4)
-    return _dumps(*args, **kwargs)
+def json_dumps_default(value):
+    if isinstance(value, (EnumValue, Values)):
+        return str(value)
+    else:
+        raise TypeError("don't know how to handle %s" % value)
+
+
+dumps = partial(
+    _dumps,
+    indent=4 if PRETTY_JSON else None,
+    default=json_dumps_default)
 
 
 def get_column_sets(model, primary_key=False):
