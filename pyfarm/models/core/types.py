@@ -26,7 +26,6 @@ from textwrap import dedent
 from uuid import uuid4, UUID
 from UserDict import UserDict
 from UserList import UserList
-from netaddr import AddrFormatError, IPAddress as _IPAddress
 
 try:
     from json import dumps, loads
@@ -34,10 +33,13 @@ except ImportError:  # pragma: no cover
     from simplejson import dumps, loads
 
 from sqlalchemy.types import (
-    TypeDecorator, CHAR, BigInteger, Integer, UnicodeText, TypeEngine)
+    TypeDecorator, CHAR, BigInteger, Integer, UnicodeText)
 from sqlalchemy.dialects.postgresql import UUID as PGUuid
+from netaddr import AddrFormatError, IPAddress as _IPAddress
+
 from pyfarm.master.application import db
-from pyfarm.core.enums import AgentState, UseAgentAddress, WorkState, EnumValue
+from pyfarm.core.enums import (
+    AgentState, UseAgentAddress, WorkState, EnumValue, Values)
 
 ID_GUID_DEFAULT = lambda: str(uuid4()).replace("-", "")
 ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should
@@ -250,10 +252,6 @@ class IPv4Address(TypeDecorator):
             return value
 
 
-# TODO: implement custom types for the enum data
-# class EnumDBtype(TypeEngine):
-#     def
-
 class EnumType(TypeDecorator):
     """
     Special column type which handles translation from a human
@@ -280,13 +278,28 @@ class EnumType(TypeDecorator):
         :raises ValueError:
             raised if ``value`` is not part of :cvar:`.enum`'s mapping
         """
-        if value is not None and value not in self.enum._map:
+        if value is None:
+            return None
+
+        elif value in self.enum._enum:
+            if isinstance(value, int):
+                return value
+
+            elif isinstance(value, basestring):
+                return self.enum._map[value]
+
+            elif isinstance(value, Values):
+                return value.int
+
+            else:
+                value = type(value)
+                raise AssertionError(
+                    "type %s was an enum value but did not have a mapping" % value)
+
+        else:
             args = (repr(value), self.__class__.__name__, self.enum._map.keys())
             raise ValueError(
                 "%s is not a valid value for %s, valid values are %s" % args)
-
-        else:
-            return value
 
     def process_result_value(self, value, dialect):
         if value is not None:
