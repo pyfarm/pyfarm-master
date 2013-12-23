@@ -50,7 +50,7 @@ from pyfarm.models.core.cfg import (
     MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH,
     TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
-    WorkValidationMixin, StateChangedMixin, ReprMixin)
+    ValidatePriorityMixin, StateChangedMixin, ReprMixin)
 from pyfarm.models.jobtype import JobType  # required for a relationship
 
 
@@ -125,7 +125,7 @@ JobDependencies = db.Table(
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
 
 
-class Job(db.Model, WorkValidationMixin, StateChangedMixin, ReprMixin):
+class Job(db.Model, ValidatePriorityMixin, StateChangedMixin, ReprMixin):
     """
     Defines the attributes and environment for a job.  Individual commands
     are kept track of by |Task|

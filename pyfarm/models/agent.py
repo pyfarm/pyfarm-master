@@ -33,7 +33,7 @@ from pyfarm.core.enums import AgentState, UseAgentAddress
 from pyfarm.core.config import read_env_number, read_env_int, read_env_bool
 from pyfarm.master.application import db
 from pyfarm.models.core.functions import repr_ip, repr_enum
-from pyfarm.models.core.mixins import WorkValidationMixin, DictMixins, ReprMixin
+from pyfarm.models.core.mixins import ValidatePriorityMixin, DictMixins, ReprMixin
 from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, IDTypeTag, UseAgentAddressEnum,
     AgentStateEnum)
@@ -136,7 +136,7 @@ class AgentSoftware(db.Model, AgentTaggingMixin):
                         because the format depends on the 3rd party."""))
 
 
-class Agent(db.Model, WorkValidationMixin, DictMixins, ReprMixin):
+class Agent(db.Model, ValidatePriorityMixin, DictMixins, ReprMixin):
     """
     Stores information about an agent include its network address,
     state, allocation configuration, etc.

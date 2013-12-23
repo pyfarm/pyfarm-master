@@ -31,7 +31,7 @@ from pyfarm.core.config import read_env_int
 logger = getLogger("models.mixin")
 
 
-class WorkValidationMixin(object):
+class ValidatePriorityMixin(object):
     """
     Mixin that adds a `state` column and uses a class
     level `STATE_ENUM` attribute to assist in validation.

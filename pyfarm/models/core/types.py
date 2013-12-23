@@ -292,9 +292,6 @@ class EnumType(TypeDecorator):
         if value is not None:
             return EnumValue(self.enum, value)
 
-    # TODO: implement comparison?
-    # def compare_values(self, x, y):
-
 
 class UseAgentAddressEnum(EnumType):
     """custom column type for working with :class:`.UseAgentAddress`"""
