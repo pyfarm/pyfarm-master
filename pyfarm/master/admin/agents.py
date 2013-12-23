@@ -155,9 +155,11 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
         FilterSoftwareContainsVersion(Agent.software, "Software"),
         FilterSoftwareNotContainsVersion(Agent.software, "Software"))
 
+    # all states except 'running' allowed (only the agent can set this)
     column_choices = {
-        "state": [(_.str, _.int) for _ in AgentState._enum],
-        "use_address": [(_.str, _.int) for _ in UseAgentAddress._enum]}
+        "state": [
+            (_.str, _.str) for _ in AgentState._enum if _.str != "running"],
+        "use_address": [(_.str, _.str) for _ in UseAgentAddress._enum]}
 
     # columns the form should display
     form_columns = (
