@@ -29,8 +29,8 @@ from sqlalchemy import event
 from sqlalchemy.orm import validates
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.master.application import db
-from pyfarm.models.core.types import id_column, IDTypeWork
-from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH, TABLE_JOB
+from pyfarm.models.core.types import id_column, JobTypeLoadModeEnum
+from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH
 
 JOBTYPE_BASECLASS = "JobType"
 
@@ -67,7 +67,9 @@ class JobType(db.Model):
                      * IMPORT - full path to the module to import
                      * OPEN - remote filepath to open (this is *not*
                      cross-platform safe)"""))
-    mode = db.Column(db.Integer, default=JobTypeLoadMode.IMPORT, nullable=False,
+    mode = db.Column(JobTypeLoadModeEnum,
+                     default=JobTypeLoadMode.IMPORT,
+                     nullable=True,
                      doc=dedent("""
                      Indicates how the job type should be retrieved.
 

@@ -39,7 +39,7 @@ from netaddr import AddrFormatError, IPAddress as _IPAddress
 
 from pyfarm.master.application import db
 from pyfarm.core.enums import (
-    AgentState, UseAgentAddress, WorkState, EnumValue, Values)
+    AgentState, UseAgentAddress, WorkState, JobTypeLoadMode, EnumValue, Values)
 
 ID_GUID_DEFAULT = lambda: str(uuid4()).replace("-", "")
 ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should
@@ -319,6 +319,11 @@ class AgentStateEnum(EnumType):
 class WorkStateEnum(EnumType):
     """custom column type for working with :class:`.WorkState`"""
     enum = WorkState
+
+
+class JobTypeLoadModeEnum(EnumType):
+    """custom column type for working with :class:`.JobTypeLoadMode`"""
+    enum = JobTypeLoadMode
 
 
 def id_column(column_type=None):
