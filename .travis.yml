@@ -22,12 +22,12 @@ before_script:
   - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
 
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION != "2.7" ]]; then pip install unittest2 simplejson --use-mirrors; fi
-  - if [[ $TDB_DRIVER != "" ]]; then pip install $TDB_DRIVER; fi
-  - pip install coverage python-coveralls --use-mirrors
-  - pip install git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg # TODO: remove dev install
-  - pip install git+git://github.com/pyfarm/pyfarm-models.git#egg=pyfarm.models --egg # TODO: remove dev install
-  - pip install . --use-mirrors
+  - if [[ $TRAVIS_PYTHON_VERSION != "2.7" ]]; then pip install -i https://pypi.pyfarm.net/simple/ unittest2 simplejson; fi
+  - if [[ $TDB_DRIVER != "" ]]; then pip install -i https://pypi.pyfarm.net/simple/ $TDB_DRIVER; fi
+  - pip install -i https://pypi.pyfarm.net/simple/ coverage python-coveralls
+  - pip install -i https://pypi.pyfarm.net/simple/ git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg # TODO: remove dev install
+  - pip install -i https://pypi.pyfarm.net/simple/ git+git://github.com/pyfarm/pyfarm-models.git#egg=pyfarm.models --egg # TODO: remove dev install
+  - pip install -i https://pypi.pyfarm.net/simple/ .
 
 script:
   - pip freeze
