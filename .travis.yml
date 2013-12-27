@@ -18,16 +18,17 @@ env:
   - TDB_TYPE=mysql TDB_DRIVER=mysql-connector-python PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
 
 before_script:
+  - mkdir $HOME/.pip/ && curl https://raw.github.com/pyfarm/pyfarm/master/misc/travis_pip.conf -o $HOME/.pip/pip.conf
   - if [[ $TDB_TYPE == "postgres" ]]; then psql -c "create database pyfarm;" -U postgres; fi
   - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
 
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION != "2.7" ]]; then pip install -i https://pypi.pyfarm.net/simple/ unittest2 simplejson; fi
-  - if [[ $TDB_DRIVER != "" ]]; then pip install -i https://pypi.pyfarm.net/simple/ $TDB_DRIVER; fi
-  - pip install -i https://pypi.pyfarm.net/simple/ coverage python-coveralls
-  - pip install -i https://pypi.pyfarm.net/simple/ git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg # TODO: remove dev install
-  - pip install -i https://pypi.pyfarm.net/simple/ git+git://github.com/pyfarm/pyfarm-models.git#egg=pyfarm.models --egg # TODO: remove dev install
-  - pip install -i https://pypi.pyfarm.net/simple/ .
+  - if [[ $TRAVIS_PYTHON_VERSION != "2.7" ]]; then pip install unittest2 simplejson; fi
+  - if [[ $TDB_DRIVER != "" ]]; then pip install $TDB_DRIVER; fi
+  - pip install coverage python-coveralls
+  - pip install git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg # TODO: remove dev install
+  - pip install git+git://github.com/pyfarm/pyfarm-models.git#egg=pyfarm.models --egg # TODO: remove dev install
+  - pip install .
 
 script:
   - pip freeze
