@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 from textwrap import dedent
 
 from .utcore import ModelTestCase
@@ -35,7 +36,7 @@ class JobTypeTest(ModelTestCase):
         value_classname = "Foobar"
         value_code = dedent("""
         class %s(JobType):
-            pass""" % value_classname).encode("utf-8")
+            pass""" % value_classname)
         value_mode = JobTypeLoadMode.OPEN
 
         # create jobtype

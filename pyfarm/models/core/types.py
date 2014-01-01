@@ -159,7 +159,7 @@ class JSONSerializable(TypeDecorator):
         if isinstance(value, (UserDict, UserList)):
             value = value.data
 
-        return dumps(value).encode("utf-8")
+        return dumps(value)
 
     def process_bind_param(self, value, dialect):
         """Converts the value being assigned into a json blob"""
@@ -176,7 +176,7 @@ class JSONSerializable(TypeDecorator):
     def process_result_value(self, value, dialect):
         """Converts data from the database into a Python object"""
         if value is not None:
-            value = loads(value.decode("utf-8"))
+            value = loads(value)
 
         return value
 
