@@ -25,7 +25,6 @@ necessary to run the master.
 import os
 from datetime import timedelta
 from flask import Flask, Blueprint
-from flask.ext.cache import Cache
 from flask.ext.admin import Admin
 from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -90,6 +89,10 @@ def get_application(**configuration_keywords):
                 read_env("PYFARM_CACHE_TYPE", "simple"),
             "REMEMBER_COOKIE_DURATION": timedelta(hours=12)}
 
+    app_config.setdefault(
+        "JSONIFY_PRETTYPRINT_REGULAR",
+        app_config.get("PYFARM_JSON_PRETTY", True))
+
     static_folder = configuration_keywords.pop("static_folder", None)
     if static_folder is None:  # static folder not provided
         import pyfarm.master
@@ -136,14 +139,6 @@ def get_sqlalchemy(**kwargs):
     return SQLAlchemy(**kwargs)
 
 
-def get_cache(**kwargs):
-    """
-    Constructs and returns an instance of :class:`.Cache`.  Any keyword
-    arguments provided will be passed to the constructor of :class:`.Cache`
-    """
-    return Cache(**kwargs)
-
-
 def get_login_manager(**kwargs):
     """
     Constructs and returns an instance of :class:`.LoginManager`.  Any keyword
@@ -168,7 +163,6 @@ api = get_api_blueprint()
 app.register_blueprint(api)
 admin = get_admin(app=app)
 db = get_sqlalchemy(app=app)
-cache = get_cache(app=app)
 login_manager = get_login_manager(app=app, login_view="/login/")
 login_serializer = get_login_serializer(app.secret_key)
 
