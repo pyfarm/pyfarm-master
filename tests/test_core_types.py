@@ -14,15 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import urandom
-from uuid import uuid4
+import uuid
 from random import randint, choice
 
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.types import BigInteger, CHAR
 from sqlalchemy.exc import StatementError
 
-from utcore import ModelTestCase, unittest
+from .utcore import ModelTestCase, unittest
 from pyfarm.core.enums import AgentState, DBAgentState, WorkState, DBWorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
@@ -53,19 +52,19 @@ class TestJsonTypes(ModelTestCase):
 
     def test_dict(self):
         for test_type in JSONDict.serialize_types:
-            for i in xrange(10):
+            for i in range(10):
                 test_data = test_type({
-                    "str": urandom(1024).encode("hex"),
+                    "str": uuid.uuid4().hex,
                     "int": randint(-1024, 1024),
                     "list": [
-                        urandom(1024).encode("hex"), -1024, 1024, True, None],
+                        uuid.uuid4().hex, -1024, 1024, True, None],
                     "bool": choice([True, False]), "none": None,
                     "dict": {
-                        "str": urandom(1024).encode("hex"),
+                        "str": uuid.uuid4().hex,
                         "true": True, "false": False,
                         "int": randint(-1024, 1024),
                         "list": [
-                            urandom(1024).encode("hex"),
+                            uuid.uuid4().hex,
                             -1024, 1024, True, None]}})
 
                 model = TypeModel(json_dict=test_data)
@@ -88,9 +87,9 @@ class TestJsonTypes(ModelTestCase):
 
     def test_list(self):
         for test_type in JSONList.serialize_types:
-            for i in xrange(10):
+            for i in range(10):
                 test_data = test_type(
-                    [urandom(1024).encode("hex"), -1024, 1024, True, None])
+                    [uuid.uuid4().hex, -1024, 1024, True, None])
 
                 model = TypeModel(json_list=test_data)
                 self.assertIsInstance(model.json_list, test_type)
@@ -206,7 +205,7 @@ class TestAgentStateEnumTypes(ModelTestCase):
 
         db.session.remove()
 
-        model = TypeModel(agent_state=urandom(10).encode("hex"))
+        model = TypeModel(agent_state=uuid.uuid4().hex)
         db.session.add(model)
 
         with self.assertRaises(StatementError):
@@ -279,7 +278,7 @@ class TestGUIDImpl(unittest.TestCase):
         guid = GUID()
         self.assertIsNone(guid.process_bind_param(None, None))
         dialect = self._dialect("postgresql", None)
-        uid = uuid4()
+        uid = uuid.uuid4()
         short_uid = self._short(uid)
         self.assertEqual(
             guid.process_bind_param(uid, dialect), short_uid)

@@ -22,7 +22,7 @@ used by the unittests.
 import os
 import sys
 import time
-from functools import wraps
+import warnings
 
 if sys.version_info[0:2] < (2, 7):
     import unittest2 as unittest
@@ -34,7 +34,8 @@ try:
 except ImportError:
     import simplejson as json
 
-from nose.plugins.skip import SkipTest
+from sqlalchemy.exc import SAWarning
+
 from pyfarm.core.logger import disable_logging
 disable_logging(True)
 
@@ -103,19 +104,11 @@ from pyfarm.models.job import Job, JobSoftware, JobTag
 from pyfarm.models.project import Project
 
 
-def skip_on_ci(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if "BUILDBOT_UUID" in os.environ or "TRAVIS" in os.environ:
-            raise SkipTest
-        return func(*args, **kwargs)
-    return wrapper
-
-
 class ModelTestCase(unittest.TestCase):
-    ORIGINAL_ENVIRONMENT = dict(os.environ.data)
+    ORIGINAL_ENVIRONMENT = dict(os.environ)
 
     def setUp(self):
+        warnings.simplefilter("ignore", SAWarning)
         db.session.rollback()
         os.environ.clear()
         os.environ.update(self.ORIGINAL_ENVIRONMENT)

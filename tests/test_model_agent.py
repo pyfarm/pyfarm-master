@@ -15,11 +15,11 @@
 # limitations under the License.
 
 from __future__ import with_statement
-from os import urandom
+import uuid
 
 from sqlalchemy.exc import DatabaseError
 
-from utcore import ModelTestCase, unittest
+from .utcore import ModelTestCase, unittest
 from pyfarm.core.enums import AgentState
 from pyfarm.master.application import db
 from pyfarm.models.agent import Agent, AgentSoftware, AgentTag
@@ -98,7 +98,7 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
                 software = AgentSoftware()
                 software.agent = agent_foobar
                 software.software = software_name
-                software.version = urandom(5).encode("hex")
+                software.version = uuid.uuid4().hex
                 software_objects.append((software.software, software.version))
                 agent_foobar.software.append(software)
 
@@ -154,7 +154,7 @@ class TestAgentTags(AgentTestCase, ModelTestCase):
             db.session.add(agent_foobar)
 
             tags = []
-            rand = lambda: urandom(6).encode("hex")
+            rand = lambda: uuid.uuid4().hex
             for tag_name in (rand(), rand(), rand()):
                 tag = AgentTag()
                 tag.tag = tag_name
@@ -181,7 +181,7 @@ class TestAgentModel(AgentTestCase, ModelTestCase):
             (Agent.query.filter_by(id=agent.id).first(), agent)
             for agent in agents)
 
-        for result, agent, in agents.iteritems():
+        for result, agent, in agents.items():
             self.assertEqual(result.hostname, agent.hostname)
             self.assertEqual(result.ip, agent.ip)
             self.assertEqual(result.port, agent.port)

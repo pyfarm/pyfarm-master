@@ -27,6 +27,8 @@ Contains core functions and data for use by :mod:`pyfarm.models`
 from uuid import UUID
 from datetime import datetime
 from textwrap import dedent
+
+from pyfarm.core.enums import STRING_TYPES
 from pyfarm.core.config import read_env_int
 from pyfarm.master.application import db
 from pyfarm.models.core.types import (
@@ -93,7 +95,7 @@ def getuuid(value, table, table_attrib, error_tail):
     # if a string was provided then we should
     # try to convert it into a uuid first to
     # be sure it's valid
-    elif isinstance(value, basestring):
+    elif isinstance(value, STRING_TYPES):
         UUID(value)
         return value
 

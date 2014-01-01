@@ -22,17 +22,20 @@ Models and interface classes related to the agent.
 """
 
 import re
+import sys
 from textwrap import dedent
 
 import netaddr
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
 from netaddr import AddrFormatError, IPAddress
-from pyfarm.core.enums import AgentState
+
+from pyfarm.core.enums import AgentState, STRING_TYPES
 from pyfarm.core.config import read_env_number, read_env_int, read_env_bool
 from pyfarm.master.application import db
 from pyfarm.models.core.functions import repr_ip
-from pyfarm.models.core.mixins import ValidatePriorityMixin, DictMixins, ReprMixin
+from pyfarm.models.core.mixins import (
+    ValidatePriorityMixin, DictMixins, ReprMixin)
 from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, IDTypeTag, UseAgentAddressEnum,
     AgentStateEnum)
@@ -74,15 +77,20 @@ class AgentTaggingMixin(object):
     Mixin used which provides some common structures to
     :class:`.AgentTag` and :class:`.AgentSoftware`
     """
+    if sys.version_info[0] == 2:
+        NUMERIC_TYPES = (int, long)
+    else:
+        NUMERIC_TYPES = int
+
     @validates("tag", "software")
     def validate_string_column(self, key, value):
         """
         Ensures `value` is a string or something that can be converted
         to a string.
         """
-        if isinstance(value, (int, long)):
+        if isinstance(value, self.NUMERIC_TYPES):
             value = str(value)
-        elif not isinstance(value, basestring):
+        elif not isinstance(value, STRING_TYPES):
             raise ValueError("expected a string for `%s`" % key)
 
         return value

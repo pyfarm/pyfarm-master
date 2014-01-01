@@ -16,7 +16,7 @@
 
 from textwrap import dedent
 
-from utcore import ModelTestCase
+from .utcore import ModelTestCase
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.master.application import db
 from pyfarm.models.job import Job
@@ -33,9 +33,9 @@ class JobTypeTest(ModelTestCase):
         value_name = "foo"
         value_description = "this is a job type"
         value_classname = "Foobar"
-        value_code = unicode(dedent("""
+        value_code = dedent("""
         class %s(JobType):
-            pass""" % value_classname))
+            pass""" % value_classname).encode("utf-8")
         value_mode = JobTypeLoadMode.OPEN
 
         # create jobtype
@@ -63,10 +63,10 @@ class JobTypeTest(ModelTestCase):
         value_name = "foo"
         value_description = "this is a job type"
         value_classname = "Foobar"
-        value_code = unicode(dedent("""
+        value_code = dedent("""
         class %s(JobType):
             a = True
-                b = False""" % value_classname))
+                b = False""" % value_classname).encode("utf-8")
 
         # create jobtype
         jobtype = JobType()
@@ -84,9 +84,9 @@ class JobTypeTest(ModelTestCase):
         value_name = "foo"
         value_description = "this is a job type"
         value_classname = "Foobar"
-        value_code = unicode(dedent("""
+        value_code = dedent("""
         class %s(object):
-            pass""" % value_classname))
+            pass""" % value_classname).encode("utf-8")
 
         # create jobtype
         jobtype = JobType()

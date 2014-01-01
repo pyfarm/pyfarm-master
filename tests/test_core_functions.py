@@ -18,7 +18,7 @@ from uuid import uuid4
 
 from sqlalchemy import Column, Integer, DateTime
 
-from utcore import ModelTestCase
+from .utcore import ModelTestCase
 from pyfarm.models.core.types import IDTypeWork, WorkStateEnum
 from pyfarm.models.core.functions import (
     modelfor, getuuid, work_columns, split_and_extend)

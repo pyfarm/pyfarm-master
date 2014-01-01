@@ -14,19 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import time
+import uuid
 from datetime import datetime, timedelta
 
-from utcore import ModelTestCase
+from .utcore import ModelTestCase
 from pyfarm.master.application import db, login_serializer
 from pyfarm.models.user import User, Role
 
 
 class UserTest(ModelTestCase):
     def test_create_user(self):
-        username = os.urandom(32).encode("hex")
-        password = os.urandom(32).encode("hex")
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
         user_id = User.create(username, password).id
         db.session.remove()
         user = User.query.filter_by(id=user_id).first()
@@ -34,28 +34,28 @@ class UserTest(ModelTestCase):
         self.assertEqual(user.username, username)
 
     def test_user_auth_token(self):
-        username = os.urandom(32).encode("hex")
-        password = os.urandom(32).encode("hex")
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
         user = User.create(username, password)
         self.assertEqual(
             user.get_auth_token(),
             login_serializer.dumps([str(user.id), user.password]))
 
     def test_get_id(self):
-        username = os.urandom(32).encode("hex")
-        password = os.urandom(32).encode("hex")
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
         user = User.create(username, password)
         self.assertEqual(user.get_id(), user.id)
 
     def test_hash_password(self):
-        username = os.urandom(32).encode("hex")
-        password = os.urandom(32).encode("hex")
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
         user = User.create(username, password)
         self.assertEqual(user.password, User.hash_password(password))
 
     def test_check_password(self):
-        username = os.urandom(32).encode("hex")
-        password = os.urandom(32).encode("hex")
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
         user = User.create(username, password)
         self.assertTrue(user.check_password(password))
         self.assertFalse(user.check_password(""))
@@ -64,8 +64,8 @@ class UserTest(ModelTestCase):
             user.check_password(None)
 
     def test_get(self):
-        username = os.urandom(32).encode("hex")
-        password = os.urandom(32).encode("hex")
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
         user = User.create(username, password)
         user_by_id = User.get(user.id)
         self.assertEqual(user_by_id.id, user.id)
@@ -76,8 +76,8 @@ class UserTest(ModelTestCase):
             User.get(None)
 
     def test_is_active(self):
-        username = os.urandom(32).encode("hex")
-        password = os.urandom(32).encode("hex")
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
         user = User.create(username, password)
         self.assertTrue(user.is_active())
         user.active = False
@@ -91,14 +91,14 @@ class UserTest(ModelTestCase):
         self.assertTrue(user.is_active())
 
     def test_roles(self):
-        username = os.urandom(32).encode("hex")
-        password = os.urandom(32).encode("hex")
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
         user = User.create(username, password)
         self.assertTrue(user.has_roles())
-        username = os.urandom(32).encode("hex")
-        password = os.urandom(32).encode("hex")
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
         user = User(username=username, password=password)
-        role_names = map(lambda i: os.urandom(6).encode("hex"), range(3))
+        role_names = map(lambda i: uuid.uuid4().hex, range(3))
         roles = []
         for role_name in role_names:
             role = Role.create(role_name)
@@ -123,7 +123,7 @@ class UserTest(ModelTestCase):
 
 class RoleTest(ModelTestCase):
     def test_create(self):
-        rolename = os.urandom(32).encode("hex")
+        rolename = uuid.uuid4().hex
         role_id = Role.create(rolename).id
         db.session.remove()
         role = Role.query.filter_by(id=role_id).first()
@@ -133,7 +133,7 @@ class RoleTest(ModelTestCase):
         self.assertEqual(new_role.id, role.id)
 
     def test_active(self):
-        rolename = os.urandom(32).encode("hex")
+        rolename = uuid.uuid4().hex
         role = Role.create(rolename)
         role.active = False
         self.assertFalse(role.is_active())

@@ -24,7 +24,7 @@ from textwrap import dedent
 from datetime import datetime
 from sqlalchemy.exc import DatabaseError
 
-from utcore import ModelTestCase, unittest
+from .utcore import ModelTestCase, unittest
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.agent import Agent
@@ -40,9 +40,9 @@ class TestTags(ModelTestCase):
         jobtype.name = "foo"
         jobtype.description = "this is a job type"
         jobtype.classname = "Foobar"
-        jobtype.code = unicode(dedent("""
+        jobtype.code = dedent("""
         class Foobar(JobType):
-            pass"""))
+            pass""").encode("utf-8")
         jobtype.mode = JobTypeLoadMode.OPEN
         db.session.add(jobtype)
 
@@ -95,9 +95,9 @@ class TestSoftware(ModelTestCase):
         jobtype.name = "foo"
         jobtype.description = "this is a job type"
         jobtype.classname = "Foobar"
-        jobtype.code = unicode(dedent("""
+        jobtype.code = dedent("""
         class Foobar(JobType):
-            pass"""))
+            pass""").encode("utf-8")
         jobtype.mode = JobTypeLoadMode.OPEN
         db.session.add(jobtype)
 

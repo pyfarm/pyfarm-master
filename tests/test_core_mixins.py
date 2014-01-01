@@ -20,7 +20,7 @@ from datetime import datetime
 from sqlalchemy import event
 from sqlalchemy.types import Integer, DateTime
 
-from utcore import ModelTestCase
+from .utcore import ModelTestCase
 from pyfarm.core.enums import _WorkState, WorkState, DBWorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
