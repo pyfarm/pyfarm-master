@@ -15,20 +15,21 @@
 # limitations under the License.
 
 import os
+
 from flask import Flask, Blueprint
 from flask.ext.admin import Admin, AdminIndexView
 from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.cache import Cache
 from flask.ext.login import LoginManager
 from itsdangerous import URLSafeTimedSerializer
-from utcore import BaseTestCase
+
+from .utcore import TestCase
 from pyfarm.master.admin.baseview import AdminIndex
 from pyfarm.master.application import (
-    get_application, get_api_blueprint, get_admin, get_sqlalchemy, get_cache,
+    get_application, get_api_blueprint, get_admin, get_sqlalchemy,
     get_login_manager, get_login_serializer)
 
 
-class TestApplicationFunctions(BaseTestCase):
+class TestApplicationFunctions(TestCase):
     def test_get_application(self):
         app = get_application(SOME_VARIABLE=True)
         self.assertIsInstance(app, Flask)
@@ -60,10 +61,6 @@ class TestApplicationFunctions(BaseTestCase):
     def test_get_sqlalchemy(self):
         db = get_sqlalchemy()
         self.assertIsInstance(db, SQLAlchemy)
-
-    def test_get_cache(self):
-        cache = get_cache()
-        self.assertIsInstance(cache, Cache)
 
     def test_get_login_manager(self):
         lm = get_login_manager()
