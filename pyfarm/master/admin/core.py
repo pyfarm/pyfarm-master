@@ -136,6 +136,9 @@ class BaseFilter(BaseSQLAFilter):
         if self.operation_text is NotImplemented:
             raise NotImplementedError("`operation_text` was not defined")
 
+    def __str__(self):
+        return self.name
+
     def apply(self, query, value):
         raise NotImplementedError
 
