@@ -137,7 +137,6 @@ def load_master(app, admin, api):
 
 def run_master():  # pragma: no cover
     """Runs :func:`load_master` then runs the application"""
-    import os
     from argparse import ArgumentParser
     from pyfarm.master.application import app, admin, api
 
