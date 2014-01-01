@@ -21,18 +21,27 @@ Utility
 General utility which are not view or tool specific
 """
 
-from httplib import BAD_REQUEST
+import sys
+
+try:
+    from httplib import BAD_REQUEST
+except ImportError:
+    from http.client import BAD_REQUEST
 
 try:
     import json
 except ImportError:
     import simplejson as json
 
-from flask import Response
+try:
+    from UserDict import UserDict
+except ImportError:
+    from collections import UserDict
+
+from flask import jsonify as _jsonify, current_app, request
 from werkzeug.datastructures import ImmutableDict
 
-from pyfarm.core.enums import APIError
-from pyfarm.core.utility import dumps
+from pyfarm.core.enums import APIError, STRING_TYPES
 
 COLUMN_CACHE = {}
 
@@ -59,23 +68,6 @@ def get_column_sets(model, primary_key=False):
     return all_columns, required_columns
 
 
-class JSONResponse(Response):
-    """
-    Wrapper around :class:`.Response` which will set the proper content type
-    and serialize any input
-    """
-    def __init__(self, data=None, **kwargs):
-        if isinstance(data, ReducibleDictionary):
-            data.reduce()
-
-        kwargs.setdefault("content_type", "application/json")
-
-        if data is not None:
-            super(JSONResponse, self).__init__(dumps(data), **kwargs)
-        else:
-            super(JSONResponse, self).__init__(**kwargs)
-
-
 class ReducibleDictionary(dict):
     """
     Adds a :meth:`.reduce` method to :class:`dict` class
@@ -87,7 +79,12 @@ class ReducibleDictionary(dict):
     {'foo': True}
     """
     def reduce(self):
-        for key, value in self.copy().iteritems():
+        if sys.version_info[0] < 3:
+            items = self.copy().iteritems
+        else:
+            items = self.copy().items
+
+        for key, value in items():
             if value is None:
                 self.pop(key)
 
@@ -132,16 +129,16 @@ def json_from_request(request, all_keys=None, required_keys=None,
 
         # though unlikely it's possible to_json didn't fully resolve
         # the data
-        if isinstance(data, unicode):
+        if isinstance(data, STRING_TYPES):
             try:
                 data = json.loads(data)
             except ValueError:  # it's also possible this was not json data
                 pass
 
-    except ValueError, e:
+    except ValueError as e:
         errorno, msg = APIError.JSON_DECODE_FAILED
         msg += ": %s" % e
-        return JSONResponse((errorno, msg), status=BAD_REQUEST)
+        return jsonify(errorno=errorno, message=msg), BAD_REQUEST
 
     if isinstance(data, dict) and "id" not in data and \
             (all_keys or required_keys or disallowed_keys):
@@ -152,7 +149,7 @@ def json_from_request(request, all_keys=None, required_keys=None,
         if all_keys is not None and not request_keys.issubset(all_keys):
             errorno, msg = APIError.EXTRA_FIELDS_ERROR
             msg += ".  Extra fields were: %s" % list(request_keys - all_keys)
-            return JSONResponse((errorno, msg), status=BAD_REQUEST)
+            return jsonify(errorno=errorno, message=msg), BAD_REQUEST
 
         # if required keys were provided, make sure the
         # request has at least those fields
@@ -161,13 +158,35 @@ def json_from_request(request, all_keys=None, required_keys=None,
             missing_keys = list(required_keys-request_keys)
             errorno, msg = APIError.MISSING_FIELDS
             msg += ".  Missing fields are: %s" % missing_keys
-            return JSONResponse((errorno, msg), status=BAD_REQUEST)
+            return jsonify(errorno=errorno, message=msg), BAD_REQUEST
 
         if disallowed_keys is not None and \
             request_keys.issuperset(disallowed_keys):
             errorno, msg = APIError.EXTRA_FIELDS_ERROR
             disallowed_extras = list(request_keys.intersection(disallowed_keys))
             msg += ".  Extra fields were: %s" % disallowed_extras
-            return JSONResponse((errorno, msg), status=BAD_REQUEST)
+            return jsonify(errorno=errorno, message=msg), BAD_REQUEST
 
     return data
+
+
+def jsonify(*args, **kwargs):
+    """
+    Drop in replacement for :func:`flask.jsonify` that also handles list
+    objects.  Flask does not support this by default because it's considered
+    a security risk in most cases but we do need it in certain cases.
+    """
+    # Single argument that's not a dictionary?  Handle it ourselves just
+    # like Flask would have.
+    if len(args) == 1 and not isinstance(args[0], (dict, UserDict)):
+        indent = None
+        if current_app.config["JSONIFY_PRETTYPRINT_REGULAR"] \
+                and not request.is_xhr:
+            indent = 2
+
+        return current_app.response_class(
+            json.dumps(args[0], indent=indent),
+            mimetype="application/json")
+
+    else:
+        return _jsonify(*args, **kwargs)
