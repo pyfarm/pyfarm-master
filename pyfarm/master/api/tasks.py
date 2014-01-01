@@ -21,11 +21,11 @@ Tasks
 Contained within this module are an API handling functions which can
 manage or query using JSON.
 """
+
+from flask import jsonify
 from flask.views import MethodView
 
 from pyfarm.models.task import Task
-from pyfarm.master.utility import (
-    JSONResponse, json_from_request, get_column_sets)
 
 # TODO: connect the below in the endpoints
 
@@ -67,7 +67,7 @@ def schema():
 
     :statuscode 200: no error
     """
-    return JSONResponse(Task().to_schema())
+    return jsonify(Task().to_schema())
 
 
 class TaskIndexAPI(MethodView):
