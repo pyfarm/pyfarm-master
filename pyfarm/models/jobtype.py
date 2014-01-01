@@ -61,12 +61,7 @@ class JobType(db.Model):
                      doc=dedent("""
                      General field containing the 'code' to retrieve the job
                      type.  See below for information on what this field will
-                     contain depending on how the job will be loaded.
-
-                     * DOWNLOAD - full source code for the job type
-                     * IMPORT - full path to the module to import
-                     * OPEN - remote filepath to open (this is *not*
-                     cross-platform safe)"""))
+                     contain depending on how the job will be loaded."""))
     mode = db.Column(JobTypeLoadModeEnum,
                      default=JobTypeLoadMode.IMPORT,
                      nullable=False,
