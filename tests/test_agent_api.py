@@ -15,22 +15,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-from httplib import CREATED, NO_CONTENT
+try:
+    from httplib import CREATED, NO_CONTENT
+except ImportError:
+    from http.client import CREATED, NO_CONTENT
 
 try:
     from json import loads, dumps
 except ImportError:
     from simplejson import loads
 
-from utcore import ModelTestCase
+from .utcore import ModelTestCase
 from pyfarm.models.agent import Agent
 
 
 class TestAgentAPI(ModelTestCase):
     def test_agents_schema(self):
         response = self.client.get("/api/v1/agents/schema")
-        self.assert200(response)
+        self.assert_ok(response)
         self.assertEqual(response.json, Agent().to_schema())
 
     def test_agent_read_write(self):
@@ -47,13 +49,11 @@ class TestAgentAPI(ModelTestCase):
                 "ram": 2048,
                 "ram_allocation": 0.8,
                 "state": "running"}))
-        self.assertStatus(response1, CREATED)
-        id = loads(response1.data)['id']
+        self.assert_created(response1)
+        id = response1.json['id']
 
         response2 = self.client.get("/api/v1/agents/%d" % id)
-        self.assert200(response2)
-        agent_data = loads(response2.data)
-        self.assertEqual(len(agent_data), 13)
+        self.assert_ok(response2)
         self.assertEqual(
             response2.json, {
                 "ram": 2048,
@@ -87,8 +87,8 @@ class TestAgentAPI(ModelTestCase):
                 "ram": 2048,
                 "ram_allocation": 0.8,
                 "state": "running"}))
-        self.assertStatus(response1, CREATED)
-        id = loads(response1.data)['id']
+        self.assert_created(response1)
+        id = response1.json['id']
 
         # When doing POST to /api/v1/agents with an already existing
         # hostname+port combination, the existing agent should be updated
@@ -105,13 +105,11 @@ class TestAgentAPI(ModelTestCase):
                 "ram": 4096,
                 "ram_allocation": 0.7,
                 "state": "running"}))
-        self.assert200(response2)
+        self.assert_ok(response2)
 
         # See if we get the updated data back
         response3 = self.client.get("/api/v1/agents/%d" % id)
-        self.assert200(response3)
-        updated_agent_data = loads(response3.data)
-        self.assertEqual(len(updated_agent_data), 13)
+        self.assert_ok(response3)
         self.assertEqual(response3.json, {
             "ram": 4096,
             "cpu_allocation": 1.1,
@@ -141,8 +139,8 @@ class TestAgentAPI(ModelTestCase):
                 "ram": 2048,
                 "ram_allocation": 0.8,
                 "state": "running"}))
-        self.assertStatus(response1, CREATED)
-        id = loads(response1.data)['id']
+        self.assert_created(response1)
+        id = response1.json['id']
 
         # Using this endpoint, we should be able to change everything about an
         # agent except its id
@@ -162,13 +160,11 @@ class TestAgentAPI(ModelTestCase):
                 "state": "running",
                 "free_ram": 4096,
                 "id": id}))
-        self.assert200(response2)
+        self.assert_ok(response2)
 
         # See if we get the updated data back
         response3 = self.client.get("/api/v1/agents/%d" % id)
-        self.assert200(response3)
-        updated_agent_data = loads(response3.data)
-        self.assertEqual(len(updated_agent_data), 13)
+        self.assert_ok(response3)
         self.assertEqual(response3.json, {
             "ram": 8192,
             "cpu_allocation": 1.2,
@@ -198,15 +194,15 @@ class TestAgentAPI(ModelTestCase):
                 "ram": 2048,
                 "ram_allocation": 0.8,
                 "state": "running"}))
-        self.assertStatus(response1, CREATED)
-        id = loads(response1.data)['id']
+        self.assert_created(response1)
+        id = response1.json['id']
 
         response2 = self.client.delete("/api/v1/agents/%d" % id)
-        self.assert200(response2)
+        self.assert_ok(response2)
         response3 = self.client.delete("/api/v1/agents/%d" % id)
-        self.assertStatus(response3, NO_CONTENT)
+        self.assert_no_content(response3)
         response4 = self.client.get("/api/v1/agents/%d" % id)
-        self.assert404(response4)
+        self.assert_not_found(response4)
 
     def test_agent_filter(self):
         create_response1 = self.client.post(
@@ -222,8 +218,8 @@ class TestAgentAPI(ModelTestCase):
                 "ram": 1024,
                 "ram_allocation": 0.8,
                 "state": "running"}))
-        self.assertStatus(create_response1, CREATED)
-        low_cpu_low_ram_id = loads(create_response1.data)['id']
+        self.assert_created(create_response1)
+        low_cpu_low_ram_id = create_response1.json['id']
 
         create_response2 = self.client.post(
             "/api/v1/agents",
@@ -238,8 +234,8 @@ class TestAgentAPI(ModelTestCase):
                 "ram": 4096,
                 "ram_allocation": 0.8,
                 "state": "running"}))
-        self.assertStatus(create_response2, CREATED)
-        low_cpu_high_ram_id = loads(create_response2.data)['id']
+        self.assert_created(create_response2)
+        low_cpu_high_ram_id = create_response2.json['id']
 
         create_response3 = self.client.post(
             "/api/v1/agents",
@@ -254,8 +250,8 @@ class TestAgentAPI(ModelTestCase):
                 "ram": 1024,
                 "ram_allocation": 0.8,
                 "state": "running"}))
-        self.assertStatus(create_response3, CREATED)
-        high_cpu_low_ram_id = loads(create_response3.data)['id']
+        self.assert_created(create_response3)
+        high_cpu_low_ram_id = create_response3.json['id']
 
         create_response4 = self.client.post(
             "/api/v1/agents",
@@ -270,8 +266,8 @@ class TestAgentAPI(ModelTestCase):
                 "ram": 4096,
                 "ram_allocation": 0.8,
                 "state": "running"}))
-        self.assertStatus(create_response4, CREATED)
-        high_cpu_high_ram_id = loads(create_response4.data)['id']
+        self.assert_created(create_response4)
+        high_cpu_high_ram_id = create_response4.json['id']
 
         create_response5 = self.client.post(
             "/api/v1/agents",
@@ -287,170 +283,170 @@ class TestAgentAPI(ModelTestCase):
                 "ram": 2048,
                 "ram_allocation": 0.8,
                 "state": "running"}))
-        self.assertStatus(create_response5, CREATED)
-        middle_cpu_middle_ram_id = loads(create_response5.data)['id']
+        self.assert_created(create_response5)
+        middle_cpu_middle_ram_id = create_response5.json['id']
 
         get_response1 = self.client.get("/api/v1/agents?min_cpus=9")
-        self.assert200(get_response1)
+        self.assert_ok(get_response1)
         self.assertNotIn(
             {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
-            loads(get_response1.data))
+            get_response1.json)
         self.assertNotIn(
             {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
-            loads(get_response1.data))
+            get_response1.json)
         self.assertIn(
             {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
-            loads(get_response1.data))
+            get_response1.json)
         self.assertIn(
             {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
-            loads(get_response1.data))
+            get_response1.json)
         self.assertIn(
             {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
-            loads(get_response1.data))
+            get_response1.json)
 
         get_response2 = self.client.get("/api/v1/agents?min_cpus=8")
-        self.assert200(get_response2)
+        self.assert_ok(get_response2)
         self.assertIn(
             {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
-            loads(get_response2.data))
+            get_response2.json)
         self.assertIn(
             {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
-            loads(get_response2.data))
+            get_response2.json)
         self.assertIn(
             {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
-            loads(get_response2.data))
+            get_response2.json)
         self.assertIn(
             {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
-            loads(get_response2.data))
+            get_response2.json)
         self.assertIn(
             {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
-            loads(get_response2.data))
+            get_response2.json)
 
         get_response3 = self.client.get("/api/v1/agents?max_cpus=12")
-        self.assert200(get_response3)
+        self.assert_ok(get_response3)
         self.assertIn(
             {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
-            loads(get_response3.data))
+            get_response3.json)
         self.assertIn(
             {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
-            loads(get_response3.data))
+            get_response3.json)
         self.assertNotIn(
             {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
-            loads(get_response3.data))
+            get_response3.json)
         self.assertNotIn(
             {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
-            loads(get_response3.data))
+            get_response3.json)
         self.assertIn(
             {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
-            loads(get_response3.data))
+            get_response3.json)
 
         get_response4 = self.client.get(
             "/api/v1/agents?min_cpus=10&max_cpus=14")
-        self.assert200(get_response4)
+        self.assert_ok(get_response4)
         self.assertNotIn(
             {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
-            loads(get_response4.data))
+            get_response4.json)
         self.assertNotIn(
             {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
-            loads(get_response4.data))
+            get_response4.json)
         self.assertNotIn(
             {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
-            loads(get_response4.data))
+            get_response4.json)
         self.assertNotIn(
             {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
-            loads(get_response4.data))
+            get_response4.json)
         self.assertIn(
             {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
-            loads(get_response3.data))
+            get_response3.json)
 
         get_response5 = self.client.get("/api/v1/agents?min_ram=1024")
-        self.assert200(get_response5)
+        self.assert_ok(get_response5)
         self.assertIn(
             {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
-            loads(get_response5.data))
+            get_response5.json)
         self.assertIn(
             {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
-            loads(get_response5.data))
+            get_response5.json)
         self.assertIn(
             {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
-            loads(get_response5.data))
+            get_response5.json)
         self.assertIn(
             {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
-            loads(get_response5.data))
+            get_response5.json)
         self.assertIn(
             {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
-            loads(get_response5.data))
+            get_response5.json)
 
         get_response6 = self.client.get("/api/v1/agents?min_ram=2048")
-        self.assert200(get_response6)
+        self.assert_ok(get_response6)
         self.assertNotIn(
             {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
-            loads(get_response6.data))
+            get_response6.json)
         self.assertIn(
             {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
-            loads(get_response6.data))
+            get_response6.json)
         self.assertNotIn(
             {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
-            loads(get_response6.data))
+            get_response6.json)
         self.assertIn(
             {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
-            loads(get_response6.data))
+            get_response6.json)
         self.assertIn(
             {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
-            loads(get_response6.data))
+            get_response6.json)
 
         get_response7 = self.client.get("/api/v1/agents?max_ram=2048")
-        self.assert200(get_response7)
+        self.assert_ok(get_response7)
         self.assertIn(
             {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
-            loads(get_response7.data))
+            get_response7.json)
         self.assertNotIn(
             {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
-            loads(get_response7.data))
+            get_response7.json)
         self.assertIn(
             {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
-            loads(get_response7.data))
+            get_response7.json)
         self.assertNotIn(
             {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
-            loads(get_response7.data))
+            get_response7.json)
         self.assertIn(
             {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
-            loads(get_response7.data))
+            get_response7.json)
 
         get_response8 = self.client.get(
             "/api/v1/agents?min_ram=1025&max_ram=2049")
-        self.assert200(get_response8)
+        self.assert_ok(get_response8)
         self.assertNotIn(
             {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
-            loads(get_response8.data))
+            get_response8.json)
         self.assertNotIn(
             {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
-            loads(get_response8.data))
+            get_response8.json)
         self.assertNotIn(
             {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
-            loads(get_response8.data))
+            get_response8.json)
         self.assertNotIn(
             {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
-            loads(get_response8.data))
+            get_response8.json)
         self.assertIn(
             {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
-            loads(get_response8.data))
+            get_response8.json)
 
         get_response9 = self.client.get(
             "/api/v1/agents?min_ram=2048&min_cpus=16")
-        self.assert200(get_response9)
+        self.assert_ok(get_response9)
         self.assertNotIn(
             {"hostname": "lowcpu-lowram", "id": low_cpu_low_ram_id},
-            loads(get_response9.data))
+            get_response9.json)
         self.assertNotIn(
             {"hostname": "lowcpu-highram", "id": low_cpu_high_ram_id},
-            loads(get_response9.data))
+            get_response9.json)
         self.assertNotIn(
             {"hostname": "highcpu-lowram", "id": high_cpu_low_ram_id},
-            loads(get_response9.data))
+            get_response9.json)
         self.assertIn(
             {"hostname": "highcpu-highram", "id": high_cpu_high_ram_id},
-            loads(get_response9.data))
+            get_response9.json)
         self.assertNotIn(
             {"hostname": "middlecpu-middleram", "id": middle_cpu_middle_ram_id},
-            loads(get_response9.data))
+            get_response9.json)
