@@ -15,9 +15,8 @@
 # limitations under the License.
 
 from flask import abort
-from utcore import TestCase
-from pyfarm.master.errors import (
-    ERROR_400_JSON, ERROR_401_JSON, ERROR_404_JSON, ERROR_500_JSON)
+
+from .utcore import TestCase
 from pyfarm.master.entrypoints.master import load_error_handlers
 
 
@@ -32,12 +31,12 @@ class TestErrors(TestCase):
             "/test_error_400",
             method="GET",
             headers=[("Content-Type", "application/json")])
-        self.assert400(response)
-        self.assertDictEqual(ERROR_400_JSON, response.json)
+        self.assert_bad_request(response)
         response = self.client.get("/test_error_400")
-        self.assert400(response)
-        self.assertIn("<title>PyFarm - Bad Request</title>", response.data)
-        self.assertTemplateUsed("pyfarm/errors/400.html")
+        self.assert_bad_request(response)
+        self.assertIn("<title>PyFarm - Bad Request</title>", 
+                      response.data.decode("utf-8"))
+        self.assert_template_used("pyfarm/errors/400.html")
 
     def test_401(self):
         self.app.add_url_rule("/test_error_401", view_func=lambda: abort(401))
@@ -45,12 +44,12 @@ class TestErrors(TestCase):
             "/test_error_401",
             method="GET",
             headers=[("Content-Type", "application/json")])
-        self.assert401(response)
-        self.assertDictEqual(ERROR_401_JSON, response.json)
+        self.assert_unauthorized(response)
         response = self.client.get("/test_error_401")
-        self.assert401(response)
-        self.assertIn("<title>PyFarm - Access Denied</title>", response.data)
-        self.assertTemplateUsed("pyfarm/errors/401.html")
+        self.assert_unauthorized(response)
+        self.assertIn("<title>PyFarm - Access Denied</title>", 
+                      response.data.decode("utf-8"))
+        self.assert_template_used("pyfarm/errors/401.html")
 
     def test_404(self):
         self.app.add_url_rule("/test_error_404", view_func=lambda: abort(404))
@@ -58,12 +57,12 @@ class TestErrors(TestCase):
             "/test_error_404",
             method="GET",
             headers=[("Content-Type", "application/json")])
-        self.assert404(response)
-        self.assertDictEqual(ERROR_404_JSON, response.json)
+        self.assert_not_found(response)
         response = self.client.get("/test_error_404")
-        self.assert404(response)
-        self.assertIn("<title>PyFarm - Not Found</title>", response.data)
-        self.assertTemplateUsed("pyfarm/errors/404.html")
+        self.assert_not_found(response)
+        self.assertIn("<title>PyFarm - Not Found</title>",
+                      response.data.decode("utf-8"))
+        self.assert_template_used("pyfarm/errors/404.html")
 
     def test_500(self):
         self.app.add_url_rule("/test_error_500", view_func=lambda: abort(500))
@@ -71,11 +70,10 @@ class TestErrors(TestCase):
             "/test_error_500",
             method="GET",
             headers=[("Content-Type", "application/json")])
-        self.assert500(response)
-        self.assertDictEqual(ERROR_500_JSON, response.json)
+        self.assert_internal_server_error(response)
         response = self.client.get("/test_error_500")
-        self.assert500(response)
+        self.assert_internal_server_error(response)
         self.assertIn("<title>PyFarm - Internal Server Error</title>",
-                      response.data)
-        self.assertTemplateUsed("pyfarm/errors/500.html")
+                      response.data.decode("utf-8"))
+        self.assert_template_used("pyfarm/errors/500.html")
 
