@@ -22,14 +22,18 @@ View and code necessary for providing the basic login and authentication
 services
 """
 
-from httplib import UNAUTHORIZED, BAD_REQUEST
-from wtforms import Form, TextField, PasswordField, validators, ValidationError
-from itsdangerous import BadTimeSignature
-from flask import request, redirect, render_template, abort
+try:
+    from httplib import UNAUTHORIZED, BAD_REQUEST
+except ImportError:
+    from http.client import UNAUTHORIZED, BAD_REQUEST
+
+from flask import request, redirect, render_template, abort, jsonify
 from flask.ext.login import login_user, logout_user, current_user
+from itsdangerous import BadTimeSignature
+from wtforms import Form, TextField, PasswordField, validators, ValidationError
+
 from pyfarm.models.user import User
 from pyfarm.master.application import app, login_manager, login_serializer
-from pyfarm.master.utility import JSONResponse
 
 try:
     import json
@@ -101,14 +105,13 @@ class LoginForm(Form):
 def login_page():
     """display and process the login for or action"""
     if request.method == "POST" and request.content_type == "application/json":
-        data = json.loads(request.data)
-        user = User.get(data["username"])
+        user = User.get(request.json["username"])
 
-        if user and user.check_password(data["password"]):
+        if user and user.check_password(request.json["password"]):
             login_user(user, remember=True)
-            return JSONResponse()
+            return jsonify()
 
-        return JSONResponse(status=UNAUTHORIZED)
+        return jsonify(), UNAUTHORIZED
 
     form = LoginForm(request.form)
     if request.method == "POST" and form.validate():
