@@ -13,6 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
 def user_management(args=None):
     from getpass import getpass
     from textwrap import dedent
@@ -107,9 +109,9 @@ def user_management(args=None):
         for role in parsed.role:
             if not Role.query.filter_by(name=role).first():
                 user.roles.append(Role.create(role))
-                print "creating role: %s" % role
+                print("creating role: %s" % role)
 
-        print "created user: %s" % user.username
+        print("created user: %s" % user.username)
 
         db.session.add(user)
         db.session.commit()

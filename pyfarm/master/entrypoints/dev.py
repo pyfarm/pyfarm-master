@@ -24,14 +24,22 @@ These are internal entry points used for development only.
     These entry pints should **never** be deployed or used in production.
 """
 
+import sys
+
 
 def dbdata():
     """creates some fake internal data for use in testing.agent_names"""
-    if raw_input(
+    if sys.version_info[0] == 2:
+        input_function = raw_input
+    else:
+        input_function = input
+
+    if input_function(
         "WARNING: THIS WILL REPLACE ALL DATABASE DATA.  DO NOT USE IN "
         "PRODUCTION.  CONTINUE [Y/n]? ") != "Y":
-        print "Quit!"
+        print("Quit!")
         return
+
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
@@ -50,19 +58,19 @@ def dbdata():
         AgentSoftwareDependency, AgentSoftwareDependency)
     from pyfarm.models.user import User, Role
 
-    print "recreating tables"
+    print("recreating tables")
     db.drop_all()
     db.create_all()
 
-    print "creating administrator"
+    print("creating administrator")
     admin_user = User.create("a", "a")
     admin_user.roles.append(Role.create("admin"))
     db.session.add(admin_user)
-    print "   user: a"
-    print "   pass: a"
+    print("   user: a")
+    print("   pass: a")
     db.session.commit()
 
-    print "creating agent tags"
+    print("creating agent tags")
     tag_agents_all = AgentTag()
     tag_agents_even = AgentTag()
     tag_agents_odd = AgentTag()
@@ -70,7 +78,7 @@ def dbdata():
     tag_agents_even.tag = "even"
     tag_agents_odd.tag = "odd"
 
-    print "creating agent software"
+    print("creating agent software")
     software_any = AgentSoftware()
     software_any.software = "any"
     software_any.version = "any"
@@ -81,7 +89,7 @@ def dbdata():
     software_ping.software = "ping"
     software_ping.version = "1.0.0"
 
-    print "creating agents"
+    print("creating agents")
     first_two = AgentTag()
     first_two.tag = "two"
     first_four = AgentTag()
@@ -89,9 +97,9 @@ def dbdata():
     first_eight = AgentTag()
     first_eight.tag = "eight"
 
-    for i in xrange(1, parsed.host_count):
+    for i in range(1, parsed.host_count):
         agent_name = "agent%s" % i
-        print "   %s:" % agent_name
+        print("   %s:" % agent_name)
         agent = Agent()
         agent.hostname = agent_name
         agent.ip = ".".join(map(
@@ -120,11 +128,11 @@ def dbdata():
             agent.tags.append(tag_agents_even)
             agent.software.append(software_any1)
 
-        print "        ip: %s" % agent.ip
-        print "      cpus: %s" % agent.cpus
-        print "       ram: %s" % agent.ram
-        print "      port: %s" % agent.port
-        print "      tags: %s" % list(tag.tag for tag in agent.tags)
-        print "  software: %s" % list(tag.software for tag in agent.software)
+        print("        ip: %s" % agent.ip)
+        print("      cpus: %s" % agent.cpus)
+        print("       ram: %s" % agent.ram)
+        print("      port: %s" % agent.port)
+        print("      tags: %s" % list(tag.tag for tag in agent.tags))
+        print("  software: %s" % list(tag.software for tag in agent.software))
         db.session.add(agent)
     db.session.commit()
