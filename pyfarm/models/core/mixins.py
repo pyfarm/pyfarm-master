@@ -25,7 +25,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import validates
 
-from pyfarm.core.enums import DBWorkState, _WorkState
+from pyfarm.core.enums import DBWorkState, _WorkState, Values
 from pyfarm.core.logger import getLogger
 from pyfarm.core.config import read_env_int
 
@@ -108,16 +108,19 @@ class DictMixins(object):
         except AttributeError:  # pragma: no cover
             serialize_column = None
 
-        result = {}
+        results = {}
         for column_name in self.__table__.c.keys():
             value = getattr(self, column_name)
 
             if serialize_column is not None:
                 value = serialize_column(value)
 
-            result[column_name] = value
+            if isinstance(value, Values):
+                value = value.str
 
-        return result
+            results[column_name] = value
+
+        return results
 
     def to_schema(self):
         """
@@ -164,7 +167,7 @@ class ReprMixin(object):
                 column_data.append(
                     "%s=%s" % (name, convert(getattr(self, name))))
 
-            except AttributeError, e:
+            except AttributeError:
                 logger.warning("%s has no such column %s" % (
                     self.__class__.__name__, repr(name)))
 
