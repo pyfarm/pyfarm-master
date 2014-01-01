@@ -25,9 +25,8 @@ from setuptools import setup
 install_requires = [
     "pyfarm.core", "sqlalchemy", "netaddr", "flask"]
 
-if sys.version_info[0:2] < (2, 7):
-    install_requires.append("simplejson")
-    install_requires.append("importlib")
+if sys.version_info[0:2] == (2, 6):
+    install_requires += ["simplejson", "importlib"]
 
 if isfile("README.rst"):
     with open("README.rst", "r") as readme:
