@@ -313,7 +313,7 @@ class Agent(db.Model, ValidatePriorityMixin, DictMixins, ReprMixin):
         try:
             ip = netaddr.IPAddress(value)
 
-        except (AddrFormatError, ValueError), e:
+        except (AddrFormatError, ValueError) as e:
             raise ValueError(
                 "%s is not a valid address format: %s" % (value, e))
 
