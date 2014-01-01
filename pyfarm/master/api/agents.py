@@ -22,26 +22,31 @@ Contained within this module are an API handling functions which can
 manage or query agents using JSON.
 """
 
-from functools import partial
-from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
+import sys
 
-from flask import request
+try:
+    from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
+except ImportError:
+    from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
+
+from functools import partial
+
+from flask import Response, request
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import APIError
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
-from pyfarm.master.utility import (
-    JSONResponse, json_from_request, get_column_sets)
+from pyfarm.master.utility import json_from_request, get_column_sets, jsonify
 
 ALL_AGENT_COLUMNS, REQUIRED_AGENT_COLUMNS = get_column_sets(Agent)
 
 # partial function(s) to assist in data conversion
-to_json = partial(json_from_request,
-                  all_keys=ALL_AGENT_COLUMNS,
-                  required_keys=REQUIRED_AGENT_COLUMNS,
-                  disallowed_keys=set(["id"]))
+to_json = partial(
+    json_from_request,
+    all_keys=ALL_AGENT_COLUMNS,
+    required_keys=REQUIRED_AGENT_COLUMNS, disallowed_keys=set(["id"]))
 
 logger = getLogger("api.agents")
 
@@ -84,7 +89,7 @@ def schema():
 
     :statuscode 200: no error
     """
-    return JSONResponse(Agent().to_schema())
+    return jsonify(Agent().to_schema())
 
 
 class AgentIndexAPI(MethodView):
@@ -204,7 +209,7 @@ class AgentIndexAPI(MethodView):
         """
         # get json data from the request
         data = to_json(request)
-        if isinstance(data, JSONResponse):
+        if isinstance(data, Response):
             return data
 
         request_columns = set(data)
@@ -214,14 +219,14 @@ class AgentIndexAPI(MethodView):
                 and request_columns.issubset(REQUIRED_AGENT_COLUMNS)):
             errorno, msg = APIError.MISSING_FIELDS
             msg += ": %s" % list(REQUIRED_AGENT_COLUMNS - request_columns)
-            return JSONResponse((errorno, msg), status=BAD_REQUEST)
+            return jsonify(errorno=errorno, message=msg), BAD_REQUEST
 
         # request included some columns which don't exist
         elif not request_columns.issubset(ALL_AGENT_COLUMNS):
             errorno, msg = APIError.EXTRA_FIELDS_ERROR
             extra_columns = list(request_columns - ALL_AGENT_COLUMNS)
             msg = "the following columns do not exist: %s" % extra_columns
-            return JSONResponse((errorno, msg), status=BAD_REQUEST)
+            return jsonify(errorno=errorno, message=msg), BAD_REQUEST
 
         # update with our remote_addr from the request
         data.update(remote_ip=request.remote_addr)
@@ -234,7 +239,13 @@ class AgentIndexAPI(MethodView):
         # agent already exists, try to update it
         if existing_agent:
             updated = {}
-            for key, value in data.iteritems():
+
+            if sys.version_info[0] == 2:
+                items = data.iteritems
+            else:
+                items = data.items
+
+            for key, value in items():
                 if getattr(existing_agent, key) != value:
                     setattr(existing_agent, key, value)
                     updated[key] = value
@@ -246,7 +257,7 @@ class AgentIndexAPI(MethodView):
                 db.session.add(existing_agent)
                 db.session.commit()
 
-            return JSONResponse(existing_agent.to_dict(), status=OK)
+            return jsonify(existing_agent.to_dict()), OK
 
         # didn't find an agent that matched the incoming data
         # so we'll create one
@@ -256,7 +267,7 @@ class AgentIndexAPI(MethodView):
             db.session.commit()
             agent_data = new_agent.to_dict()
             logger.info("created agent %s: %s" % (new_agent.id, agent_data))
-            return JSONResponse(agent_data, status=CREATED)
+            return jsonify(agent_data), CREATED
 
     def get(self):
         """
@@ -340,7 +351,8 @@ class AgentIndexAPI(MethodView):
 
         for agent_id, hostname in q:
             out.append({"id": agent_id, "hostname": hostname})
-        return JSONResponse(out, status=OK)
+
+        return jsonify(out), OK
 
 
 class SingleAgentAPI(MethodView):
@@ -405,11 +417,11 @@ class SingleAgentAPI(MethodView):
         """
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is not None:
-            return JSONResponse(agent.to_dict())
+            return jsonify(agent.to_dict())
         else:
             errorno, msg = APIError.DATABASE_ERROR
             msg = "no agent found for `%s`" % agent_id
-            return JSONResponse((errorno, msg), status=NOT_FOUND)
+            return jsonify(errorno=errorno, message=msg), NOT_FOUND
 
     # TODO: docs need a few more examples here
     def post(self, agent_id=None):
@@ -457,7 +469,7 @@ class SingleAgentAPI(MethodView):
         """
         # get json data
         data = to_json(request)
-        if isinstance(data, JSONResponse):
+        if isinstance(data, Response):
             return data
 
         # get model
@@ -465,11 +477,16 @@ class SingleAgentAPI(MethodView):
         if model is None:
             errorno, msg = APIError.DATABASE_ERROR
             msg = "no agent found for `%s`" % agent_id
-            return JSONResponse((errorno, msg), status=NOT_FOUND)
+            return jsonify(errorno=errorno, message=msg), NOT_FOUND
+
+        if sys.version_info[0] == 2:
+            items = data.iteritems
+        else:
+            items = data.items
 
         # update model
         modified = {}
-        for key, value in data.iteritems():
+        for key, value in items():
             if value != getattr(model, key):
                 setattr(model, key, value)
                 modified[key] = value
@@ -480,7 +497,7 @@ class SingleAgentAPI(MethodView):
             db.session.add(model)
             db.session.commit()
 
-        return JSONResponse(model.to_dict(), status=OK)
+        return jsonify(model.to_dict()), OK
 
     def delete(self, agent_id=None):
         """
@@ -522,8 +539,8 @@ class SingleAgentAPI(MethodView):
         """
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is None:
-            return JSONResponse(status=NO_CONTENT)
+            return jsonify(), NO_CONTENT
         else:
             db.session.delete(agent)
             db.session.commit()
-            return JSONResponse(status=OK)
+            return jsonify(), OK
