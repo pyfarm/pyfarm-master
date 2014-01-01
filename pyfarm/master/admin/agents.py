@@ -147,7 +147,7 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     column_searchable_list = ("hostname",)
     column_filters = (
         "hostname", "ram", "free_ram", "cpus",
-        FilterState(Agent.state, "State"),
+        FilterState(Agent.state, "State", options=[(_, _)for _ in AgentState]),
         FilterTagsContains(Agent.tags, "Tag"),
         FilterTagsNotContains(Agent.tags, "Tag"),
         FilterSoftwareContains(Agent.software, "Software"),
