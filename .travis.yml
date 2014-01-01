@@ -18,6 +18,13 @@ env:
   - TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
   - TDB_TYPE=mysql TDB_DRIVER=mysql-connector-python PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
 
+matrix:
+  exclude:
+    - python: 3.3
+      env: TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+    - python: 3.3
+      env: TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
+
 before_script:
   - if [[ $TDB_TYPE == "postgres" ]]; then psql -c "create database pyfarm;" -U postgres; fi
   - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
