@@ -26,7 +26,7 @@ from setuptools import setup
 install_requires = [
     "pyfarm.core", "pyfarm.models",
     "flask-login", "flask-admin>=1.0.7",
-    "flask-sqlalchemy", "flask-cache", "flask",
+    "flask-sqlalchemy", "flask",
     "itsdangerous", "blinker"]
 
 if sys.version_info[0:2] == (2, 6):
