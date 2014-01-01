@@ -14,15 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import urandom
+import uuid
 
 try:
     from json import dumps
 except ImportError:
     from simplejson import dumps
 
-from utcore import ModelTestCase
 from flask.ext.admin import BaseView, expose
+
+from .utcore import ModelTestCase
 from pyfarm.master.admin.baseview import AuthMixins
 from pyfarm.master.login import login_page, load_token, load_user
 from pyfarm.master.application import db, get_login_manager
@@ -43,18 +44,19 @@ class TestLogin(ModelTestCase):
         self.app.add_url_rule("/login/", view_func=login_page)
         db.create_all()
 
-        self.admin.add_view(AdminRequiredView(name="AdminRequired",
-                                              endpoint="admin_required_test/"))
+        self.admin.add_view(
+            AdminRequiredView(
+                name="AdminRequired", endpoint="admin_required_test/"))
 
         # create a normal user
-        self.normal_username = urandom(12).encode("hex")
-        self.normal_password = urandom(12).encode("hex")
+        self.normal_username = uuid.uuid4().hex
+        self.normal_password = uuid.uuid4().hex
         self.normal_user = User.create(
             self.normal_username, self.normal_password)
 
         # create an admin
-        self.admin_username = urandom(12).encode("hex")
-        self.admin_password = urandom(12).encode("hex")
+        self.admin_username = uuid.uuid4().hex
+        self.admin_password = uuid.uuid4().hex
         self.admin_user = User.create(
             self.admin_username, self.admin_password)
         self.admin_user.roles.append(Role.create("admin"))
@@ -76,25 +78,26 @@ class TestLogin(ModelTestCase):
         response = self.client.open(
             "/login/", method="GET",
             headers=[("Content-Type", "application/json")])
-        self.assert400(response)
+        self.assert_bad_request(response)
 
     def test_get_login(self):
         response = self.client.get("/login/")
-        self.assert200(response)
+        self.assert_ok(response)
         self.assertIn(
             '<input id="password" name="password" type="password" value="">',
-            response.data)
+            response.data.decode("utf-8"))
         self.assertIn(
             '<input id="username" name="username" type="text" value="">',
-            response.data)
-        self.assertTemplateUsed("pyfarm/login.html")
+            response.data.decode("utf-8"))
+        self.assert_template_used("pyfarm/login.html")
 
     def test_post_login(self):
         # ensure admin page redirects to the login page
         response = self.client.get(
             "/admin/admin_required_test/", follow_redirects=True)
-        self.assert200(response)
-        self.assertIn("<title>PyFarm - Login</title>", response.data)
+        self.assert_ok(response)
+        self.assertIn("<title>PyFarm - Login</title>",
+                      response.data.decode("utf-8"))
         
         # login as a normal user
         response = self.client.post(
@@ -102,7 +105,7 @@ class TestLogin(ModelTestCase):
                 "username": self.normal_username,
                 "password": self.normal_password},
             follow_redirects=True)
-        self.assert200(response)
+        self.assert_ok(response)
         self.assertIn("Set-Cookie", response.headers)
         self.assertIn("text/html", response.headers["Content-Type"])
         self.assertIn("HttpOnly", response.headers["Set-Cookie"])
@@ -110,7 +113,7 @@ class TestLogin(ModelTestCase):
         # attempt to access protected page
         response = self.client.get(
             "/admin/admin_required_test/", follow_redirects=True)
-        self.assert403(response)
+        self.assert_forbidden(response)
         
         # login as admin
         response = self.client.post(
@@ -118,7 +121,7 @@ class TestLogin(ModelTestCase):
                 "username": self.admin_username,
                 "password": self.admin_password},
             follow_redirects=True)
-        self.assert200(response)
+        self.assert_ok(response)
         self.assertIn("Set-Cookie", response.headers)
         self.assertIn("text/html", response.headers["Content-Type"])
         self.assertIn("HttpOnly", response.headers["Set-Cookie"])
@@ -126,8 +129,8 @@ class TestLogin(ModelTestCase):
         # since we've posted as admin, this should work now
         response = self.client.get(
             "/admin/admin_required_test/", follow_redirects=True)
-        self.assert200(response)
-        self.assertIn("Hello world!", response.data)
+        self.assert_ok(response)
+        self.assertIn("Hello world!", response.data.decode("utf-8"))
 
     def test_post_login_json(self):
         response = self.client.open(
@@ -137,17 +140,18 @@ class TestLogin(ModelTestCase):
             data=dumps({
                 "username": self.normal_username,
                 "password": self.normal_password}))
-        self.assert200(response)
+        self.assert_ok(response)
         self.assertIn("Set-Cookie", response.headers)
         self.assertEqual(response.content_type, "application/json")
 
     def test_logout(self):
         response = self.client.get("/logout/")
-        self.assert200(response)
+        self.assert_ok(response)
         self.assertIn(
-            "<title>PyFarm - Already Logged Out</title>", response.data)
+            "<title>PyFarm - Already Logged Out</title>",
+            response.data.decode("utf-8"))
         self.test_post_login()
         response = self.client.get("/logout/")
-        self.assert200(response)
+        self.assert_ok(response)
         self.assertIn(
-            "<title>PyFarm - Logged Out</title>", response.data)
+            "<title>PyFarm - Logged Out</title>", response.data.decode("utf-8"))
