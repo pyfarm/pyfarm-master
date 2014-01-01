@@ -27,11 +27,10 @@ install_requires = [
     "pyfarm.core", "pyfarm.models",
     "flask-login", "flask-admin>=1.0.7",
     "flask-sqlalchemy", "flask-cache", "flask",
-    "itsdangerous", "blinker", "flask-testing"]
+    "itsdangerous", "blinker"]
 
-if sys.version_info[0:2] < (2, 7):
-    install_requires.append("simplejson")
-    install_requires.append("argparse")
+if sys.version_info[0:2] == (2, 6):
+    install_requires += ["simplejson", "argparse"]
 
 if isfile("README.rst"):
     with open("README.rst", "r") as readme:
