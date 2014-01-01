@@ -1,4 +1,5 @@
 # No shebang line, this module is meant to be imported
+# -*- coding: utf-8 -*-
 #
 # Copyright 2013 Oliver Palmer
 #
@@ -24,13 +25,19 @@ those requests will be responded to directly instead of calling
 :meth:`flask.abort`
 """
 
-from flask import render_template, request
-from pyfarm.master.utility import JSONResponse
+try:
+    from httplib import (
+        BAD_REQUEST, NOT_FOUND, UNAUTHORIZED, INTERNAL_SERVER_ERROR)
+except ImportError:
+    from http.client import (
+        BAD_REQUEST, NOT_FOUND, UNAUTHORIZED, INTERNAL_SERVER_ERROR)
 
-ERROR_400_JSON = {u"errorno": 400, u"error": u"BAD REQUEST"}
-ERROR_401_JSON = {u"errorno": 401, u"error": u"UNAUTHORIZED"}
-ERROR_404_JSON = {u"errorno": 404, u"error": u"NOT FOUND"}
-ERROR_500_JSON = {u"errorno": 500, u"error": u"INTERNAL SERVER ERROR"}
+try:
+    from json import dumps
+except ImportError:
+    from simplejson import dumps
+
+from flask import render_template, request, jsonify
 
 
 def error_400(e):
@@ -40,10 +47,11 @@ def error_400(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        return JSONResponse(ERROR_400_JSON, status=400)
+        return jsonify({
+            "error": "unhandled bad request to %s" % request.url}), BAD_REQUEST
     else:
         return render_template(
-            "pyfarm/errors/400.html", url=request.url), 400
+            "pyfarm/errors/400.html", url=request.url), BAD_REQUEST
 
 
 def error_401(e):
@@ -53,10 +61,12 @@ def error_401(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        return JSONResponse(ERROR_401_JSON, status=401)
+        return jsonify(
+            {"error": "unhandled unauthorized request to %s" % request.url}), \
+               UNAUTHORIZED
     else:
         return render_template(
-            "pyfarm/errors/401.html", url=request.url), 401
+            "pyfarm/errors/401.html", url=request.url), UNAUTHORIZED
 
 
 def error_404(e):
@@ -66,10 +76,13 @@ def error_404(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        return JSONResponse(ERROR_404_JSON, status=404)
+        return jsonify(
+            {"error":
+                 "%s was not found and was not explicitly handled internally" %
+                 request.url}), NOT_FOUND
     else:
         return render_template(
-            "pyfarm/errors/404.html", url=request.url), 404
+            "pyfarm/errors/404.html", url=request.url), NOT_FOUND
 
 
 def error_500(e):
@@ -79,7 +92,10 @@ def error_500(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        return JSONResponse(ERROR_500_JSON, status=500)
+        return jsonify(
+            {"error":
+                 "unhandled internal server error when requesting %s" %
+                 request.url}), INTERNAL_SERVER_ERROR
     else:
         return render_template(
-            "pyfarm/errors/500.html", url=request.url), 500
+            "pyfarm/errors/500.html", url=request.url), INTERNAL_SERVER_ERROR
