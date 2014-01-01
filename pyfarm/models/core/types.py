@@ -24,8 +24,12 @@ Special column types used by PyFarm's models.
 import re
 from textwrap import dedent
 from uuid import uuid4, UUID
-from UserDict import UserDict
-from UserList import UserList
+
+try:
+    from UserDict import UserDict
+    from UserList import UserList
+except ImportError:
+    from collections import UserDict, UserList
 
 try:
     from json import dumps, loads
@@ -39,7 +43,8 @@ from netaddr import AddrFormatError, IPAddress as _IPAddress
 
 from pyfarm.master.application import db
 from pyfarm.core.enums import (
-    _AgentState, _UseAgentAddress, _WorkState, _JobTypeLoadMode, Values)
+    STRING_TYPES, _AgentState, _UseAgentAddress, _WorkState,
+    _JobTypeLoadMode, Values)
 
 ID_GUID_DEFAULT = lambda: str(uuid4()).replace("-", "")
 ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should
@@ -64,7 +69,7 @@ def short_guid(func):
     """decorator which shortens guids by replacing {, }, and - with ''"""
     def wrapper(*args, **kwargs):
         value = func(*args, **kwargs)
-        if isinstance(value, basestring):
+        if isinstance(value, STRING_TYPES):
             value = RESUB_GUID_CHARS.sub("", value)
 
         return value
@@ -192,7 +197,7 @@ class IPAddress(_IPAddress):
     against other instance of the same class, a string, or an integer.
     """
     def __eq__(self, other):
-        if isinstance(other, basestring):
+        if isinstance(other, STRING_TYPES):
             return str(self) == other
         elif isinstance(other, int):
             return int(self) == other
@@ -200,7 +205,7 @@ class IPAddress(_IPAddress):
             return super(IPAddress, self).__eq__(other)
 
     def __ne__(self, other):
-        if isinstance(other, basestring):
+        if isinstance(other, STRING_TYPES):
             return str(self) != other
         elif isinstance(other, int):
             return int(self) != other
@@ -227,7 +232,7 @@ class IPv4Address(TypeDecorator):
         if isinstance(value, int):
             return self.checkInteger(value)
 
-        elif isinstance(value, basestring):
+        elif isinstance(value, STRING_TYPES):
             try:
                 return self.checkInteger(int(IPAddress(value.replace("%", ""))))
             except AddrFormatError:  # pragma: no cover
