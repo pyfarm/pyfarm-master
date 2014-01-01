@@ -21,12 +21,17 @@ Permissions
 Stores users and their roles in the database.
 """
 
+import sys
+
 from hashlib import sha256
 from datetime import datetime
 from textwrap import dedent
+
 from flask.ext.login import UserMixin
+
 from pyfarm.core.logger import getLogger
-from pyfarm.master.application import app, db, login_serializer, cache
+from pyfarm.core.enums import STRING_TYPES
+from pyfarm.master.application import app, db, login_serializer
 from pyfarm.models.core.mixins import ReprMixin
 from pyfarm.models.core.functions import split_and_extend
 from pyfarm.models.core.cfg import (
@@ -112,7 +117,7 @@ class User(db.Model, UserMixin, ReprMixin):
         if roles is None:
             roles = []
 
-        elif isinstance(roles, basestring):
+        elif isinstance(roles, STRING_TYPES):
             roles = [roles]
 
         # create the user with the proper initial values
@@ -137,14 +142,19 @@ class User(db.Model, UserMixin, ReprMixin):
 
         if isinstance(id_or_username, int):
             return cls.query.filter_by(id=id_or_username).first()
-        elif isinstance(id_or_username, basestring):
+        elif isinstance(id_or_username, STRING_TYPES):
             return cls.query.filter_by(username=id_or_username).first()
         else:
             raise TypeError("string or integer required for User.get()")
 
     @classmethod
     def hash_password(cls, value):
-        return sha256(app.secret_key.encode("hex") + value).hexdigest()
+        value = app.secret_key + value
+
+        if sys.version_info[0] >= 3:
+            value = value.encode("utf-8")
+
+        return sha256(value).hexdigest()
 
     def get_auth_token(self):
         return login_serializer.dumps([str(self.id), self.password])
@@ -154,10 +164,9 @@ class User(db.Model, UserMixin, ReprMixin):
 
     def check_password(self, password):
         """checks the password provided against the stored password"""
-        assert isinstance(password, basestring)
+        assert isinstance(password, STRING_TYPES)
         return self.hash_password(password) == self.password
 
-    @cache.memoize(timeout=120)
     def is_active(self):
         """returns true if the user and the roles it belongs to are active"""
         logger.debug("%(self)s.is_active()" % locals())
@@ -174,7 +183,6 @@ class User(db.Model, UserMixin, ReprMixin):
         # TODO: there's probably some way to cache this information
         return all(role.is_active() for role in self.roles)
 
-    @cache.memoize(timeout=120)
     def has_roles(self, allowed=None, required=None):
         """checks the provided arguments against the roles assigned"""
         if not allowed and not required:
