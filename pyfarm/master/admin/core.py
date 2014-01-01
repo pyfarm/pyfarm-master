@@ -24,40 +24,15 @@ logic necessary for the admin forms.
 
 import socket
 from functools import partial
+
 from flask import flash
 from flask.ext.admin.babel import gettext
 from flask.ext.admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from flask.ext.admin.contrib.sqla.filters import BaseSQLAFilter
-from sqlalchemy.orm.exc import MultipleResultsFound
 from wtforms.validators import StopValidation
-from wtforms.fields import SelectField
+
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
-
-
-class EnumList(SelectField):
-    """
-    Custom list field which is meant to handle enums objects
-
-    :param enum:
-        the enum to read data
-
-    :type values:
-    :param values:
-        if provided, only these keys will be provided as choices
-        in the html list widget
-    """
-    def __init__(self, *args, **kwargs):
-        processed_choices = []
-        enum = kwargs.pop("enum")
-        values = kwargs.pop("values")
-
-        for key, value in enum._asdict().iteritems():
-            if value in values:
-                processed_choices.append((value, key.title()))
-
-        super(EnumList, self).__init__(
-            choices=processed_choices, coerce=int, **kwargs)
 
 
 def validate_model_field(form, field, function=None):
@@ -72,7 +47,7 @@ def validate_model_field(form, field, function=None):
     """
     try:
         return function(field.name, field.data)
-    except ValueError, e:
+    except ValueError as e:
         raise StopValidation(str(e))
 
 # resource validation wrappers
@@ -120,7 +95,8 @@ class AjaxLoader(QueryAjaxModelLoader):
     """
     def __init__(self, name, model, session=db.session, **options):
         pk = options.pop("pk", None)
-        self.fmt = options.pop("fmt", lambda model: unicode(model))
+        self.fmt = options.pop("fmt", lambda model: model.decode("utf-8"))
+
         super(AjaxLoader, self).__init__(name, session, model, **options)
         if pk is not None:
             self.pk = pk
