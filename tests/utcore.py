@@ -22,24 +22,42 @@ used by the unittests.
 import os
 import time
 import sys
-from functools import wraps
-from flask.ext.testing import TestCase as FlaskTestCase
+import warnings
+
 if sys.version_info[0:2] < (2, 7):
-    from unittest2 import TestCase as BaseTestCase
+    import unittest2 as unittest
 else:
-    from unittest import TestCase as BaseTestCase
+    import unittest
 
 try:
-    import json
+    from httplib import (
+        OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED, FORBIDDEN,
+        NOT_FOUND, NOT_ACCEPTABLE, CONFLICT, GONE, INTERNAL_SERVER_ERROR,
+        NOT_IMPLEMENTED)
+
 except ImportError:
-    import simplejson as json
+    from http.client import (
+        OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED, FORBIDDEN,
+        NOT_FOUND, NOT_ACCEPTABLE, CONFLICT, GONE, INTERNAL_SERVER_ERROR,
+        NOT_IMPLEMENTED)
 
-from nose.plugins.skip import SkipTest
+try:
+    import blinker
+except ImportError:
+    blinker = None
 
-# silence SAWarning (this only comes up during testing)
-import warnings
+
+from flask import Response, template_rendered, json_available
 from sqlalchemy.exc import SAWarning
-warnings.simplefilter("ignore", category=SAWarning)
+from werkzeug.utils import cached_property
+
+if json_available:
+    from flask import json
+else:
+    try:
+        import json
+    except ImportError:
+        import simplejson as json
 
 # disable logging
 from pyfarm.core.logger import disable_logging
@@ -102,34 +120,110 @@ from pyfarm.models.task import Task
 from pyfarm.models.job import Job, JobSoftware, JobTag
 from pyfarm.master.application import (
     get_application, get_api_blueprint, get_admin, db, app, admin)
-from pyfarm.master.entrypoints.master import load_admin, load_api, load_master
+from pyfarm.master.entrypoints.master import load_master
 
 
-def skip_on_ci(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if "BUILDBOT_UUID" in os.environ or "TRAVIS" in os.environ:
-            raise SkipTest
-        return func(*args, **kwargs)
-    return wrapper
+class JsonResponseMixin(object):
+    """
+    Mixin with testing helper methods
+    """
+    @cached_property
+    def json(self):
+        if not json_available:  # pragma: no cover
+            raise NotImplementedError
+        return json.loads(self.data)
 
 
-class TestCase(FlaskTestCase, BaseTestCase):
-    def assert500(self, response):
-        self.assertStatus(response, 500)
+def _make_test_response(response_class):
+    class TestResponse(response_class, JsonResponseMixin):
+        pass
 
-    def create_app(self):
-        return get_application()
+    return TestResponse
+
+
+class TestCase(unittest.TestCase):
+    """
+    Base test case for the master application.  A lot of this code is copied
+    from the flask-testing package so it's kept in on place and because there's
+    some issues between Python 3 and flask-testing.
+    """
+    def _template_rendered(self, app, template, context):
+        self.templates_rendered.append((template, context))
 
     def setUp(self):
         super(TestCase, self).setUp()
+        warnings.simplefilter("ignore", category=SAWarning, append=True)
+
+        self.templates_rendered = []
+        if blinker is not None:
+            template_rendered.connect(self._template_rendered)
+
+        # application and test client
+        self.app = get_application()
+
+        # response class
+        self._original_response_class = self.app.response_class
+        self.app.response_class = _make_test_response(self.app.response_class)
+
+        self.client = self.app.test_client()
+
+        # context
+        self._ctx = self.app.test_request_context()
+        self._ctx.push()
+
+        # internal testing end points
         self.admin = get_admin(app=self.app)
         self.api = get_api_blueprint()
+
         load_master(self.app, self.admin, self.api)
+
+    def tearDown(self):
+        del self.templates_rendered[:]
+
+        if blinker is not None:
+            template_rendered.disconnect(self._template_rendered)
+
+        if self.app is not None:
+            self.app.response_class = self._original_response_class
+
+    def assert_template_used(self, name, tmpl_name_attribute="name"):
+        if blinker is None:
+            raise RuntimeError("Signals not supported")
+
+        for template, context in self.templates_rendered:
+            if getattr(template, tmpl_name_attribute) == name:
+                return True
+        raise AssertionError("template %s not used" % name)
+
+    def assert_status(self, response, status_code=None):
+        assert status_code is not None
+        self.assertIsInstance(response, Response)
+        self.assertEqual(response.status_code, status_code)
+
+    assert_ok = lambda self, response: \
+        self.assert_status(response, status_code=OK)
+    assert_created = lambda self, response: \
+        self.assert_status(response, status_code=CREATED)
+    assert_accepted = lambda self, response: \
+        self.assert_status(response, status_code=ACCEPTED)
+    assert_no_content = lambda self, response: \
+        self.assert_status(response, status_code=NO_CONTENT)
+    assert_bad_request = lambda self, response: \
+        self.assert_status(response, status_code=BAD_REQUEST)
+    assert_unauthorized = lambda self, response: \
+        self.assert_status(response, status_code=UNAUTHORIZED)
+    assert_forbidden = lambda self, response: \
+        self.assert_status(response, status_code=FORBIDDEN)
+    assert_not_found = lambda self, response: \
+        self.assert_status(response, status_code=NOT_FOUND)
+    assert_not_acceptable = lambda self, response: \
+        self.assert_status(response, status_code=NOT_ACCEPTABLE)
+    assert_internal_server_error = lambda self, response: \
+        self.assert_status(response, status_code=INTERNAL_SERVER_ERROR)
 
 
 class ModelTestCase(TestCase):
-    ORIGINAL_ENVIRONMENT = dict(os.environ.data)
+    ORIGINAL_ENVIRONMENT = dict(os.environ)
 
     def setUp(self):
         super(ModelTestCase, self).setUp()
@@ -139,5 +233,6 @@ class ModelTestCase(TestCase):
         db.create_all()
 
     def tearDown(self):
+        super(ModelTestCase, self).tearDown()
         db.session.remove()
         db.drop_all()
