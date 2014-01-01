@@ -46,7 +46,7 @@ def get_application(**configuration_keywords):
     # build the configuration
     if read_env("PYFARM_CONFIG", "debug", ) == "debug":
         secret_key = read_env(
-            "PYFARM_SECRET_KEY", "4n)Z\xc2\xde\xdd\x17\xdd\xf7\xa6)>{\xfc\xff",
+            "PYFARM_SECRET_KEY", "NG4pWsOCw57DnRfDncO3wqYpPnvDvMO",
             log_result=False)
 
         app_config = {
