@@ -19,14 +19,11 @@ import time
 from datetime import datetime, timedelta
 
 from utcore import ModelTestCase
-from pyfarm.master.application import db, login_serializer, cache
+from pyfarm.master.application import db, login_serializer
 from pyfarm.models.user import User, Role
 
 
 class UserTest(ModelTestCase):
-    def tearDown(self):
-        cache.clear()
-
     def test_create_user(self):
         username = os.urandom(32).encode("hex")
         password = os.urandom(32).encode("hex")
@@ -83,17 +80,13 @@ class UserTest(ModelTestCase):
         password = os.urandom(32).encode("hex")
         user = User.create(username, password)
         self.assertTrue(user.is_active())
-        cache.clear()
         user.active = False
         self.assertFalse(user.is_active())
-        cache.clear()
         user.active = True
         self.assertTrue(user.is_active())
-        cache.clear()
         user.expiration = datetime.now() + timedelta(seconds=.5)
         time.sleep(1.5)
         self.assertFalse(user.is_active())
-        cache.clear()
         user.expiration = datetime.now() + timedelta(days=1)
         self.assertTrue(user.is_active())
 
@@ -116,22 +109,16 @@ class UserTest(ModelTestCase):
         db.session.commit()
         self.assertTrue(
             user.has_roles(allowed=[roles[0].name, roles[1].name]))
-        cache.clear()
         self.assertTrue(
             user.has_roles(allowed=[roles[0].name, "foo"]))
-        cache.clear()
         self.assertTrue(
             user.has_roles(allowed=["foo", roles[0].name]))
-        cache.clear()
         self.assertFalse(
             user.has_roles(allowed=["foo"]))
-        cache.clear()
         self.assertTrue(
             user.has_roles(required=[roles[0].name, roles[1].name]))
-        cache.clear()
         self.assertFalse(
             user.has_roles(required=[roles[0].name, roles[1].name, "foo"]))
-        cache.clear()
 
 
 class RoleTest(ModelTestCase):
