@@ -229,7 +229,7 @@ class AgentIndexAPI(MethodView):
             return jsonify(errorno=errorno, message=msg), BAD_REQUEST
 
         # update with our remote_addr from the request
-        data.update(remote_ip=request.remote_addr)
+        data.setdefault("remote_ip", request.remote_addr)
 
         # check to see if there's already an existing agent with
         # this information
