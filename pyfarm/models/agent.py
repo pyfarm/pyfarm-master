@@ -32,7 +32,7 @@ from netaddr import AddrFormatError, IPAddress
 
 from pyfarm.core.enums import AgentState, STRING_TYPES
 from pyfarm.core.config import read_env_number, read_env_int, read_env_bool
-from pyfarm.master.application import db
+from pyfarm.master.application import db, app
 from pyfarm.models.core.functions import repr_ip
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, DictMixins, ReprMixin)
@@ -325,15 +325,17 @@ class Agent(db.Model, ValidatePriorityMixin, DictMixins, ReprMixin):
             raise ValueError(
                 "%s is not a valid address format: %s" % (value, e))
 
-        if PYFARM_REQUIRE_PRIVATE_IP and not ip.is_private():
-            raise ValueError("%s is not a private ip address" % value)
+        if not app.config.get("DEV_ALLOW_ANY_AGENT_ADDRESS", False):
+            if PYFARM_REQUIRE_PRIVATE_IP and not ip.is_private():
+                raise ValueError("%s is not a private ip address" % value)
 
-        if not all([
-            not ip.is_hostmask(), not ip.is_link_local(),
-            not ip.is_loopback(), not ip.is_multicast(),
-            not ip.is_netmask(), not ip.is_reserved()
-        ]):
-            raise ValueError("%s is not a usable ip address" % value)
+            if not app.config.get("DEV_ALLOW_ANY_AGENT_ADDRESS", False) and \
+                not all([
+                    not ip.is_hostmask(), not ip.is_link_local(),
+                    not ip.is_loopback(), not ip.is_multicast(),
+                    not ip.is_netmask(), not ip.is_reserved()
+                ]):
+                raise ValueError("%s is not a usable ip address" % value)
 
         return value
 
