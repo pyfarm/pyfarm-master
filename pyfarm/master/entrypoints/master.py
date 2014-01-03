@@ -148,6 +148,11 @@ def run_master():  # pragma: no cover
     parser.add_argument("--create-all", "-C", action="store_true",
                         help="create all tables before starting")
     parser.add_argument("--confirm-drop")
+    parser.add_argument("--allow-any-agent-address", action="store_true",
+                        help="Special flag that will turn off all ip address "
+                             "validation in the agent model.  This is provided "
+                             "so the master and agent can be run on the "
+                             "loopback adapter.")
     parsed = parser.parse_args()
 
     if app.debug and parsed.drop_all:
@@ -155,6 +160,9 @@ def run_master():  # pragma: no cover
 
     if parsed.create_all:
         db.create_all()
+
+    if parsed.allow_any_agent_address:
+        app.config["DEV_ALLOW_ANY_AGENT_ADDRESS"] = True
 
     load_master(app, admin, api)
     app.run()
