@@ -21,8 +21,6 @@ Utility
 General utility which are not view or tool specific
 """
 
-import sys
-
 try:
     from httplib import BAD_REQUEST
 except ImportError:
@@ -41,7 +39,7 @@ except ImportError:
 from flask import jsonify as _jsonify, current_app, request
 from werkzeug.datastructures import ImmutableDict
 
-from pyfarm.core.enums import APIError, STRING_TYPES
+from pyfarm.core.enums import APIError, STRING_TYPES, PY3
 
 COLUMN_CACHE = {}
 
@@ -79,7 +77,7 @@ class ReducibleDictionary(dict):
     {'foo': True}
     """
     def reduce(self):
-        if sys.version_info[0] < 3:
+        if not PY3:
             items = self.copy().iteritems
         else:
             items = self.copy().items

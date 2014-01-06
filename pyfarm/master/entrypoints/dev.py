@@ -24,12 +24,12 @@ These are internal entry points used for development only.
     These entry pints should **never** be deployed or used in production.
 """
 
-import sys
-
 
 def dbdata():
     """creates some fake internal data for use in testing.agent_names"""
-    if sys.version_info[0] == 2:
+    from pyfarm.core.enums import PY3
+
+    if not PY3:
         input_function = raw_input
     else:
         input_function = input

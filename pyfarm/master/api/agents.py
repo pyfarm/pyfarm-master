@@ -35,7 +35,7 @@ from flask import Response, request
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import APIError
+from pyfarm.core.enums import APIError, PY2
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
 from pyfarm.master.utility import json_from_request, get_column_sets, jsonify
@@ -240,7 +240,7 @@ class AgentIndexAPI(MethodView):
         if existing_agent:
             updated = {}
 
-            if sys.version_info[0] == 2:
+            if PY2:
                 items = data.iteritems
             else:
                 items = data.items
@@ -479,7 +479,7 @@ class SingleAgentAPI(MethodView):
             msg = "no agent found for `%s`" % agent_id
             return jsonify(errorno=errorno, message=msg), NOT_FOUND
 
-        if sys.version_info[0] == 2:
+        if PY2:
             items = data.iteritems
         else:
             items = data.items
