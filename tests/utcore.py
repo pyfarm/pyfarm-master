@@ -20,11 +20,12 @@ used by the unittests.
 """
 
 import os
-import sys
 import time
 import warnings
 
-if sys.version_info[0:2] < (2, 7):
+from pyfarm.core.enums import PY26
+
+if PY26:
     import unittest2 as unittest
 else:
     import unittest

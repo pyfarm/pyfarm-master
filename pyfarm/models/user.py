@@ -21,8 +21,6 @@ Permissions
 Stores users and their roles in the database.
 """
 
-import sys
-
 from hashlib import sha256
 from datetime import datetime
 from textwrap import dedent
@@ -30,7 +28,7 @@ from textwrap import dedent
 from flask.ext.login import UserMixin
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import STRING_TYPES
+from pyfarm.core.enums import STRING_TYPES, PY3
 from pyfarm.master.application import app, db, login_serializer
 from pyfarm.models.core.mixins import ReprMixin
 from pyfarm.models.core.functions import split_and_extend
@@ -151,7 +149,7 @@ class User(db.Model, UserMixin, ReprMixin):
     def hash_password(cls, value):
         value = app.secret_key + value
 
-        if sys.version_info[0] >= 3:
+        if PY3:
             value = value.encode("utf-8")
 
         return sha256(value).hexdigest()

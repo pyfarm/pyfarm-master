@@ -30,7 +30,7 @@ from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
 from netaddr import AddrFormatError, IPAddress
 
-from pyfarm.core.enums import AgentState, STRING_TYPES
+from pyfarm.core.enums import AgentState, STRING_TYPES, PY3
 from pyfarm.core.config import read_env_number, read_env_int, read_env_bool
 from pyfarm.master.application import db, app
 from pyfarm.models.core.functions import repr_ip
@@ -77,7 +77,7 @@ class AgentTaggingMixin(object):
     Mixin used which provides some common structures to
     :class:`.AgentTag` and :class:`.AgentSoftware`
     """
-    if sys.version_info[0] == 2:
+    if not PY3:
         NUMERIC_TYPES = (int, long)
     else:
         NUMERIC_TYPES = int
