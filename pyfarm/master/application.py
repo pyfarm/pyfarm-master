@@ -23,12 +23,13 @@ necessary to run the master.
 """
 
 import os
-from datetime import timedelta
+
 from flask import Flask, Blueprint
 from flask.ext.admin import Admin
 from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
 from itsdangerous import URLSafeTimedSerializer
+
 from pyfarm.core.config import read_env
 from pyfarm.master.admin.baseview import AdminIndex
 

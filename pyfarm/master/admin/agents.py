@@ -23,6 +23,7 @@ Objects and classes for working with the agent models.
 
 from wtforms import TextField, SelectField
 from sqlalchemy import not_
+
 from pyfarm.core.enums import AgentState, UseAgentAddress
 from pyfarm.models.agent import (
     AgentTag, AgentSoftware, Agent)

@@ -24,6 +24,7 @@ Entry points for the /setup/ target
 from wtforms import Form, TextField, PasswordField, ValidationError
 from wtforms.validators import Required
 from flask import render_template, request
+
 from pyfarm.models.user import User, Role
 from pyfarm.master.application import db
 

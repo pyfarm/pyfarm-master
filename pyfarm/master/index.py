@@ -22,7 +22,9 @@ Contains the endpoints for master"s index ("/")
 """
 
 import os
+
 from flask import Response, abort, render_template
+
 from pyfarm.master.application import app
 
 

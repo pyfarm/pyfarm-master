@@ -22,7 +22,6 @@ Contained within this module are an API handling functions which can
 manage or query agents using JSON.
 """
 
-import sys
 
 try:
     from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
