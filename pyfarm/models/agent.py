@@ -40,8 +40,8 @@ from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, IDTypeTag, UseAgentAddressEnum,
     AgentStateEnum)
 from pyfarm.models.core.cfg import (
-    TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE,
-    MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH, TABLE_AGENT_SOFTWARE_DEPENDENCIES,
+    TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_SOFTWARE,
+    MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH, TABLE_AGENT_SOFTWARE_ASSOC,
     TABLE_AGENT_TAGS_DEPENDENCIES, TABLE_PROJECT_AGENTS, TABLE_PROJECT)
 
 PYFARM_REQUIRE_PRIVATE_IP = read_env_bool("PYFARM_REQUIRE_PRIVATE_IP", False)
@@ -56,12 +56,13 @@ AgentTagDependency = db.Table(
     db.Column("tag_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_AGENT_TAGS), primary_key=True))
 
-AgentSoftwareDependency = db.Table(
-    TABLE_AGENT_SOFTWARE_DEPENDENCIES, db.metadata,
+
+AgentSoftwareAssociation = db.Table(
+    TABLE_AGENT_SOFTWARE_ASSOC, db.metadata,
     db.Column("agent_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
     db.Column("software_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_AGENT_SOFTWARE), primary_key=True))
+              db.ForeignKey("%s.id" % TABLE_SOFTWARE), primary_key=True))
 
 
 AgentProjects = db.Table(
@@ -113,34 +114,6 @@ class AgentTag(db.Model, AgentTaggingMixin):
                     is used for grouping like resources together on the network
                     but could also be used by jobs as a sort of
                     requirement."""))
-
-
-class AgentSoftware(db.Model, AgentTaggingMixin):
-    """
-    Stores information about an the software installed on
-    an agent.
-
-    .. note::
-        This table enforces two forms of uniqueness.  The :attr:`id` column
-        must be unique and the combination of these columns must also be
-        unique to limit the frequency of duplicate data:
-
-            * :attr:`version`
-            * :attr:`software`
-    """
-    __tablename__ = TABLE_AGENT_SOFTWARE
-    __table_args__ = (UniqueConstraint("version", "software"), )
-    id = id_column(IDTypeTag)
-    software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
-                         doc=dedent("""
-                         The name of the software installed.  No normalization
-                         is performed prior to being stored in the database"""))
-    version = db.Column(db.String(MAX_TAG_LENGTH),
-                        default="any", nullable=False,
-                        doc=dedent("""
-                        The version of the software installed on a host.  This
-                        value does not follow any special formatting rules
-                        because the format depends on the 3rd party."""))
 
 
 class Agent(db.Model, ValidatePriorityMixin, DictMixins, ReprMixin):
@@ -258,8 +231,8 @@ class Agent(db.Model, ValidatePriorityMixin, DictMixins, ReprMixin):
                             backref=db.backref("agents", lazy="dynamic"),
                             lazy="dynamic",
                             doc="Tag(s) assigned to this agent")
-    software = db.relationship("AgentSoftware",
-                               secondary=AgentSoftwareDependency,
+    software = db.relationship("Software",
+                               secondary=AgentSoftwareAssociation,
                                backref=db.backref("agents", lazy="dynamic"),
                                lazy="dynamic",
                                doc="software this agent has installed or is "

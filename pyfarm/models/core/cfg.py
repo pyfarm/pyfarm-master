@@ -30,17 +30,11 @@ variables have defaults defined in the configuration under `PYFARM_DB_<value>`
 :const string TABLE_AGENT_TAGS:
     Stores the name of the table for agent tags
 
-:const string TABLE_AGENT_SOFTWARE:
-    Stores the name of the table for agent software
-
 :const string TABLE_JOB:
     Stores the name of the table for jobs
 
 :const string TABLE_JOB_TAG:
     Stores the name of the table for job tags
-
-:const string TABLE_JOB_SOFTWARE:
-    Stores the name of the table for job software
 
 :const string TABLE_TASK:
     Stores the name of the table for job tasks
@@ -79,16 +73,16 @@ from pyfarm.core.config import read_env, read_env_int
 
 # table names
 TABLE_PREFIX = read_env("PYFARM_DB_PREFIX", "pyfarm_")
+TABLE_SOFTWARE = "%ssoftware" % TABLE_PREFIX
 TABLE_AGENT = "%sagents" % TABLE_PREFIX
 TABLE_AGENT_TAGS = "%s_tags" % TABLE_AGENT
 TABLE_AGENT_TAGS_DEPENDENCIES = "%s_dependencies" % TABLE_AGENT
-TABLE_AGENT_SOFTWARE = "%s_software" % TABLE_AGENT
-TABLE_AGENT_SOFTWARE_DEPENDENCIES = "%s_dependencies" % TABLE_AGENT_SOFTWARE
+TABLE_AGENT_SOFTWARE_ASSOC = "%s_software_assoc" % TABLE_AGENT
 TABLE_JOB = "%sjobs" % TABLE_PREFIX
 TABLE_JOB_TYPE = "%s_jobtypes" % TABLE_JOB
 TABLE_JOB_TAG = "%s_tags" % TABLE_JOB
 TABLE_JOB_DEPENDENCIES = "%s_dependencies" % TABLE_JOB
-TABLE_JOB_SOFTWARE = "%s_software" % TABLE_JOB
+TABLE_JOB_SOFTWARE_DEP = "%s_software_dep" % TABLE_JOB
 TABLE_TASK = "%stask" % TABLE_PREFIX
 TABLE_TASK_DEPENDENCIES = "%s_dependencies" % TABLE_TASK
 TABLE_USERS = "%susers" % TABLE_PREFIX
@@ -99,11 +93,11 @@ TABLE_USERS_USER_ROLES = "%s_user_roles" % TABLE_USERS
 TABLE_PROJECT = "%sprojects" % TABLE_PREFIX
 TABLE_PROJECT_AGENTS = "%s_agents" % TABLE_PROJECT
 
-TABLES = (TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE, TABLE_AGENT_SOFTWARE,
+TABLES = (TABLE_AGENT_TAGS, TABLE_SOFTWARE, TABLE_AGENT_SOFTWARE_ASSOC,
           TABLE_AGENT, TABLE_AGENT_TAGS_DEPENDENCIES, TABLE_JOB_TYPE,
           TABLE_USERS_USER, TABLE_USERS_ROLE, TABLE_USERS_USER_ROLES,
           TABLE_TASK, TABLE_TASK_DEPENDENCIES, TABLE_JOB_DEPENDENCIES,
-          TABLE_JOB_TAG, TABLE_JOB_SOFTWARE, TABLE_JOB, TABLE_PROJECT,
+          TABLE_JOB_TAG, TABLE_JOB_SOFTWARE_DEP, TABLE_JOB, TABLE_PROJECT,
           TABLE_PROJECT_AGENTS, TABLE_USERS_PROJECTS)
 
 # column lengths

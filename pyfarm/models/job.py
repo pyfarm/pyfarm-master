@@ -45,12 +45,20 @@ from pyfarm.master.application import db
 from pyfarm.models.core.functions import work_columns
 from pyfarm.models.core.types import id_column, JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_JOB_TAG, TABLE_JOB_SOFTWARE, TABLE_JOB_TYPE,
-    MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH,
+    TABLE_JOB, TABLE_JOB_TAG, TABLE_JOB_SOFTWARE_DEP, TABLE_JOB_TYPE,
+    MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH, TABLE_SOFTWARE,
     TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin)
 from pyfarm.models.jobtype import JobType  # required for a relationship
+
+
+JobSoftwareDependency = db.Table(
+    TABLE_JOB_SOFTWARE_DEP, db.metadata,
+    db.Column("job_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True),
+    db.Column("software_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_SOFTWARE), primary_key=True))
 
 
 class JobTag(db.Model):
@@ -78,42 +86,6 @@ class JobTag(db.Model):
                        Foreign key which stores :attr:`Job.id`"""))
 
     tag = db.Column(db.String(MAX_TAG_LENGTH), nullable=False)
-
-
-class JobSoftware(db.Model):
-    """
-    Model which allows specific software to be associated with a
-    :class:`.Job` object.
-
-    .. note::
-        This table enforces two forms of uniqueness.  The :attr:`id` column
-        must be unique and the combination of these columns must also be
-        unique to limit the frequency of duplicate data:
-
-            * :attr:`job_id`
-            * :attr:`software`
-            * :attr:`version`
-
-    .. autoattribute:: job_id
-    """
-    __tablename__ = TABLE_JOB_SOFTWARE
-    __table_args__ = (
-        UniqueConstraint("job_id", "software", "version"), )
-
-    id = id_column()
-    job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
-                       nullable=False,
-                       doc=dedent("""
-                       The foreign key which stores :attr:`Job.id`"""))
-    software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
-                         doc=dedent("""
-                         The name of the software required to run a job"""))
-    version = db.Column(db.String(MAX_TAG_LENGTH),
-                        default="any", nullable=False,
-                        doc=dedent("""
-                        The version of software required to run the job.  This
-                        value does not follow any special formatting rules
-                        because the format depends on the 3rd party."""))
 
 
 JobDependencies = db.Table(
@@ -184,7 +156,7 @@ class Job(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin):
                     The platform independent command to run. Each agent will
                     resolve this value for itself when the task begins so a
                     command like `ping` will work on any platform it's
-                    assigned to.  The full commend could be provided here,
+                    assigned to.  The full command could be provided here,
                     but then the job must be tagged using
                     :class:`.JobSoftware` to limit which agent(s) it will
                     run on."""))
@@ -355,11 +327,11 @@ class Job(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin):
                            doc=dedent("""
                            Relationship between this job and
                            :class:`.JobTag` objects"""))
-    software = db.relationship("JobSoftware", backref="job",
+    software = db.relationship("Software",
+                               secondary=JobSoftwareDependency,
+                               backref=db.backref("jobs", lazy="dynamic"),
                                lazy="dynamic",
-                               doc=dedent("""
-                               Relationship between this job and
-                               :class:`.JobSoftware` objects"""))
+                               doc="software needed by this job")
 
     @validates("ram", "cpus")
     def validate_resource(self, key, value):
