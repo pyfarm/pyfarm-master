@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2013 Oliver Palmer
+# Copyright 2014 Ambient Entertainment GmbH & Co. KG
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,32 +16,18 @@
 # limitations under the License.
 
 """
-Job
+Software
 ===
 
-Objects and classes for working with the job models.
+Objects and classes for working with the software models.
 """
 
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.application import SessionMixin
-from pyfarm.models.job import Job, JobTag
+from pyfarm.models.software import Software
 from pyfarm.models.task import Task
 
 
-class JobRolesMixin(object):
-    access_roles = ("admin.db.work.job", )
-
-
-# TODO: !!! add display override for STATE field
-class JobView(SessionMixin, JobRolesMixin, SQLModelView):
-    model = Job
-
-
-# TODO: !!! add display override for STATE field
-class TaskView(SessionMixin, SQLModelView):
-    access_roles = ("admin.db.work.task", )
-    model = Task
-
-
-class JobTagView(SessionMixin, JobRolesMixin, SQLModelView):
-    model = JobTag
+class SoftwareView(SessionMixin, SQLModelView):
+    model = Software
+    access_roles = ("admin.db.work.software", )

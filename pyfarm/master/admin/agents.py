@@ -25,8 +25,8 @@ from wtforms import TextField, SelectField
 from sqlalchemy import not_
 
 from pyfarm.core.enums import AgentState, UseAgentAddress
-from pyfarm.models.agent import (
-    AgentTag, AgentSoftware, Agent)
+from pyfarm.models.agent import AgentTag, Agent, AgentSoftwareAssociation
+from pyfarm.models.software import Software
 from pyfarm.master.application import SessionMixin
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.admin.core import (
@@ -226,7 +226,7 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     form_ajax_refs = {
         "tags": AjaxLoader("tags", AgentTag,
                            fields=("tag", ), fmt=lambda model: model.tag),
-        "software": AjaxLoader("software", AgentSoftware,
+        "software": AjaxLoader("software", Software,
                                fields=("software", "version"),
                                fmt=lambda model: "%s (%s)" % (
                                    model.software, model.version))}
@@ -248,32 +248,6 @@ class AgentTagView(SessionMixin, AgentRolesMixin, SQLModelView):
             "description": AgentTag.tag.__doc__},
         "agents": {
             "description": "Agents(s) which are tagged with this string"}}
-
-    # create ajax loaders for the relationships
-    form_ajax_refs = {
-        "agents": AjaxLoader("agents", Agent,
-                             fields=("hostname", ), fmt=repr_agent)}
-
-
-class AgentSoftwareView(SessionMixin, AgentRolesMixin, SQLModelView):
-    """
-    Administrative view which allows users to view, create, or edit agent
-    software.
-    """
-    model = AgentSoftware
-
-    # search setup
-    column_searchable_list = ("software", "version")
-    column_filters = ("software", "version")
-
-    # arguments to pass into the fields
-    form_args = {
-        "software": {
-            "description": AgentSoftware.software.__doc__},
-        "version": {
-            "description": AgentSoftware.version.__doc__},
-        "agents": {
-            "description": "Agent(s) which are tagged with this software"}}
 
     # create ajax loaders for the relationships
     form_ajax_refs = {
