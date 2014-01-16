@@ -24,12 +24,12 @@ of PyFarm's master.
 
 from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
+from pyfarm.models.software import Software
 from pyfarm.models.task import Task, TaskDependencies
-from pyfarm.models.job import Job, JobTag, JobDependencies
+from pyfarm.models.job import Job, JobTag, JobDependencies, JobSoftwareDependency
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import (
-    Agent, AgentSoftware, AgentTag,
-    AgentSoftwareDependency, AgentSoftwareDependency)
+    Agent, AgentTag, AgentSoftwareAssociation)
 from pyfarm.models.user import User, Role
 from pyfarm.master.application import db
 
@@ -73,17 +73,23 @@ def load_index(app_instance):
 
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
-    from pyfarm.master.api.agents import SingleAgentAPI, AgentIndexAPI, schema
+    from pyfarm.master.api.agents import (
+        SingleAgentAPI, AgentIndexAPI, schema as agent_schema)
 
     # add api methods
     api_instance.add_url_rule(
         "/agents",
         view_func=AgentIndexAPI.as_view("agent_index_api"))
     api_instance.add_url_rule(
-        "/agents/schema", view_func=schema, methods=("GET", ))
+        "/agents/schema", view_func=agent_schema, methods=("GET", ))
     api_instance.add_url_rule(
         "/agents/<int:agent_id>",
         view_func=SingleAgentAPI.as_view("single_agent_api"))
+    '''
+    api_instance.add_url_rule(
+        "/jobs",
+        view_func=JobIndexAPI.as_view("job_index_api"))
+    '''
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)
@@ -94,10 +100,10 @@ def load_admin(admin_instance):
     from flask.ext.admin.base import MenuLink
     from pyfarm.master.admin.projects import ProjectView
     from pyfarm.master.admin.users import UserView, RoleView
-    from pyfarm.master.admin.agents import (
-        AgentView, AgentSoftwareView, AgentTagView)
+    from pyfarm.master.admin.software import SoftwareView
+    from pyfarm.master.admin.agents import AgentView, AgentTagView
     from pyfarm.master.admin.work import (
-        JobView, JobSoftwareView, JobTagView, TaskView)
+        JobView, JobTagView, TaskView)
 
     # admin links
     admin_instance.add_link(MenuLink("Preferences", "/preferences"))
@@ -109,17 +115,15 @@ def load_admin(admin_instance):
     admin_instance.add_view(
         RoleView(name="Users - Role", endpoint="users/role"))
     admin_instance.add_view(
-        AgentView(name="Agents - Host", endpoint="agents/agent"))
+        SoftwareView(name="Software", endpoint="software"))
     admin_instance.add_view(
-        AgentSoftwareView(name="Agents - Software", endpoint="agents/software"))
+        AgentView(name="Agents - Host", endpoint="agents/agent"))
     admin_instance.add_view(
         AgentTagView(name="Agents - Tags", endpoint="agents/tags"))
     admin_instance.add_view(
         JobView(name="Jobs - Job", endpoint="jobs/job"))
     admin_instance.add_view(
         TaskView(name="Jobs - Task", endpoint="jobs/task"))
-    admin_instance.add_view(
-        JobSoftwareView(name="Jobs - Software", endpoint="jobs/software"))
     admin_instance.add_view(
         JobTagView(name="Jobs - Tags", endpoint="jobs/tags"))
     admin_instance.add_view(
