@@ -40,8 +40,8 @@ from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, IDTypeTag, UseAgentAddressEnum,
     AgentStateEnum)
 from pyfarm.models.core.cfg import (
-    TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_AGENT_SOFTWARE,
-    MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH, TABLE_AGENT_SOFTWARE_DEPENDENCIES,
+    TABLE_AGENT, TABLE_AGENT_TAGS, TABLE_SOFTWARE,
+    MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH, TABLE_AGENT_SOFTWARE_ASSOC,
     TABLE_AGENT_TAGS_DEPENDENCIES, TABLE_PROJECT_AGENTS, TABLE_PROJECT)
 
 PYFARM_REQUIRE_PRIVATE_IP = read_env_bool("PYFARM_REQUIRE_PRIVATE_IP", False)
@@ -56,12 +56,13 @@ AgentTagDependency = db.Table(
     db.Column("tag_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_AGENT_TAGS), primary_key=True))
 
-AgentSoftwareDependency = db.Table(
-    TABLE_AGENT_SOFTWARE_DEPENDENCIES, db.metadata,
+
+AgentSoftwareAssociation = db.Table(
+    TABLE_AGENT_SOFTWARE_ASSOC, db.metadata,
     db.Column("agent_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
     db.Column("software_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_AGENT_SOFTWARE), primary_key=True))
+              db.ForeignKey("%s.id" % TABLE_SOFTWARE), primary_key=True))
 
 
 AgentProjects = db.Table(
@@ -258,8 +259,8 @@ class Agent(db.Model, ValidatePriorityMixin, UtilityMixins, ReprMixin):
                             backref=db.backref("agents", lazy="dynamic"),
                             lazy="dynamic",
                             doc="Tag(s) assigned to this agent")
-    software = db.relationship("AgentSoftware",
-                               secondary=AgentSoftwareDependency,
+    software = db.relationship("Software",
+                               secondary=AgentSoftwareAssociation,
                                backref=db.backref("agents", lazy="dynamic"),
                                lazy="dynamic",
                                doc="software this agent has installed or is "

@@ -78,7 +78,7 @@ class JobType(db.Model):
 
     jobs = db.relationship("Job", backref="job_type", lazy="dynamic",
                            doc=dedent("""
-                           Relationship between this job and
+                           Relationship between this jobtype and
                            :class:`.Job` objects."""))
 
     @validates("mode")
