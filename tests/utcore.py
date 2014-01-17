@@ -54,10 +54,7 @@ from werkzeug.utils import cached_property
 if json_available:
     from flask import json
 else:
-    try:
-        import json
-    except ImportError:
-        import simplejson as json
+    import json
 
 # disable logging
 from pyfarm.core.logger import disable_logging

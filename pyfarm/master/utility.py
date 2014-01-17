@@ -21,15 +21,12 @@ Utility
 General utility which are not view or tool specific
 """
 
+import json
+
 try:
     from httplib import BAD_REQUEST
 except ImportError:
     from http.client import BAD_REQUEST
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 try:
     from UserDict import UserDict

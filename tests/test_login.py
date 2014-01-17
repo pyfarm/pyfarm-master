@@ -15,11 +15,7 @@
 # limitations under the License.
 
 import uuid
-
-try:
-    from json import dumps
-except ImportError:
-    from simplejson import dumps
+from json import dumps
 
 from flask.ext.admin import BaseView, expose
 

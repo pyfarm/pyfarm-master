@@ -14,15 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from json import loads
+
 try:
     from httplib import OK, BAD_REQUEST
 except ImportError:
     from http.client import OK, BAD_REQUEST
-
-try:
-    from json import loads
-except ImportError:
-    from simplejson import loads
 
 from werkzeug.datastructures import ImmutableDict
 

@@ -25,17 +25,14 @@ those requests will be responded to directly instead of calling
 :meth:`flask.abort`
 """
 
+from json import dumps
+
 try:
     from httplib import (
         BAD_REQUEST, NOT_FOUND, UNAUTHORIZED, INTERNAL_SERVER_ERROR)
 except ImportError:
     from http.client import (
         BAD_REQUEST, NOT_FOUND, UNAUTHORIZED, INTERNAL_SERVER_ERROR)
-
-try:
-    from json import dumps
-except ImportError:
-    from simplejson import dumps
 
 from flask import render_template, request, jsonify
 

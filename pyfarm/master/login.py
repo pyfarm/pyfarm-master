@@ -22,6 +22,8 @@ View and code necessary for providing the basic login and authentication
 services
 """
 
+import json
+
 try:
     from httplib import UNAUTHORIZED, BAD_REQUEST
 except ImportError:
@@ -34,13 +36,6 @@ from wtforms import Form, TextField, PasswordField, validators, ValidationError
 
 from pyfarm.models.user import User
 from pyfarm.master.application import app, login_manager, login_serializer
-
-try:
-    import json
-
-except ImportError:
-    import simplejson as json
-
 
 @login_manager.user_loader
 def load_user(user):

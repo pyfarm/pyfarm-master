@@ -15,15 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from json import loads, dumps
+
 try:
     from httplib import CREATED, NO_CONTENT
 except ImportError:
     from http.client import CREATED, NO_CONTENT
-
-try:
-    from json import loads, dumps
-except ImportError:
-    from simplejson import loads
 
 from .utcore import ModelTestCase
 from pyfarm.models.agent import Agent
