@@ -26,7 +26,7 @@ install_requires = [
     "pyfarm.core", "sqlalchemy", "flask"]
 
 if sys.version_info[0:2] == (2, 6):
-    install_requires += ["simplejson", "importlib"]
+    install_requires += ["importlib"]
 
 if isfile("README.rst"):
     with open("README.rst", "r") as readme:
