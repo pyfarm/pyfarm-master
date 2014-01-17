@@ -22,6 +22,7 @@ Special column types used by PyFarm's models.
 """
 
 import re
+from json import dumps, loads
 from textwrap import dedent
 from uuid import uuid4, UUID
 
@@ -30,11 +31,6 @@ try:
     from UserList import UserList
 except ImportError:
     from collections import UserDict, UserList
-
-try:
-    from json import dumps, loads
-except ImportError:  # pragma: no cover
-    from simplejson import dumps, loads
 
 from sqlalchemy.types import (
     TypeDecorator, CHAR, BigInteger, Integer, UnicodeText)

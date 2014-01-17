@@ -28,11 +28,7 @@ try:
 except ImportError:  # pragma: no cover
     pwd = None
 
-try:
-    import json
-except ImportError:  # pragma: no cover
-    import simplejson as json
-
+import json
 from textwrap import dedent
 
 from sqlalchemy import event

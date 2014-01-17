@@ -19,6 +19,7 @@ Module containing the base test class and functions
 used by the unittests.
 """
 
+import json
 import os
 import time
 import warnings
@@ -29,11 +30,6 @@ if PY26:
     import unittest2 as unittest
 else:
     import unittest
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 from sqlalchemy.exc import SAWarning
 
