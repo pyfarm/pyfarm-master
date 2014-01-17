@@ -30,7 +30,7 @@ install_requires = [
     "itsdangerous", "blinker"]
 
 if sys.version_info[0:2] == (2, 6):
-    install_requires += ["simplejson", "argparse"]
+    install_requires += ["argparse"]
 
 if isfile("README.rst"):
     with open("README.rst", "r") as readme:
