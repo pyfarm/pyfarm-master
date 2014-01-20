@@ -22,8 +22,9 @@ from sqlalchemy.schema import UniqueConstraint
 from pyfarm.master.application import app, db
 from pyfarm.models.core.cfg import TABLE_SOFTWARE, MAX_TAG_LENGTH
 from pyfarm.models.core.types import id_column
+from pyfarm.models.core.mixins import DictMixins
 
-class Software(db.Model):
+class Software(db.Model, DictMixins):
     """
     Model to represent a versioned piece of software that can be present on an
     agent and may be depended on by a job and/or jobtype
