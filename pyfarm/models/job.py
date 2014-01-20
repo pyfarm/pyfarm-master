@@ -41,9 +41,9 @@ from pyfarm.master.application import db
 from pyfarm.models.core.functions import work_columns
 from pyfarm.models.core.types import id_column, JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_JOB_TAG, TABLE_JOB_SOFTWARE_DEP, TABLE_JOB_TYPE,
-    MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH, TABLE_SOFTWARE,
-    TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
+    TABLE_JOB, TABLE_JOB_SOFTWARE_DEP, TABLE_JOB_TYPE, TABLE_TAG,
+    TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH,
+    TABLE_SOFTWARE, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin)
 from pyfarm.models.jobtype import JobType  # required for a relationship
@@ -57,31 +57,12 @@ JobSoftwareDependency = db.Table(
               db.ForeignKey("%s.id" % TABLE_SOFTWARE), primary_key=True))
 
 
-class JobTag(db.Model):
-    """
-    Model which provides tagging for :class:`.Job` objects
-
-    .. note::
-        This table enforces two forms of uniqueness.  The :attr:`id` column
-        must be unique and the combination of these columns must also be
-        unique to limit the frequency of duplicate data:
-
-            * :attr:`job_id`
-            * :attr:`tag`
-
-    .. autoattribute:: job_id
-    """
-    __tablename__ = TABLE_JOB_TAG
-    __table_args__ = (
-        UniqueConstraint("job_id", "tag"), )
-
-    id = id_column()
-    job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
-                       nullable=False,
-                       doc=dedent("""
-                       Foreign key which stores :attr:`Job.id`"""))
-
-    tag = db.Column(db.String(MAX_TAG_LENGTH), nullable=False)
+JobTagAssociation = db.Table(
+    TABLE_JOB_TAG_ASSOC, db.metadata,
+    db.Column("job_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True),
+    db.Column("tag_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_TAG), primary_key=True))
 
 
 JobDependencies = db.Table(
@@ -319,10 +300,11 @@ class Job(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin):
         are queued."""))
 
     # resource relationships
-    tags = db.relationship("JobTag", backref="job", lazy="dynamic",
+    tags = db.relationship("Tag", backref="job", lazy="dynamic",
+                           secondary=JobTagAssociation,
                            doc=dedent("""
                            Relationship between this job and
-                           :class:`.JobTag` objects"""))
+                           :class:`.Tag` objects"""))
     software = db.relationship("Software",
                                secondary=JobSoftwareDependency,
                                backref=db.backref("jobs", lazy="dynamic"),

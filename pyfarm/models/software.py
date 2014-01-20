@@ -19,7 +19,7 @@ from textwrap import dedent
 
 from sqlalchemy.schema import UniqueConstraint
 
-from pyfarm.master.application import app, db
+from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_SOFTWARE, MAX_TAG_LENGTH
 from pyfarm.models.core.types import id_column
 from pyfarm.models.core.mixins import UtilityMixins
