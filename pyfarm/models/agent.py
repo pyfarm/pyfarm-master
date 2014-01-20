@@ -116,34 +116,6 @@ class AgentTag(db.Model, AgentTaggingMixin):
                     requirement."""))
 
 
-class AgentSoftware(db.Model, AgentTaggingMixin):
-    """
-    Stores information about an the software installed on
-    an agent.
-
-    .. note::
-        This table enforces two forms of uniqueness.  The :attr:`id` column
-        must be unique and the combination of these columns must also be
-        unique to limit the frequency of duplicate data:
-
-            * :attr:`version`
-            * :attr:`software`
-    """
-    __tablename__ = TABLE_AGENT_SOFTWARE
-    __table_args__ = (UniqueConstraint("version", "software"), )
-    id = id_column(IDTypeTag)
-    software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
-                         doc=dedent("""
-                         The name of the software installed.  No normalization
-                         is performed prior to being stored in the database"""))
-    version = db.Column(db.String(MAX_TAG_LENGTH),
-                        default="any", nullable=False,
-                        doc=dedent("""
-                        The version of the software installed on a host.  This
-                        value does not follow any special formatting rules
-                        because the format depends on the 3rd party."""))
-
-
 class Agent(db.Model, ValidatePriorityMixin, UtilityMixins, ReprMixin):
     """
     Stores information about an agent include its network address,
