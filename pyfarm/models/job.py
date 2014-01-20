@@ -300,7 +300,7 @@ class Job(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin):
         are queued."""))
 
     # resource relationships
-    tags = db.relationship("Tag", backref="job", lazy="dynamic",
+    tags = db.relationship("Tag", backref="jobs", lazy="dynamic",
                            secondary=JobTagAssociation,
                            doc=dedent("""
                            Relationship between this job and
