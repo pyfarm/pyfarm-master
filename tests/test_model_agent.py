@@ -17,12 +17,15 @@
 from __future__ import with_statement
 import uuid
 
-from sqlalchemy.exc import DatabaseError
+from sqlalchemy.exc import DatabaseError, IntegrityError
 
 from .utcore import ModelTestCase, unittest
 from pyfarm.core.enums import AgentState
 from pyfarm.master.application import db
-from pyfarm.models.agent import Agent, AgentSoftware, AgentTag
+from pyfarm.models.software import Software
+from pyfarm.models.tag import Tag
+from pyfarm.models.agent import (
+    Agent, AgentSoftwareAssociation, AgentTagAssociation)
 
 try:
     from itertools import product
@@ -58,7 +61,7 @@ class AgentTestCase(unittest.TestCase):
         count = 0
         for (ip, port, cpus, ram, state,
              ram_allocation, cpu_allocation) in generator:
-            if limit is not None and count > limit:
+            if limit is not None and count >= limit:
                 break
 
             yield (
@@ -95,8 +98,8 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
             # create some software tags
             software_objects = []
             for software_name in ("foo", "bar", "baz"):
-                software = AgentSoftware()
-                software.agent = agent_foobar
+                software = Software()
+                software.agents = [agent_foobar]
                 software.software = software_name
                 software.version = uuid.uuid4().hex
                 software_objects.append((software.software, software.version))
@@ -117,12 +120,12 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
 
     def test_software_unique(self):
         for agent_foobar in self.models(limit=1):
-            softwareA = AgentSoftware()
-            softwareA.agent = agent_foobar
+            softwareA = Software()
+            softwareA.agent = [agent_foobar]
             softwareA.software = "foo"
             softwareA.version = "1.0.0"
-            softwareB = AgentSoftware()
-            softwareB.agent = agent_foobar
+            softwareB = Software()
+            softwareB.agent = [agent_foobar]
             softwareB.software = "foo"
             softwareB.version = "1.0.0"
             db.session.add_all([softwareA, softwareB])
@@ -135,19 +138,22 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
 class TestAgentTags(AgentTestCase, ModelTestCase):
     def test_tags_validation(self):
         for agent_foobar in self.models(limit=1):
-            tag = AgentTag()
-            tag.agent = agent_foobar
-            tag.tag = "foo"
+            tag = Tag()
+            tag.agent = [agent_foobar]
+            tag.tag = "foo123"
             db.session.add(tag)
             db.session.commit()
-            self.assertEqual(tag.tag, "foo")
+            self.assertEqual(tag.tag, "foo123")
 
     def test_tags_validation_error(self):
         for agent_foobar in self.models(limit=1):
-            tag = AgentTag()
-            tag.agent = agent_foobar
-            with self.assertRaises(ValueError):
-                tag.tag = None
+            tag = Tag()
+            tag.agents = [agent_foobar]
+            tag.tag = None
+
+        with self.assertRaises(IntegrityError):
+            db.session.add(tag)
+            db.session.commit()
 
     def test_tags(self):
         for agent_foobar in self.models(limit=1):
@@ -156,7 +162,7 @@ class TestAgentTags(AgentTestCase, ModelTestCase):
             tags = []
             rand = lambda: uuid.uuid4().hex
             for tag_name in (rand(), rand(), rand()):
-                tag = AgentTag()
+                tag = Tag()
                 tag.tag = tag_name
                 tags.append(tag_name)
                 agent_foobar.tags.append(tag)

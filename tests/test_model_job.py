@@ -27,8 +27,10 @@ from sqlalchemy.exc import DatabaseError
 from .utcore import ModelTestCase, unittest
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
+from pyfarm.models.tag import Tag
+from pyfarm.models.software import Software
 from pyfarm.models.agent import Agent
-from pyfarm.models.job import JobTag, JobSoftware, Job
+from pyfarm.models.job import Job
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.models.jobtype import JobType
 
@@ -48,40 +50,40 @@ class TestTags(ModelTestCase):
 
         job = Job()
         job.job_type = jobtype
-        tag = JobTag()
-        tag.job = job
-        tag.tag = "foo"
+        tag = Tag()
+        tag.jobs = [job]
+        tag.tag = "foo456"
         db.session.add_all([tag, job])
         db.session.commit()
         model_id = tag.id
         job_id = job.id
         db.session.remove()
-        result = JobTag.query.filter_by(id=model_id).first()
-        self.assertEqual(result.tag, "foo")
-        self.assertEqual(result.job.id, job_id)
+        result = Tag.query.filter_by(id=model_id).first()
+        self.assertEqual(result.tag, "foo456")
+        self.assertEqual(result.jobs[0].id, job_id)
 
     def test_null(self):
         with self.assertRaises(DatabaseError):
-            model = JobTag()
+            model = Tag()
             db.session.add(model)
             db.session.commit()
 
         db.session.remove()
 
         with self.assertRaises(DatabaseError):
-            tag = JobTag()
-            tag.tag = "foo"
+            tag = Tag()
+            tag.tag = "foo789"
             db.session.add(model)
             db.session.commit()
 
     def test_unique(self):
         job = Job()
-        tagA = JobTag()
-        tagB = JobTag()
-        tagA.job = job
-        tagA.tag = "foo"
-        tagB.job = job
-        tagB.tag = "foo"
+        tagA = Tag()
+        tagB = Tag()
+        tagA.jobs = [job]
+        tagA.tag = "foo0"
+        tagB.jobs = [job]
+        tagB.tag = "foo1"
         db.session.add_all([job, tagA, tagB])
 
         with self.assertRaises(DatabaseError):
@@ -103,40 +105,40 @@ class TestSoftware(ModelTestCase):
 
         job = Job()
         job.job_type = jobtype
-        software = JobSoftware()
-        software.job = job
+        software = Software()
+        software.jobs = [job]
         software.software = "foo"
         db.session.add_all([job, software])
         db.session.commit()
         job_id = job.id
         software_id = software.id
         db.session.remove()
-        software = JobSoftware.query.filter_by(id=software_id).first()
-        self.assertEqual(software.job.id, job_id)
+        software = Software.query.filter_by(id=software_id).first()
+        self.assertEqual(software.jobs[0].id, job_id)
         self.assertEqual(software.software, "foo")
         self.assertEqual(software.version, "any")
 
     def test_null(self):
         with self.assertRaises(DatabaseError):
-            model = JobSoftware()
+            model = Software()
             db.session.add(model)
             db.session.commit()
 
         db.session.remove()
 
         with self.assertRaises(DatabaseError):
-            tag = JobSoftware()
+            tag = Software()
             tag.software = "foo"
             db.session.add(model)
             db.session.commit()
 
     def test_unique(self):
         job = Job()
-        softwareA = JobSoftware()
-        softwareB = JobSoftware()
-        softwareA.job = job
+        softwareA = Software()
+        softwareB = Software()
+        softwareA.jobs = [job]
         softwareA.software = "foo"
-        softwareB.job = job
+        softwareB.jobs = [job]
         softwareB.software = "foo"
         db.session.add_all([job, softwareA, softwareB])
 
