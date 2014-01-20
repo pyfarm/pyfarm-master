@@ -34,8 +34,8 @@ install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install unittest2; fi
   - if [[ $TDB_DRIVER != "" ]]; then pip install $TDB_DRIVER; fi
   - pip install coverage python-coveralls
-  - pip install git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg # TODO: remove dev install
-  - pip install git+git://github.com/pyfarm/pyfarm-models.git#egg=pyfarm.models --egg # TODO: remove dev install
+  - pip install git+git://github.com/$(echo $TRAVIS_REPO_SLUG | cut -d / -f 1)/pyfarm-core.git@${TRAVIS_BRANCH}#egg=pyfarm.core --egg || pip install git+git://github.com/$(echo $TRAVIS_REPO_SLUG | cut -d / -f 1)/pyfarm-core.git#egg=pyfarm.core --egg
+  - pip install git+git://github.com/$(echo $TRAVIS_REPO_SLUG | cut -d / -f 1)/pyfarm-models.git@${TRAVIS_BRANCH}#egg=pyfarm.models --egg || pip install git+git://github.com/$(echo $TRAVIS_REPO_SLUG | cut -d / -f 1)/pyfarm-models.git#egg=pyfarm.models --egg
   - pip install .
 
 script:
