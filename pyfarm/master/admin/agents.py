@@ -25,8 +25,9 @@ from wtforms import TextField, SelectField
 from sqlalchemy import not_
 
 from pyfarm.core.enums import AgentState, UseAgentAddress
-from pyfarm.models.agent import AgentTag, Agent, AgentSoftwareAssociation
+from pyfarm.models.agent import Agent, AgentSoftwareAssociation
 from pyfarm.models.software import Software
+from pyfarm.models.tag import Tag
 from pyfarm.master.application import SessionMixin
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.admin.core import (
@@ -224,32 +225,9 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
 
     # create ajax loaders for the relationships
     form_ajax_refs = {
-        "tags": AjaxLoader("tags", AgentTag,
+        "tags": AjaxLoader("tags", Tag,
                            fields=("tag", ), fmt=lambda model: model.tag),
         "software": AjaxLoader("software", Software,
                                fields=("software", "version"),
                                fmt=lambda model: "%s (%s)" % (
                                    model.software, model.version))}
-
-
-class AgentTagView(SessionMixin, AgentRolesMixin, SQLModelView):
-    """
-    Administrative view which allows users to view, create, or edit agent tags.
-    """
-    model = AgentTag
-
-    # column setup
-    column_searchable_list = ("tag", )
-    column_filters = ("tag", )
-
-    # arguments to pass into the fields
-    form_args = {
-        "tag": {
-            "description": AgentTag.tag.__doc__},
-        "agents": {
-            "description": "Agents(s) which are tagged with this string"}}
-
-    # create ajax loaders for the relationships
-    form_ajax_refs = {
-        "agents": AjaxLoader("agents", Agent,
-                             fields=("hostname", ), fmt=repr_agent)}
