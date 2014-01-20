@@ -33,7 +33,7 @@ from pyfarm.models.core.functions import work_columns, repr_enum
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_TASK, TABLE_AGENT, TABLE_TASK_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
-    ValidatePriorityMixin, WorkStateChangedMixin, DictMixins, ReprMixin)
+    ValidatePriorityMixin, WorkStateChangedMixin, UtilityMixins, ReprMixin)
 
 TaskDependencies = db.Table(
     TABLE_TASK_DEPENDENCIES, db.metadata,
@@ -43,7 +43,7 @@ TaskDependencies = db.Table(
               db.ForeignKey("%s.id" % TABLE_TASK), primary_key=True))
 
 
-class Task(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, DictMixins,
+class Task(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, UtilityMixins,
            ReprMixin):
     """
     Defines a task which a child of a :class:`Job`.  This table represents

@@ -96,7 +96,7 @@ class WorkStateChangedMixin(object):
             target.time_finished = datetime.now()
 
 
-class DictMixins(object):
+class UtilityMixins(object):
     """
     Mixins which can be used to produce dictionaries
     of existing data

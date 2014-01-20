@@ -26,7 +26,7 @@ from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.types import IPv4Address, WorkStateEnum
 from pyfarm.models.core.mixins import (
-    WorkStateChangedMixin, ValidatePriorityMixin, DictMixins,
+    WorkStateChangedMixin, ValidatePriorityMixin, UtilityMixins,
     ValidateWorkStateMixin)
 
 
@@ -53,7 +53,7 @@ event.listen(
     WorkStateChangedModel.state, "set", WorkStateChangedModel.stateChangedEvent)
 
 
-class MixinModel(db.Model, DictMixins):
+class MixinModel(db.Model, UtilityMixins):
     __tablename__ = "%s_mixin_test" % TABLE_PREFIX
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     a = db.Column(db.Integer)
