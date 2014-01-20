@@ -85,11 +85,6 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/agents/<int:agent_id>",
         view_func=SingleAgentAPI.as_view("single_agent_api"))
-    '''
-    api_instance.add_url_rule(
-        "/jobs",
-        view_func=JobIndexAPI.as_view("job_index_api"))
-    '''
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)
