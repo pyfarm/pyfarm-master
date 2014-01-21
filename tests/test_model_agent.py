@@ -151,7 +151,7 @@ class TestAgentTags(AgentTestCase, ModelTestCase):
             tag.agents = [agent_foobar]
             tag.tag = None
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(DatabaseError):
             db.session.add(tag)
             db.session.commit()
 

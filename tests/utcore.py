@@ -97,9 +97,9 @@ from pyfarm.master.application import db
 # and the the mapper won't have problems finding the required classes
 from pyfarm.models.agent import Agent
 from pyfarm.models.task import Task
-from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
 from pyfarm.models.software import Software
+from pyfarm.models.job import Job
 from pyfarm.models.project import Project
 
 

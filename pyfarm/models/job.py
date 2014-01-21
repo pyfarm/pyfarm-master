@@ -47,8 +47,6 @@ from pyfarm.models.core.cfg import (
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin)
 from pyfarm.models.jobtype import JobType  # required for a relationship
-from pyfarm.models.tag import Tag
-from pyfarm.models.software import Software
 
 
 JobSoftwareDependency = db.Table(
