@@ -79,7 +79,7 @@ def load_api(app_instance, api_instance):
     from pyfarm.master.api.software import (
         schema as software_schema, SoftwareIndexAPI)
     from pyfarm.master.api.tag import (
-        schema as tag_schema, TagIndexAPI)
+        schema as tag_schema, TagIndexAPI, AgentsInTagAPI)
 
     # add api methods
     api_instance.add_url_rule(
@@ -103,6 +103,12 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/tags",
         view_func=TagIndexAPI.as_view("tag_index_api"))
+    api_instance.add_url_rule(
+        "/tags/<string:tag>/agents",
+        view_func=AgentsInTagAPI.as_view("agents_in_tag_by_string_api"))
+    api_instance.add_url_rule(
+        "/tags/<int:tag>/agents",
+        view_func=AgentsInTagAPI.as_view("agents_in_tag_by_id_api"))
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)

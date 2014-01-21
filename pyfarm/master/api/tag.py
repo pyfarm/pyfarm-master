@@ -32,7 +32,8 @@ from flask import Response, request
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
-from pyfarm.models.agent import Agent
+from pyfarm.models.agent import Agent, AgentTagAssociation
+from pyfarm.models.job import Job, JobTagAssociation
 from pyfarm.models.tag import Tag
 from pyfarm.master.application import db
 from pyfarm.master.utility import json_from_request, jsonify, get_column_sets
@@ -230,5 +231,28 @@ class TagIndexAPI(MethodView):
                 tag_dict["jobs"] = jobs
 
             out.append(tag_dict)
+
+        return jsonify(out), OK
+
+
+class AgentsInTagAPI(MethodView):
+    def get(self, tag=None):
+        out = []
+
+        if (isinstance(tag, unicode) or
+            isinstance(tag, str)):
+            q = db.session.query(
+                Agent.id,
+                Agent.hostname).join(
+                    AgentTagAssociation).join(
+                        Tag).filter_by(tag=tag)
+        else:
+            q = db.session.query(
+                Agent.id,
+                Agent.hostname).join(
+                    AgentTagAssociation).filter_by(tag_id=tag)
+
+        for agent_id, hostname in q:
+            out.append({"id": agent_id, "hostname": hostname})
 
         return jsonify(out), OK
