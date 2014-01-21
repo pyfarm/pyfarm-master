@@ -14,6 +14,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Software
+========
+Table of software items with optional versions. Agents can reference this table
+to show that they provide a given software, while jobs can reference it to
+depend on that software.
+"""
 
 from textwrap import dedent
 
