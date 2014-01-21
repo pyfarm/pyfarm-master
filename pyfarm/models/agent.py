@@ -52,7 +52,7 @@ REGEX_HOSTNAME = re.compile("^(?!-)[A-Z\d-]{1,63}(?<!-)"
 
 AgentSoftwareAssociation = db.Table(
     TABLE_AGENT_SOFTWARE_ASSOC, db.metadata,
-    db.Column("agent_id", db.Integer,
+    db.Column("agent_id", IDTypeAgent,
               db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
     db.Column("software_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_SOFTWARE), primary_key=True))
@@ -60,7 +60,7 @@ AgentSoftwareAssociation = db.Table(
 
 AgentTagAssociation = db.Table(
     TABLE_AGENT_TAG_ASSOC, db.metadata,
-    db.Column("agent_id", db.Integer,
+    db.Column("agent_id", IDTypeAgent,
               db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
     db.Column("tag_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_TAG), primary_key=True))
@@ -68,7 +68,7 @@ AgentTagAssociation = db.Table(
 
 AgentProjects = db.Table(
     TABLE_PROJECT_AGENTS, db.metadata,
-    db.Column("agent_id", db.Integer,
+    db.Column("agent_id", IDTypeAgent,
               db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
     db.Column("project_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_PROJECT), primary_key=True))

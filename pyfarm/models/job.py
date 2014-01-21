@@ -51,7 +51,7 @@ from pyfarm.models.jobtype import JobType  # required for a relationship
 
 JobSoftwareDependency = db.Table(
     TABLE_JOB_SOFTWARE_DEP, db.metadata,
-    db.Column("job_id", db.Integer,
+    db.Column("job_id", IDTypeWork,
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True),
     db.Column("software_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_SOFTWARE), primary_key=True))
@@ -59,7 +59,7 @@ JobSoftwareDependency = db.Table(
 
 JobTagAssociation = db.Table(
     TABLE_JOB_TAG_ASSOC, db.metadata,
-    db.Column("job_id", db.Integer,
+    db.Column("job_id", IDTypeWork,
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True),
     db.Column("tag_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_TAG), primary_key=True))
