@@ -240,7 +240,6 @@ class TagIndexAPI(MethodView):
 
 class AgentsInTagAPI(MethodView):
     def post(self, tagname=None):
-        logger.debug("In AgentsInTagAPI.post()")
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
@@ -248,38 +247,28 @@ class AgentsInTagAPI(MethodView):
         if tag is None:
             return jsonify(message="Tag not found"), NOT_FOUND
 
-        logger.debug("Got tag object")
-
         data = json_from_request(request)
         # json_from_request returns a Response object on error
         if isinstance(data, Response):
             return data
 
-        logger.debug("Got input data")
-
         if len(data) > 1:
             return jsonify(errorno=APIError.EXTRA_FIELDS_ERROR,
                            message="Unknown fields in JSON data"), BAD_REQUEST
-
-        logger.debug("Input data not too long")
 
         if "agent_id" not in data:
             return jsonify(errorno=APIError.MISSING_FIELDS,
                            message="Field agent_id missing"), BAD_REQUEST
 
-        logger.debug("Found agent_id")
-
         agent = Agent.query.filter_by(id=data["agent_id"]).first()
         if agent is None:
             return jsonify(message="Specified agent does not exist"), NOT_FOUND
 
-        logger.debug("Got agent object")
-
         if agent not in tag.agents:
             tag.agents.append(agent)
-            logger.debug("Added agent to tag")
             db.session.commit()
-            logger.debug("Committed db session")
+            logger.info("Added agent %s (%s) to tag %s" % (
+                agent.id, agent.hostname, tag.tag))
             return jsonify({"id": agent.id}), CREATED
         else:
             return jsonify({"id": agent.id}), OK
