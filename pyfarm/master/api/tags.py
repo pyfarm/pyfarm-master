@@ -28,7 +28,7 @@ try:
 except ImportError:
     from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 
-from flask import Response, request
+from flask import Response, request, url_for
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
@@ -197,6 +197,39 @@ class TagIndexAPI(MethodView):
                     }
                 ]
 
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/tags?list_agents=true HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "agents": [
+                        {
+                            "href": "/api/v1/agents/1",
+                            "hostname": "agent3",
+                            "id": 1
+                        }
+                        ],
+                        "id": 1,
+                        "tag": "interesting"
+                    },
+                    {
+                        "agents": [],
+                        "id": 2,
+                        "tag": "boring"
+                    }
+                ]
+
         :qparam list_agents: If true, list all agents for every tag
         :qparam list_agents_full: If true, list agents with full info
         :qparam list_jobs: If true, list all jobs for every tag
@@ -217,7 +250,9 @@ class TagIndexAPI(MethodView):
                 for agent in tag.agents:
                     if request.args.get("list_agents_full") != "true":
                         agents.append({"id": agent.id,
-                                       "hostname": agent.hostname})
+                                       "hostname": agent.hostname,
+                                       "href": url_for(".single_agent_api",
+                                                       agent_id=agent.id)})
                     else:
                         agents.append(agent.to_dict())
                 tag_dict["agents"] = agents
@@ -345,9 +380,13 @@ class AgentsInTagIndexAPI(MethodView):
             db.session.commit()
             logger.info("Added agent %s (%s) to tag %s" % (
                 agent.id, agent.hostname, tag.tag))
-            return jsonify({"id": agent.id}), CREATED
+            return jsonify({"id": agent.id,
+                            "href": url_for(".single_agent_api", 
+                                              agent_id=agent.id)}), CREATED
         else:
-            return jsonify({"id": agent.id}), OK
+            return jsonify({"id": agent.id,
+                            "href": url_for(".single_agent_api", 
+                                              agent_id=agent.id)}), OK
 
     def get(self, tagname=None):
         if isinstance(tagname, STRING_TYPES):
@@ -359,6 +398,8 @@ class AgentsInTagIndexAPI(MethodView):
 
         out = []
         for agent in tag.agents:
-            out.append({"id": agent.id, "hostname": agent.hostname})
+            out.append({"id": agent.id,
+                        "hostname": agent.hostname,
+                        "href": url_for(".single_agent_api", agent_id=agent.id)})
 
         return jsonify(out), OK
