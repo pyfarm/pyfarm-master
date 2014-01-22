@@ -48,13 +48,13 @@ def schema():
     """
     Returns the basic schema of :class:`.Tag`
 
-    .. http:get:: /api/v1/tag/schema HTTP/1.1
+    .. http:get:: /api/v1/tags/schema HTTP/1.1
 
         **Request**
 
         .. sourcecode:: http
 
-            GET /api/v1/tag/schema HTTP/1.1
+            GET /api/v1/tags/schema HTTP/1.1
             Accept: application/json
 
         **Response**
@@ -85,25 +85,24 @@ class TagIndexAPI(MethodView):
        Tags only have one column, the tag name. Two tags are automatically
        considered equal if the tag names are equal.
 
-        .. http:post:: /api/v1/tag HTTP/1.1
+        .. http:post:: /api/v1/tags HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                POST /api/v1/tag HTTP/1.1
+                POST /api/v1/tags HTTP/1.1
                 Accept: application/json
 
                 {
                     "tag": "interesting"
                 }
 
-
             **Response (new tag create)**
 
             .. sourcecode:: http
 
-                HTTP/1.1 200 OK
+                HTTP/1.1 201 CREATED
                 Content-Type: application/json
 
                 {
@@ -115,7 +114,7 @@ class TagIndexAPI(MethodView):
 
             .. sourcecode:: http
 
-                POST /api/v1/tag HTTP/1.1
+                POST /api/v1/tags HTTP/1.1
                 Accept: application/json
 
                 {
@@ -240,6 +239,83 @@ class TagIndexAPI(MethodView):
 
 class AgentsInTagIndexAPI(MethodView):
     def post(self, tagname=None):
+        """
+        A ``POST`` will add an agent to the list of agents tagged with this tag
+        The tag can be given as a string or as an integer (its id).
+
+        .. http:post:: /api/v1/tags/interesting/agents HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/tags/interesting/agents HTTP/1.1
+                Accept: application/json
+
+                {
+                    "agent_id": 1
+                }
+
+            **Response (agent newly tagged)**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": 1
+                }
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/tags/interesting/agents HTTP/1.1
+                Accept: application/json
+
+                {
+                    "agent_id": 1
+                }
+
+            **Response (agent already had that tag)**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "id": 1
+                }
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/tags/1/agents HTTP/1.1
+                Accept: application/json
+
+                {
+                    "agent_id": 1
+                }
+
+            **Response (agent already had that tag)**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "id": 1
+                }
+
+        :statuscode 200: an existing tag was found and returned
+        :statuscode 201: a new tag was created
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        """
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
