@@ -98,14 +98,15 @@ def load_api(app_instance, api_instance):
         "/software",
         view_func=SoftwareIndexAPI.as_view("software_index_api"))
     api_instance.add_url_rule(
-        "/tag/schema",
-        "tag_schema", view_func=tag_schema, methods=("GET", ))
+        "/tags/schema",
+        "tags_schema", view_func=tag_schema, methods=("GET", ))
     api_instance.add_url_rule(
         "/tags",
         view_func=TagIndexAPI.as_view("tag_index_api"))
     api_instance.add_url_rule(
         "/tags/<string:tagname>/agents",
-        view_func=AgentsInTagIndexAPI.as_view("agents_in_tag_by_string_index_api"))
+        view_func=AgentsInTagIndexAPI.as_view(
+            "agents_in_tag_by_string_index_api"))
     api_instance.add_url_rule(
         "/tags/<int:tagname>/agents",
         view_func=AgentsInTagIndexAPI.as_view("agents_in_tag_by_id_index_api"))
