@@ -32,6 +32,7 @@ from flask import Response, request
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
+from pyfarm.core.enums import STRING_TYPES, APIError
 from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.job import Job, JobTagAssociation
 from pyfarm.models.tag import Tag
@@ -209,6 +210,8 @@ class TagIndexAPI(MethodView):
         for tag in Tag.query.all():
             tag_dict = {"id": tag.id, "tag": tag.tag}
 
+            # TODO Instead of doing one query per tag, do a single big query to
+            # get all agent-tag relations
             if (request.args.get("list_agents") == "true" or
                 request.args.get("list_agents_full") == "true"):
                 agents = []
@@ -236,23 +239,61 @@ class TagIndexAPI(MethodView):
 
 
 class AgentsInTagAPI(MethodView):
-    def get(self, tag=None):
-        out = []
-
-        if (isinstance(tag, unicode) or
-            isinstance(tag, str)):
-            q = db.session.query(
-                Agent.id,
-                Agent.hostname).join(
-                    AgentTagAssociation).join(
-                        Tag).filter_by(tag=tag)
+    def post(self, tagname=None):
+        logger.debug("In AgentsInTagAPI.post()")
+        if isinstance(tagname, STRING_TYPES):
+            tag = Tag.query.filter_by(tag=tagname).first()
         else:
-            q = db.session.query(
-                Agent.id,
-                Agent.hostname).join(
-                    AgentTagAssociation).filter_by(tag_id=tag)
+            tag = Tag.query.filter_by(tag_id=tagname).first()
+        if tag is None:
+            return jsonify(message="Tag not found"), NOT_FOUND
 
-        for agent_id, hostname in q:
-            out.append({"id": agent_id, "hostname": hostname})
+        logger.debug("Got tag object")
+
+        data = json_from_request(request)
+        # json_from_request returns a Response object on error
+        if isinstance(data, Response):
+            return data
+
+        logger.debug("Got input data")
+
+        if len(data) > 1:
+            return jsonify(errorno=APIError.EXTRA_FIELDS_ERROR,
+                           message="Unknown fields in JSON data"), BAD_REQUEST
+
+        logger.debug("Input data not too long")
+
+        if "agent_id" not in data:
+            return jsonify(errorno=APIError.MISSING_FIELDS,
+                           message="Field agent_id missing"), BAD_REQUEST
+
+        logger.debug("Found agent_id")
+
+        agent = Agent.query.filter_by(id=data["agent_id"]).first()
+        if agent is None:
+            return jsonify(message="Specified agent does not exist"), NOT_FOUND
+
+        logger.debug("Got agent object")
+
+        if agent not in tag.agents:
+            tag.agents.append(agent)
+            logger.debug("Added agent to tag")
+            db.session.commit()
+            logger.debug("Committed db session")
+            return jsonify({"id": agent.id}), CREATED
+        else:
+            return jsonify({"id": agent.id}), OK
+
+    def get(self, tagname=None):
+        if isinstance(tagname, STRING_TYPES):
+            tag = Tag.query.filter_by(tag=tagname).first()
+        else:
+            tag = Tag.query.filter_by(tag_id=tagname).first()
+        if tag is None:
+            return jsonify(message="Tag not found"), NOT_FOUND
+
+        out = []
+        for agent in tag.agents:
+            out.append({"id": agent.id, "hostname": agent.hostname})
 
         return jsonify(out), OK
