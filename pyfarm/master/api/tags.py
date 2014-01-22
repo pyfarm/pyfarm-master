@@ -238,7 +238,7 @@ class TagIndexAPI(MethodView):
         return jsonify(out), OK
 
 
-class AgentsInTagAPI(MethodView):
+class AgentsInTagIndexAPI(MethodView):
     def post(self, tagname=None):
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
