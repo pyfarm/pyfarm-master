@@ -76,7 +76,7 @@ setup(
     entry_points={
         "console_scripts": [
             "pyfarm-dev-dbdata = pyfarm.master.entrypoints.dev:dbdata",
-            "pyfarm-master = pyfarm.master.entrypoints.master:run_master"]},
+            "pyfarm-master = pyfarm.master.entrypoints.main:run_master"]},
     install_requires=install_requires,
     url="https://github.com/pyfarm/pyfarm-master",
     license="Apache v2.0",

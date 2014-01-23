@@ -17,7 +17,7 @@
 from flask import abort
 
 from .utcore import TestCase
-from pyfarm.master.entrypoints.master import load_error_handlers
+from pyfarm.master.entrypoints.main import load_error_handlers
 
 
 class TestErrors(TestCase):
