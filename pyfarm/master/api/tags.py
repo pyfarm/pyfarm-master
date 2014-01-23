@@ -307,6 +307,69 @@ class SingleTagAPI(MethodView):
 
         return jsonify(tag_dict), OK
 
+    def put(self, tagname=None):
+        if isinstance(tagname, STRING_TYPES):
+            tag = Tag.query.filter_by(tag=tagname).first()
+        else:
+            tag = Tag.query.filter_by(tag_id=tagname).first()
+        if tag is not None:
+            # If tag exists, delete it before recreating it
+            tag.agents = []
+            tag.jobs = []
+            db.session.delete(tag)
+            logger.debug("Deleted tag %s as part of PUT operation" % tag.tag)
+            db.session.flush()
+
+        data = json_from_request(request)
+        if isinstance(data, tuple):
+            return data
+
+        if (isinstance(tagname, STRING_TYPES) and
+            data["tag"] != tagname):
+                return jsonify(message="Name of tag must equal the name under "
+                                       "which it is put"), BAD_REQUEST
+
+        agents = []
+        if "agents" in data:
+            agent_ids = data["agents"]
+            del data["agents"]
+            if not isinstance(agent_ids, list):
+                return jsonify(errorno=APIError.UNEXPECTED_DATATYPE,
+                               message="agents must be a list"), BAD_REQUEST
+            for agent_id in agent_ids:
+                if not isinstance(agent_id, int):
+                    return jsonify(errorno=APIError.UNEXPECTED_DATATYPE,
+                                   message="agent must be an int"), BAD_REQUEST
+                agent = Agent.query.filter_by(id=agent_id).first()
+                if agent is None:
+                    return jsonify(message="agent not found"), NOT_FOUND
+                agents.append(agent)
+
+        jobs = []
+        if "jobs" in data:
+            job_ids = data["jobs"]
+            del data["jobs"]
+            if not isinstance(job_ids, list):
+                return jsonify(errorno=APIError.UNEXPECTED_DATATYPE,
+                               message="jobs must be a list"), BAD_REQUEST
+            for job_id in job_ids:
+                if not isinstance(job_id, int):
+                    return jsonify(errorno=APIError.UNEXPECTED_DATATYPE,
+                                   message="job must be an int"), BAD_REQUEST
+                job = Job.query.filter_by(id=agent_id).first()
+                if job is None:
+                    return jsonify(message="job not found"), NOT_FOUND
+                jobs.append(job)
+
+        new_tag = Tag(**data)
+        new_tag.agents = agents
+        new_tag.jobs = jobs
+        db.session.add(new_tag)
+        db.session.commit()
+        tag_data = new_tag.to_dict()
+        logger.info("created tag %s: %s" % (new_tag.id, tag_data))
+        return jsonify(tag_data), CREATED
+
     def delete(self, tagname=None):
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
