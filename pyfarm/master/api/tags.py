@@ -300,6 +300,7 @@ class AgentsInTagIndexAPI(MethodView):
                 Content-Type: application/json
 
                 {
+                    "href": "/api/v1/agents/1",
                     "id": 1
                 }
 
@@ -322,6 +323,7 @@ class AgentsInTagIndexAPI(MethodView):
                 Content-Type: application/json
 
                 {
+                    "href": "/api/v1/agents/1",
                     "id": 1
                 }
 
@@ -344,6 +346,7 @@ class AgentsInTagIndexAPI(MethodView):
                 Content-Type: application/json
 
                 {
+                    "href": "/api/v1/agents/1",
                     "id": 1
                 }
 
@@ -351,6 +354,7 @@ class AgentsInTagIndexAPI(MethodView):
         :statuscode 201: a new tag was created
         :statuscode 400: there was something wrong with the request (such as
                             invalid columns being included)
+        :statuscode 404: either the tag or the referenced agent does not exist
         """
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
@@ -390,6 +394,36 @@ class AgentsInTagIndexAPI(MethodView):
                                               agent_id=agent.id)}), OK
 
     def get(self, tagname=None):
+        """
+        A ``GET`` to this endpoint will list all agents associated with this tag.
+
+        .. http:get:: /api/v1/tags/interesting/agents HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/tags/interesting/agents HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                [
+                    {
+                        "hostname": "agent3",
+                        "id": 1,
+                        "href": "/api/v1/agents/1
+                    }
+                ]
+
+        :statuscode 200: the list of agents associated with this tag is returned
+        :statuscode 404: the tag specified does not exist
+        """
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
