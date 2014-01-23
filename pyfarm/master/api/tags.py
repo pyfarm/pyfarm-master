@@ -82,8 +82,8 @@ class TagIndexAPI(MethodView):
             * create a new tag and return the row
             * return the row for an existing tag
 
-       Tags only have one column, the tag name. Two tags are automatically
-       considered equal if the tag names are equal.
+        Tags only have one column, the tag name. Two tags are automatically
+        considered equal if the tag names are equal.
 
         .. http:post:: /api/v1/tags HTTP/1.1
 
@@ -275,6 +275,86 @@ class TagIndexAPI(MethodView):
 
 class SingleTagAPI(MethodView):
     def get(self, tagname=None):
+        """
+        A ``GET`` to this endpoint will return the referenced tag, either by
+        name or id, including a list of agents and jobs associated with it.
+
+        .. http:get:: /api/v1/tags/interesting HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/tags/interesting HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                "agents": [
+                    {
+                    "hostname": "agent3", 
+                    "href": "/api/v1/agents/1", 
+                    "id": 1
+                    }
+                ], 
+                "id": 1, 
+                "jobs": [], 
+                "tag": "interesting"
+                }
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/tags/interesting?list_agents_full=true HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                "agents": [
+                    {
+                    "data": {
+                        "cpu_allocation": 1.0,
+                        "cpus": 16,
+                        "free_ram": 128,
+                        "hostname": "agent3",
+                        "id": 1,
+                        "ip": "11.196.200.117",
+                        "port": 64994,
+                        "ram": 2048,
+                        "ram_allocation": 0.8,
+                        "remote_ip": "127.0.0.1",
+                        "state": "online",
+                        "time_offset": 0,
+                        "use_address": "remote"
+                    }, 
+                    "hostname": "agent3",
+                    "href": "/api/v1/agents/1",
+                    "id": 1
+                    }
+                ],
+                "id": 1,
+                "jobs": [],
+                "tag": "interesting"
+                }
+
+        :qparam list_agents_full: If true, list agents with full info
+        :qparam list_jobs_full: If true, list jobs with full info
+
+        :statuscode 200: no error
+        :statuscode 404: tag not found
+        """
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
@@ -309,6 +389,68 @@ class SingleTagAPI(MethodView):
         return jsonify(tag_dict), OK
 
     def put(self, tagname=None):
+        """
+        A ``PUT`` to this endpoint will create a new tag under the given URI.
+        If a tag already exists under that URI, it will be deleted, then
+        recreated.
+        You can optionally specify a list of agents or jobs relations as
+        integers in the request data.
+
+        .. http:put:: /api/v1/tags HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                PUT /api/v1/tags/interesting HTTP/1.1
+                Accept: application/json
+
+                {
+                    "tag": "interesting"
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": 1,
+                    "tag": "interesting"
+                }
+
+            **Request**
+
+            .. sourcecode:: http
+
+                PUT /api/v1/tags/interesting HTTP/1.1
+                Accept: application/json
+
+                {
+                    "tag": "interesting",
+                    "agents": [1]
+                    "jobs": []
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": 1,
+                    "tag": "interesting"
+                }
+
+        :statuscode 201: a new tag was created
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        :statuscode 404: a referenced agent or job does not exist
+        """
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
@@ -372,6 +514,33 @@ class SingleTagAPI(MethodView):
         return jsonify(tag_data), CREATED
 
     def delete(self, tagname=None):
+        """
+        A ``DELETE`` to this endpoint will delete the tag under this URI,
+        including all relations to tags or jobs.
+
+        .. http:delete:: /api/v1/tags HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/tags/interesting HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": 1,
+                    "tag": "interesting"
+                }
+
+        :statuscode 204: the tag was deleted or did not exist in the first place
+        """
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
