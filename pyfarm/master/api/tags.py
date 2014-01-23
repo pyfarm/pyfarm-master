@@ -244,27 +244,28 @@ class TagIndexAPI(MethodView):
 
             # TODO Instead of doing one query per tag, do a single big query to
             # get all agent-tag relations
-            if (request.args.get("list_agents") == "true" or
-                request.args.get("list_agents_full") == "true"):
+            if request.args.get("list_agents") == "true":
                 agents = []
                 for agent in tag.agents:
-                    if request.args.get("list_agents_full") != "true":
-                        agents.append({"id": agent.id,
-                                       "hostname": agent.hostname,
-                                       "href": url_for(".single_agent_api",
-                                                       agent_id=agent.id)})
-                    else:
-                        agents.append(agent.to_dict())
+                    agent_entry = {"id": agent.id,
+                                   "hostname": agent.hostname,
+                                   "href": url_for(".single_agent_api",
+                                                   agent_id=agent.id)}
+                    if request.args.get("list_agents_full") == "true":
+                        agent_entry["data"] = agent.to_dict()
+                    agents.append(agent_entry)
                 tag_dict["agents"] = agents
 
-            if (request.args.get("list_jobs") == "true" or
-                request.args.get("list_jobs_full") == "true"):
+            if request.args.get("list_jobs") == "true":
                 jobs = []
                 for job in tag.jobs:
-                    if request.args.get("list_jobs_full") != "true":
-                        jobs.append({"id": job.id})
-                    else:
-                        jobs.append(job.to_dict())
+                    job_entry = {"id": job.id,
+                                 # TODO Replace with url_for() once we actually
+                                 # have a job endpoint
+                                 "href": "/api/v1/jobs/%s" % job.id}
+                    if request.args.get("list_jobs_full") == "true":
+                        job_entry["data"] = job.to_dict()
+                    jobs.append(job_entry)
                 tag_dict["jobs"] = jobs
 
             out.append(tag_dict)
