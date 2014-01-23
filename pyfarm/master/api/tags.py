@@ -272,6 +272,7 @@ class TagIndexAPI(MethodView):
 
         return jsonify(out), OK
 
+
 class SingleTagAPI(MethodView):
     def get(self, tagname=None):
         if isinstance(tagname, STRING_TYPES):
