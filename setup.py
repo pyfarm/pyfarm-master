@@ -26,7 +26,7 @@ from setuptools import setup
 install_requires = [
     "pyfarm.core", 
     "sqlalchemy", 
-    "flask"
+    "flask",
     "flask-admin>=1.0.7",
     "flask-login", 
     "flask-sqlalchemy", 
