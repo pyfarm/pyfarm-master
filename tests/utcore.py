@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 """
 Module containing the base test class and functions
 used by the unittests.
@@ -21,45 +22,26 @@ used by the unittests.
 
 import os
 import time
-import sys
 import warnings
 
-if sys.version_info[0:2] < (2, 7):
+from pyfarm.core.enums import PY26
+
+if PY26:
     import unittest2 as unittest
 else:
     import unittest
 
-try:
-    from httplib import (
-        OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED, FORBIDDEN,
-        NOT_FOUND, NOT_ACCEPTABLE, CONFLICT, GONE, INTERNAL_SERVER_ERROR,
-        NOT_IMPLEMENTED)
 
-except ImportError:
-    from http.client import (
-        OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED, FORBIDDEN,
-        NOT_FOUND, NOT_ACCEPTABLE, CONFLICT, GONE, INTERNAL_SERVER_ERROR,
-        NOT_IMPLEMENTED)
-
-try:
-    import blinker
-except ImportError:
-    blinker = None
-
-
-from flask import Response, template_rendered, json_available
 from sqlalchemy.exc import SAWarning
-from werkzeug.utils import cached_property
 
-if json_available:
-    from flask import json
-else:
-    import json
-
-# disable logging
 from pyfarm.core.logger import disable_logging
 disable_logging(True)
 
+if "PYFARM_DATABASE_URI" not in os.environ:
+    os.environ["PYFARM_DATABASE_URI"] = "sqlite:///:memory:"
+
+if "PYFARM_CONFIG" not in os.environ:
+    os.environ["PYFARM_CONFIG"] = "debug"
 
 # Some initial configuration values before we load the models.  Some values,
 # such as the table prefix are included here just so two tests don't step
@@ -109,17 +91,14 @@ os.environ.update(
     PYFARM_QUEUE_MAX_RAM="262144"  # copied from above
 )
 
+from pyfarm.master.application import db
+
 # import all model objects into this space so relationships, foreign keys,
 # and the the mapper won't have problems finding the required classes
-from pyfarm.models.project import Project
-from pyfarm.models.agent import Agent
+from pyfarm.models.agent import Agent, AgentSoftware, AgentTag
 from pyfarm.models.task import Task
-from pyfarm.models.job import Job
-from pyfarm.models.tag import Tag
-from pyfarm.models.software import Software
-from pyfarm.master.application import (
-    get_application, get_api_blueprint, get_admin, db, app, admin)
-from pyfarm.master.entrypoints.master import load_master
+from pyfarm.models.job import Job, JobSoftware, JobTag
+from pyfarm.models.project import Project
 
 
 class JsonResponseMixin(object):
@@ -140,7 +119,8 @@ def _make_test_response(response_class):
     return TestResponse
 
 
-class TestCase(unittest.TestCase):
+class MasterTestCase(unittest.TestCase):
+    ORIGINAL_ENVIRONMENT = dict(os.environ)
     """
     Base test case for the master application.  A lot of this code is copied
     from the flask-testing package so it's kept in on place and because there's
@@ -152,6 +132,10 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         super(TestCase, self).setUp()
         warnings.simplefilter("ignore", category=SAWarning, append=True)
+
+        db.session.rollback()
+        os.environ.clear()
+        os.environ.update(self.ORIGINAL_ENVIRONMENT)
 
         self.templates_rendered = []
         if blinker is not None:
@@ -177,6 +161,8 @@ class TestCase(unittest.TestCase):
         load_master(self.app, self.admin, self.api)
 
     def tearDown(self):
+        db.session.remove()
+        db.drop_all()
         del self.templates_rendered[:]
 
         if blinker is not None:
@@ -219,19 +205,3 @@ class TestCase(unittest.TestCase):
         self.assert_status(response, status_code=NOT_ACCEPTABLE)
     assert_internal_server_error = lambda self, response: \
         self.assert_status(response, status_code=INTERNAL_SERVER_ERROR)
-
-
-class ModelTestCase(TestCase):
-    ORIGINAL_ENVIRONMENT = dict(os.environ)
-
-    def setUp(self):
-        super(ModelTestCase, self).setUp()
-        db.session.rollback()
-        os.environ.clear()
-        os.environ.update(self.ORIGINAL_ENVIRONMENT)
-        db.create_all()
-
-    def tearDown(self):
-        super(ModelTestCase, self).tearDown()
-        db.session.remove()
-        db.drop_all()

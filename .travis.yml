@@ -35,12 +35,11 @@ install:
   - if [[ $TDB_DRIVER != "" ]]; then pip install $TDB_DRIVER; fi
   - pip install coverage python-coveralls
   - pip install git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg # TODO: remove dev install
-  - pip install git+git://github.com/pyfarm/pyfarm-models.git#egg=pyfarm.models --egg # TODO: remove dev install
   - pip install .
 
 script:
   - pip freeze
-  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.master tests
+  - nosetests -s --verbose --with-coverage --cover-package=pyfarm tests
 
 after_success:
  - coveralls

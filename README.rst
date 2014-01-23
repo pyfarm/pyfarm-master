@@ -32,7 +32,8 @@ Sub-library which contains the code necessary to run an instance of the master
 server.  Each master instance is intended to be able to serve:
     * the underlying REST api for PyFarm
     * backend for the admin interface
-    * layer between requests and resources such as:
+    * the database models
+    * a layer between requests and resources such as:
         * agents
         * queue management
         * jobs and tasks

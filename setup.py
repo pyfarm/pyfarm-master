@@ -24,10 +24,14 @@ from os.path import isfile, join
 from setuptools import setup
 
 install_requires = [
-    "pyfarm.core", "pyfarm.models",
-    "flask-login", "flask-admin>=1.0.7",
-    "flask-sqlalchemy", "flask",
-    "itsdangerous", "blinker"]
+    "pyfarm.core", 
+    "sqlalchemy", 
+    "flask"
+    "flask-admin>=1.0.7",
+    "flask-login", 
+    "flask-sqlalchemy", 
+    "itsdangerous", 
+    "blinker"]
 
 if sys.version_info[0:2] == (2, 6):
     install_requires += ["argparse"]
@@ -63,7 +67,9 @@ setup(
         "pyfarm.master",
         "pyfarm.master.admin",
         "pyfarm.master.api",
-        "pyfarm.master.entrypoints"],
+        "pyfarm.master.entrypoints",
+        "pyfarm.models",
+        "pyfarm.models.core"],
     namespace_packages=["pyfarm"],
     include_package_data=True,
     package_data={"pyfarm.master": get_package_data()},

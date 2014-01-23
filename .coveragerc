@@ -1,5 +1,6 @@
+
 [run]
-source = pyfarm.master
+source = pyfarm
 
 [report]
 exclude_lines =
@@ -13,3 +14,4 @@ omit =
     *pyfarm/master/static/*
     *pyfarm/master/entrypoints/*
     *pyfarm/master/admin/baseview.py*
+    *pyfarm/models/core/app.py*
