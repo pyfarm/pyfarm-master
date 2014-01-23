@@ -20,9 +20,19 @@ Module containing the base test class and functions
 used by the unittests.
 """
 
+import json
 import os
 import time
 import warnings
+
+try:
+    from http.client import (
+        OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED,
+        FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR)
+except ImportError:
+    from httplib import (
+        OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED,
+        FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR)
 
 from pyfarm.core.enums import PY26
 
@@ -31,11 +41,22 @@ if PY26:
 else:
     import unittest
 
+try:
+    import blinker
+except ImportError:
+    blinker = NotImplemented
 
+
+from flask import Response, template_rendered, json_available
 from sqlalchemy.exc import SAWarning
+from werkzeug import cached_property
 
 from pyfarm.core.logger import disable_logging
 disable_logging(True)
+
+from pyfarm.master.entrypoints.main import load_master
+from pyfarm.master.application import (
+    get_application, get_admin, get_api_blueprint)
 
 if "PYFARM_DATABASE_URI" not in os.environ:
     os.environ["PYFARM_DATABASE_URI"] = "sqlite:///:memory:"
@@ -120,60 +141,80 @@ def _make_test_response(response_class):
 
 
 class MasterTestCase(unittest.TestCase):
-    ORIGINAL_ENVIRONMENT = dict(os.environ)
     """
     Base test case for the master application.  A lot of this code is copied
     from the flask-testing package so it's kept in on place and because there's
     some issues between Python 3 and flask-testing.
     """
+    ORIGINAL_ENVIRONMENT = dict(os.environ)
+
+    # enable/disable test features
+    reset_environment = True
+    clean_database = False
+    web_application = False
+
     def _template_rendered(self, app, template, context):
         self.templates_rendered.append((template, context))
 
     def setUp(self):
-        super(TestCase, self).setUp()
+        super(MasterTestCase, self).setUp()
         warnings.simplefilter("ignore", category=SAWarning, append=True)
 
-        db.session.rollback()
-        os.environ.clear()
-        os.environ.update(self.ORIGINAL_ENVIRONMENT)
+        if self.reset_environment:
+            os.environ.clear()
+            os.environ.update(self.ORIGINAL_ENVIRONMENT)
 
-        self.templates_rendered = []
-        if blinker is not None:
-            template_rendered.connect(self._template_rendered)
+        if self.clean_database:
+            db.session.rollback()
 
-        # application and test client
-        self.app = get_application()
+        if self.web_application:
+            self.templates_rendered = []
+            if blinker is not NotImplemented:
+                template_rendered.connect(self._template_rendered)
 
-        # response class
-        self._original_response_class = self.app.response_class
-        self.app.response_class = _make_test_response(self.app.response_class)
+            # application and test client
+            self.app = get_application()
 
-        self.client = self.app.test_client()
+            # response class
+            self._original_response_class = self.app.response_class
+            self.app.response_class = _make_test_response(self.app.response_class)
 
-        # context
-        self._ctx = self.app.test_request_context()
-        self._ctx.push()
+            self.client = self.app.test_client()
 
-        # internal testing end points
-        self.admin = get_admin(app=self.app)
-        self.api = get_api_blueprint()
+            # context
+            self._ctx = self.app.test_request_context()
+            self._ctx.push()
 
-        load_master(self.app, self.admin, self.api)
+            # internal testing end points
+            self.admin = get_admin(app=self.app)
+            self.api = get_api_blueprint()
+
+            load_master(self.app, self.admin, self.api)
 
     def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        del self.templates_rendered[:]
+        if self.reset_environment:
+            os.environ.clear()
+            os.environ.update(self.ORIGINAL_ENVIRONMENT)
 
-        if blinker is not None:
-            template_rendered.disconnect(self._template_rendered)
+        if self.clean_database:
+            db.session.remove()
+            db.drop_all()
 
-        if self.app is not None:
-            self.app.response_class = self._original_response_class
+        if self.web_application:
+            del self.templates_rendered[:]
+
+            if blinker is not None:
+                template_rendered.disconnect(self._template_rendered)
+
+            if self.app is not None:
+                self.app.response_class = self._original_response_class
 
     def assert_template_used(self, name, tmpl_name_attribute="name"):
-        if blinker is None:
-            raise RuntimeError("Signals not supported")
+        if not self.web_application:
+            self.fail("`web_application` must be True to use this function")
+
+        if blinker is NotImplemented:
+            raise RuntimeError("signals module not supported")
 
         for template, context in self.templates_rendered:
             if getattr(template, tmpl_name_attribute) == name:
@@ -181,6 +222,9 @@ class MasterTestCase(unittest.TestCase):
         raise AssertionError("template %s not used" % name)
 
     def assert_status(self, response, status_code=None):
+        if not self.web_application:
+            self.fail("`web_application` must be True to use this function")
+
         assert status_code is not None
         self.assertIsInstance(response, Response)
         self.assertEqual(response.status_code, status_code)
