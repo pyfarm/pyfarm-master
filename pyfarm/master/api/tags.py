@@ -313,7 +313,7 @@ class SingleTagAPI(MethodView):
         else:
             tag = Tag.query.filter_by(tag_id=tagname).first()
         if tag is None:
-            return jsonify(message="Tag not found"), NOT_FOUND
+            return Response(), NO_CONTENT
 
         # First, delete all relations
         tag.agents = []
