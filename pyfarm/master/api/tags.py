@@ -272,6 +272,60 @@ class TagIndexAPI(MethodView):
 
         return jsonify(out), OK
 
+class SingleTagAPI(MethodView):
+    def get(self, tagname=None):
+        if isinstance(tagname, STRING_TYPES):
+            tag = Tag.query.filter_by(tag=tagname).first()
+        else:
+            tag = Tag.query.filter_by(tag_id=tagname).first()
+        if tag is None:
+            return jsonify(message="Tag not found"), NOT_FOUND
+
+        tag_dict = tag.to_dict()
+
+        agents = []
+        for agent in tag.agents:
+            agent_entry = {"id": agent.id,
+                            "hostname": agent.hostname,
+                            "href": url_for(".single_agent_api",
+                                            agent_id=agent.id)}
+            if request.args.get("list_agents_full") == "true":
+                agent_entry["data"] = agent.to_dict()
+            agents.append(agent_entry)
+        tag_dict["agents"] = agents
+
+        jobs = []
+        for job in tag.jobs:
+            job_entry = {"id": job.id,
+                            # TODO Replace with url_for() once we actually
+                            # have a job endpoint
+                            "href": "/api/v1/jobs/%s" % job.id}
+            if request.args.get("list_jobs_full") == "true":
+                job_entry["data"] = job.to_dict()
+            jobs.append(job_entry)
+        tag_dict["jobs"] = jobs
+
+        return jsonify(tag_dict), OK
+
+    def delete(self, tagname=None):
+        if isinstance(tagname, STRING_TYPES):
+            tag = Tag.query.filter_by(tag=tagname).first()
+        else:
+            tag = Tag.query.filter_by(tag_id=tagname).first()
+        if tag is None:
+            return jsonify(message="Tag not found"), NOT_FOUND
+
+        # First, delete all relations
+        tag.agents = []
+        tag.jobs = []
+
+        db.session.delete(tag)
+        db.session.commit()
+
+        logger.info("Deleted tag %s" % tag.tag)
+
+        return Response(), NO_CONTENT
+
 
 class AgentsInTagIndexAPI(MethodView):
     def post(self, tagname=None):
