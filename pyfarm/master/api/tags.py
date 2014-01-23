@@ -142,8 +142,8 @@ class TagIndexAPI(MethodView):
                                  all_keys=ALL_TAG_COLUMNS,
                                  required_keys=REQUIRED_TAG_COLUMNS,
                                  disallowed_keys=set(["id"]))
-        # json_from_request returns a Response object on error
-        if isinstance(data, Response):
+        # json_from_request returns a Response, Returncode tuple on error
+        if isinstance(data, tuple):
             return data
 
         existing_tag = Tag.query.filter_by(tag=data["tag"]).first()
@@ -418,8 +418,8 @@ class AgentsInTagIndexAPI(MethodView):
             return jsonify(message="Tag not found"), NOT_FOUND
 
         data = json_from_request(request)
-        # json_from_request returns a Response object on error
-        if isinstance(data, Response):
+        # json_from_request returns a Response, Returncode tuple on error
+        if isinstance(data, tuple):
             return data
 
         if len(data) > 1:
