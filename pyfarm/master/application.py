@@ -30,6 +30,8 @@ from flask.ext.admin import Admin
 from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
 from itsdangerous import URLSafeTimedSerializer
+from sqlalchemy.engine import Engine
+from sqlalchemy import event
 
 from pyfarm.core.config import read_env
 from pyfarm.master.admin.baseview import AdminIndex
@@ -43,10 +45,13 @@ def get_application(**configuration_keywords):
 
     >>> app = get_application(TESTING=True)
     >>> assert app.testing is True
-    """
 
+    :keyword bool setup_appcontext:
+        If ``True`` then setup the ``flask.g`` variable to include the
+        application level information (ex. ``g.db``)
+    """
     # build the configuration
-    if read_env("PYFARM_CONFIG", "debug", ) == "debug":
+    if read_env("PYFARM_CONFIG", "debug") == "debug":
         secret_key = read_env(
             "PYFARM_SECRET_KEY", "NG4pWsOCw57DnRfDncO3wqYpPnvDvMO",
             log_result=False)
@@ -107,6 +112,28 @@ def get_application(**configuration_keywords):
     return app
 
 
+def get_sqlalchemy(app=None, use_native_unicode=True, session_options=None):
+    """
+    Constructs and returns an instance of :class:`.SQLAlchemy`.  Any keyword
+    arguments provided will be passed to the constructor of :class:`.SQLAlchemy`
+    """
+    db = SQLAlchemy(
+        app=app, use_native_unicode=use_native_unicode,
+        session_options=session_options)
+
+    # sqlite specific configuration for development
+    if db.engine.name == "sqlite":
+        @event.listens_for(Engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.execute("PRAGMA synchronous=OFF")
+            cursor.execute("PRAGMA journal_mode=MEMORY")
+            cursor.close()
+
+    return db
+
+
 def get_api_blueprint(url_prefix=None):
     """
     Constructs and returns an instance of :class:`.Blueprint` for routing api
@@ -131,14 +158,6 @@ def get_admin(**kwargs):
     """
     kwargs.setdefault("index_view", AdminIndex())
     return Admin(**kwargs)
-
-
-def get_sqlalchemy(**kwargs):
-    """
-    Constructs and returns an instance of :class:`.SQLAlchemy`.  Any keyword
-    arguments provided will be passed to the constructor of :class:`.SQLAlchemy`
-    """
-    return SQLAlchemy(**kwargs)
 
 
 def get_login_manager(**kwargs):
@@ -177,15 +196,3 @@ class SessionMixin(object):
     _session = property(fget=lambda self: db.session)
 
 
-# sqlite specific configuration for development
-if db.engine.name == "sqlite":
-    from sqlalchemy.engine import Engine
-    from sqlalchemy import event
-
-    @event.listens_for(Engine, "connect")
-    def set_sqlite_pragma(dbapi_connection, connection_record):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.execute("PRAGMA synchronous=OFF")
-        cursor.execute("PRAGMA journal_mode=MEMORY")
-        cursor.close()
