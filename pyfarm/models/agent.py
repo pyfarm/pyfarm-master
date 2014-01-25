@@ -22,7 +22,6 @@ Models and interface classes related to the agent.
 """
 
 import re
-import sys
 from textwrap import dedent
 
 import netaddr
@@ -37,11 +36,11 @@ from pyfarm.models.core.functions import repr_ip
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, UtilityMixins, ReprMixin)
 from pyfarm.models.core.types import (
-    id_column, IPv4Address, IDTypeAgent, IDTypeTag, UseAgentAddressEnum,
+    id_column, IPv4Address, IDTypeAgent, UseAgentAddressEnum,
     AgentStateEnum)
 from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_SOFTWARE, TABLE_TAG, TABLE_AGENT_TAG_ASSOC,
-    MAX_HOSTNAME_LENGTH, MAX_TAG_LENGTH, TABLE_AGENT_SOFTWARE_ASSOC,
+    MAX_HOSTNAME_LENGTH, TABLE_AGENT_SOFTWARE_ASSOC,
     TABLE_PROJECT_AGENTS, TABLE_PROJECT)
 
 PYFARM_REQUIRE_PRIVATE_IP = read_env_bool("PYFARM_REQUIRE_PRIVATE_IP", False)
