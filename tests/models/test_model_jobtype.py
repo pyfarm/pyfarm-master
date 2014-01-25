@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 from textwrap import dedent
 
 # test class must be loaded first
@@ -23,11 +22,10 @@ BaseTestCase.setup_test_environment()
 
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.master.application import db
-from pyfarm.models.job import Job
 from pyfarm.models.jobtype import JobType
 
 
-class JobTypeTest(ModelTestCase):
+class JobTypeTest(BaseTestCase):
     def test_validate_mode(self):
         jobtype = JobType()
         with self.assertRaises(ValueError):

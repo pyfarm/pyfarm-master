@@ -38,7 +38,7 @@ from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.models.jobtype import JobType
 
 
-class TestTags(ModelTestCase):
+class TestTags(BaseTestCase):
     def test_insert(self):
         # A job can not be created without a jobtype, create one first
         jobtype = JobType()
@@ -93,7 +93,7 @@ class TestTags(ModelTestCase):
             db.session.commit()
 
 
-class TestSoftware(ModelTestCase):
+class TestSoftware(BaseTestCase):
     def test_insert(self):
         # A job can not be created without a jobtype, create one first
         jobtype = JobType()
@@ -149,7 +149,7 @@ class TestSoftware(ModelTestCase):
             db.session.commit()
 
 
-class TestJobEventsAndValidation(unittest.TestCase):
+class TestJobEventsAndValidation(BaseTestCase):
     def test_ram(self):
         model = Job()
         model.ram = Agent.MIN_RAM

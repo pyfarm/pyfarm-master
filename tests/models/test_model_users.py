@@ -26,7 +26,7 @@ from pyfarm.master.application import db, login_serializer
 from pyfarm.models.user import User, Role
 
 
-class UserTest(ModelTestCase):
+class UserTest(BaseTestCase):
     def test_create_user(self):
         username = uuid.uuid4().hex
         password = uuid.uuid4().hex
@@ -124,7 +124,7 @@ class UserTest(ModelTestCase):
             user.has_roles(required=[roles[0].name, roles[1].name, "foo"]))
 
 
-class RoleTest(ModelTestCase):
+class RoleTest(BaseTestCase):
     def test_create(self):
         rolename = uuid.uuid4().hex
         role_id = Role.create(rolename).id

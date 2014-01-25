@@ -19,17 +19,15 @@ import uuid
 
 from sqlalchemy.exc import DatabaseError
 
-from pyfarm.core.enums import AgentState
+
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.setup_test_environment()
 
+from pyfarm.core.enums import AgentState
 from pyfarm.master.application import db
-from pyfarm.models.project import Project
-from pyfarm.models.task import Task
 from pyfarm.models.software import Software
 from pyfarm.models.tag import Tag
-from pyfarm.models.agent import (
-    Agent, AgentSoftwareAssociation, AgentTagAssociation)
+from pyfarm.models.agent import Agent
 
 try:
     from itertools import product
