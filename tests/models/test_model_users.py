@@ -18,7 +18,10 @@ import time
 import uuid
 from datetime import datetime, timedelta
 
-from .utcore import ModelTestCase
+# test class must be loaded first
+from pyfarm.master.testutil import BaseTestCase
+BaseTestCase.setup_test_environment()
+
 from pyfarm.master.application import db, login_serializer
 from pyfarm.models.user import User, Role
 

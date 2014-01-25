@@ -24,7 +24,10 @@ from textwrap import dedent
 from datetime import datetime
 from sqlalchemy.exc import DatabaseError
 
-from .utcore import ModelTestCase, unittest
+# test class must be loaded first
+from pyfarm.master.testutil import BaseTestCase
+BaseTestCase.setup_test_environment()
+
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.tag import Tag

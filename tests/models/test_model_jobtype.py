@@ -17,7 +17,10 @@
 import sys
 from textwrap import dedent
 
-from .utcore import ModelTestCase
+# test class must be loaded first
+from pyfarm.master.testutil import BaseTestCase
+BaseTestCase.setup_test_environment()
+
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.master.application import db
 from pyfarm.models.job import Job

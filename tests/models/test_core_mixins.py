@@ -20,7 +20,10 @@ from datetime import datetime
 from sqlalchemy import event
 from sqlalchemy.types import Integer, DateTime
 
-from .utcore import ModelTestCase
+# test class must be loaded first
+from pyfarm.master.testutil import BaseTestCase
+BaseTestCase.setup_test_environment()
+
 from pyfarm.core.enums import _WorkState, WorkState, DBWorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
@@ -64,7 +67,7 @@ class MixinModel(db.Model, UtilityMixins):
         return column
 
 
-class TestMixins(ModelTestCase):
+class TestMixins(BaseTestCase):
     def test_state_validation(self):
         model = ValidationModel()
         db.session.add(model)

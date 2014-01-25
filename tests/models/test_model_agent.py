@@ -17,11 +17,16 @@
 from __future__ import with_statement
 import uuid
 
-from sqlalchemy.exc import DatabaseError, IntegrityError
+from sqlalchemy.exc import DatabaseError
 
-from .utcore import ModelTestCase, unittest
 from pyfarm.core.enums import AgentState
+from pyfarm.master.testutil import BaseTestCase
+BaseTestCase.setup_test_environment()
+BaseTestCase.import_models()
+
 from pyfarm.master.application import db
+from pyfarm.models.project import Project
+from pyfarm.models.task import Task
 from pyfarm.models.software import Software
 from pyfarm.models.tag import Tag
 from pyfarm.models.agent import (
@@ -33,7 +38,7 @@ except ImportError:
     from pyfarm.core.backports import product
 
 
-class AgentTestCase(unittest.TestCase):
+class AgentTestCase(BaseTestCase):
     hostnamebase = "foobar"
     ports = (Agent.MIN_PORT, Agent.MAX_PORT)
     cpus = (Agent.MIN_CPUS, Agent.MAX_CPUS)
@@ -90,7 +95,7 @@ class AgentTestCase(unittest.TestCase):
             yield agent
 
 
-class TestAgentSoftware(AgentTestCase, ModelTestCase):
+class TestAgentSoftware(AgentTestCase, BaseTestCase):
     def test_software(self):
         for agent_foobar in self.models(limit=1):
             db.session.add(agent_foobar)
@@ -135,7 +140,7 @@ class TestAgentSoftware(AgentTestCase, ModelTestCase):
             db.session.rollback()
 
 
-class TestAgentTags(AgentTestCase, ModelTestCase):
+class TestAgentTags(AgentTestCase, BaseTestCase):
     def test_tags_validation(self):
         for agent_foobar in self.models(limit=1):
             tag = Tag()
@@ -178,7 +183,7 @@ class TestAgentTags(AgentTestCase, ModelTestCase):
             self.assertListEqual(agent_tags, tags)
 
 
-class TestAgentModel(AgentTestCase, ModelTestCase):
+class TestAgentModel(AgentTestCase, BaseTestCase):
     def test_basic_insert(self):
         agents = list(self.models())
         db.session.add_all(agents)

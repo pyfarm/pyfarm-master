@@ -21,8 +21,11 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.types import BigInteger, CHAR
 from sqlalchemy.exc import StatementError
 
-from .utcore import ModelTestCase, unittest
-from pyfarm.core.enums import AgentState, DBAgentState, WorkState, DBWorkState
+# test class must be loaded first
+from pyfarm.master.testutil import BaseTestCase
+BaseTestCase.setup_test_environment()
+
+from pyfarm.core.enums import AgentState, DBAgentState
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.types import (
@@ -42,7 +45,7 @@ class TypeModel(db.Model):
     work_state = db.Column(WorkStateEnum)
 
 
-class TestJsonTypes(ModelTestCase):
+class TestJsonTypes(BaseTestCase):
     def test_types_notimplemented(self):
         class TestType(JSONSerializable):
             pass
@@ -110,7 +113,7 @@ class TestJsonTypes(ModelTestCase):
             db.session.commit()
 
 
-class TestIPAddressType(ModelTestCase):
+class TestIPAddressType(BaseTestCase):
     def test_implementation(self):
         # IP addrs are a spec, we need to be specific
         self.assertIs(IPv4Address.impl, BigInteger)
@@ -177,7 +180,7 @@ class TestIPAddressType(ModelTestCase):
             db.session.commit()
 
 
-class TestIDColumn(ModelTestCase):
+class TestIDColumn(BaseTestCase):
     def test_integer(self):
         column = id_column(db.Integer)
         self.assertIsInstance(column.type, db.Integer)
@@ -195,7 +198,7 @@ class TestIDColumn(ModelTestCase):
         self.assertIs(IDTypeTag, db.Integer)
 
 
-class TestAgentStateEnumTypes(ModelTestCase):
+class TestAgentStateEnumTypes(BaseTestCase):
     def test_invalid(self):
         model = TypeModel(agent_state=1e10)
         db.session.add(model)
@@ -234,7 +237,7 @@ class TestAgentStateEnumTypes(ModelTestCase):
             self.assertEqual(result.agent_state, i)
 
 
-class TestGUIDImpl(unittest.TestCase):
+class TestGUIDImpl(BaseTestCase):
     def _dialect(self, name, driver):
         """
         constructs a fake dialect object that replicates a

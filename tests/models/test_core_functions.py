@@ -18,7 +18,7 @@ from uuid import uuid4
 
 from sqlalchemy import Column, Integer, DateTime
 
-from .utcore import ModelTestCase
+from pyfarm.master.testutil import BaseTestCase
 from pyfarm.models.core.types import IDTypeWork, WorkStateEnum
 from pyfarm.models.core.functions import (
     modelfor, getuuid, work_columns, split_and_extend)
@@ -29,7 +29,7 @@ class Foo(object):
     id = uuid4()
 
 
-class TestFunctionsModule(ModelTestCase):
+class TestFunctionsModule(BaseTestCase):
     def test_modelfor(self):
         class Foo(object):
             __tablename__ = "test"
