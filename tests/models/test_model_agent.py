@@ -22,7 +22,6 @@ from sqlalchemy.exc import DatabaseError
 from pyfarm.core.enums import AgentState
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.setup_test_environment()
-BaseTestCase.import_models()
 
 from pyfarm.master.application import db
 from pyfarm.models.project import Project
