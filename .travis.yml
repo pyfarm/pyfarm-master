@@ -41,8 +41,8 @@ script:
   - pip freeze
 
   # run nosetests for the two individual modules (otherwise coverage won't work)
-  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.models tests/models && mv -v .coverage .coverage.1
-  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.master tests/master && mv -v .coverage .coverage.2
+  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.models tests/test_models && mv -v .coverage .coverage.1
+  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.master tests/test_master && mv -v .coverage .coverage.2
 
 after_success:
  - coverage combine
