@@ -41,7 +41,7 @@ try:
 except ImportError:
     from collections import UserDict
 
-from pyfarm.core.enums import PY26, PY3
+from pyfarm.core.enums import PY26
 
 if not PY26:
     from unittest import TestCase
@@ -208,14 +208,8 @@ class BaseTestCase(TestCase):
         self.app.response_class = make_test_response(self.app.response_class)
 
         # construct and push the context
-        context = self.app.test_request_context()
-        context.push()
-
-        if blinker is not NotImplemented:
-            def template_rendered_callback(app, **kwargs):
-                self.templates_rendered.append(kwargs.pop("template"))
-
-            template_rendered.connect(template_rendered_callback, self.app)
+        self._context = self.app.test_request_context()
+        self._context.push()
 
     def setup_client(self, app):
         """returns the test client from the given application instance"""
@@ -240,7 +234,6 @@ class BaseTestCase(TestCase):
                 "build_environment() not called, aborting due to "
                 "possibility of dangerous behaviors")
 
-        self.templates_rendered = []
         self.setup_warning_filter()
         self.setup_app()
         self.setup_client(self.app)
@@ -250,16 +243,6 @@ class BaseTestCase(TestCase):
         self.teardown_app()
         self.teardown_database()
         self.teardown_warning_filter()
-
-    def assert_template_used(self, name, tmpl_name_attribute="name"):
-        if blinker is NotImplemented:
-            raise RuntimeError("signals module not supported")
-
-        for template in self.templates_rendered:
-            if getattr(template, tmpl_name_attribute) == name:
-                return True
-
-        raise AssertionError("template %s not used" % name)
 
     def assert_status(self, response, status_code=None):
         assert status_code is not None

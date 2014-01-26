@@ -93,7 +93,6 @@ class TestLogin(BaseTestCase):
         self.assertIn(
             '<input id="username" name="username" type="text" value="">',
             response.data.decode("utf-8"))
-        self.assert_template_used("pyfarm/login.html")
 
     def test_post_login(self):
         # ensure admin page redirects to the login page

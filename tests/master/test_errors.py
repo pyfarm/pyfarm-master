@@ -41,7 +41,6 @@ class TestErrors(BaseTestCase):
         self.assert_bad_request(response)
         self.assertIn("<title>PyFarm - Bad Request</title>",
                       response.data.decode("utf-8"))
-        self.assert_template_used("pyfarm/errors/400.html")
 
     def test_401(self):
         self.app.add_url_rule("/test_error_401", view_func=lambda: abort(401))
@@ -54,7 +53,6 @@ class TestErrors(BaseTestCase):
         self.assert_unauthorized(response)
         self.assertIn("<title>PyFarm - Access Denied</title>",
                       response.data.decode("utf-8"))
-        self.assert_template_used("pyfarm/errors/401.html")
 
     def test_404(self):
         self.app.add_url_rule("/test_error_404", view_func=lambda: abort(404))
@@ -67,7 +65,6 @@ class TestErrors(BaseTestCase):
         self.assert_not_found(response)
         self.assertIn("<title>PyFarm - Not Found</title>",
                       response.data.decode("utf-8"))
-        self.assert_template_used("pyfarm/errors/404.html")
 
     def test_500(self):
         self.app.add_url_rule("/test_error_500", view_func=lambda: abort(500))
@@ -80,5 +77,4 @@ class TestErrors(BaseTestCase):
         self.assert_internal_server_error(response)
         self.assertIn("<title>PyFarm - Internal Server Error</title>",
                       response.data.decode("utf-8"))
-        self.assert_template_used("pyfarm/errors/500.html")
 
