@@ -23,9 +23,11 @@ from flask.ext.admin import BaseView, expose
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
+from pyfarm.master.entrypoints.main import load_authentication, load_index
 from pyfarm.master.admin.baseview import AuthMixins
-from pyfarm.master.login import login_page, load_token, load_user
-from pyfarm.master.application import db, get_login_manager
+from pyfarm.master.login import load_token, load_user
+from pyfarm.master.application import (
+    db, get_login_manager, get_admin)
 from pyfarm.models.user import User, Role
 
 
@@ -38,14 +40,27 @@ class AdminRequiredView(AuthMixins, BaseView):
 
 
 class TestLogin(BaseTestCase):
-    def setUp(self):
-        super(TestLogin, self).setUp()
-        self.app.add_url_rule("/login/", view_func=login_page)
-        db.create_all()
-
-        self.admin.add_view(
+    def setup_app(self):
+        super(TestLogin, self).setup_app()
+        admin = get_admin(app=self.app)
+        admin.add_view(
             AdminRequiredView(
                 name="AdminRequired", endpoint="admin_required_test/"))
+
+        # setup the login manager and the callbacks
+        # necessary to load hte user
+        login_manger = get_login_manager(
+            app=self.app, login_view="/login/")
+        login_manger.token_callback = load_token
+        login_manger.user_callback = load_user
+        load_authentication(self.app)
+
+        # add an index url because the login page
+        # will redirect there if there's not a 'next'
+        load_index(self.app)
+
+    def setUp(self):
+        super(TestLogin, self).setUp()
 
         # create a normal user
         self.normal_username = uuid.uuid4().hex
@@ -60,21 +75,11 @@ class TestLogin(BaseTestCase):
             self.admin_username, self.admin_password)
         self.admin_user.roles.append(Role.create("admin"))
 
+        # commit the changes to the database
         db.session.commit()
 
-        self.login_manger = get_login_manager(
-            app=self.app, login_view="/login/")
-
-        @self.login_manger.token_loader
-        def _load_token(token):
-            return load_token(token)
-
-        @self.login_manger.user_loader
-        def _load_user(user):
-            return load_user(user)
-
     def test_login_bad_content_type(self):
-        response = self.client.open(
+        response = self.client.get(
             "/login/", method="GET",
             headers=[("Content-Type", "application/json")])
         self.assert_bad_request(response)
@@ -132,8 +137,8 @@ class TestLogin(BaseTestCase):
         self.assertIn("Hello world!", response.data.decode("utf-8"))
 
     def test_post_login_json(self):
-        response = self.client.open(
-            "/login/", method="POST",
+        response = self.client.post(
+            "/login/",
             headers=[("Content-Type", "application/json")],
             follow_redirects=True,
             data=dumps({
