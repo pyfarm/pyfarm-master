@@ -22,14 +22,17 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from itsdangerous import URLSafeTimedSerializer
 
-from .utcore import TestCase
+# test class must be loaded first
+from pyfarm.master.testutil import BaseTestCase
+BaseTestCase.setup_test_environment()
+
 from pyfarm.master.admin.baseview import AdminIndex
 from pyfarm.master.application import (
     get_application, get_api_blueprint, get_admin, get_sqlalchemy,
     get_login_manager, get_login_serializer)
 
 
-class TestApplicationFunctions(TestCase):
+class TestApplicationFunctions(BaseTestCase):
     def test_get_application(self):
         app = get_application(SOME_VARIABLE=True)
         self.assertIsInstance(app, Flask)

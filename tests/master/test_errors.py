@@ -16,11 +16,14 @@
 
 from flask import abort
 
-from .utcore import TestCase
+# test class must be loaded first
+from pyfarm.master.testutil import BaseTestCase
+BaseTestCase.setup_test_environment()
+
 from pyfarm.master.entrypoints.main import load_error_handlers
 
 
-class TestErrors(TestCase):
+class TestErrors(BaseTestCase):
     def setUp(self):
         super(TestErrors, self).setUp()
         load_error_handlers(self.app)

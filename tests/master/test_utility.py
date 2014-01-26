@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from json import loads
-
 try:
     from httplib import OK, BAD_REQUEST
 except ImportError:
@@ -23,7 +21,10 @@ except ImportError:
 
 from werkzeug.datastructures import ImmutableDict
 
-from .utcore import ModelTestCase, TestCase
+# test class must be loaded first
+from pyfarm.master.testutil import BaseTestCase
+BaseTestCase.setup_test_environment()
+
 from pyfarm.master.utility import (
     get_column_sets, ReducibleDictionary, TemplateDictionary)
 from pyfarm.master.application import db
@@ -49,14 +50,14 @@ class FakeRequest(object):
         return self.data
 
 
-class TestUtilityDB(ModelTestCase):
+class TestUtilityDB(BaseTestCase):
     def test_get_column_sets(self):
         all_columns, required_columns = get_column_sets(ColumnSetTest)
         self.assertSetEqual(all_columns, set(["b", "c", "d"]))
         self.assertSetEqual(required_columns, set(["c"]))
 
 
-class TestUtility(TestCase):
+class TestUtility(BaseTestCase):
     def test_reducible_dictionary(self):
         source = {"a": None}
         data = ReducibleDictionary(source)

@@ -15,18 +15,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from json import loads, dumps
+from json import dumps
 
 try:
     from httplib import CREATED, NO_CONTENT
 except ImportError:
     from http.client import CREATED, NO_CONTENT
 
-from .utcore import ModelTestCase
+# test class must be loaded first
+from pyfarm.master.testutil import BaseTestCase
+BaseTestCase.setup_test_environment()
+
 from pyfarm.models.agent import Agent
 
 
-class TestAgentAPI(ModelTestCase):
+class TestAgentAPI(BaseTestCase):
     def test_agents_schema(self):
         response = self.client.get("/api/v1/agents/schema")
         self.assert_ok(response)

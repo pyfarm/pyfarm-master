@@ -19,7 +19,10 @@ from json import dumps
 
 from flask.ext.admin import BaseView, expose
 
-from .utcore import ModelTestCase
+# test class must be loaded first
+from pyfarm.master.testutil import BaseTestCase
+BaseTestCase.setup_test_environment()
+
 from pyfarm.master.admin.baseview import AuthMixins
 from pyfarm.master.login import login_page, load_token, load_user
 from pyfarm.master.application import db, get_login_manager
@@ -34,7 +37,7 @@ class AdminRequiredView(AuthMixins, BaseView):
         return self.render("pyfarm/tests/admin_required.html")
 
 
-class TestLogin(ModelTestCase):
+class TestLogin(BaseTestCase):
     def setUp(self):
         super(TestLogin, self).setUp()
         self.app.add_url_rule("/login/", view_func=login_page)
