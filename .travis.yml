@@ -39,7 +39,11 @@ install:
 
 script:
   - pip freeze
-  - nosetests -s --with-coverage --verbose --cover-package=pyfarm.models tests/models
+
+  # run nosetests for the two individual modules (otherwise coverage won't work)
+  - nosetests -s --with-coverage --verbose --cover-package=pyfarm.models tests/models && mv -v .coverage .coverage.1
+  - nosetests -s --with-coverage --verbose --cover-package=pyfarm.master tests/master && mv -v .coverage .coverage.2
 
 after_success:
+ - coverage combine
  - coveralls
