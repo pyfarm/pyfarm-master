@@ -24,7 +24,7 @@ from itsdangerous import URLSafeTimedSerializer
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
-BaseTestCase.setup_test_environment()
+BaseTestCase.build_environment()
 
 from pyfarm.master.admin.baseview import AdminIndex
 from pyfarm.master.application import (

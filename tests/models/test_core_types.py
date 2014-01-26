@@ -23,7 +23,7 @@ from sqlalchemy.exc import StatementError
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
-BaseTestCase.setup_test_environment()
+BaseTestCase.build_environment()
 
 from pyfarm.core.enums import AgentState, DBAgentState
 from pyfarm.master.application import db

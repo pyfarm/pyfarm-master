@@ -18,7 +18,7 @@ from flask import abort
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
-BaseTestCase.setup_test_environment()
+BaseTestCase.build_environment()
 
 from pyfarm.master.entrypoints.main import load_error_handlers
 

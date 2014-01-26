@@ -20,7 +20,7 @@ from sqlalchemy import Column, Integer, DateTime
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
-BaseTestCase.setup_test_environment()
+BaseTestCase.build_environment()
 
 from pyfarm.models.core.types import IDTypeWork, WorkStateEnum
 from pyfarm.models.core.functions import (

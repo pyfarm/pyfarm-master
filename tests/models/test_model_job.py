@@ -26,7 +26,7 @@ from sqlalchemy.exc import DatabaseError
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
-BaseTestCase.setup_test_environment()
+BaseTestCase.build_environment()
 
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
