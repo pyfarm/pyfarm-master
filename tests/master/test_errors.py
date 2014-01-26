@@ -21,42 +21,44 @@ from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
 from pyfarm.master.entrypoints.main import load_error_handlers
+from pyfarm.master.application import get_admin
 
 
 class TestErrors(BaseTestCase):
-    def setUp(self):
-        super(TestErrors, self).setUp()
+    def setup_app(self):
+        super(TestErrors, self).setup_app()
+        get_admin(app=self.app)  # adds admin.static
         load_error_handlers(self.app)
 
     def test_400(self):
         self.app.add_url_rule("/test_error_400", view_func=lambda: abort(400))
-        response = self.client.open(
+        response = self.client.get(
             "/test_error_400",
             method="GET",
             headers=[("Content-Type", "application/json")])
         self.assert_bad_request(response)
         response = self.client.get("/test_error_400")
         self.assert_bad_request(response)
-        self.assertIn("<title>PyFarm - Bad Request</title>", 
+        self.assertIn("<title>PyFarm - Bad Request</title>",
                       response.data.decode("utf-8"))
         self.assert_template_used("pyfarm/errors/400.html")
 
     def test_401(self):
         self.app.add_url_rule("/test_error_401", view_func=lambda: abort(401))
-        response = self.client.open(
+        response = self.client.get(
             "/test_error_401",
             method="GET",
             headers=[("Content-Type", "application/json")])
         self.assert_unauthorized(response)
         response = self.client.get("/test_error_401")
         self.assert_unauthorized(response)
-        self.assertIn("<title>PyFarm - Access Denied</title>", 
+        self.assertIn("<title>PyFarm - Access Denied</title>",
                       response.data.decode("utf-8"))
         self.assert_template_used("pyfarm/errors/401.html")
 
     def test_404(self):
         self.app.add_url_rule("/test_error_404", view_func=lambda: abort(404))
-        response = self.client.open(
+        response = self.client.get(
             "/test_error_404",
             method="GET",
             headers=[("Content-Type", "application/json")])
@@ -69,7 +71,7 @@ class TestErrors(BaseTestCase):
 
     def test_500(self):
         self.app.add_url_rule("/test_error_500", view_func=lambda: abort(500))
-        response = self.client.open(
+        response = self.client.get(
             "/test_error_500",
             method="GET",
             headers=[("Content-Type", "application/json")])
