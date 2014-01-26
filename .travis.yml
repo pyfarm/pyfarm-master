@@ -6,18 +6,18 @@ python:
 
 env:
   - TDB_TYPE=sqlite PYFARM_DATABASE_URI="sqlite:///:memory:" PYFARM_CONFIG="debug"
-#  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 PYFARM_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-#  - TDB_TYPE=postgres TDB_DRIVER=pg8000 PYFARM_DATABASE_URI="postgresql+pg8000://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-#  - TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-#  - TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-#  - TDB_TYPE=mysql TDB_DRIVER=mysql-connector-python PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-#  - TDB_TYPE=sqlite PYFARM_DATABASE_URI="sqlite:///:memory:" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-#  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 PYFARM_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-#  - TDB_TYPE=postgres TDB_DRIVER=pg8000 PYFARM_DATABASE_URI="postgresql+pg8000://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-#  - TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-#  - TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-#  - TDB_TYPE=mysql TDB_DRIVER=mysql-connector-python PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-#
+  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 PYFARM_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
+  - TDB_TYPE=postgres TDB_DRIVER=pg8000 PYFARM_DATABASE_URI="postgresql+pg8000://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
+  - TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
+  - TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
+  - TDB_TYPE=mysql TDB_DRIVER=mysql-connector-python PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
+  - TDB_TYPE=sqlite PYFARM_DATABASE_URI="sqlite:///:memory:" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 PYFARM_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+  - TDB_TYPE=postgres TDB_DRIVER=pg8000 PYFARM_DATABASE_URI="postgresql+pg8000://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+  - TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+  - TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+  - TDB_TYPE=mysql TDB_DRIVER=mysql-connector-python PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+
 matrix:
   exclude:
     - python: 3.3
@@ -41,8 +41,8 @@ script:
   - pip freeze
 
   # run nosetests for the two individual modules (otherwise coverage won't work)
-  - nosetests -s --with-coverage --verbose --cover-package=pyfarm.models tests/models && mv -v .coverage .coverage.1
-  - nosetests -s --with-coverage --verbose --cover-package=pyfarm.master tests/master && mv -v .coverage .coverage.2
+  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.models tests/models && mv -v .coverage .coverage.1
+  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.master tests/master && mv -v .coverage .coverage.2
 
 after_success:
  - coverage combine
