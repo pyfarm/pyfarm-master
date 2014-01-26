@@ -26,15 +26,17 @@ except ImportError:
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.master.application import api
+from pyfarm.master.application import get_api_blueprint
 from pyfarm.master.entrypoints.main import load_api
 from pyfarm.models.agent import Agent
 
 
 class TestAgentAPI(BaseTestCase):
-    def setUp(self):
-        super(TestAgentAPI, self).setUp()
-        load_api(self.app, api)
+    def setup_app(self):
+        super(TestAgentAPI, self).setup_app()
+        self.api = get_api_blueprint()
+        self.app.register_blueprint(self.api)
+        load_api(self.app, self.api)
 
     def test_agents_schema(self):
         response = self.client.get("/api/v1/agents/schema")
