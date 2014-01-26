@@ -39,7 +39,7 @@ install:
 
 script:
   - pip freeze
-  - nosetests -s --verbose --with-coverage tests/models tests/master
+  - coverage run -m unittest discover tests --verbose
   - env
   - pwd
   - ls -la
