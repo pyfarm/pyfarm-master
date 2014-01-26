@@ -40,7 +40,7 @@ install:
 script:
   - pip freeze
   - nosetests -s --verbose --with-coverage --cover-package="pyfarm*" tests/models tests/master
-  - ls -l
+  - ls -la
 
 after_success:
  - coveralls
