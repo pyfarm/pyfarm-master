@@ -139,11 +139,7 @@ class JsonResponseMixin(object):
         if not json_available:  # pragma: no cover
             raise NotImplementedError
 
-        data = self.data
-        if PY3 and isinstance(data, bytes):
-            data = data.decode("utf-8")
-
-        return json.loads(data)
+        return json.loads(self.data.decode("utf-8"))
 
 
 def make_test_response(response_class):
@@ -215,6 +211,12 @@ class BaseTestCase(TestCase):
         context = self.app.test_request_context()
         context.push()
 
+        if blinker is not NotImplemented:
+            def template_rendered_callback(app, **kwargs):
+                self.templates_rendered.append(kwargs.pop("template"))
+
+            template_rendered.connect(template_rendered_callback, self.app)
+
     def setup_client(self, app):
         """returns the test client from the given application instance"""
         self.client = app.test_client()
@@ -229,12 +231,6 @@ class BaseTestCase(TestCase):
     def teardown_app(self):
         self.app.response_class = self._original_response_class
 
-    def setup_template_renderer_signal(self):
-        if blinker is not NotImplemented:
-            rendered_template = lambda template, context: \
-                self.templates_rendered.append((template, context))
-            template_rendered.connect(rendered_template)
-
     def setUp(self):
         # be sure this value has been set first, not doing so
         # could cause some dangerous behaviors (such as testing
@@ -246,7 +242,6 @@ class BaseTestCase(TestCase):
 
         self.templates_rendered = []
         self.setup_warning_filter()
-        self.setup_template_renderer_signal()
         self.setup_app()
         self.setup_client(self.app)
         self.setup_database()
@@ -260,7 +255,7 @@ class BaseTestCase(TestCase):
         if blinker is NotImplemented:
             raise RuntimeError("signals module not supported")
 
-        for template, context in self.templates_rendered:
+        for template in self.templates_rendered:
             if getattr(template, tmpl_name_attribute) == name:
                 return True
 
