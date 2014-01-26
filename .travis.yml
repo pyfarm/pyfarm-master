@@ -1,6 +1,6 @@
 language: python
 python:
-#  - 2.6
+  - 2.6
   - 2.7
   - 3.3
 
@@ -39,10 +39,7 @@ install:
 
 script:
   - pip freeze
-  - nosetests -s --with-coverage --verbose tests
-  - env
-  - pwd
-  - ls -la
+  - nosetests -s --with-coverage --verbose --cover-package=pyfarm.models tests/models
 
 after_success:
  - coveralls
