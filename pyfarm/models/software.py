@@ -31,6 +31,9 @@ from pyfarm.models.core.cfg import TABLE_SOFTWARE, MAX_TAG_LENGTH
 from pyfarm.models.core.types import id_column
 from pyfarm.models.core.mixins import UtilityMixins
 
+__all__ = ("Software", )
+
+
 class Software(db.Model, UtilityMixins):
     """
     Model to represent a versioned piece of software that can be present on an

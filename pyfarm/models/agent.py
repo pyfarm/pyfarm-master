@@ -24,7 +24,6 @@ Models and interface classes related to the agent.
 import re
 from textwrap import dedent
 
-import netaddr
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
 from netaddr import AddrFormatError, IPAddress
@@ -42,6 +41,10 @@ from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_SOFTWARE, TABLE_TAG, TABLE_AGENT_TAG_ASSOC,
     MAX_HOSTNAME_LENGTH, TABLE_AGENT_SOFTWARE_ASSOC,
     TABLE_PROJECT_AGENTS, TABLE_PROJECT)
+
+
+__all__ = ("Agent", )
+
 
 PYFARM_REQUIRE_PRIVATE_IP = read_env_bool("PYFARM_REQUIRE_PRIVATE_IP", False)
 REGEX_HOSTNAME = re.compile("^(?!-)[A-Z\d-]{1,63}(?<!-)"
@@ -273,7 +276,7 @@ class Agent(db.Model, ValidatePriorityMixin, UtilityMixins, ReprMixin):
             return
 
         try:
-            ip = netaddr.IPAddress(value)
+            ip = IPAddress(value)
 
         except (AddrFormatError, ValueError) as e:
             raise ValueError(

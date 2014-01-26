@@ -35,6 +35,8 @@ from pyfarm.models.core.cfg import (
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, UtilityMixins, ReprMixin)
 
+__all__ = ("Task", )
+
 TaskDependencies = db.Table(
     TABLE_TASK_DEPENDENCIES, db.metadata,
     db.Column("parent_id", IDTypeWork,

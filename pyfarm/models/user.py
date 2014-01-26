@@ -37,6 +37,8 @@ from pyfarm.models.core.cfg import (
     MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
     MAX_ROLE_LENGTH, TABLE_USERS_PROJECTS, TABLE_PROJECT)
 
+__all__ = ("User", )
+
 logger = getLogger("models.users")
 
 # roles the user is a member of

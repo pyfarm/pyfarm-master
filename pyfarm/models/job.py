@@ -28,25 +28,26 @@ try:
 except ImportError:  # pragma: no cover
     pwd = None
 
-import json
+
 from textwrap import dedent
 
 from sqlalchemy import event
 from sqlalchemy.orm import validates
-from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.core.config import read_env, read_env_int
 from pyfarm.core.enums import WorkState, DBWorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.functions import work_columns
-from pyfarm.models.core.types import id_column, JSONDict, JSONList, IDTypeWork
+from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_SOFTWARE_DEP, TABLE_JOB_TYPE, TABLE_TAG,
-    TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_TAG_LENGTH, MAX_USERNAME_LENGTH,
+    TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
     TABLE_SOFTWARE, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin)
 from pyfarm.models.jobtype import JobType  # required for a relationship
+
+__all__ = ("Job", )
 
 
 JobSoftwareDependency = db.Table(

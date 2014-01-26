@@ -25,12 +25,16 @@ general implementation.
 
 import ast
 from textwrap import dedent
+
 from sqlalchemy import event
 from sqlalchemy.orm import validates
+
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.master.application import db
 from pyfarm.models.core.types import id_column, JobTypeLoadModeEnum
 from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH
+
+__all__ = ("JobType", )
 
 JOBTYPE_BASECLASS = "JobType"
 

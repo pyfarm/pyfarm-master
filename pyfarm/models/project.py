@@ -22,10 +22,13 @@ Top level table used as a grouping mechanism for many components of PyFarm
  including jobs, tasks, agents, users, and more.
 """
 
+from pyfarm.core.enums import STRING_TYPES
 from pyfarm.master.application import db
 from pyfarm.models.core.types import id_column
 from pyfarm.models.core.cfg import TABLE_PROJECT, MAX_PROJECT_NAME_LENGTH
 from pyfarm.models.core.mixins import ReprMixin
+
+__all__ = ("Project", )
 
 
 class Project(db.Model, ReprMixin):
@@ -52,7 +55,7 @@ class Project(db.Model, ReprMixin):
             if True and a project by ``name`` does not exist, create it
             before returning
         """
-        assert isinstance(name, basestring), "expected string for `name`"
+        assert isinstance(name, STRING_TYPES), "expected string for `name`"
         project = cls.query.filter_by(name=name).first()
 
         # create the project if necessary
