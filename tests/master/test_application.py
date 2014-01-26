@@ -62,8 +62,7 @@ class TestApplicationFunctions(BaseTestCase):
         self.assertIsInstance(admin.index_view, NewAdminIndexView)
 
     def test_get_sqlalchemy(self):
-        db = get_sqlalchemy()
-        self.assertIsInstance(db, SQLAlchemy)
+        self.assertIsInstance(get_sqlalchemy(app=self.app), SQLAlchemy)
 
     def test_get_login_manager(self):
         lm = get_login_manager()
