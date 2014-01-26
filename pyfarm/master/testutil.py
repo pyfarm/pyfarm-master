@@ -25,7 +25,7 @@ import json
 import os
 import time
 import warnings
-from functools import partial
+import uuid
 
 try:
     from httplib import (
@@ -41,7 +41,7 @@ try:
 except ImportError:
     from collections import UserDict
 
-from pyfarm.core.enums import PY26
+from pyfarm.core.enums import PY26, PY3
 
 if not PY26:
     from unittest import TestCase
@@ -138,7 +138,12 @@ class JsonResponseMixin(object):
     def json(self):
         if not json_available:  # pragma: no cover
             raise NotImplementedError
-        return json.loads(self.data)
+
+        data = self.data
+        if PY3 and isinstance(data, bytes):
+            data = data.decode("utf-8")
+
+        return json.loads(data)
 
 
 def make_test_response(response_class):
@@ -153,7 +158,7 @@ class BaseTestCase(TestCase):
     ORIGINAL_ENVIRONMENT = os.environ.copy()
 
     @classmethod
-    def setup_test_environment(cls):
+    def build_environment(cls):
         """
         Sets up the current environment with some values for
         unittesting.  This must be used before any other code
@@ -192,21 +197,27 @@ class BaseTestCase(TestCase):
                 warnings.filters.remove(warning_entry)
 
     def setup_app(self):
-        app = get_application(**os.environ.copy())
+        """
+        Constructs the application object and assigns the instance
+        variables for tests.  If you're testing the master your
+        sublcass will probably need to extend this method.
+        """
+        environment = os.environ.copy()
+        environment.setdefault("app_name", uuid.uuid4().hex)
+        self.app = get_application(**environment)
 
         # construct response class so we can use the json methods
         # in our handlers
-        original_response_class = app.response_class
-        app.response_class = make_test_response(app.response_class)
-        return app, original_response_class
+        self._original_response_class = self.app.response_class
+        self.app.response_class = make_test_response(self.app.response_class)
 
-    def setup_context(self):
+        # construct and push the context
         context = self.app.test_request_context()
         context.push()
-        return context
 
     def setup_client(self, app):
-        return app.test_client()
+        """returns the test client from the given application instance"""
+        self.client = app.test_client()
 
     def setup_database(self):
         db.create_all()
@@ -214,6 +225,9 @@ class BaseTestCase(TestCase):
     def teardown_database(self):
         db.session.remove()
         db.drop_all()
+
+    def teardown_app(self):
+        self.app.response_class = self._original_response_class
 
     def setup_template_renderer_signal(self):
         if blinker is not NotImplemented:
@@ -227,19 +241,18 @@ class BaseTestCase(TestCase):
         # on production data)
         if not self.ENVIRONMENT_SETUP:
             self.fail(
-                "setup_test_environment() not called, aborting due to "
+                "build_environment() not called, aborting due to "
                 "possibility of dangerous behaviors")
 
         self.templates_rendered = []
         self.setup_warning_filter()
         self.setup_template_renderer_signal()
-        self.app, self._original_response_class = self.setup_app()
-        self._ctx = self.setup_context()
-        self.client = self.setup_client(self.app)
+        self.setup_app()
+        self.setup_client(self.app)
         self.setup_database()
 
     def tearDown(self):
-        self.app.response_class = self._original_response_class
+        self.teardown_app()
         self.teardown_database()
         self.teardown_warning_filter()
 
