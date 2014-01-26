@@ -40,6 +40,8 @@ install:
 script:
   - pip freeze
   - nosetests -s --verbose --with-coverage --cover-package="pyfarm*" tests/models tests/master
+  - env
+  - pwd
   - ls -la
 
 after_success:
