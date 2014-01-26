@@ -39,7 +39,7 @@ install:
 
 script:
   - pip freeze
-  - nosetests -s --verbose --with-coverage --cover-package=pyfarm tests
+  - nosetests -s --verbose --with-coverage --cover-package="pyfarm*" tests/models tests/master
 
 after_success:
  - coveralls

@@ -13,3 +13,4 @@
 build
 dist
 *.kdev4
+*cov
