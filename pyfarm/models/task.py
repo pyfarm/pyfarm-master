@@ -25,6 +25,7 @@ from functools import partial
 from textwrap import dedent
 
 from sqlalchemy import event
+from sqlalchemy.orm import validates
 
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
@@ -101,6 +102,18 @@ class Task(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, UtilityMixins
         """set the state to ASSIGN whenever the agent is changed"""
         if new_value is not None:
             target.state = target.STATE_ENUM.ASSIGN
+
+    def validate_state(self, key, value):
+        """Ensures that ``value`` is a member of ``AgentState``"""
+        if value not in WorkState:
+            raise ValueError("`%s` is not a valid state" % value)
+
+        return value
+
+    @validates("state")
+    def validate_state_column(self, key, value):
+        """validates the state column"""
+        return self.validate_state(key, value)
 
 
 event.listen(Task.agent_id, "set", Task.agentChangedEvent)

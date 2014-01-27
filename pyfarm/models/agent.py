@@ -48,8 +48,8 @@ __all__ = ("Agent", )
 
 PYFARM_REQUIRE_PRIVATE_IP = read_env_bool("PYFARM_REQUIRE_PRIVATE_IP", False)
 REGEX_HOSTNAME = re.compile("^(?!-)[A-Z\d-]{1,63}(?<!-)"
-                            "(\.(?!-)[A-Z\d-]{1,63}(?<!-))*\.?$"
-                            , re.IGNORECASE)
+                            "(\.(?!-)[A-Z\d-]{1,63}(?<!-))*\.?$",
+                            re.IGNORECASE)
 
 
 AgentSoftwareAssociation = db.Table(
@@ -296,6 +296,13 @@ class Agent(db.Model, ValidatePriorityMixin, UtilityMixins, ReprMixin):
 
         return value
 
+    def validate_state(self, key, value):
+        """Ensures that ``value`` is a member of ``AgentState``"""
+        if value not in AgentState:
+            raise ValueError("`%s` is not a valid state" % value)
+
+        return value
+
     @validates("ip")
     def validate_address_column(self, key, value):
         """validates the ip column"""
@@ -310,6 +317,11 @@ class Agent(db.Model, ValidatePriorityMixin, UtilityMixins, ReprMixin):
     def validate_resource_column(self, key, value):
         """validates the ram, cpus, and port columns"""
         return self.validate_resource(key, value)
+
+    @validates("state")
+    def validate_state_column(self, key, value):
+        """validates the state column"""
+        return self.validate_state(key, value)
 
     def serialize_column(self, column):
         """serializes a single column, typically used by a dictionary mixin"""

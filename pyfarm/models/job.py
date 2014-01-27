@@ -341,5 +341,17 @@ class Job(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin):
 
         return value
 
+    def validate_state(self, key, value):
+        """Ensures that ``value`` is a member of ``AgentState``"""
+        if value not in WorkState:
+            raise ValueError("`%s` is not a valid state" % value)
+
+        return value
+
+    @validates("state")
+    def validate_state_column(self, key, value):
+        """validates the state column"""
+        return self.validate_state(key, value)
+
 
 event.listen(Job.state, "set", Job.stateChangedEvent)
