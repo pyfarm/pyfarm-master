@@ -158,7 +158,7 @@ class TestMixins(BaseTestCase):
 
     def test_types(self):
         types = MixinModel.types()
-        self.assertEqual(types.primary_keys, {"id"})
-        self.assertEqual(types.columns, {"b", "c", "a", "id", "d"})
-        self.assertEqual(types.required, {"id", "d"})
-        self.assertEqual(types.relationships, {"e"})
+        self.assertEqual(types.primary_keys, set(["id"]))
+        self.assertEqual(types.columns, set(["b", "c", "a", "id", "d"]))
+        self.assertEqual(types.required, set(["id", "d"]))
+        self.assertEqual(types.relationships, set(["e"]))
