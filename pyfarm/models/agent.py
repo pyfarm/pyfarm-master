@@ -312,9 +312,3 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     def validate_resource_column(self, key, value):
         """validates the ram, cpus, and port columns"""
         return self.validate_resource(key, value)
-
-    def serialize_column(self, column):
-        """serializes a single column, typically used by a dictionary mixin"""
-        if isinstance(column, IPAddress):
-            return str(column)
-        return column
