@@ -57,15 +57,21 @@ event.listen(
     WorkStateChangedModel.state, "set", WorkStateChangedModel.stateChangedEvent)
 
 
+MixinModelRelation = db.Table(
+    "%s_mixin_rel_test" % TABLE_PREFIX, db.metadata,
+    db.Column("mixin_id", db.Integer,
+              db.ForeignKey("%s.id" % "%s_mixin_test" % TABLE_PREFIX),
+              primary_key=True))
+
+
 class MixinModel(db.Model, UtilityMixins):
     __tablename__ = "%s_mixin_test" % TABLE_PREFIX
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     a = db.Column(db.Integer)
     b = db.Column(db.String(512))
     c = db.Column(IPv4Address)
-
-    def serialize_column(self, column):
-        return column
+    d = db.Column(db.Integer, nullable=False)
+    e = db.relationship("MixinModel", secondary=MixinModelRelation)
 
 
 class TestMixins(BaseTestCase):
@@ -132,18 +138,27 @@ class TestMixins(BaseTestCase):
             db.session.commit()
 
     def test_to_dict(self):
-        model = MixinModel(a=1, b="hello")
+        model = MixinModel(a=1, b="hello", d=0)
         db.session.add(model)
         db.session.commit()
         self.assertDictEqual(
-            {"a": model.a, "b": model.b, "id": model.id, "c": None},
+            {"a": model.a, "b": model.b, "id": model.id, "c": None,
+             "d": model.d},
             model.to_dict())
 
     def test_to_schema(self):
-        model = MixinModel(a=1, b="hello")
+        model = MixinModel(a=1, b="hello", d=0)
         db.session.add(model)
         db.session.commit()
         self.assertDictEqual(
             {"a": "INTEGER", "b": "VARCHAR(512)",
-             "id": "INTEGER", "c": "IPv4Address"},
+             "id": "INTEGER", "c": "IPv4Address",
+             "d": "INTEGER"},
             model.to_schema())
+
+    def test_types(self):
+        types = MixinModel.types()
+        self.assertEqual(types.primary_keys, {"id"})
+        self.assertEqual(types.columns, {"b", "c", "a", "id", "d"})
+        self.assertEqual(types.required, {"id", "d"})
+        self.assertEqual(types.relationships, {"e"})
