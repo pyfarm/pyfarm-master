@@ -23,11 +23,14 @@ Module containing mixins which can be used by multiple models.
 
 from datetime import datetime
 
-from sqlalchemy.orm import validates
+from sqlalchemy.orm import (
+    validates, class_mapper, RelationshipProperty, ColumnProperty)
 
 from pyfarm.core.enums import DBWorkState, _WorkState, Values
 from pyfarm.core.logger import getLogger
 from pyfarm.core.config import read_env_int
+from pyfarm.models.core.types import IPAddress
+
 
 logger = getLogger("models.mixin")
 
@@ -99,46 +102,120 @@ class WorkStateChangedMixin(object):
 class UtilityMixins(object):
     """
     Mixins which can be used to produce dictionaries
-    of existing data
+    of existing data.
+
+    :const dict DICT_CONVERT_COLUMN:
+        A dictionary containing key value pairs of attribute names
+        and a function to retrieve the attribute.  The function should
+        take a single input and return the value itself.  Optionally,
+        you can also use the ``NotImplemented`` object to exclude
+        some columns from the results.
     """
+    DICT_CONVERT_COLUMN = {}
+
+    def _to_dict_column(self, name):
+        """
+        Default method used by :meth:`.to_dict` to convert a column to
+        a standard value.
+        """
+        value = getattr(self, name)
+        if isinstance(value, Values):
+            return value.str
+        elif isinstance(value, IPAddress):
+            return str(value)
+        else:
+            return value
+
+    def _to_dict_relationship(self, name):
+        """
+        Default method used by :meth:`.to_dict` to convert a relationship
+        to a standard value.  In the event this method does not know
+        how to unpack a relationship it will raise a ``NotImplementedError``
+        """
+        values = []
+
+        for relationship in getattr(self, name):
+            if name == "tags":
+                values.append(relationship.tag)
+            elif name == "projects":
+                values.append(relationship.name)
+            elif name == "software":
+                values.append([relationship.name, relationship.version])
+            elif name in ("tasks", "jobs"):
+                values.append(relationship.id)
+            else:
+                raise NotImplementedError(
+                    "don't know how to unpack relationships for `%s`" % name)
+
+        return values
+
     def to_dict(self):
         """Produce a dictionary of existing data in the table"""
-        try:
-            serialize_column = self.serialize_column
-        except AttributeError:  # pragma: no cover
-            serialize_column = None
+        if not isinstance(self.DICT_CONVERT_COLUMN, dict):
+            raise TypeError(
+                "expected %s.DICT_CONVERT_COLUMN to "
+                "be a dictionary" % self.__class__.__name__)
 
         results = {}
-        for column_name in self.__table__.c.keys():
-            value = getattr(self, column_name)
 
-            if serialize_column is not None:
-                value = serialize_column(value)
+        for name, column_type in self.attributes():
+            # normal column, let the column handle the conversion
+            if isinstance(column_type, ColumnProperty):
+                converter = self.DICT_CONVERT_COLUMN.get(
+                    name, self._to_dict_column)
 
-            if isinstance(value, Values):
-                value = value.str
+            elif isinstance(column_type, RelationshipProperty):
+                converter = self.DICT_CONVERT_COLUMN.get(
+                    name, self._to_dict_relationship)
 
-            results[column_name] = value
+            else:
+                raise NotImplementedError(
+                    "don't know how to handle %s" % column_type)
+
+            # check the converter and then either handle the result
+            # or pass
+            if converter is NotImplemented:
+                continue
+
+            elif not callable(converter):
+                raise TypeError(
+                    "converter function for %s was not callable" % name)
+
+            else:
+                results[name] = converter(name)
 
         return results
 
-    def to_schema(self):
+    @classmethod
+    def to_schema(cls):
         """
         Produce a dictionary which represents the
         table's schema in a basic format
         """
         result = {}
-        for name, column in self.__table__.c.items():
-            try:
-                column.type.python_type
-            except NotImplementedError:
-                column_type = column.type.__class__.__name__
-            else:
-                column_type = str(column.type)
 
-            result[name] = column_type
+        for name, column_type in cls.attributes():
+            if isinstance(column_type, ColumnProperty):
+                column = cls.__table__.c[name]
+
+                try:
+                    column.type.python_type
+                except NotImplementedError:
+                    result[name] = column.type.__class__.__name__
+                else:
+                    result[name] = str(column.type)
 
         return result
+
+    @classmethod
+    def attributes(cls):
+        """
+        Returns a list of tuples containing all the raw column attributes
+        and relationships for the current class.  This classmethod does
+        not unpack the values themselves.
+        """
+        mapper = class_mapper(cls)
+        return mapper.column_attrs.items() + mapper.relationships.items()
 
 
 class ReprMixin(object):

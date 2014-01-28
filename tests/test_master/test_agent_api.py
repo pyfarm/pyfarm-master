@@ -76,7 +76,11 @@ class TestAgentAPI(BaseTestCase):
                 "state": "running",
                 "free_ram": 133,
                 "id": id,
-                "remote_ip": None})
+                "remote_ip": None,
+                "tags": [],
+                "tasks": [],
+                "projects": [],
+                "software": []})
 
     # There are two ways to update an agent, with a POST to /api/v1/agents
     # or with a POST to /api/v1/agents/<id>
@@ -131,7 +135,11 @@ class TestAgentAPI(BaseTestCase):
             "state": "running",
             "free_ram": 128,
             "id": id,
-            "remote_ip": None})
+            "remote_ip": None,
+            "tags": [],
+            "tasks": [],
+            "projects": [],
+            "software": []})
 
     def test_post_agents(self):
         response1 = self.client.post(
@@ -186,7 +194,11 @@ class TestAgentAPI(BaseTestCase):
             "state": "running",
             "free_ram": 4096,
             "id": id,
-            "remote_ip": None})
+            "remote_ip": None,
+            "tags": [],
+            "tasks": [],
+            "projects": [],
+            "software": []})
 
     def test_agent_delete(self):
         response1 = self.client.post(
