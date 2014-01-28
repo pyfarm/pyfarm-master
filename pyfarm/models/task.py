@@ -34,7 +34,8 @@ from pyfarm.models.core.functions import work_columns, repr_enum
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_TASK, TABLE_AGENT, TABLE_TASK_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
-    ValidatePriorityMixin, WorkStateChangedMixin, UtilityMixins, ReprMixin)
+    ValidatePriorityMixin, WorkStateChangedMixin, UtilityMixins, ReprMixin,
+    ValidateWorkStateMixin)
 
 __all__ = ("Task", )
 
@@ -46,8 +47,8 @@ TaskDependencies = db.Table(
               db.ForeignKey("%s.id" % TABLE_TASK), primary_key=True))
 
 
-class Task(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, UtilityMixins,
-           ReprMixin):
+class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
+           WorkStateChangedMixin, UtilityMixins, ReprMixin):
     """
     Defines a task which a child of a :class:`Job`.  This table represents
     rows which contain the individual work unit(s) for a job.
@@ -102,18 +103,6 @@ class Task(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, UtilityMixins
         """set the state to ASSIGN whenever the agent is changed"""
         if new_value is not None:
             target.state = target.STATE_ENUM.ASSIGN
-
-    def validate_state(self, key, value):
-        """Ensures that ``value`` is a member of ``AgentState``"""
-        if value not in WorkState:
-            raise ValueError("`%s` is not a valid state" % value)
-
-        return value
-
-    @validates("state")
-    def validate_state_column(self, key, value):
-        """validates the state column"""
-        return self.validate_state(key, value)
 
 
 event.listen(Task.agent_id, "set", Task.agentChangedEvent)

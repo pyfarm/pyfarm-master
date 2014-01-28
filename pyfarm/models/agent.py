@@ -33,7 +33,7 @@ from pyfarm.core.config import read_env_number, read_env_int, read_env_bool
 from pyfarm.master.application import db, app
 from pyfarm.models.core.functions import repr_ip
 from pyfarm.models.core.mixins import (
-    ValidatePriorityMixin, UtilityMixins, ReprMixin)
+    ValidatePriorityMixin, UtilityMixins, ReprMixin, ValidateWorkStateMixin)
 from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, UseAgentAddressEnum,
     AgentStateEnum)
@@ -100,7 +100,8 @@ class AgentTaggingMixin(object):
         return value
 
 
-class Agent(db.Model, ValidatePriorityMixin, UtilityMixins, ReprMixin):
+class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
+            UtilityMixins, ReprMixin):
     """
     Stores information about an agent include its network address,
     state, allocation configuration, etc.
@@ -117,6 +118,7 @@ class Agent(db.Model, ValidatePriorityMixin, UtilityMixins, ReprMixin):
     """
     __tablename__ = TABLE_AGENT
     __table_args__ = (UniqueConstraint("hostname", "ip", "port"), )
+    STATE_ENUM = AgentState
     STATE_DEFAULT = "online"
     REPR_COLUMNS = (
         "id", "hostname", "state", "ip", "remote_ip", "port", "cpus",
@@ -296,13 +298,6 @@ class Agent(db.Model, ValidatePriorityMixin, UtilityMixins, ReprMixin):
 
         return value
 
-    def validate_state(self, key, value):
-        """Ensures that ``value`` is a member of ``AgentState``"""
-        if value not in AgentState:
-            raise ValueError("`%s` is not a valid state" % value)
-
-        return value
-
     @validates("ip")
     def validate_address_column(self, key, value):
         """validates the ip column"""
@@ -317,11 +312,6 @@ class Agent(db.Model, ValidatePriorityMixin, UtilityMixins, ReprMixin):
     def validate_resource_column(self, key, value):
         """validates the ram, cpus, and port columns"""
         return self.validate_resource(key, value)
-
-    @validates("state")
-    def validate_state_column(self, key, value):
-        """validates the state column"""
-        return self.validate_state(key, value)
 
     def serialize_column(self, column):
         """serializes a single column, typically used by a dictionary mixin"""

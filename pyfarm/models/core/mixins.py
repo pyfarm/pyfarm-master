@@ -65,12 +65,21 @@ class ValidatePriorityMixin(object):
 
 
 class ValidateWorkStateMixin(object):
-    @validates("state")
+    STATE_ENUM = NotImplemented
+
     def validate_state(self, key, value):
-        if value not in DBWorkState._map:
-            raise ValueError(
-                "%s is not a valid value for `%s`" % (repr(value), key))
+        """Ensures that ``value`` is a member of ``STATE_ENUM``"""
+        assert self.STATE_ENUM is not NotImplemented
+
+        if value not in self.STATE_ENUM:
+            raise ValueError("`%s` is not a valid state" % value)
+
         return value
+
+    @validates("state")
+    def validate_state_column(self, key, value):
+        """validates the state column"""
+        return self.validate_state(key, value)
 
 
 class WorkStateChangedMixin(object):

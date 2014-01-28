@@ -38,6 +38,7 @@ rand_state = lambda: choice(list(WorkState))
 
 class ValidationModel(db.Model, ValidateWorkStateMixin, ValidatePriorityMixin):
     __tablename__ = "%s_validation_mixin_test" % TABLE_PREFIX
+    STATE_ENUM = WorkState
     id = db.Column(Integer, primary_key=True, autoincrement=True)
     state = db.Column(WorkStateEnum)
     attempts = db.Column(Integer)

@@ -44,7 +44,8 @@ from pyfarm.models.core.cfg import (
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
     TABLE_SOFTWARE, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
-    ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin)
+    ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
+    ValidateWorkStateMixin)
 from pyfarm.models.jobtype import JobType  # required for a relationship
 
 __all__ = ("Job", )
@@ -74,7 +75,8 @@ JobDependencies = db.Table(
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
 
 
-class Job(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin):
+class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
+          WorkStateChangedMixin, ReprMixin):
     """
     Defines the attributes and environment for a job.  Individual commands
     are kept track of by |Task|
@@ -83,6 +85,7 @@ class Job(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin):
     REPR_COLUMNS = ("id", "state", "project")
     REPR_CONVERT_COLUMN = {
         "state": repr}
+    STATE_ENUM = WorkState
     MIN_CPUS = read_env_int("PYFARM_QUEUE_MIN_CPUS", 1)
     MAX_CPUS = read_env_int("PYFARM_QUEUE_MAX_CPUS", 256)
     MIN_RAM = read_env_int("PYFARM_QUEUE_MIN_RAM", 16)
@@ -340,18 +343,5 @@ class Job(db.Model, ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin):
             raise ValueError(msg)
 
         return value
-
-    def validate_state(self, key, value):
-        """Ensures that ``value`` is a member of ``AgentState``"""
-        if value not in WorkState:
-            raise ValueError("`%s` is not a valid state" % value)
-
-        return value
-
-    @validates("state")
-    def validate_state_column(self, key, value):
-        """validates the state column"""
-        return self.validate_state(key, value)
-
 
 event.listen(Job.state, "set", Job.stateChangedEvent)
