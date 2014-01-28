@@ -143,7 +143,7 @@ class TestMixins(BaseTestCase):
         db.session.commit()
         self.assertDictEqual(
             {"a": model.a, "b": model.b, "id": model.id, "c": None,
-             "d": model.d},
+             "e": [], "d": model.d},
             model.to_dict())
 
     def test_to_schema(self):
