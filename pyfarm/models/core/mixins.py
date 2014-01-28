@@ -23,8 +23,12 @@ Module containing mixins which can be used by multiple models.
 
 from datetime import datetime
 
-from sqlalchemy.orm import (
-    validates, class_mapper, RelationshipProperty, ColumnProperty)
+try:
+    from collections import namedtuple
+except ImportError:
+    from pyfarm.core.backports import namedtuple
+
+from sqlalchemy.orm import validates, class_mapper
 
 from pyfarm.core.enums import DBWorkState, _WorkState, Values
 from pyfarm.core.logger import getLogger
@@ -33,6 +37,12 @@ from pyfarm.models.core.types import IPAddress
 
 
 logger = getLogger("models.mixin")
+
+# stores information about a model's columns
+# and relationships
+ModelTypes = namedtuple(
+    "ModelTypes",
+    ("primary_keys", "columns", "required", "relationships"))
 
 
 class ValidatePriorityMixin(object):
@@ -166,23 +176,28 @@ class UtilityMixins(object):
                 "be a dictionary" % self.__class__.__name__)
 
         results = {}
+        types = self.types()
 
-        for name, column_type in self.attributes():
-            # normal column, let the column handle the conversion
-            if isinstance(column_type, ColumnProperty):
-                converter = self.DICT_CONVERT_COLUMN.get(
-                    name, self._to_dict_column)
+        # first convert all the non-relationship columns
+        for name in types.columns:
+            converter = self.DICT_CONVERT_COLUMN.get(
+                name, self._to_dict_column)
 
-            elif isinstance(column_type, RelationshipProperty):
-                converter = self.DICT_CONVERT_COLUMN.get(
-                    name, self._to_dict_relationship)
+            if converter is NotImplemented:
+                continue
+
+            elif not callable(converter):
+                raise TypeError(
+                    "converter function for %s was not callable" % name)
 
             else:
-                raise NotImplementedError(
-                    "don't know how to handle %s" % column_type)
+                results[name] = converter(name)
 
-            # check the converter and then either handle the result
-            # or pass
+        # now convert all of the relationships
+        for name in types.relationships:
+            converter = self.DICT_CONVERT_COLUMN.get(
+                name, self._to_dict_relationship)
+
             if converter is NotImplemented:
                 continue
 
@@ -203,28 +218,57 @@ class UtilityMixins(object):
         """
         result = {}
 
-        for name, column_type in cls.attributes():
-            if isinstance(column_type, ColumnProperty):
-                column = cls.__table__.c[name]
+        for name in cls.types().columns:
+            column = cls.__table__.c[name]
 
-                try:
-                    column.type.python_type
-                except NotImplementedError:
-                    result[name] = column.type.__class__.__name__
-                else:
-                    result[name] = str(column.type)
+            try:
+                column.type.python_type
+            except NotImplementedError:
+                result[name] = column.type.__class__.__name__
+            else:
+                result[name] = str(column.type)
 
         return result
 
     @classmethod
-    def attributes(cls):
+    def types(cls):
         """
-        Returns a list of tuples containing all the raw column attributes
-        and relationships for the current class.  This classmethod does
-        not unpack the values themselves.
+        A classmethod that constructs a ``namedtuple`` object with four
+        attributes:
+
+            * primary_keys - set of all primary key(s) names
+            * columns - set of all column names
+            * required - set of all required columns (non-nullable wo/defaults)
+            * relationships - not columns themselves but do store relationships
         """
         mapper = class_mapper(cls)
-        return mapper.column_attrs.items() + mapper.relationships.items()
+        primary_keys = set()
+        columns = set()
+        required = set()
+
+        # all relationship columns
+        relationships = set(
+            name for name, column in mapper.relationships.items())
+
+        # create sets for all true columns, primary keys,
+        # and required columns
+        for name, column in mapper.mapped_table.c.items():
+            columns.add(name)
+
+            if column.primary_key:
+                primary_keys.add(name)
+
+            if column.primary_key and not column.autoincrement:
+                required.add(name)
+
+            if not column.nullable and column.default is None:
+                required.add(name)
+
+        return ModelTypes(
+            primary_keys=primary_keys,
+            columns=columns,
+            required=required,
+            relationships=relationships)
 
 
 class ReprMixin(object):
