@@ -16,7 +16,12 @@
 
 import os
 
-from flask import Flask, Blueprint
+try:
+    from httplib import BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE
+except ImportError:
+    from http.client import BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE
+
+from flask import Flask, Blueprint, g
 from flask.ext.admin import Admin, AdminIndexView
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
@@ -26,10 +31,11 @@ from itsdangerous import URLSafeTimedSerializer
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
+from pyfarm.master.utility import jsonify
 from pyfarm.master.admin.baseview import AdminIndex
 from pyfarm.master.application import (
     get_application, get_api_blueprint, get_admin, get_sqlalchemy,
-    get_login_manager, get_login_serializer)
+    get_login_manager, get_login_serializer, before_request)
 
 
 class TestApplicationFunctions(BaseTestCase):
@@ -76,3 +82,23 @@ class TestApplicationFunctions(BaseTestCase):
         ls = get_login_serializer(secret_key)
         self.assertIsInstance(ls, URLSafeTimedSerializer)
         self.assertEqual(ls.secret_key, secret_key)
+
+    def test_request_handler(self):
+        @self.app.route("/api/", methods=("POST", ))
+        def test_api():
+            return jsonify(success=True)
+
+        # this is not a "real" request so we have to
+        # test it manually for each request
+        def get_before_request_result():
+            response, code = before_request()
+            self.assertEqual(code, UNSUPPORTED_MEDIA_TYPE)
+            self.assertEqual(
+                response.json,
+                {'error': "only 'application/json' is supported here"})
+
+        self.app.before_first_request_funcs.append(get_before_request_result)
+        self.client.post(
+            "/api/", headers={"Content-Type": "application/json2"}, data={})
+        self.app.before_first_request_funcs.remove(get_before_request_result)
+        self.assertIsNotNone(g.json)

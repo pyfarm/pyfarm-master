@@ -189,16 +189,6 @@ def get_login_serializer(secret_key):
     return URLSafeTimedSerializer(secret_key)
 
 
-app = get_application()
-api = get_api_blueprint()
-app.register_blueprint(api)
-admin = get_admin(app=app)
-db = get_sqlalchemy(app=app)
-login_manager = get_login_manager(app=app, login_view="/login/")
-login_serializer = get_login_serializer(app.secret_key)
-
-
-@app.before_request
 def before_request():
     """
     Global before_request handler that will handle common problems when
@@ -208,7 +198,7 @@ def before_request():
 
     # do nothing with non-api/non-data contributing requests
     if request.method not in POST_METHODS \
-            or not request.path.startswith("/api"):
+            or not request.path.startswith("/api"):  # pragma: no cover
         return
 
     # header must be application/json if we're working with
@@ -222,8 +212,21 @@ def before_request():
     # so we can produce a better error message
     try:
         g.json = request.get_json()
-    except BadRequest:
+    except BadRequest:  # pragma: no cover
         return jsonify(error="failed to decode json"), BAD_REQUEST
+
+
+# main object setup (app, api, etc)
+app = get_application()
+api = get_api_blueprint()
+admin = get_admin(app=app)
+db = get_sqlalchemy(app=app)
+login_manager = get_login_manager(app=app, login_view="/login/")
+login_serializer = get_login_serializer(app.secret_key)
+
+# attach the remaining functions to the application object
+app.register_blueprint(api)
+app.before_first_request_funcs.append(before_request)
 
 
 class SessionMixin(object):
