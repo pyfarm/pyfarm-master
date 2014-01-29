@@ -25,16 +25,26 @@ necessary to run the master.
 import os
 from datetime import timedelta
 
-from flask import Flask, Blueprint
+try:
+    from httplib import BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE
+except ImportError:
+    from http.client import BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE
+
+from flask import Flask, Blueprint, request, g
 from flask.ext.admin import Admin
 from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
 from itsdangerous import URLSafeTimedSerializer
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
+from werkzeug.exceptions import BadRequest
 
+from pyfarm.core.enums import NOTSET
 from pyfarm.core.config import read_env
 from pyfarm.master.admin.baseview import AdminIndex
+from pyfarm.master.utility import jsonify
+
+POST_METHODS = set(("POST", "PUT"))
 
 
 def get_application(**configuration_keywords):
@@ -186,6 +196,34 @@ admin = get_admin(app=app)
 db = get_sqlalchemy(app=app)
 login_manager = get_login_manager(app=app, login_view="/login/")
 login_serializer = get_login_serializer(app.secret_key)
+
+
+@app.before_request
+def before_request():
+    """
+    Global before_request handler that will handle common problems when
+    trying to accept json data to the api.
+    """
+    g.json = NOTSET
+
+    # do nothing with non-api/non-data contributing requests
+    if request.method not in POST_METHODS \
+            or not request.path.startswith("/api"):
+        return
+
+    # header must be application/json if we're working with
+    # data input to /api
+    if request.headers["Content-Type"] != "application/json":
+        return (
+            jsonify(error="only 'application/json' is supported here"),
+            UNSUPPORTED_MEDIA_TYPE)
+
+    # manually handle decoding errors from get_json()
+    # so we can produce a better error message
+    try:
+        g.json = request.get_json()
+    except BadRequest:
+        return jsonify(error="failed to decode json"), BAD_REQUEST
 
 
 class SessionMixin(object):
