@@ -233,4 +233,3 @@ class SessionMixin(object):
     """
     _session = property(fget=lambda self: db.session)
 
-
