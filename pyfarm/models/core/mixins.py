@@ -245,8 +245,6 @@ class UtilityMixins(object):
         primary_keys = set()
         columns = set()
         required = set()
-
-        # all relationship columns
         relationships = set(
             name for name, column in mapper.relationships.items())
 
