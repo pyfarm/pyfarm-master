@@ -201,7 +201,7 @@ class TagIndexAPI(MethodView):
 
             .. sourcecode:: http
 
-                GET /api/v1/tags?list_agents=true HTTP/1.1
+                GET /api/v1/tags HTTP/1.1
                 Accept: application/json
 
             **Response**
@@ -214,61 +214,26 @@ class TagIndexAPI(MethodView):
                 [
                     {
                         "agents": [
-                        {
-                            "href": "/api/v1/agents/1",
-                            "hostname": "agent3",
-                            "id": 1
-                        }
+                            1
                         ],
+                        "jobs": [],
                         "id": 1,
                         "tag": "interesting"
                     },
                     {
                         "agents": [],
+                        "jobs": [],
                         "id": 2,
                         "tag": "boring"
                     }
                 ]
-
-        :qparam list_agents: If true, list all agents for every tag
-        :qparam list_agents_full: If true, list agents with full info
-        :qparam list_jobs: If true, list all jobs for every tag
-        :qparam list_jobs_full: If true, list jobs with full info
 
         :statuscode 200: no error
         """
         out = []
 
         for tag in Tag.query.all():
-            tag_dict = {"id": tag.id, "tag": tag.tag}
-
-            # TODO Instead of doing one query per tag, do a single big query to
-            # get all agent-tag relations
-            if request.args.get("list_agents") == "true":
-                agents = []
-                for agent in tag.agents:
-                    agent_entry = {"id": agent.id,
-                                   "hostname": agent.hostname,
-                                   "href": url_for(".single_agent_api",
-                                                   agent_id=agent.id)}
-                    if request.args.get("list_agents_full") == "true":
-                        agent_entry["data"] = agent.to_dict()
-                    agents.append(agent_entry)
-                tag_dict["agents"] = agents
-
-            if request.args.get("list_jobs") == "true":
-                jobs = []
-                for job in tag.jobs:
-                    job_entry = {"id": job.id,
-                                 # TODO Replace with url_for() once we actually
-                                 # have a job endpoint
-                                 "href": "/api/v1/jobs/%s" % job.id}
-                    if request.args.get("list_jobs_full") == "true":
-                        job_entry["data"] = job.to_dict()
-                    jobs.append(job_entry)
-                tag_dict["jobs"] = jobs
-
-            out.append(tag_dict)
+            out.append(tag.to_dict())
 
         return jsonify(out), OK
 
@@ -307,50 +272,6 @@ class SingleTagAPI(MethodView):
                 "jobs": [], 
                 "tag": "interesting"
                 }
-            **Request**
-
-            .. sourcecode:: http
-
-                GET /api/v1/tags/interesting?list_agents_full=true HTTP/1.1
-                Accept: application/json
-
-            **Response**
-
-            .. sourcecode:: http
-
-                HTTP/1.1 200 OK
-                Content-Type: application/json
-
-                {
-                "agents": [
-                    {
-                    "data": {
-                        "cpu_allocation": 1.0,
-                        "cpus": 16,
-                        "free_ram": 128,
-                        "hostname": "agent3",
-                        "id": 1,
-                        "ip": "11.196.200.117",
-                        "port": 64994,
-                        "ram": 2048,
-                        "ram_allocation": 0.8,
-                        "remote_ip": "127.0.0.1",
-                        "state": "online",
-                        "time_offset": 0,
-                        "use_address": "remote"
-                    }, 
-                    "hostname": "agent3",
-                    "href": "/api/v1/agents/1",
-                    "id": 1
-                    }
-                ],
-                "id": 1,
-                "jobs": [],
-                "tag": "interesting"
-                }
-
-        :qparam list_agents_full: If true, list agents with full info
-        :qparam list_jobs_full: If true, list jobs with full info
 
         :statuscode 200: no error
         :statuscode 404: tag not found
@@ -358,33 +279,11 @@ class SingleTagAPI(MethodView):
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
-            tag = Tag.query.filter_by(tag_id=tagname).first()
+            tag = Tag.query.filter_by(id=tagname).first()
         if tag is None:
             return jsonify(message="Tag not found"), NOT_FOUND
 
         tag_dict = tag.to_dict()
-
-        agents = []
-        for agent in tag.agents:
-            agent_entry = {"id": agent.id,
-                            "hostname": agent.hostname,
-                            "href": url_for(".single_agent_api",
-                                            agent_id=agent.id)}
-            if request.args.get("list_agents_full") == "true":
-                agent_entry["data"] = agent.to_dict()
-            agents.append(agent_entry)
-        tag_dict["agents"] = agents
-
-        jobs = []
-        for job in tag.jobs:
-            job_entry = {"id": job.id,
-                            # TODO Replace with url_for() once we actually
-                            # have a job endpoint
-                            "href": "/api/v1/jobs/%s" % job.id}
-            if request.args.get("list_jobs_full") == "true":
-                job_entry["data"] = job.to_dict()
-            jobs.append(job_entry)
-        tag_dict["jobs"] = jobs
 
         return jsonify(tag_dict), OK
 
@@ -454,7 +353,7 @@ class SingleTagAPI(MethodView):
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
-            tag = Tag.query.filter_by(tag_id=tagname).first()
+            tag = Tag.query.filter_by(id=tagname).first()
         if tag is not None:
             # If tag exists, delete it before recreating it
             tag.agents = []
@@ -544,7 +443,7 @@ class SingleTagAPI(MethodView):
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
-            tag = Tag.query.filter_by(tag_id=tagname).first()
+            tag = Tag.query.filter_by(id=tagname).first()
         if tag is None:
             return Response(), NO_CONTENT
 
@@ -646,7 +545,7 @@ class AgentsInTagIndexAPI(MethodView):
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
-            tag = Tag.query.filter_by(tag_id=tagname).first()
+            tag = Tag.query.filter_by(id=tagname).first()
         if tag is None:
             return jsonify(message="Tag not found"), NOT_FOUND
 
@@ -714,7 +613,7 @@ class AgentsInTagIndexAPI(MethodView):
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
-            tag = Tag.query.filter_by(tag_id=tagname).first()
+            tag = Tag.query.filter_by(id=tagname).first()
         if tag is None:
             return jsonify(message="Tag not found"), NOT_FOUND
 
