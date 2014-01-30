@@ -513,29 +513,6 @@ class AgentsInTagIndexAPI(MethodView):
                     "id": 1
                 }
 
-            **Request**
-
-            .. sourcecode:: http
-
-                POST /api/v1/tags/1/agents HTTP/1.1
-                Accept: application/json
-
-                {
-                    "agent_id": 1
-                }
-
-            **Response (agent already had that tag)**
-
-            .. sourcecode:: http
-
-                HTTP/1.1 200 OK
-                Content-Type: application/json
-
-                {
-                    "href": "/api/v1/agents/1",
-                    "id": 1
-                }
-
         :statuscode 200: an existing tag was found and returned
         :statuscode 201: a new tag was created
         :statuscode 400: there was something wrong with the request (such as
