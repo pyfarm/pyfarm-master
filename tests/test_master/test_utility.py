@@ -119,6 +119,6 @@ class TestUtility(BaseTestCase):
             return
 
         response, code = foo()
-        self.assertIn(
-            "<class 'int'> expected", response.get_data().decode("utf-8"))
+        self.assertIn("int", response.get_data().decode("utf-8"))
+        self.assertIn("expected", response.get_data().decode("utf-8"))
         self.assertEqual(code, BAD_REQUEST)
