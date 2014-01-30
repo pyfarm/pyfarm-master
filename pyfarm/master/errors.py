@@ -25,8 +25,6 @@ those requests will be responded to directly instead of calling
 :meth:`flask.abort`
 """
 
-from json import dumps
-
 try:
     from httplib import (
         BAD_REQUEST, NOT_FOUND, UNAUTHORIZED, INTERNAL_SERVER_ERROR)
