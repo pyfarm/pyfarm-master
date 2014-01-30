@@ -101,7 +101,7 @@ def load_api(app_instance, api_instance):
         "/tags/schema",
         "tags_schema", view_func=tag_schema, methods=("GET", ))
     api_instance.add_url_rule(
-        "/tags",
+        "/tags/",
         view_func=TagIndexAPI.as_view("tag_index_api"))
     api_instance.add_url_rule(
         "/tags/<string:tagname>",
@@ -110,11 +110,11 @@ def load_api(app_instance, api_instance):
         "/tags/<int:tagname>",
         view_func=SingleTagAPI.as_view("single_tag_by_id_api"))
     api_instance.add_url_rule(
-        "/tags/<string:tagname>/agents",
+        "/tags/<string:tagname>/agents/",
         view_func=AgentsInTagIndexAPI.as_view(
             "agents_in_tag_by_string_index_api"))
     api_instance.add_url_rule(
-        "/tags/<int:tagname>/agents",
+        "/tags/<int:tagname>/agents/",
         view_func=AgentsInTagIndexAPI.as_view("agents_in_tag_by_id_index_api"))
 
     # register the api blueprint
