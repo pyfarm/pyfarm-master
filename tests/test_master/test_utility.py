@@ -19,14 +19,17 @@ try:
 except ImportError:
     from http.client import OK, BAD_REQUEST
 
+from flask import g
 from werkzeug.datastructures import ImmutableDict
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
+from pyfarm.core.enums import NOTSET
 from pyfarm.master.utility import (
-    get_column_sets, ReducibleDictionary, TemplateDictionary)
+    get_column_sets, ReducibleDictionary, TemplateDictionary, json_required,
+    jsonify)
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 
@@ -58,6 +61,11 @@ class TestUtilityDB(BaseTestCase):
 
 
 class TestUtility(BaseTestCase):
+    def setUp(self):
+        super(TestUtility, self).setUp()
+        g.error = NOTSET
+        g.json = NOTSET
+
     def test_reducible_dictionary(self):
         source = {"a": None}
         data = ReducibleDictionary(source)
@@ -72,3 +80,45 @@ class TestUtility(BaseTestCase):
         self.assertIsInstance(template, ImmutableDict)
         self.assertIsInstance(template(), ReducibleDictionary)
         self.assertIsInstance(template(reducible=False), dict)
+
+    def test_json_required_error(self):
+        g.error = 1
+        @json_required(NOTSET)
+        def foo():
+            return
+        self.assertEqual(foo(), 1)
+
+    def test_json_required_json_notset(self):
+        @json_required(NOTSET)
+        def foo():
+            return
+
+        with self.assertRaises(RuntimeError):
+            self.assertEqual(foo(), 1)
+
+    def test_json_required_no_instance_check(self):
+        g.json = {}
+
+        @json_required(NOTSET)
+        def foo():
+            return
+
+        self.assertIsNone(foo())
+
+    def test_json_required_type_check(self):
+        g.json = {}
+
+        @json_required(dict)
+        def foo():
+            return
+
+        self.assertIsNone(foo())
+
+        @json_required(int)
+        def foo():
+            return
+
+        response, code = foo()
+        self.assertIn(
+            "<class 'int'> expected", response.get_data().decode("utf-8"))
+        self.assertEqual(code, BAD_REQUEST)

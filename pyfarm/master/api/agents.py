@@ -30,14 +30,14 @@ except ImportError:
 
 from functools import partial
 
-from flask import Response, request
+from flask import Response, request, g
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import APIError, PY2
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
-from pyfarm.master.utility import json_from_request, get_column_sets, jsonify
+from pyfarm.master.utility import json_from_request, get_column_sets, jsonify, json_required
 
 ALL_AGENT_COLUMNS, REQUIRED_AGENT_COLUMNS = get_column_sets(Agent)
 
@@ -88,10 +88,11 @@ def schema():
 
     :statuscode 200: no error
     """
-    return jsonify(Agent().to_schema())
+    return jsonify(Agent.to_schema())
 
 
 class AgentIndexAPI(MethodView):
+    @json_required(dict)
     def post(self):
         """
         A ``POST`` to this endpoint will do one of two things:

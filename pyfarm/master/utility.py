@@ -22,6 +22,7 @@ General utility which are not view or tool specific
 """
 
 import json
+from functools import wraps
 
 try:
     from httplib import BAD_REQUEST
@@ -33,10 +34,10 @@ try:
 except ImportError:
     from collections import UserDict
 
-from flask import jsonify as _jsonify, current_app, request
+from flask import jsonify as _jsonify, current_app, request, g
 from werkzeug.datastructures import ImmutableDict
 
-from pyfarm.core.enums import APIError, STRING_TYPES, PY3
+from pyfarm.core.enums import APIError, STRING_TYPES, PY3, NOTSET
 
 COLUMN_CACHE = {}
 
@@ -185,3 +186,39 @@ def jsonify(*args, **kwargs):
 
     else:
         return _jsonify(*args, **kwargs)
+
+
+def json_required(instance_type):
+    """
+    Wrapper function for REST endpoint to do some high level validation
+    of ``g.json``
+    """
+    def wrapper(func):
+
+        @wraps(func)
+        def wrapped_func(*args, **kwargs):
+            # error was established somewhere upstream so
+            # return it here instead
+            if g.error is not NOTSET:
+                return g.error
+
+            # we've done something wrong internally
+            elif g.json is NOTSET:
+                raise RuntimeError("g.json was not set")
+
+            # we don't care what the type is
+            elif instance_type is NOTSET:
+                pass
+
+            # specific type check
+            elif not isinstance(g.json, instance_type):
+                return (jsonify(
+                    error="%s expected but got "
+                          "%s instead" % (
+                        instance_type, g.json.__class__.__name__)),
+                        BAD_REQUEST)
+
+            return func(*args, **kwargs)
+
+        return wrapped_func
+    return wrapper

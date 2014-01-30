@@ -195,25 +195,29 @@ def before_request():
     trying to accept json data to the api.
     """
     g.json = NOTSET
+    g.error = NOTSET
 
     # do nothing with non-api/non-data contributing requests
     if request.method not in POST_METHODS \
             or not request.path.startswith("/api"):  # pragma: no cover
-        return
+        pass
 
     # header must be application/json if we're working with
     # data input to /api
-    if request.headers["Content-Type"] != "application/json":
-        return (
+    elif request.headers["Content-Type"] != "application/json":
+        g.error = (
             jsonify(error="only 'application/json' is supported here"),
             UNSUPPORTED_MEDIA_TYPE)
+        return g.error
 
-    # manually handle decoding errors from get_json()
-    # so we can produce a better error message
-    try:
-        g.json = request.get_json()
-    except BadRequest:  # pragma: no cover
-        return jsonify(error="failed to decode json"), BAD_REQUEST
+    else:
+        # manually handle decoding errors from get_json()
+        # so we can produce a better error message
+        try:
+            g.json = request.get_json()
+        except BadRequest:  # pragma: no cover
+            g.error = (jsonify(error="failed to decode json"), BAD_REQUEST)
+            return g.error
 
 
 # main object setup (app, api, etc)
@@ -226,7 +230,7 @@ login_serializer = get_login_serializer(app.secret_key)
 
 # attach the remaining functions to the application object
 app.register_blueprint(api)
-app.before_first_request_funcs.append(before_request)
+app.before_request_funcs.setdefault(None, []).append(before_request)
 
 
 class SessionMixin(object):
