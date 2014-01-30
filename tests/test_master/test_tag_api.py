@@ -89,7 +89,6 @@ class TestTagAPI(BaseTestCase):
             data=dumps({
                 "tag": "foo"}))
         self.assert_created(response1)
-        id = response1.json['id']
 
         # Must be idempotent
         response2 = self.client.put(
@@ -98,6 +97,7 @@ class TestTagAPI(BaseTestCase):
             data=dumps({
                 "tag": "foo"}))
         self.assert_created(response2)
+        id = response2.json['id']
 
         response3 = self.client.get("/api/v1/tags/foo")
         self.assert_ok(response3)
