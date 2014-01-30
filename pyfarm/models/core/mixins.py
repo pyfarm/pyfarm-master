@@ -160,7 +160,7 @@ class UtilityMixins(object):
                 values.append(relationship.name)
             elif name == "software":
                 values.append([relationship.name, relationship.version])
-            elif name in ("tasks", "jobs"):
+            elif name in ("tasks", "jobs", "agents"):
                 values.append(relationship.id)
             else:
                 raise NotImplementedError(
