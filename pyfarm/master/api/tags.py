@@ -368,23 +368,21 @@ class SingleTagAPI(MethodView):
 
         if (isinstance(tagname, STRING_TYPES) and
             data["tag"] != tagname):
-                return jsonify(message="Name of tag must equal the name under "
-                                       "which it is put"), BAD_REQUEST
+                return jsonify(error="Name of tag must equal the name under "
+                                     "which it is put"), BAD_REQUEST
 
         agents = []
         if "agents" in data:
             agent_ids = data["agents"]
             del data["agents"]
             if not isinstance(agent_ids, list):
-                return jsonify(errorno=APIError.UNEXPECTED_DATATYPE,
-                               message="agents must be a list"), BAD_REQUEST
+                return jsonify(error="agents must be a list"), BAD_REQUEST
             for agent_id in agent_ids:
                 if not isinstance(agent_id, int):
-                    return jsonify(errorno=APIError.UNEXPECTED_DATATYPE,
-                                   message="agent must be an int"), BAD_REQUEST
+                    return jsonify(error="agent must be an int"), BAD_REQUEST
                 agent = Agent.query.filter_by(id=agent_id).first()
                 if agent is None:
-                    return jsonify(message="agent not found"), NOT_FOUND
+                    return jsonify(error="agent not found"), NOT_FOUND
                 agents.append(agent)
 
         jobs = []
@@ -392,15 +390,13 @@ class SingleTagAPI(MethodView):
             job_ids = data["jobs"]
             del data["jobs"]
             if not isinstance(job_ids, list):
-                return jsonify(errorno=APIError.UNEXPECTED_DATATYPE,
-                               message="jobs must be a list"), BAD_REQUEST
+                return jsonify(error="jobs must be a list"), BAD_REQUEST
             for job_id in job_ids:
                 if not isinstance(job_id, int):
-                    return jsonify(errorno=APIError.UNEXPECTED_DATATYPE,
-                                   message="job must be an int"), BAD_REQUEST
+                    return jsonify(error="job must be an int"), BAD_REQUEST
                 job = Job.query.filter_by(id=agent_id).first()
                 if job is None:
-                    return jsonify(message="job not found"), NOT_FOUND
+                    return jsonify(error="job not found"), NOT_FOUND
                 jobs.append(job)
 
         new_tag = Tag(**data)
@@ -524,7 +520,7 @@ class AgentsInTagIndexAPI(MethodView):
         else:
             tag = Tag.query.filter_by(id=tagname).first()
         if tag is None:
-            return jsonify(message="Tag not found"), NOT_FOUND
+            return jsonify(error="Tag not found"), NOT_FOUND
 
         data = json_from_request(request)
         # json_from_request returns a Response, Returncode tuple on error
@@ -532,16 +528,14 @@ class AgentsInTagIndexAPI(MethodView):
             return data
 
         if len(data) > 1:
-            return jsonify(errorno=APIError.EXTRA_FIELDS_ERROR,
-                           message="Unknown fields in JSON data"), BAD_REQUEST
+            return jsonify(error="Unknown fields in JSON data"), BAD_REQUEST
 
         if "agent_id" not in data:
-            return jsonify(errorno=APIError.MISSING_FIELDS,
-                           message="Field agent_id missing"), BAD_REQUEST
+            return jsonify(error="Field agent_id missing"), BAD_REQUEST
 
         agent = Agent.query.filter_by(id=data["agent_id"]).first()
         if agent is None:
-            return jsonify(message="Specified agent does not exist"), NOT_FOUND
+            return jsonify(error="Specified agent does not exist"), NOT_FOUND
 
         if agent not in tag.agents:
             tag.agents.append(agent)
@@ -592,7 +586,7 @@ class AgentsInTagIndexAPI(MethodView):
         else:
             tag = Tag.query.filter_by(id=tagname).first()
         if tag is None:
-            return jsonify(message="Tag not found"), NOT_FOUND
+            return jsonify(error="Tag not found"), NOT_FOUND
 
         out = []
         for agent in tag.agents:
