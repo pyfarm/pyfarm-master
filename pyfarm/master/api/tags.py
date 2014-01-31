@@ -71,7 +71,7 @@ def schema():
 
     :statuscode 200: no error
     """
-    return jsonify(Tag().to_schema())
+    return jsonify(Tag.to_schema())
 
 
 class TagIndexAPI(MethodView):
