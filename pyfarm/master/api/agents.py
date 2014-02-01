@@ -25,7 +25,7 @@ manage or query agents using JSON.
 
 try:
     from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
-except ImportError:
+except ImportError: # pragma: no cover
     from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 
 from functools import partial
