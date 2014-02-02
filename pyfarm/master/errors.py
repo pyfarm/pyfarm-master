@@ -32,7 +32,7 @@ except ImportError:
     from http.client import (
         BAD_REQUEST, NOT_FOUND, UNAUTHORIZED, INTERNAL_SERVER_ERROR)
 
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, g
 
 
 def error_400(e):
@@ -42,8 +42,8 @@ def error_400(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        return jsonify({
-            "error": "unhandled bad request to %s" % request.url}), BAD_REQUEST
+        error = g.error or "unhandled bad request to %s" % request.url
+        return jsonify(error=error), BAD_REQUEST
     else:
         return render_template(
             "pyfarm/errors/400.html", url=request.url), BAD_REQUEST
@@ -56,9 +56,8 @@ def error_401(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        return jsonify(
-            {"error": "unhandled unauthorized request to %s" % request.url}), \
-               UNAUTHORIZED
+        error = g.error or "unhandled unauthorized request to %s" % request.url
+        return jsonify(error=error), UNAUTHORIZED
     else:
         return render_template(
             "pyfarm/errors/401.html", url=request.url), UNAUTHORIZED
@@ -71,10 +70,9 @@ def error_404(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        return jsonify(
-            {"error":
-                 "%s was not found and was not explicitly handled internally" %
-                 request.url}), NOT_FOUND
+        error = g.error or "%s was not found and was not explicitly " \
+                           "handled internally" % request.url
+        return jsonify(error=error), NOT_FOUND
     else:
         return render_template(
             "pyfarm/errors/404.html", url=request.url), NOT_FOUND
@@ -87,10 +85,9 @@ def error_500(e):
     and a short description.
     """
     if request.mimetype == "application/json":
-        return jsonify(
-            {"error":
-                 "unhandled internal server error when requesting %s" %
-                 request.url}), INTERNAL_SERVER_ERROR
+        error = g.error or "unhandled internal server error when " \
+                           "requesting %s" % request.url
+        return jsonify(error=error), INTERNAL_SERVER_ERROR
     else:
         return render_template(
             "pyfarm/errors/500.html", url=request.url), INTERNAL_SERVER_ERROR
