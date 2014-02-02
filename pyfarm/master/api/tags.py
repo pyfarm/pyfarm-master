@@ -25,16 +25,16 @@ manage or query tags using JSON.
 
 try:
     from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 
 from flask import Response, request, url_for
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import STRING_TYPES, APIError
-from pyfarm.models.agent import Agent, AgentTagAssociation
-from pyfarm.models.job import Job, JobTagAssociation
+from pyfarm.core.enums import STRING_TYPES
+from pyfarm.models.agent import Agent
+from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
 from pyfarm.master.application import db
 from pyfarm.master.utility import json_from_request, jsonify, get_column_sets
@@ -142,6 +142,7 @@ class TagIndexAPI(MethodView):
                                  all_keys=ALL_TAG_COLUMNS,
                                  required_keys=REQUIRED_TAG_COLUMNS,
                                  disallowed_keys=set(["id"]))
+
         # json_from_request returns a Response, Returncode tuple on error
         if isinstance(data, tuple):
             return data
@@ -281,7 +282,7 @@ class SingleTagAPI(MethodView):
         else:
             tag = Tag.query.filter_by(id=tagname).first()
         if tag is None:
-            return jsonify(message="Tag not found"), NOT_FOUND
+            return jsonify(error="Tag not found"), NOT_FOUND
 
         tag_dict = tag.to_dict()
 
