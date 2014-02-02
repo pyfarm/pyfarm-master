@@ -125,7 +125,7 @@ class TestTagAPI(BaseTestCase):
     def test_tag_put_with_agents(self):
         # create an agent to link to
         response1 = self.client.post(
-            "/api/v1/agents",
+            "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
                 "cpu_allocation": 1.0,
@@ -151,7 +151,7 @@ class TestTagAPI(BaseTestCase):
     def test_tag_put_mismatch_with_agents(self):
         # create an agent to link to
         response1 = self.client.post(
-            "/api/v1/agents",
+            "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
                 "cpu_allocation": 1.0,
@@ -198,7 +198,7 @@ class TestTagAPI(BaseTestCase):
     def test_tag_post_agent(self):
         # create an agent to link to
         response1 = self.client.post(
-            "/api/v1/agents",
+            "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
                 "cpu_allocation": 1.0,
