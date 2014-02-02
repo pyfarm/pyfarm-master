@@ -20,6 +20,7 @@ except ImportError:
     from http.client import OK, BAD_REQUEST
 
 from flask import g
+from werkzeug.exceptions import InternalServerError, BadRequest
 from werkzeug.datastructures import ImmutableDict
 
 # test class must be loaded first
@@ -28,8 +29,7 @@ BaseTestCase.build_environment()
 
 from pyfarm.core.enums import NOTSET
 from pyfarm.master.utility import (
-    get_column_sets, ReducibleDictionary, TemplateDictionary, json_required,
-    jsonify)
+    get_column_sets, ReducibleDictionary, TemplateDictionary, json_required)
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 
@@ -83,23 +83,27 @@ class TestUtility(BaseTestCase):
 
     def test_json_required_error(self):
         g.error = 1
-        @json_required(NOTSET)
+        g.json = 1
+
+        @json_required(None)
         def foo():
-            return
+            return 1
+
         self.assertEqual(foo(), 1)
 
     def test_json_required_json_notset(self):
-        @json_required(NOTSET)
-        def foo():
-            return
 
-        with self.assertRaises(RuntimeError):
+        @json_required(None)
+        def foo():
+            return 1
+
+        with self.assertRaises(InternalServerError):
             self.assertEqual(foo(), 1)
 
     def test_json_required_no_instance_check(self):
         g.json = {}
 
-        @json_required(NOTSET)
+        @json_required(None)
         def foo():
             return
 
@@ -118,7 +122,5 @@ class TestUtility(BaseTestCase):
         def foo():
             return
 
-        response, code = foo()
-        self.assertIn("int", response.get_data().decode("utf-8"))
-        self.assertIn("expected", response.get_data().decode("utf-8"))
-        self.assertEqual(code, BAD_REQUEST)
+        with self.assertRaises(BadRequest):
+            foo()
