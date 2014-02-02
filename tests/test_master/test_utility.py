@@ -29,7 +29,7 @@ BaseTestCase.build_environment()
 
 from pyfarm.core.enums import NOTSET
 from pyfarm.master.utility import (
-    get_column_sets, ReducibleDictionary, TemplateDictionary, json_required)
+    get_column_sets, ReducibleDictionary, TemplateDictionary, validate_json_type)
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 
@@ -85,7 +85,7 @@ class TestUtility(BaseTestCase):
         g.error = 1
         g.json = 1
 
-        @json_required(None)
+        @validate_json_type(None)
         def foo():
             return 1
 
@@ -93,7 +93,7 @@ class TestUtility(BaseTestCase):
 
     def test_json_required_json_notset(self):
 
-        @json_required(None)
+        @validate_json_type(None)
         def foo():
             return 1
 
@@ -103,7 +103,7 @@ class TestUtility(BaseTestCase):
     def test_json_required_no_instance_check(self):
         g.json = {}
 
-        @json_required(None)
+        @validate_json_type(None)
         def foo():
             return
 
@@ -112,13 +112,13 @@ class TestUtility(BaseTestCase):
     def test_json_required_type_check(self):
         g.json = {}
 
-        @json_required(dict)
+        @validate_json_type(dict)
         def foo():
             return
 
         self.assertIsNone(foo())
 
-        @json_required(int)
+        @validate_json_type(int)
         def foo():
             return
 

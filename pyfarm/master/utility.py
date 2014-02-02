@@ -188,7 +188,7 @@ def jsonify(*args, **kwargs):
         return _jsonify(*args, **kwargs)
 
 
-def json_required(instance_type):
+def validate_json_type(instance_type):
     """
     Wrapper function for REST endpoint to do some high level validation
     of ``g.json``

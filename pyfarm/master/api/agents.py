@@ -37,7 +37,7 @@ from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import APIError, PY2
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
-from pyfarm.master.utility import json_from_request, get_column_sets, jsonify, json_required
+from pyfarm.master.utility import json_from_request, get_column_sets, jsonify, validate_json_type
 
 ALL_AGENT_COLUMNS, REQUIRED_AGENT_COLUMNS = get_column_sets(Agent)
 
@@ -92,7 +92,7 @@ def schema():
 
 
 class AgentIndexAPI(MethodView):
-    @json_required(dict)
+    @validate_json_type(dict)
     def post(self):
         """
         A ``POST`` to this endpoint will do one of two things:
