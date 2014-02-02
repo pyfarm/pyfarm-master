@@ -84,6 +84,9 @@ class TestApplicationFunctions(BaseTestCase):
         self.assertEqual(ls.secret_key, secret_key)
 
     def test_request_handler(self):
+        # deregister all other before request handlers
+        del self.app.before_first_request_funcs[:]
+
         @self.app.route("/api/", methods=("POST", ))
         def test_api():
             return jsonify(success=True)

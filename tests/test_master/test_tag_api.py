@@ -27,7 +27,7 @@ except ImportError:
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.master.application import get_api_blueprint, before_request
+from pyfarm.master.application import get_api_blueprint
 from pyfarm.master.entrypoints.main import load_api
 from pyfarm.models.tag import Tag
 
@@ -38,10 +38,6 @@ class TestTagAPI(BaseTestCase):
         self.api = get_api_blueprint()
         self.app.register_blueprint(self.api)
         load_api(self.app, self.api)
-
-        @self.app.before_request
-        def before_each_request():
-            return before_request()
 
     def test_tags_schema(self):
         response = self.client.get("/api/v1/tags/schema")

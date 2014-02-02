@@ -54,12 +54,12 @@ try:
 except ImportError:
     blinker = NotImplemented
 
-from flask import Response, json_available, template_rendered
+from flask import Response, json_available
 from sqlalchemy.exc import SAWarning
 from werkzeug.utils import cached_property
 from werkzeug.datastructures import ImmutableDict
 
-from pyfarm.master.application import get_application, db
+from pyfarm.master.application import get_application, db, before_request
 
 TEST_ENVIRONMENT = ImmutableDict({
     "PYFARM_DB_PREFIX": "test%s_" % time.strftime("%M%d%Y%H%M%S"),
@@ -201,6 +201,10 @@ class BaseTestCase(TestCase):
         environment = os.environ.copy()
         environment.setdefault("app_name", uuid.uuid4().hex)
         self.app = get_application(**environment)
+
+        @self.app.before_request
+        def before_request_handler():
+            return before_request()
 
         # construct response class so we can use the json methods
         # in our handlers
