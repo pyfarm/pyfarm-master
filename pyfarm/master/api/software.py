@@ -69,7 +69,7 @@ def schema():
 
     :statuscode 200: no error
     """
-    return jsonify(Software().to_schema())
+    return jsonify(Software.to_schema())
 
 
 class SoftwareIndexAPI(MethodView):

@@ -67,7 +67,7 @@ def schema():
 
     :statuscode 200: no error
     """
-    return jsonify(Task().to_schema())
+    return jsonify(Task.to_schema())
 
 
 class TaskIndexAPI(MethodView):
