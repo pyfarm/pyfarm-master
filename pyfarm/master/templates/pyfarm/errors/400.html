@@ -9,7 +9,11 @@
     <body>
         <div class="title">Bad Request</div>
         <div class="subtitle">
-            Sorry, that request was bad.
+            {% if not g.error %}
+                Sorry, that request was bad.
+            {% else %}
+                {{ g.error}}
+            {% endif %}
         </div>
     </body>
 </html>

@@ -46,7 +46,7 @@ def error_400(e):
         return jsonify(error=error), BAD_REQUEST
     else:
         return render_template(
-            "pyfarm/errors/400.html", url=request.url), BAD_REQUEST
+            "pyfarm/errors/400.html", url=request.url, g=g), BAD_REQUEST
 
 
 def error_401(e):
@@ -60,7 +60,7 @@ def error_401(e):
         return jsonify(error=error), UNAUTHORIZED
     else:
         return render_template(
-            "pyfarm/errors/401.html", url=request.url), UNAUTHORIZED
+            "pyfarm/errors/401.html", url=request.url, g=g), UNAUTHORIZED
 
 
 def error_404(e):
@@ -75,7 +75,7 @@ def error_404(e):
         return jsonify(error=error), NOT_FOUND
     else:
         return render_template(
-            "pyfarm/errors/404.html", url=request.url), NOT_FOUND
+            "pyfarm/errors/404.html", url=request.url, g=g), NOT_FOUND
 
 
 def error_500(e):
@@ -90,4 +90,5 @@ def error_500(e):
         return jsonify(error=error), INTERNAL_SERVER_ERROR
     else:
         return render_template(
-            "pyfarm/errors/500.html", url=request.url), INTERNAL_SERVER_ERROR
+            "pyfarm/errors/500.html", url=request.url, g=g), \
+               INTERNAL_SERVER_ERROR

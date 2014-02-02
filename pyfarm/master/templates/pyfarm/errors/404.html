@@ -9,7 +9,11 @@
     <body>
         <div class="title">Not Found</div>
         <div class="subtitle">
-            {{path or url}} was not found
+            {% if not g.error %}
+                {{ path or url }} was not found
+            {% else %}
+                {{ g.error }}
+            {% endif %}
         </div>
     </body>
 </html>

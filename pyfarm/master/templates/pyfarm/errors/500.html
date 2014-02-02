@@ -9,8 +9,12 @@
     <body>
         <div class="title">Internal Server Error</div>
         <div class="subtitle">
-            A problem on the server that prevented this your request
-            from rendering: {{error or "undefined error"}}
+            {% if not g.error %}
+                A problem on the server that prevented this your request
+                from rendering: {{ error or "undefined error" }}
+            {% else %}
+                {{ g.error }}
+            {% endif %}
         </div>
     </body>
 </html>

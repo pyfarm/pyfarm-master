@@ -9,7 +9,11 @@
     <body>
         <div class="title">Access Denied</div>
         <div class="subtitle">
-            Sorry, you do not have access {{url}}.
+            {% if not g.error %}
+                Sorry, you do not have access {{ url }}.
+            {% else %}
+                {{ g.error }}
+            {% endif %}
         </div>
     </body>
 </html>
