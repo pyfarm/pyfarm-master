@@ -25,16 +25,16 @@ import json
 from functools import wraps
 
 try:
-    from httplib import BAD_REQUEST
+    from httplib import BAD_REQUEST, INTERNAL_SERVER_ERROR
 except ImportError:
-    from http.client import BAD_REQUEST
+    from http.client import BAD_REQUEST, INTERNAL_SERVER_ERROR
 
 try:
     from UserDict import UserDict
 except ImportError:
     from collections import UserDict
 
-from flask import jsonify as _jsonify, current_app, request, g
+from flask import jsonify as _jsonify, current_app, request, g, abort
 from werkzeug.datastructures import ImmutableDict
 
 from pyfarm.core.enums import APIError, STRING_TYPES, PY3, NOTSET
@@ -197,26 +197,17 @@ def json_required(instance_type):
 
         @wraps(func)
         def wrapped_func(*args, **kwargs):
-            # error was established somewhere upstream so
-            # return it here instead
-            if g.error is not NOTSET:
-                return g.error
-
-            # we've done something wrong internally
-            elif g.json is NOTSET:
-                raise RuntimeError("g.json was not set")
-
-            # we don't care what the type is
-            elif instance_type is NOTSET:
-                pass
+            # g.json should be set by our before_request handler
+            # if not then that's an error
+            if g.json is NOTSET:
+                g.error = "expected g.json to be set"
+                abort(INTERNAL_SERVER_ERROR)
 
             # specific type check
-            elif not isinstance(g.json, instance_type):
-                return (jsonify(
-                    error="%s expected but got "
-                          "%s instead" % (
-                        instance_type, g.json.__class__.__name__)),
-                        BAD_REQUEST)
+            elif instance_type and not isinstance(g.json, instance_type):
+                g.error = "%s expected but got %s instead" % (
+                    instance_type, g.json.__class__.__name__)
+                abort(BAD_REQUEST)
 
             return func(*args, **kwargs)
 
