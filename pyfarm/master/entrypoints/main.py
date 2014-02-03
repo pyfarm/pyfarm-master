@@ -16,7 +16,7 @@
 
 """
 Master Script Entry Points
-===========================
+==========================
 
 Contains the functions necessary to run individual components
 of PyFarm's master.
@@ -81,34 +81,40 @@ def load_api(app_instance, api_instance):
     from pyfarm.master.api.tags import (
         schema as tag_schema, TagIndexAPI, SingleTagAPI, AgentsInTagIndexAPI)
 
-    # add api methods
+    # top level types
     api_instance.add_url_rule(
-        "/agents",
+        "/agents/",
         view_func=AgentIndexAPI.as_view("agent_index_api"))
+    api_instance.add_url_rule(
+        "/software/",
+        view_func=SoftwareIndexAPI.as_view("software_index_api"))
+    api_instance.add_url_rule(
+        "/tags/",
+        view_func=TagIndexAPI.as_view("tag_index_api"))
+
+    # schemas
     api_instance.add_url_rule(
         "/agents/schema",
         "agent_schema", view_func=agent_schema, methods=("GET", ))
     api_instance.add_url_rule(
-        "/agents/<int:agent_id>",
-        view_func=SingleAgentAPI.as_view("single_agent_api"))
-    api_instance.add_url_rule(
         "/software/schema",
         "software_schema", view_func=software_schema, methods=("GET", ))
     api_instance.add_url_rule(
-        "/software",
-        view_func=SoftwareIndexAPI.as_view("software_index_api"))
-    api_instance.add_url_rule(
         "/tags/schema",
         "tags_schema", view_func=tag_schema, methods=("GET", ))
-    api_instance.add_url_rule(
-        "/tags/",
-        view_func=TagIndexAPI.as_view("tag_index_api"))
+
+    # specific item access
     api_instance.add_url_rule(
         "/tags/<string:tagname>",
         view_func=SingleTagAPI.as_view("single_tag_by_string_api"))
     api_instance.add_url_rule(
         "/tags/<int:tagname>",
         view_func=SingleTagAPI.as_view("single_tag_by_id_api"))
+    api_instance.add_url_rule(
+        "/agents/<int:agent_id>",
+        view_func=SingleAgentAPI.as_view("single_agent_api"))
+
+    # subitems
     api_instance.add_url_rule(
         "/tags/<string:tagname>/agents/",
         view_func=AgentsInTagIndexAPI.as_view(
