@@ -25,7 +25,7 @@ manage or query software items using JSON.
 
 try:
     from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 
 from flask import Response, request
@@ -36,7 +36,7 @@ from pyfarm.models.software import Software
 from pyfarm.master.application import db
 from pyfarm.master.utility import json_from_request, jsonify, get_column_sets
 
-ALL_SOFTWARE_COLUMNS, REQUIRED_SOFTWARRE_COLUMNS = get_column_sets(Software)
+ALL_SOFTWARE_COLUMNS, REQUIRED_SOFTWARE_COLUMNS = get_column_sets(Software)
 
 logger = getLogger("api.agents")
 
@@ -83,13 +83,13 @@ class SoftwareIndexAPI(MethodView):
         Software items only have two columns, software and version. Two software
         items are equal if both these columns are equal.
 
-        .. http:post:: /api/v1/software HTTP/1.1
+        .. http:post:: /api/v1/software/ HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                POST /api/v1/softwarre HTTP/1.1
+                POST /api/v1/software/ HTTP/1.1
                 Accept: application/json
 
                 {
@@ -107,20 +107,20 @@ class SoftwareIndexAPI(MethodView):
 
                 {
                     "id": 4,
-                    "software": "bliender",
+                    "software": "blender",
                     "version": "1.56"
-                    }
+                }
 
             **Request**
 
             .. sourcecode:: http
 
-                POST /api/v1/software HTTP/1.1
+                POST /api/v1/software/ HTTP/1.1
                 Accept: application/json
 
                 {
                     "id": 4,
-                    "software": "bliender",
+                    "software": "blender",
                     "version": "1.56"
                 }
 
@@ -133,7 +133,7 @@ class SoftwareIndexAPI(MethodView):
 
                 {
                     "id": 4,
-                    "software": "bliender",
+                    "software": "blender",
                     "version": "1.56"
                 }
 
@@ -145,7 +145,7 @@ class SoftwareIndexAPI(MethodView):
         logger.info("In SoftwareIndexAPI.post")
         data = json_from_request(request,
                                  all_keys=ALL_SOFTWARE_COLUMNS,
-                                 required_keys=REQUIRED_SOFTWARRE_COLUMNS,
+                                 required_keys=REQUIRED_SOFTWARE_COLUMNS,
                                  disallowed_keys=set(["id"]))
         logger.info("called json_from_request")
         # json_from_request returns a Response object on error

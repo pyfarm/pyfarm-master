@@ -25,19 +25,20 @@ manage or query agents using JSON.
 
 try:
     from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 
 from functools import partial
 
-from flask import Response, request, g
+from flask import Response, request
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import APIError, PY2
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
-from pyfarm.master.utility import json_from_request, get_column_sets, jsonify, validate_json_type
+from pyfarm.master.utility import (
+    json_from_request, get_column_sets, jsonify)
 
 ALL_AGENT_COLUMNS, REQUIRED_AGENT_COLUMNS = get_column_sets(Agent)
 
@@ -92,7 +93,6 @@ def schema():
 
 
 class AgentIndexAPI(MethodView):
-    @validate_json_type(dict)
     def post(self):
         """
         A ``POST`` to this endpoint will do one of two things:
@@ -274,13 +274,13 @@ class AgentIndexAPI(MethodView):
         A ``GET`` to this endpoint will return a list of known agents, with id
         and name.
 
-        .. http:get:: /api/v1/agents HTTP/1.1
+        .. http:get:: /api/v1/agents/ HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                GET /api/v1/agents HTTP/1.1
+                GET /api/v1/agents/ HTTP/1.1
                 Accept: application/json
 
             **Response**
@@ -509,7 +509,7 @@ class SingleAgentAPI(MethodView):
 
             .. sourcecode:: http
 
-                DELETE /api/v1/1 HTTP/1.1
+                DELETE /api/v1/agents/1 HTTP/1.1
                 Accept: application/json
 
             **Response**

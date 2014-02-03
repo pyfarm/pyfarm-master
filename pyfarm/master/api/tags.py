@@ -37,7 +37,8 @@ from pyfarm.models.agent import Agent
 from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
 from pyfarm.master.application import db
-from pyfarm.master.utility import json_from_request, jsonify, get_column_sets
+from pyfarm.master.utility import (
+    json_from_request, jsonify, get_column_sets, validate_with_model)
 
 ALL_TAG_COLUMNS, REQUIRED_TAG_COLUMNS = get_column_sets(Tag)
 
@@ -48,13 +49,13 @@ def schema():
     """
     Returns the basic schema of :class:`.Tag`
 
-    .. http:get:: /api/v1/tags/schema HTTP/1.1
+    .. http:get:: /api/v1/tags/schema/ HTTP/1.1
 
         **Request**
 
         .. sourcecode:: http
 
-            GET /api/v1/tags/schema HTTP/1.1
+            GET /api/v1/tags/schema/ HTTP/1.1
             Accept: application/json
 
         **Response**
@@ -75,6 +76,7 @@ def schema():
 
 
 class TagIndexAPI(MethodView):
+    @validate_with_model(Tag)
     def post(self):
         """
         A ``POST`` to this endpoint will do one of two things:
@@ -85,13 +87,13 @@ class TagIndexAPI(MethodView):
         Tags only have one column, the tag name. Two tags are automatically
         considered equal if the tag names are equal.
 
-        .. http:post:: /api/v1/tags HTTP/1.1
+        .. http:post:: /api/v1/tags/ HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                POST /api/v1/tags HTTP/1.1
+                POST /api/v1/tags/ HTTP/1.1
                 Accept: application/json
 
                 {
@@ -114,7 +116,7 @@ class TagIndexAPI(MethodView):
 
             .. sourcecode:: http
 
-                POST /api/v1/tags HTTP/1.1
+                POST /api/v1/tags/ HTTP/1.1
                 Accept: application/json
 
                 {
@@ -171,13 +173,13 @@ class TagIndexAPI(MethodView):
         Only use it if you need that information anyway and the alternative would
         be separate API calls for every tag returned here.
 
-        .. http:get:: /api/v1/tags HTTP/1.1
+        .. http:get:: /api/v1/tags/ HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                GET /api/v1/tags HTTP/1.1
+                GET /api/v1/tags/ HTTP/1.1
                 Accept: application/json
 
             **Response**
@@ -202,7 +204,7 @@ class TagIndexAPI(MethodView):
 
             .. sourcecode:: http
 
-                GET /api/v1/tags HTTP/1.1
+                GET /api/v1/tags/ HTTP/1.1
                 Accept: application/json
 
             **Response**
@@ -296,7 +298,7 @@ class SingleTagAPI(MethodView):
         You can optionally specify a list of agents or jobs relations as
         integers in the request data.
 
-        .. http:put:: /api/v1/tags HTTP/1.1
+        .. http:put:: /api/v1/tags/ HTTP/1.1
 
             **Request**
 
@@ -414,7 +416,7 @@ class SingleTagAPI(MethodView):
         A ``DELETE`` to this endpoint will delete the tag under this URI,
         including all relations to tags or jobs.
 
-        .. http:delete:: /api/v1/tags HTTP/1.1
+        .. http:delete:: /api/v1/tags/ HTTP/1.1
 
             **Request**
 
