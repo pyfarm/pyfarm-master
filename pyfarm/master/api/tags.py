@@ -38,7 +38,7 @@ from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
-    json_from_request, jsonify, get_column_sets, validate_with_model)
+    json_from_request, jsonify, get_column_sets)
 
 ALL_TAG_COLUMNS, REQUIRED_TAG_COLUMNS = get_column_sets(Tag)
 
@@ -76,7 +76,6 @@ def schema():
 
 
 class TagIndexAPI(MethodView):
-    @validate_with_model(Tag)
     def post(self):
         """
         A ``POST`` to this endpoint will do one of two things:
