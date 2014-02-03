@@ -30,7 +30,7 @@ from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.types import (
     IPv4Address, UseAgentAddressEnum, JSONDict, JSONList,
-    JSONSerializable, id_column, GUID, AgentStateEnum,
+    JSONSerializable, id_column, AgentStateEnum,
     IDTypeWork, IDTypeAgent, IDTypeTag, IPAddress, WorkStateEnum)
 
 
@@ -235,60 +235,3 @@ class TestAgentStateEnumTypes(BaseTestCase):
             db.session.remove()
             result = TypeModel.query.filter_by(id=model_id).first()
             self.assertEqual(result.agent_state, i)
-
-
-class TestGUIDImpl(BaseTestCase):
-    def _dialect(self, name, driver):
-        """
-        constructs a fake dialect object that replicates a
-        sqlalchemy dialect
-        """
-        return type("FakeDialect", (object, ), {
-                    "name": name,
-                    "driver": driver,
-                    "type_descriptor": lambda self, value: value})()
-
-    def _short(self, value):
-        return str(value).replace("-", "")
-
-    def test_id_column(self):
-        column = id_column(GUID)
-        self.assertIsInstance(column.type, GUID)
-        self.assertTrue(column.primary_key)
-        self.assertFalse(column.nullable)
-        self.assertTrue(column.autoincrement)
-
-    def test_driver_psycopg2(self):
-        guid = GUID()
-        dialect = self._dialect("postgresql", "psycopg2")
-        impl = guid.load_dialect_impl(dialect)
-        self.assertIsInstance(impl, UUID)
-
-    def test_driver_pg8000(self):
-        guid = GUID()
-        dialect = self._dialect("postgresql", "pg8000")
-        impl = guid.load_dialect_impl(dialect)
-        self.assertIsInstance(impl, CHAR)
-
-    def test_driver_mysql(self):
-        guid = GUID()
-        dialect = self._dialect("mysql", None)
-        impl = guid.load_dialect_impl(dialect)
-        self.assertIsInstance(impl, CHAR)
-        self.assertEqual(impl.length, 32)
-
-    def test_bind_param(self):
-        guid = GUID()
-        self.assertIsNone(guid.process_bind_param(None, None))
-        dialect = self._dialect("postgresql", None)
-        uid = uuid.uuid4()
-        short_uid = self._short(uid)
-        self.assertEqual(
-            guid.process_bind_param(uid, dialect), short_uid)
-        dialect = self._dialect(None, None)
-        self.assertEqual(
-            guid.process_bind_param(uid, dialect), short_uid)
-        self.assertEqual(
-            guid.process_bind_param(str(uid), dialect), short_uid)
-        self.assertEqual(
-            guid.process_bind_param(self._short(str(uid)), dialect), short_uid)

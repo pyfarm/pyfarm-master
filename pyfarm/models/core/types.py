@@ -24,7 +24,6 @@ Special column types used by PyFarm's models.
 import re
 from json import dumps, loads
 from textwrap import dedent
-from uuid import uuid4, UUID
 
 try:
     from UserDict import UserDict
@@ -32,9 +31,7 @@ try:
 except ImportError:
     from collections import UserDict, UserList
 
-from sqlalchemy.types import (
-    TypeDecorator, CHAR, BigInteger, Integer, UnicodeText)
-from sqlalchemy.dialects.postgresql import UUID as PGUuid
+from sqlalchemy.types import TypeDecorator, BigInteger, Integer, UnicodeText
 from netaddr import AddrFormatError, IPAddress as _IPAddress
 
 from pyfarm.master.application import db
@@ -42,13 +39,18 @@ from pyfarm.core.enums import (
     STRING_TYPES, _AgentState, _UseAgentAddress, _WorkState,
     _JobTypeLoadMode, Values)
 
-ID_GUID_DEFAULT = lambda: str(uuid4()).replace("-", "")
 ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should
                          never be directly relied upon and it's intended for use
                          by relationships.""")
+NoneType = type(None)  # from stdlib types module
 JSON_NONE = dumps(None)
 RESUB_GUID_CHARS = re.compile("[{}-]")
-NoneType = type(None)  # from stdlib types module
+
+# types which our custom column types will accept via json
+try:
+    JSON_CUSTOM_COLUMN_TYPES = (str, unicode, int, long)
+except NameError:
+    JSON_CUSTOM_COLUMN_TYPES = (str, int)
 
 # global mappings which can be used in relationships by external
 # tables
@@ -59,60 +61,6 @@ else:
 
 IDTypeAgent = Integer
 IDTypeTag = Integer
-
-
-def short_guid(func):
-    """decorator which shortens guids by replacing {, }, and - with ''"""
-    def wrapper(*args, **kwargs):
-        value = func(*args, **kwargs)
-        if isinstance(value, STRING_TYPES):
-            value = RESUB_GUID_CHARS.sub("", value)
-
-        return value
-    return wrapper
-
-
-class GUID(TypeDecorator):
-    """
-    Platform-independent GUID type.
-
-    Uses Postgresql's UUID type, otherwise uses
-    CHAR(32), storing as stringified hex values.
-
-    .. note::
-        This code is copied from sqlalchemy's standard documentation with
-        some minor modifications
-    """
-    impl = None
-
-    def load_dialect_impl(self, dialect):
-        # Currently, pg8000 does not support the PGUuid type.  This is
-        # backed up both by tests and from sqlalchemy's docs. Unfortunately,
-        # there's not really much information about other drivers so we'll
-        # only use the proper type where we know it should work (for now).
-        if dialect.name == "postgresql" and dialect.driver == "psycopg2":
-            return dialect.type_descriptor(PGUuid())
-        else:
-            return dialect.type_descriptor(CHAR(32))
-
-    @short_guid
-    def process_bind_param(self, value, dialect):
-        if value is None:
-            return value
-        elif dialect.name == "postgresql":
-            return str(value)
-        else:
-            if not isinstance(value, UUID):
-                return "%.32x" % UUID(value)
-            else:
-                # hexstring
-                return "%.32x" % value
-
-    def process_result_value(self, value, dialect):  # pragma: no cover
-        if value is None:
-            return value
-        else:
-            return UUID(value)
 
 
 class JSONSerializable(TypeDecorator):
@@ -216,6 +164,7 @@ class IPv4Address(TypeDecorator):
     """
     impl = BigInteger
     MAX_INT = 4294967295
+    json_types = JSON_CUSTOM_COLUMN_TYPES
 
     def checkInteger(self, value):
         if value < 0 or value > self.MAX_INT:
@@ -267,6 +216,7 @@ class EnumType(TypeDecorator):
     """
     impl = Integer
     enum = NotImplemented
+    json_types = JSON_CUSTOM_COLUMN_TYPES
 
     def __init__(self, *args, **kwargs):
         super(EnumType, self).__init__(*args, **kwargs)
