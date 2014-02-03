@@ -24,17 +24,21 @@ Module containing mixins which can be used by multiple models.
 from datetime import datetime
 
 try:
+    from httplib import INTERNAL_SERVER_ERROR
+except ImportError:
+    from http.client import INTERNAL_SERVER_ERROR
+
+try:
     from collections import namedtuple
 except ImportError:
     from pyfarm.core.backports import namedtuple
 
 from sqlalchemy.orm import validates, class_mapper
 
-from pyfarm.core.enums import DBWorkState, _WorkState, Values
+from pyfarm.core.enums import DBWorkState, _WorkState, Values, PY2
 from pyfarm.core.logger import getLogger
 from pyfarm.core.config import read_env_int
 from pyfarm.models.core.types import IPAddress
-
 
 logger = getLogger("models.mixin")
 
@@ -42,7 +46,7 @@ logger = getLogger("models.mixin")
 # and relationships
 ModelTypes = namedtuple(
     "ModelTypes",
-    ("primary_keys", "columns", "required", "relationships"))
+    ("primary_keys", "columns", "required", "relationships", "mappings"))
 
 
 class ValidatePriorityMixin(object):
@@ -240,6 +244,8 @@ class UtilityMixins(object):
             * columns - set of all column names
             * required - set of all required columns (non-nullable wo/defaults)
             * relationships - not columns themselves but do store relationships
+            * mappings - contains a dictionary with each field mapping to a
+              Python type
         """
         mapper = class_mapper(cls)
         primary_keys = set()
@@ -248,9 +254,13 @@ class UtilityMixins(object):
         relationships = set(
             name for name, column in mapper.relationships.items())
 
+        # TODO: it's possible though unlikely, based on our current tables,
+        # that a relationship this could be some other than a list
+        type_mapping = dict((name, list) for name in relationships)
+
         # create sets for all true columns, primary keys,
         # and required columns
-        for name, column in mapper.mapped_table.c.items():
+        for name, column in mapper.c.items():
             columns.add(name)
 
             if column.primary_key:
@@ -262,11 +272,29 @@ class UtilityMixins(object):
             if not column.nullable and column.default is None:
                 required.add(name)
 
+            # get the Python type(s)
+            try:
+                python_types = column.type.python_type
+            except NotImplementedError:  # custom type object
+                python_types = column.type.json_types
+
+            # if we're using Python 2.x be sure that we include
+            # a couple of extra types that could potentially
+            # come in with a request
+            if PY2 and python_types is str:
+                python_types = (python_types, unicode)
+
+            elif PY2 and python_types is int:
+                python_types = (python_types, long)
+
+            type_mapping[name] = python_types
+
         return ModelTypes(
             primary_keys=primary_keys,
             columns=columns,
             required=required,
-            relationships=relationships)
+            relationships=relationships,
+            mappings=type_mapping)
 
 
 class ReprMixin(object):

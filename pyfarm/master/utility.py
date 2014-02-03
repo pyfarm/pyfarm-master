@@ -196,20 +196,111 @@ def validate_json_type(instance_type):
     def wrapper(func):
 
         @wraps(func)
-        def wrapped_func(*args, **kwargs):
-            # g.json should be set by our before_request handler
-            # if not then that's an error
-            if g.json is NOTSET:
-                g.error = "expected g.json to be set"
-                abort(INTERNAL_SERVER_ERROR)
+        def wrapped(*args, **kwargs):
+            try:
+                # special case where the decorator is being
+                # called before any requests have been made
+                if not hasattr(g, "json"):
+                    pass
 
-            # specific type check
-            elif instance_type and not isinstance(g.json, instance_type):
-                g.error = "%s expected but got %s instead" % (
-                    instance_type, g.json.__class__.__name__)
-                abort(BAD_REQUEST)
+                # g.json should be set by our before_request handler
+                # if not then that's an error
+                elif g.json is NOTSET:
+                    g.error = "expected g.json to be set"
+                    abort(INTERNAL_SERVER_ERROR)
 
+                # specific type check
+                elif instance_type and not isinstance(g.json, instance_type):
+                    g.error = "%s expected but got %s instead" % (
+                        instance_type, g.json.__class__.__name__)
+                    abort(BAD_REQUEST)
+
+            except RuntimeError:  # outside of a request context
+                pass
+
+            # return the wrapped function
             return func(*args, **kwargs)
 
-        return wrapped_func
+        return wrapped
+    return wrapper
+
+
+@validate_json_type(dict)
+def validate_with_model(model, type_checks=None):
+    """
+    Decorator which will check the contents of the of the json
+    request against a model for:
+
+        * missing fields which are required
+        * values which don't match their type(s) in the database
+        * inclusion of fields which do not exist
+
+    :param model:
+        The model object that the decorated endpoint should use for testing
+        the points above.
+
+    :param dict type_checks:
+        A dictionary containing a mapping of column names to
+        special functions used for checking.  If there's a key in the
+        incoming request that needs a more detailed check than
+        "isinstance(g.json[column_name], <Python type(s) from sql>)" then
+        this is the place to add it.
+    """
+    assert type_checks is None or isinstance(type_checks, dict)
+    type_checks = type_checks or {}
+
+    def wrapper(func):
+
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            types = model.types()
+            request_columns = set(g.json)
+            all_valid_keys = types.columns | types.relationships
+
+            # check to see if there are any fields that do not exist
+            # in the request
+            unknown_keys = request_columns - all_valid_keys
+            if unknown_keys:
+                g.error = "request contains field(s) that do not exist " \
+                          "in %s: %r" % (model.__table__, unknown_keys)
+                abort(BAD_REQUEST)
+
+            # now check to see if we're missing any required fields
+            missing_keys = (
+               types.required - request_columns) - types.primary_keys
+            if missing_keys:
+                g.error = "request to %s is missing field(s): %r" % (
+                    model.__table__, missing_keys)
+                abort(BAD_REQUEST)
+
+            # finally make sure that the types included in the request make
+            # make sense
+            for name, python_types in types.mappings.items():
+                # if there's a custom function to do the type
+                # checking then call it here
+                if name in type_checks:
+                    passed = type_checks[name]
+                    if passed not in (True, False):
+                        g.error = "expected custom type check function for " \
+                                  "%r to return True or False" % name
+                        abort(INTERNAL_SERVER_ERROR)
+
+                    if not passed:
+                        # set the error if the custom function has not
+                        if not g.error:
+                            g.error = "type check failed for %r" % name
+
+                        abort(BAD_REQUEST)
+
+                elif name in g.json:
+                    value = g.json[name]
+                    if not isinstance(value, python_types):
+                        g.error = "field %r has type %s but we expected " \
+                                  "type(s) %s" % (name, type(value),
+                                                  python_types)
+                        abort(BAD_REQUEST)
+
+            # everything checks out, proceed back to the original function
+            return func(*args, **kwargs)
+        return wrapped
     return wrapper
