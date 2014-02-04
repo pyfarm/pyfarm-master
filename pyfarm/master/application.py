@@ -205,6 +205,11 @@ def before_request():
             g.json = request.get_json()
         except (ValueError, BadRequest):  # pragma: no cover
             g.error = "failed to decode json"
+
+            # see if there just was not any data to decode
+            if not request.get_data():
+                g.error = "no data to decode"
+
             abort(BAD_REQUEST)
 
 
