@@ -84,24 +84,12 @@ class TestApplicationFunctions(BaseTestCase):
         self.assertEqual(ls.secret_key, secret_key)
 
     def test_request_handler(self):
-        # deregister all other before request handlers
-        del self.app.before_first_request_funcs[:]
-
-        @self.app.route("/api/", methods=("POST", ))
+        @self.app.route("/", methods=("POST", ))
         def test_api():
             return jsonify(success=True)
 
-        # this is not a "real" request so we have to
-        # test it manually for each request
-        def get_before_request_result():
-            response, code = before_request()
-            self.assertEqual(code, UNSUPPORTED_MEDIA_TYPE)
-            self.assertEqual(
-                response.json,
-                {'error': "only 'application/json' is supported here"})
-
-        self.app.before_first_request_funcs.append(get_before_request_result)
-        self.client.post(
-            "/api/", headers={"Content-Type": "application/json2"}, data={})
-        self.app.before_first_request_funcs.remove(get_before_request_result)
+        response = self.client.post(
+            "/", headers={"Content-Type": "application/json2"}, data={})
+        self.assert_ok(response)
+        self.assertEqual(response.json, {"success": True})
         self.assertIsNotNone(g.json)
