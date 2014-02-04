@@ -188,44 +188,6 @@ def jsonify(*args, **kwargs):
         return _jsonify(*args, **kwargs)
 
 
-def validate_json_type(instance_type):
-    """
-    Wrapper function for REST endpoint to do some high level validation
-    of ``g.json``
-    """
-    def wrapper(func):
-
-        @wraps(func)
-        def wrapped(*args, **kwargs):
-            try:
-                # special case where the decorator is being
-                # called before any requests have been made
-                if not hasattr(g, "json"):
-                    pass
-
-                # g.json should be set by our before_request handler
-                # if not then that's an error
-                elif g.json is NOTSET:
-                    g.error = "expected g.json to be set"
-                    abort(INTERNAL_SERVER_ERROR)
-
-                # specific type check
-                elif instance_type and not isinstance(g.json, instance_type):
-                    g.error = "%s expected but got %s instead" % (
-                        instance_type, g.json.__class__.__name__)
-                    abort(BAD_REQUEST)
-
-            except RuntimeError:  # outside of a request context
-                pass
-
-            # return the wrapped function
-            return func(*args, **kwargs)
-
-        return wrapped
-    return wrapper
-
-
-@validate_json_type(dict)
 def validate_with_model(model, type_checks=None):
     """
     Decorator which will check the contents of the of the json
@@ -253,6 +215,27 @@ def validate_with_model(model, type_checks=None):
 
         @wraps(func)
         def wrapped(*args, **kwargs):
+            try:
+                # special case where the decorator is being
+                # called before any requests have been made
+                if not hasattr(g, "json"):
+                    pass
+
+                # g.json should be set by our before_request handler
+                # if not then that's an error
+                elif g.json is NOTSET:
+                    g.error = "expected g.json to be set"
+                    abort(INTERNAL_SERVER_ERROR)
+
+                # in all other cases g.json should be a dictionary
+                elif not isinstance(g.json, dict):
+                    g.error = "dictionary expected but got %s instead" % (
+                        g.json.__class__.__name__)
+                    abort(BAD_REQUEST)
+
+            except RuntimeError:  # outside of a request context
+                pass
+
             types = model.types()
             request_columns = set(g.json)
             all_valid_keys = types.columns | types.relationships
