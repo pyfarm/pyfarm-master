@@ -195,7 +195,7 @@ def before_request():
     trying to accept json data to the api.
     """
     g.json = NOTSET
-    g.error = NOTSET
+    g.error = None
 
     if request.method in POST_METHODS and \
             request.headers["Content-Type"] == "application/json":
