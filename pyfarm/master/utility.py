@@ -259,10 +259,15 @@ def validate_with_model(model, type_checks=None):
             # finally make sure that the types included in the request make
             # make sense
             for name, python_types in types.mappings.items():
+                if name not in g.json:
+                    continue
+
+                value = g.json[name]
+
                 # if there's a custom function to do the type
                 # checking then call it here
                 if name in type_checks:
-                    passed = type_checks[name]
+                    passed = type_checks[name](value)
                     if passed not in (True, False):
                         g.error = "expected custom type check function for " \
                                   "%r to return True or False" % name
@@ -275,13 +280,10 @@ def validate_with_model(model, type_checks=None):
 
                         abort(BAD_REQUEST)
 
-                elif name in g.json:
-                    value = g.json[name]
-                    if not isinstance(value, python_types):
-                        g.error = "field %r has type %s but we expected " \
-                                  "type(s) %s" % (name, type(value),
-                                                  python_types)
-                        abort(BAD_REQUEST)
+                elif not isinstance(value, python_types):
+                    g.error = "field %r has type %s but we expected " \
+                              "type(s) %s" % (name, type(value), python_types)
+                    abort(BAD_REQUEST)
 
             # everything checks out, proceed back to the original function
             return func(*args, **kwargs)
