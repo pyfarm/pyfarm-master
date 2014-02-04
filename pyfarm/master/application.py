@@ -30,7 +30,7 @@ try:
 except ImportError:
     from http.client import BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE
 
-from flask import Flask, Blueprint, request, g
+from flask import Flask, Blueprint, request, g, abort
 from flask.ext.admin import Admin
 from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -198,26 +198,17 @@ def before_request():
     g.error = NOTSET
 
     # do nothing with non-api/non-data contributing requests
-    if request.method not in POST_METHODS \
-            or not request.path.startswith("/api"):  # pragma: no cover
+    if request.method not in POST_METHODS:
         pass
 
-    # header must be application/json if we're working with
-    # data input to /api
-    elif request.headers["Content-Type"] != "application/json":
-        g.error = (
-            jsonify(error="only 'application/json' is supported here"),
-            UNSUPPORTED_MEDIA_TYPE)
-        return g.error
-
-    else:
+    elif request.headers["Content-Type"] == "application/json":
         # manually handle decoding errors from get_json()
         # so we can produce a better error message
         try:
             g.json = request.get_json()
-        except BadRequest:  # pragma: no cover
-            g.error = (jsonify(error="failed to decode json"), BAD_REQUEST)
-            return g.error
+        except (ValueError, BadRequest):  # pragma: no cover
+            g.error = "failed to decode json"
+            return abort(BAD_REQUEST)
 
 
 # main object setup (app, api, etc)
