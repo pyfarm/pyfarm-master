@@ -176,7 +176,7 @@ class TestValidateWithModel(BaseTestCase):
 
     def test_custom_type_check_false(self):
         with self.assertRaises(AssertionError):
-            @validate_with_model(ValidationTestModel, type_checks={"a"})
+            @validate_with_model(ValidationTestModel, type_checks=["a"])
             def test():
                 return ""
 
@@ -194,7 +194,7 @@ class TestValidateWithModel(BaseTestCase):
 
     def test_custom_type_check_true(self):
         with self.assertRaises(AssertionError):
-            @validate_with_model(ValidationTestModel, type_checks={"a"})
+            @validate_with_model(ValidationTestModel, type_checks=["a"])
             def test():
                 return ""
 
@@ -212,7 +212,7 @@ class TestValidateWithModel(BaseTestCase):
 
     def test_custom_type_check_with_custom_error(self):
         with self.assertRaises(AssertionError):
-            @validate_with_model(ValidationTestModel, type_checks={"a"})
+            @validate_with_model(ValidationTestModel, type_checks=["a"])
             def test():
                 return ""
 
