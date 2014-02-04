@@ -219,7 +219,7 @@ class TestValidateWithModel(BaseTestCase):
 
     def test_custom_type_check_invalid_output(self):
         with self.assertRaises(AssertionError):
-            @validate_with_model(ValidationTestModel, type_checks={"a"})
+            @validate_with_model(ValidationTestModel, type_checks=["a"])
             def test():
                 return ""
 
