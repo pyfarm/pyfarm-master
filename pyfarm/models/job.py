@@ -40,7 +40,7 @@ from pyfarm.master.application import db
 from pyfarm.models.core.functions import work_columns
 from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_JOB_SOFTWARE_DEP, TABLE_JOB_TYPE, TABLE_TAG,
+    TABLE_JOB, TABLE_JOB_TYPE, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
     TABLE_SOFTWARE, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
@@ -49,14 +49,6 @@ from pyfarm.models.core.mixins import (
 from pyfarm.models.jobtype import JobType  # required for a relationship
 
 __all__ = ("Job", )
-
-
-JobSoftwareDependency = db.Table(
-    TABLE_JOB_SOFTWARE_DEP, db.metadata,
-    db.Column("job_id", IDTypeWork,
-              db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True),
-    db.Column("software_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_SOFTWARE), primary_key=True))
 
 
 JobTagAssociation = db.Table(
@@ -309,11 +301,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                            doc=dedent("""
                            Relationship between this job and
                            :class:`.Tag` objects"""))
-    software = db.relationship("Software",
-                               secondary=JobSoftwareDependency,
-                               backref=db.backref("jobs", lazy="dynamic"),
-                               lazy="dynamic",
-                               doc="software needed by this job")
 
     @validates("ram", "cpus")
     def validate_resource(self, key, value):

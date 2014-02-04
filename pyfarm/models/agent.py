@@ -38,9 +38,9 @@ from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, UseAgentAddressEnum,
     AgentStateEnum)
 from pyfarm.models.core.cfg import (
-    TABLE_AGENT, TABLE_SOFTWARE, TABLE_TAG, TABLE_AGENT_TAG_ASSOC,
-    MAX_HOSTNAME_LENGTH, TABLE_AGENT_SOFTWARE_ASSOC,
-    TABLE_PROJECT_AGENTS, TABLE_PROJECT)
+    TABLE_AGENT, TABLE_SOFTWARE, TABLE_SOFTWARE_VERSION, TABLE_TAG,
+    TABLE_AGENT_TAG_ASSOC, MAX_HOSTNAME_LENGTH,
+    TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_PROJECT_AGENTS, TABLE_PROJECT)
 
 
 __all__ = ("Agent", )
@@ -52,12 +52,12 @@ REGEX_HOSTNAME = re.compile("^(?!-)[A-Z\d-]{1,63}(?<!-)"
                             re.IGNORECASE)
 
 
-AgentSoftwareAssociation = db.Table(
-    TABLE_AGENT_SOFTWARE_ASSOC, db.metadata,
+AgentSoftwareVersionAssociation = db.Table(
+    TABLE_AGENT_SOFTWARE_VERSION_ASSOC, db.metadata,
     db.Column("agent_id", IDTypeAgent,
               db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
-    db.Column("software_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_SOFTWARE), primary_key=True))
+    db.Column("software_version_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION), primary_key=True))
 
 
 AgentTagAssociation = db.Table(
@@ -217,12 +217,13 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                             backref=db.backref("agents", lazy="dynamic"),
                             lazy="dynamic",
                             doc="Tags associated with this agent")
-    software = db.relationship("Software",
-                               secondary=AgentSoftwareAssociation,
-                               backref=db.backref("agents", lazy="dynamic"),
-                               lazy="dynamic",
-                               doc="software this agent has installed or is "
-                                   "configured for")
+    software_versions = db.relationship("SoftwareVersion",
+                                       secondary=AgentSoftwareVersionAssociation,
+                                       backref=db.backref("agents",
+                                                          lazy="dynamic"),
+                                       lazy="dynamic",
+                                       doc="software this agent has installed "
+                                           "or is configured for")
     projects = db.relationship("Project",
                                secondary=AgentProjects,
                                backref=db.backref("agents", lazy="dynamic"),

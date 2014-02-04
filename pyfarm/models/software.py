@@ -17,9 +17,9 @@
 """
 Software
 ========
-Table of software items with optional versions. Agents can reference this table
-to show that they provide a given software, while jobs can reference it to
-depend on that software.
+Table of software items. Agents can reference this table to show that they
+provide a given software. Jobs or jobtypes can depend on a software via the
+SoftwareRequirement table
 """
 
 from textwrap import dedent
@@ -37,29 +37,15 @@ __all__ = ("Software", )
 class Software(db.Model, UtilityMixins):
     """
     Model to represent a versioned piece of software that can be present on an
-    agent and may be depended on by a job and/or jobtype
+    agent and may be depended on by a job and/or jobtype through the appropriate
+    SoftwareRequirement table
 
-    .. note::
-        This table enforces two forms of uniqueness.  The :attr:`id` column
-        must be unique and the combination of these columns must also be
-        unique to limit the frequency of duplicate data:
-
-            * :attr:`software`
-            * :attr:`version`
-
-    .. autoattribute:: job_id
     """
     __tablename__ = TABLE_SOFTWARE
     __table_args__ = (
-        UniqueConstraint("software", "version"), )
+        UniqueConstraint("software"), )
 
     id = id_column()
     software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
                          doc=dedent("""
                          The name of the software"""))
-    version = db.Column(db.String(MAX_TAG_LENGTH),
-                        default="any", nullable=False,
-                        doc=dedent("""
-                        The version of the software.  This value does not follow
-                        any special formatting rules because the format depends
-                        on the 3rd party."""))
