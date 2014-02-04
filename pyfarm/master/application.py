@@ -197,11 +197,8 @@ def before_request():
     g.json = NOTSET
     g.error = NOTSET
 
-    # do nothing with non-api/non-data contributing requests
-    if request.method not in POST_METHODS:
-        pass
-
-    elif request.headers["Content-Type"] == "application/json":
+    if request.method in POST_METHODS and \
+            request.headers["Content-Type"] == "application/json":
         # manually handle decoding errors from get_json()
         # so we can produce a better error message
         try:
