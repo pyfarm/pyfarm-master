@@ -23,14 +23,13 @@ except ImportError:
     from http.client import OK, BAD_REQUEST
 
 from flask import g
-from werkzeug.exceptions import InternalServerError, BadRequest
 from werkzeug.datastructures import ImmutableDict
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.core.enums import NOTSET
+from pyfarm.core.enums import NOTSET, PY3
 from pyfarm.models.core.mixins import UtilityMixins
 from pyfarm.master.utility import (
     ReducibleDictionary, TemplateDictionary, validate_with_model)
@@ -133,8 +132,13 @@ class TestValidateWithModel(BaseTestCase):
         self.add_route(test)
         response = self.post("/", data=dumps({"foobar": True}))
         self.assertIn("error", response.json)
-        error_message = "request contains field(s) that do not exist " \
-                        "in %s: {'foobar'}" % ValidationTestModel.__tablename__
+        if PY3:
+            error_message = "request contains field(s) that do not exist in " \
+                            "%s: {'foobar'}" % ValidationTestModel.__tablename__
+        else:
+            error_message = "request contains field(s) that do not exist in " \
+                            "%s: set([u'foobar'])" % \
+                            ValidationTestModel.__tablename__
         self.assertEqual(response.json["error"], error_message)
 
     def test_missing_required_fields(self):
@@ -145,8 +149,12 @@ class TestValidateWithModel(BaseTestCase):
         self.add_route(test)
         response = self.post("/", data=dumps({"b": 1}))
         self.assertIn("error", response.json)
-        error_message = "request to %s is missing " \
-                        "field(s): {'a'}" % ValidationTestModel.__tablename__
+        if PY3:
+            error_message = "request to %s is missing field(s): " \
+                            "{'a'}" % ValidationTestModel.__tablename__
+        else:
+            error_message = "request to %s is missing field(s): " \
+                            "set(['a'])" % ValidationTestModel.__tablename__
         self.assertEqual(response.json["error"], error_message)
 
     def test_type_check(self):
@@ -157,8 +165,13 @@ class TestValidateWithModel(BaseTestCase):
         self.add_route(test)
         response = self.post("/", data=dumps({"a": "foobar"}))
         self.assertIn("error", response.json)
-        error_message = "field 'a' has type <class 'str'> but we " \
-                        "expected type(s) <class 'int'>"
+        if PY3:
+            error_message = "field 'a' has type <class 'str'> but we " \
+                            "expected type(s) <class 'int'>"
+        else:
+            error_message = "field 'a' has type <type 'unicode'> " \
+                            "but we expected type(s) (<type 'int'>, " \
+                            "<type 'long'>)"
         self.assertEqual(response.json["error"], error_message)
 
     def test_custom_type_check_false(self):
