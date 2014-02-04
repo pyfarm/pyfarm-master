@@ -28,7 +28,7 @@ try:
 except ImportError:  # pragma: no cover
     from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 
-from flask import Response, request, url_for
+from flask import Response, request, url_for, g
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
@@ -140,23 +140,14 @@ class TagIndexAPI(MethodView):
         :statuscode 400: there was something wrong with the request (such as
                             invalid columns being included)
         """
-        data = json_from_request(request,
-                                 all_keys=ALL_TAG_COLUMNS,
-                                 required_keys=REQUIRED_TAG_COLUMNS,
-                                 disallowed_keys=set(["id"]))
-
-        # json_from_request returns a Response, Returncode tuple on error
-        if isinstance(data, tuple):
-            return data
-
-        existing_tag = Tag.query.filter_by(tag=data["tag"]).first()
+        existing_tag = Tag.query.filter_by(tag=g.json["tag"]).first()
 
         if existing_tag:
             # No update needed, because Tag only has that one column
             return jsonify(existing_tag.to_dict()), OK
 
         else:
-            new_tag = Tag(**data)
+            new_tag = Tag(**g.json)
             db.session.add(new_tag)
             db.session.commit()
             tag_data = new_tag.to_dict()
