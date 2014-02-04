@@ -99,7 +99,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         work_columns(WorkState.QUEUED, "job.priority")
     project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
                            doc="stores the project id")
-    job_type_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_JOB_TYPE),
+    job_type_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB_TYPE),
                             nullable=False,
                             doc=dedent("""
                             The foreign key which stores :class:`JobType.id`"""))
