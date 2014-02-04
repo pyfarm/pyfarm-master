@@ -24,6 +24,7 @@ Objects and classes for working with the job models.
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.application import SessionMixin
 from pyfarm.models.job import Job
+from pyfarm.models.jobsoftwarerequirement import JobSoftwareRequirement
 from pyfarm.models.task import Task
 from pyfarm.models.software import Software
 from pyfarm.models.tag import Tag
@@ -36,11 +37,7 @@ class JobRolesMixin(object):
 # TODO: !!! add display override for STATE field
 class JobView(SessionMixin, JobRolesMixin, SQLModelView):
     model = Job
-    form_ajax_refs = {"software": AjaxLoader("software", Software,
-                               fields=("software", "version"),
-                               fmt=lambda model: "%s (%s)" % (
-                                   model.software, model.version)),
-                      "tags": AjaxLoader("tags", Tag,
+    form_ajax_refs = {"tags": AjaxLoader("tags", Tag,
                                fields=("tag", ),
                                fmt=lambda model: "%s" % model.tag)}
 
