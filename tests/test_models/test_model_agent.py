@@ -26,6 +26,7 @@ BaseTestCase.build_environment()
 from pyfarm.core.enums import AgentState
 from pyfarm.master.application import db
 from pyfarm.models.software import Software
+from pyfarm.models.softwareversion import SoftwareVersion
 from pyfarm.models.tag import Tag
 from pyfarm.models.agent import Agent
 
@@ -97,15 +98,19 @@ class TestAgentSoftware(AgentTestCase, BaseTestCase):
         for agent_foobar in self.models(limit=1):
             db.session.add(agent_foobar)
 
-            # create some software tags
-            software_objects = []
+            # create some software version tags
+            software_version_objects = []
             for software_name in ("foo", "bar", "baz"):
                 software = Software()
                 software.agents = [agent_foobar]
                 software.software = software_name
-                software.version = uuid.uuid4().hex
-                software_objects.append((software.software, software.version))
-                agent_foobar.software.append(software)
+                software_version = SoftwareVersion()
+                software_version.software = software
+                software_version.version = "1"
+                software_version.rank = 1
+                software_version_objects.append((software.software,
+                                                 software_version.version))
+                agent_foobar.software_versions.append(software_version)
 
             db.session.commit()
             agent_id = agent_foobar.id
@@ -114,11 +119,13 @@ class TestAgentSoftware(AgentTestCase, BaseTestCase):
             agent = Agent.query.filter_by(id=agent_id).first()
             self.assertIsNotNone(agent)
 
-            agent_software = list(
-                (str(i.software), str(i.version)) for i in agent.software)
-            software_objects.sort()
-            agent_software.sort()
-            self.assertListEqual(agent_software, software_objects)
+            agent_software_versions = list(
+                (str(i.software.software), str(i.version))
+                for i in agent.software_versions)
+            software_version_objects.sort()
+            agent_software_versions.sort()
+            self.assertListEqual(agent_software_versions,
+                                 software_version_objects)
 
     def test_software_unique(self):
         for agent_foobar in self.models(limit=1):

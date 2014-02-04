@@ -32,6 +32,7 @@ from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.tag import Tag
 from pyfarm.models.software import Software
+from pyfarm.models.jobsoftwarerequirement import JobSoftwareRequirement
 from pyfarm.models.agent import Agent
 from pyfarm.models.job import Job
 from pyfarm.core.enums import JobTypeLoadMode
@@ -93,7 +94,7 @@ class TestTags(BaseTestCase):
             db.session.commit()
 
 
-class TestSoftware(BaseTestCase):
+class TestSoftwareRequirement(BaseTestCase):
     def test_insert(self):
         # A job can not be created without a jobtype, create one first
         jobtype = JobType()
@@ -108,42 +109,65 @@ class TestSoftware(BaseTestCase):
 
         job = Job()
         job.job_type = jobtype
+
+        # Software requirement needs a software first
         software = Software()
-        software.jobs = [job]
         software.software = "foo"
-        db.session.add_all([job, software])
+        requirement = JobSoftwareRequirement()
+        requirement.job = job
+        requirement.software = software
+        db.session.add(job)
         db.session.commit()
         job_id = job.id
-        software_id = software.id
-        db.session.remove()
-        software = Software.query.filter_by(id=software_id).first()
-        self.assertEqual(software.jobs[0].id, job_id)
-        self.assertEqual(software.software, "foo")
-        self.assertEqual(software.version, "any")
+        requirement_id = requirement.id
+        requirement2 = JobSoftwareRequirement.query.\
+            filter_by(id=requirement_id).first()
+        self.assertEqual(requirement.job.id, job_id)
+        self.assertEqual(requirement2.software.software, "foo")
+        self.assertEqual(requirement2.min_version, None)
+        self.assertEqual(requirement2.max_version, None)
 
     def test_null(self):
         with self.assertRaises(DatabaseError):
-            model = Software()
+            model = JobSoftwareRequirement()
             db.session.add(model)
             db.session.commit()
 
         db.session.remove()
 
         with self.assertRaises(DatabaseError):
-            tag = Software()
-            tag.software = "foo"
-            db.session.add(model)
+            software = Software()
+            software.software = "foo"
+            requirement = JobSoftwareRequirement()
+            requirement.software = software
+            db.session.add(requirement)
             db.session.commit()
 
     def test_unique(self):
+        # A job can not be created without a jobtype, create one first
+        jobtype = JobType()
+        jobtype.name = "foo"
+        jobtype.description = "this is a job type"
+        jobtype.classname = "Foobar"
+        jobtype.code = dedent("""
+        class Foobar(JobType):
+            pass""").encode("utf-8")
+        jobtype.mode = JobTypeLoadMode.OPEN
+        db.session.add(jobtype)
+
         job = Job()
-        softwareA = Software()
-        softwareB = Software()
-        softwareA.jobs = [job]
-        softwareA.software = "foo"
-        softwareB.jobs = [job]
-        softwareB.software = "foo"
-        db.session.add_all([job, softwareA, softwareB])
+        job.job_type = jobtype
+
+        software = Software()
+        software.software = "foo"
+
+        requirementA = JobSoftwareRequirement()
+        requirementB = JobSoftwareRequirement()
+        requirementA.job = job
+        requirementA.software = software
+        requirementB.job = job
+        requirementB.software = software
+        db.session.add_all([job, requirementA, requirementB])
 
         with self.assertRaises(DatabaseError):
             db.session.commit()
