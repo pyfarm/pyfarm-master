@@ -24,13 +24,12 @@ of PyFarm's master.
 
 from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
-from pyfarm.models.software import Software
-from pyfarm.models.softwareversion import SoftwareVersion
+from pyfarm.models.software import (
+    Software, SoftwareVersion, JobSoftwareRequirement,
+    JobTypeSoftwareRequirement)
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task, TaskDependencies
 from pyfarm.models.job import Job, JobDependencies
-from pyfarm.models.jobsoftwarerequirement import JobSoftwareRequirement
-from pyfarm.models.jobtypesoftwarerequirement import JobTypeSoftwareRequirement
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import (
     Agent, AgentTagAssociation, AgentSoftwareVersionAssociation)

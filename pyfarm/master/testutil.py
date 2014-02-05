@@ -174,10 +174,8 @@ class BaseTestCase(TestCase):
         from pyfarm.models.job import Job
         from pyfarm.models.jobtype import JobType
         from pyfarm.models.project import Project
-        from pyfarm.models.software import Software
-        from pyfarm.models.softwareversion import SoftwareVersion
-        from pyfarm.models.jobsoftwarerequirement import JobSoftwareRequirement
-        from pyfarm.models.jobtypesoftwarerequirement import (
+        from pyfarm.models.software import (
+            Software, SoftwareVersion, JobSoftwareRequirement,
             JobTypeSoftwareRequirement)
         from pyfarm.models.tag import Tag
         from pyfarm.models.task import Task

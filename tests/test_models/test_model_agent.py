@@ -25,8 +25,7 @@ BaseTestCase.build_environment()
 
 from pyfarm.core.enums import AgentState
 from pyfarm.master.application import db
-from pyfarm.models.software import Software
-from pyfarm.models.softwareversion import SoftwareVersion
+from pyfarm.models.software import Software, SoftwareVersion
 from pyfarm.models.tag import Tag
 from pyfarm.models.agent import Agent
 

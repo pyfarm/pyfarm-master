@@ -31,8 +31,7 @@ BaseTestCase.build_environment()
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.tag import Tag
-from pyfarm.models.software import Software
-from pyfarm.models.jobsoftwarerequirement import JobSoftwareRequirement
+from pyfarm.models.software import Software, JobSoftwareRequirement
 from pyfarm.models.agent import Agent
 from pyfarm.models.job import Job
 from pyfarm.core.enums import JobTypeLoadMode
