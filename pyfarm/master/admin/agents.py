@@ -80,58 +80,6 @@ class FilterTagsNotContains(BaseFilter):
         return query
 
 
-class FilterSoftwareContains(BaseFilter):
-    """
-    Filter for :class:`AgentView` which allows specific software
-    to be included in the view.
-    """
-    operation_text = "includes"
-
-    def apply(self, query, value):
-        if value.strip():
-            return query.filter(Agent.software.any(software=value))
-        return query
-
-
-class FilterSoftwareNotContains(BaseFilter):
-    """
-    Filter for :class:`AgentView` which allows specific software
-    to be excluded from the view.
-    """
-    operation_text = "excludes"
-
-    def apply(self, query, value):
-        if value.strip():
-            return query.filter(not_(Agent.software.any(software=value)))
-        return query
-
-
-class FilterSoftwareContainsVersion(BaseFilter):
-    """
-    Filter for :class:`AgentView` which allows specific software versions
-    to be included in the view.
-    """
-    operation_text = "includes version"
-
-    def apply(self, query, value):
-        if value.strip():
-            return query.filter(Agent.software.any(version=value))
-        return query
-
-
-class FilterSoftwareNotContainsVersion(BaseFilter):
-    """
-    Filter for :class:`AgentView` which allows specific software versions
-    to be excluded in the view.
-    """
-    operation_text = "excludes version"
-
-    def apply(self, query, value):
-        if value.strip():
-            return query.filter(not_(Agent.software.any(version=value)))
-        return query
-
-
 class FilterState(BaseFilter):
     operation_text = "equals"
 
@@ -151,11 +99,7 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
         "hostname", "ram", "free_ram", "cpus",
         FilterState(Agent.state, "State", options=[(_, _)for _ in AgentState]),
         FilterTagsContains(Agent.tags, "Tag"),
-        FilterTagsNotContains(Agent.tags, "Tag"),
-        FilterSoftwareContains(Agent.software, "Software"),
-        FilterSoftwareNotContains(Agent.software, "Software"),
-        FilterSoftwareContainsVersion(Agent.software, "Software"),
-        FilterSoftwareNotContainsVersion(Agent.software, "Software"))
+        FilterTagsNotContains(Agent.tags, "Tag"))
 
     # all states except 'running' allowed (only the agent can set this)
     column_choices = {
