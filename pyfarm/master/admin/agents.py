@@ -110,7 +110,7 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     # columns the form should display
     form_columns = (
         "state", "hostname", "port", "cpus", "ram", "free_ram",
-        "tags", "software", "ip", "use_address", "ram_allocation",
+        "tags", "software_versions", "ip", "use_address", "ram_allocation",
         "cpu_allocation")
 
     # custom type columns need overrides
@@ -160,8 +160,8 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
             "choices": column_choices["use_address"]},
         "tags": {
             "description": Agent.tags.__doc__},
-        "software": {
-            "description": Agent.software.__doc__},
+        "software_versions": {
+            "description": Agent.software_versions.__doc__},
         "ram_allocation": {
             "description": Agent.ram_allocation.__doc__},
         "cpu_allocation": {
@@ -170,8 +170,4 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     # create ajax loaders for the relationships
     form_ajax_refs = {
         "tags": AjaxLoader("tags", Tag,
-                           fields=("tag", ), fmt=lambda model: model.tag),
-        "software": AjaxLoader("software", Software,
-                               fields=("software", "version"),
-                               fmt=lambda model: "%s (%s)" % (
-                                   model.software, model.version))}
+                           fields=("tag", ), fmt=lambda model: model.tag)}
