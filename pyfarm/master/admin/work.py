@@ -24,7 +24,6 @@ Objects and classes for working with the job models.
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.application import SessionMixin
 from pyfarm.models.job import Job
-from pyfarm.models.jobsoftwarerequirement import JobSoftwareRequirement
 from pyfarm.models.task import Task
 from pyfarm.models.software import Software
 from pyfarm.models.tag import Tag
