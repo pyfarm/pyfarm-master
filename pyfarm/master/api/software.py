@@ -146,8 +146,8 @@ class SoftwareIndexAPI(MethodView):
                                  all_keys=ALL_SOFTWARE_COLUMNS,
                                  required_keys=REQUIRED_SOFTWARE_COLUMNS,
                                  disallowed_keys=set(["id"]))
-        # json_from_request returns a Response object on error
-        if isinstance(data, Response):
+        # json_from_request returns a tuple on error
+        if isinstance(data, tuple):
             return data
 
         existing_software = Software.query.filter_by(
