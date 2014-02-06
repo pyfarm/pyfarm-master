@@ -142,17 +142,13 @@ class SoftwareIndexAPI(MethodView):
         :statuscode 400: there was something wrong with the request (such as
                             invalid columns being included)
         """
-        logger.info("In SoftwareIndexAPI.post")
         data = json_from_request(request,
                                  all_keys=ALL_SOFTWARE_COLUMNS,
                                  required_keys=REQUIRED_SOFTWARE_COLUMNS,
                                  disallowed_keys=set(["id"]))
-        logger.info("called json_from_request")
         # json_from_request returns a Response object on error
         if isinstance(data, Response):
-            logger.info("json_from_request returned an error")
             return data
-        logger.info("json_from_request returned data")
 
         existing_software = Software.query.filter_by(
             software=data["software"], version=data["version"]).first()
