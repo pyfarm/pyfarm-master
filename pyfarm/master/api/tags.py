@@ -356,8 +356,6 @@ class SingleTagAPI(MethodView):
             tag = Tag.query.filter_by(id=tagname).first()
         if tag is not None:
             # If tag exists, delete it before recreating it
-            tag.agents = []
-            tag.jobs = []
             db.session.delete(tag)
             logger.debug("Deleted tag %s as part of PUT operation" % tag.tag)
             db.session.flush()
@@ -442,10 +440,6 @@ class SingleTagAPI(MethodView):
             tag = Tag.query.filter_by(id=tagname).first()
         if tag is None:
             return Response(), NO_CONTENT
-
-        # First, delete all relations
-        tag.agents = []
-        tag.jobs = []
 
         db.session.delete(tag)
         db.session.commit()
