@@ -38,7 +38,7 @@ from pyfarm.master.utility import json_from_request, jsonify, get_column_sets
 
 ALL_SOFTWARE_COLUMNS, REQUIRED_SOFTWARE_COLUMNS = get_column_sets(Software)
 
-logger = getLogger("api.agents")
+logger = getLogger("api.software")
 
 
 def schema():
