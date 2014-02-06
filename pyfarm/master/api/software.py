@@ -151,7 +151,7 @@ class SoftwareIndexAPI(MethodView):
             return data
 
         existing_software = Software.query.filter_by(
-            software=data["software"], version=data["version"]).first()
+            software=data["software"]).first()
 
         if existing_software:
             # No update needed, because Software only has those two columns
