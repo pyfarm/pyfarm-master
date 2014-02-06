@@ -25,7 +25,7 @@ from wtforms import TextField, SelectField
 from sqlalchemy import not_
 
 from pyfarm.core.enums import AgentState, UseAgentAddress
-from pyfarm.models.agent import Agent, AgentSoftwareAssociation
+from pyfarm.models.agent import Agent
 from pyfarm.models.software import Software
 from pyfarm.models.tag import Tag
 from pyfarm.master.application import SessionMixin
