@@ -156,3 +156,12 @@ class SoftwareIndexAPI(MethodView):
             logger.debug(
                 "created software %s: %r", new_software.id, software_data)
             return jsonify(software_data), CREATED
+
+    def get(self):
+        all_software = Software.query.all()
+
+        out = []
+        for software in all_software:
+            out.append(software.to_dict())
+
+        return jsonify(out), OK
