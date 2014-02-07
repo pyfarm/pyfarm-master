@@ -145,7 +145,7 @@ class SoftwareIndexAPI(MethodView):
             software=g.json["software"]).first()
 
         if existing_software:
-            # No update needed, because Software only has those two columns
+            # No update needed, because Software only has one column
             return jsonify(existing_software.to_dict()), OK
 
         else:
