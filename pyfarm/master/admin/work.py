@@ -36,11 +36,7 @@ class JobRolesMixin(object):
 # TODO: !!! add display override for STATE field
 class JobView(SessionMixin, JobRolesMixin, SQLModelView):
     model = Job
-    form_ajax_refs = {"software": AjaxLoader("software", Software,
-                               fields=("software", "version"),
-                               fmt=lambda model: "%s (%s)" % (
-                                   model.software, model.version)),
-                      "tags": AjaxLoader("tags", Tag,
+    form_ajax_refs = {"tags": AjaxLoader("tags", Tag,
                                fields=("tag", ),
                                fmt=lambda model: "%s" % model.tag)}
 

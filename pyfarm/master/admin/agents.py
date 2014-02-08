@@ -25,7 +25,7 @@ from wtforms import TextField, SelectField
 from sqlalchemy import not_
 
 from pyfarm.core.enums import AgentState, UseAgentAddress
-from pyfarm.models.agent import Agent, AgentSoftwareAssociation
+from pyfarm.models.agent import Agent
 from pyfarm.models.software import Software
 from pyfarm.models.tag import Tag
 from pyfarm.master.application import SessionMixin
@@ -80,58 +80,6 @@ class FilterTagsNotContains(BaseFilter):
         return query
 
 
-class FilterSoftwareContains(BaseFilter):
-    """
-    Filter for :class:`AgentView` which allows specific software
-    to be included in the view.
-    """
-    operation_text = "includes"
-
-    def apply(self, query, value):
-        if value.strip():
-            return query.filter(Agent.software.any(software=value))
-        return query
-
-
-class FilterSoftwareNotContains(BaseFilter):
-    """
-    Filter for :class:`AgentView` which allows specific software
-    to be excluded from the view.
-    """
-    operation_text = "excludes"
-
-    def apply(self, query, value):
-        if value.strip():
-            return query.filter(not_(Agent.software.any(software=value)))
-        return query
-
-
-class FilterSoftwareContainsVersion(BaseFilter):
-    """
-    Filter for :class:`AgentView` which allows specific software versions
-    to be included in the view.
-    """
-    operation_text = "includes version"
-
-    def apply(self, query, value):
-        if value.strip():
-            return query.filter(Agent.software.any(version=value))
-        return query
-
-
-class FilterSoftwareNotContainsVersion(BaseFilter):
-    """
-    Filter for :class:`AgentView` which allows specific software versions
-    to be excluded in the view.
-    """
-    operation_text = "excludes version"
-
-    def apply(self, query, value):
-        if value.strip():
-            return query.filter(not_(Agent.software.any(version=value)))
-        return query
-
-
 class FilterState(BaseFilter):
     operation_text = "equals"
 
@@ -151,11 +99,7 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
         "hostname", "ram", "free_ram", "cpus",
         FilterState(Agent.state, "State", options=[(_, _)for _ in AgentState]),
         FilterTagsContains(Agent.tags, "Tag"),
-        FilterTagsNotContains(Agent.tags, "Tag"),
-        FilterSoftwareContains(Agent.software, "Software"),
-        FilterSoftwareNotContains(Agent.software, "Software"),
-        FilterSoftwareContainsVersion(Agent.software, "Software"),
-        FilterSoftwareNotContainsVersion(Agent.software, "Software"))
+        FilterTagsNotContains(Agent.tags, "Tag"))
 
     # all states except 'running' allowed (only the agent can set this)
     column_choices = {
@@ -166,7 +110,7 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     # columns the form should display
     form_columns = (
         "state", "hostname", "port", "cpus", "ram", "free_ram",
-        "tags", "software", "ip", "use_address", "ram_allocation",
+        "tags", "software_versions", "ip", "use_address", "ram_allocation",
         "cpu_allocation")
 
     # custom type columns need overrides
@@ -216,8 +160,8 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
             "choices": column_choices["use_address"]},
         "tags": {
             "description": Agent.tags.__doc__},
-        "software": {
-            "description": Agent.software.__doc__},
+        "software_versions": {
+            "description": Agent.software_versions.__doc__},
         "ram_allocation": {
             "description": Agent.ram_allocation.__doc__},
         "cpu_allocation": {
@@ -226,8 +170,4 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     # create ajax loaders for the relationships
     form_ajax_refs = {
         "tags": AjaxLoader("tags", Tag,
-                           fields=("tag", ), fmt=lambda model: model.tag),
-        "software": AjaxLoader("software", Software,
-                               fields=("software", "version"),
-                               fmt=lambda model: "%s (%s)" % (
-                                   model.software, model.version))}
+                           fields=("tag", ), fmt=lambda model: model.tag)}

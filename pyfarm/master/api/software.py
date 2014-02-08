@@ -38,7 +38,7 @@ from pyfarm.master.utility import json_from_request, jsonify, get_column_sets
 
 ALL_SOFTWARE_COLUMNS, REQUIRED_SOFTWARE_COLUMNS = get_column_sets(Software)
 
-logger = getLogger("api.agents")
+logger = getLogger("api.software")
 
 
 def schema():
@@ -142,20 +142,16 @@ class SoftwareIndexAPI(MethodView):
         :statuscode 400: there was something wrong with the request (such as
                             invalid columns being included)
         """
-        logger.info("In SoftwareIndexAPI.post")
         data = json_from_request(request,
                                  all_keys=ALL_SOFTWARE_COLUMNS,
                                  required_keys=REQUIRED_SOFTWARE_COLUMNS,
                                  disallowed_keys=set(["id"]))
-        logger.info("called json_from_request")
-        # json_from_request returns a Response object on error
-        if isinstance(data, Response):
-            logger.info("json_from_request returned an error")
+        # json_from_request returns a tuple on error
+        if isinstance(data, tuple):
             return data
-        logger.info("json_from_request returned data")
 
         existing_software = Software.query.filter_by(
-            software=data["software"], version=data["version"]).first()
+            software=data["software"]).first()
 
         if existing_software:
             # No update needed, because Software only has those two columns

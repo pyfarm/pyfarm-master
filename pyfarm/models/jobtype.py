@@ -31,7 +31,7 @@ from sqlalchemy.orm import validates
 
 from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.master.application import db
-from pyfarm.models.core.types import id_column, JobTypeLoadModeEnum
+from pyfarm.models.core.types import id_column, JobTypeLoadModeEnum, IDTypeWork
 from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH
 
 __all__ = ("JobType", )
@@ -45,7 +45,7 @@ class JobType(db.Model):
     """
     __tablename__ = TABLE_JOB_TYPE
 
-    id = id_column(db.Integer)
+    id = id_column(IDTypeWork)
     name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
                      doc=dedent("""
                      The name of the job type.  This can be either a human

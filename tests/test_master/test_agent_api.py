@@ -80,7 +80,7 @@ class TestAgentAPI(BaseTestCase):
                 "tags": [],
                 "tasks": [],
                 "projects": [],
-                "software": []})
+                "software_versions": []})
 
     # There are two ways to update an agent, with a POST to /api/v1/agents
     # or with a POST to /api/v1/agents/<id>
@@ -139,7 +139,7 @@ class TestAgentAPI(BaseTestCase):
             "tags": [],
             "tasks": [],
             "projects": [],
-            "software": []})
+            "software_versions": []})
 
     def test_post_agents(self):
         response1 = self.client.post(
@@ -198,7 +198,7 @@ class TestAgentAPI(BaseTestCase):
             "tags": [],
             "tasks": [],
             "projects": [],
-            "software": []})
+            "software_versions": []})
 
     def test_agent_delete(self):
         response1 = self.client.post(

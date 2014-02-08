@@ -17,9 +17,9 @@
 """
 Software
 ========
-Table of software items with optional versions. Agents can reference this table
-to show that they provide a given software, while jobs can reference it to
-depend on that software.
+Table of software items. Agents can reference this table to show that they
+provide a given software. Jobs or jobtypes can depend on a software via the
+SoftwareRequirement table
 """
 
 from textwrap import dedent
@@ -27,8 +27,11 @@ from textwrap import dedent
 from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.master.application import db
-from pyfarm.models.core.cfg import TABLE_SOFTWARE, MAX_TAG_LENGTH
-from pyfarm.models.core.types import id_column
+from pyfarm.models.core.cfg import (
+    TABLE_SOFTWARE, TABLE_SOFTWARE_VERSION, MAX_TAG_LENGTH,
+    TABLE_JOB, TABLE_JOB_SOFTWARE_REQ, TABLE_JOB_TYPE,
+    TABLE_JOB_TYPE_SOFTWARE_REQ)
+from pyfarm.models.core.types import id_column, IDTypeWork
 from pyfarm.models.core.mixins import UtilityMixins
 
 __all__ = ("Software", )
@@ -37,29 +40,114 @@ __all__ = ("Software", )
 class Software(db.Model, UtilityMixins):
     """
     Model to represent a versioned piece of software that can be present on an
-    agent and may be depended on by a job and/or jobtype
+    agent and may be depended on by a job and/or jobtype through the appropriate
+    SoftwareRequirement table
 
-    .. note::
-        This table enforces two forms of uniqueness.  The :attr:`id` column
-        must be unique and the combination of these columns must also be
-        unique to limit the frequency of duplicate data:
-
-            * :attr:`software`
-            * :attr:`version`
-
-    .. autoattribute:: job_id
     """
     __tablename__ = TABLE_SOFTWARE
     __table_args__ = (
-        UniqueConstraint("software", "version"), )
+        UniqueConstraint("software"), )
 
     id = id_column()
     software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
                          doc=dedent("""
                          The name of the software"""))
+
+
+class SoftwareVersion(db.Model, UtilityMixins):
+    """
+    Model to represent a version for a given software
+
+    """
+    __tablename__ = TABLE_SOFTWARE_VERSION
+    __table_args__ = (
+        UniqueConstraint("software_id", "version"),
+        UniqueConstraint("software_id", "rank"))
+
+    id = id_column()
+    software_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_SOFTWARE),
+                            nullable=False,
+                            doc="The software this version belongs to")
     version = db.Column(db.String(MAX_TAG_LENGTH),
                         default="any", nullable=False,
                         doc=dedent("""
-                        The version of the software.  This value does not follow
-                        any special formatting rules because the format depends
-                        on the 3rd party."""))
+                            The version of the software.  This value does not
+                            follow any special formatting rules because the
+                            format depends on the 3rd party."""))
+    rank = db.Column(db.Integer, nullable=False,
+                     doc=dedent("""
+                        The rank of this version relative to other versions of
+                        the same software. Used to determine whether a version is
+                        higher or lower than another."""))
+
+    software = db.relationship("Software", backref="software_versions")
+
+
+class JobSoftwareRequirement(db.Model, UtilityMixins):
+    """
+    Model representing a dependency of a job on a software tag, with optional
+    version constraints
+
+    """
+    __tablename__ = TABLE_JOB_SOFTWARE_REQ
+    __table_args__ = (
+        UniqueConstraint("software_id", "job_id"), )
+
+    id = id_column()
+    software_id = db.Column(db.Integer,
+                            db.ForeignKey("%s.id" % TABLE_SOFTWARE),
+                            nullable=False,
+                            doc=dedent("""
+                                Reference to the required software"""))
+    job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+                       nullable=False,
+                       doc=dedent("""
+                            Foreign key to :class:`Job.id`"""))
+    min_version = db.Column(db.Integer,
+                            db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+                            nullable=True,
+                            doc=dedent("""
+                                Reference to the minimum required version"""))
+    max_version = db.Column(db.Integer,
+                            db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+                            nullable=True,
+                            doc=dedent("""
+                                Reference to the maximum required version"""))
+
+    job = db.relationship("Job", backref="software_requirements")
+    software = db.relationship("Software")
+
+
+class JobTypeSoftwareRequirement(db.Model, UtilityMixins):
+    """
+    Model representing a dependency of a job on a software tag, with optional
+    version constraints
+
+    """
+    __tablename__ = TABLE_JOB_TYPE_SOFTWARE_REQ
+    __table_args__ = (
+        UniqueConstraint("software_id", "jobtype_id"), )
+
+    id = id_column()
+    software_id = db.Column(db.Integer,
+                            db.ForeignKey("%s.id" % TABLE_SOFTWARE),
+                            nullable=False,
+                            doc=dedent("""
+                                Reference to the required software"""))
+    jobtype_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB_TYPE),
+                           nullable=False,
+                           doc=dedent("""
+                                      Foreign key to :class:`JobType.id`"""))
+    min_version = db.Column(db.Integer,
+                            db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+                            nullable=True,
+                            doc=dedent("""
+                                Reference to the minimum required version"""))
+    max_version = db.Column(db.Integer,
+                            db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+                            nullable=True,
+                            doc=dedent("""
+                                Reference to the maximum required version"""))
+
+    jobtype = db.relationship("JobType", backref="software_requirements")
+    software = db.relationship("Software")
