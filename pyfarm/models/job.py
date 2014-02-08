@@ -128,7 +128,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                       doc=dedent("""
                       Notes that are provided on submission or added after
                       the fact. This column is only provided for human
-                      consumption is not scanned, index, or used when
+                      consumption, is not scanned, index, or used when
                       searching"""))
 
     # task data

@@ -73,9 +73,9 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                        hides the task from queue and web ui"""))
     attempts = db.Column(db.Integer,
                          doc=dedent("""
-                         The number attempts which have been made on this
+                         The number of attempts which have been made on this
                          task. This value is auto incremented when
-                         :attr:`state` changes to a value synonyms with a
+                         :attr:`state` changes to a value synonymous with a
                          running state."""))
     frame = db.Column(db.Float, nullable=False,
                       doc=dedent("""
