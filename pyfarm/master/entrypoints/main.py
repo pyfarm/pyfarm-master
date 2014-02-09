@@ -22,6 +22,19 @@ Contains the functions necessary to run individual components
 of PyFarm's master.
 """
 
+from functools import partial
+
+try:
+    from httplib import (
+        responses, BAD_REQUEST, UNAUTHORIZED, NOT_FOUND, METHOD_NOT_ALLOWED,
+        INTERNAL_SERVER_ERROR)
+except ImportError:
+    from http.client import (
+        responses, BAD_REQUEST, UNAUTHORIZED, NOT_FOUND, METHOD_NOT_ALLOWED,
+        INTERNAL_SERVER_ERROR)
+
+from flask import request
+
 from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
@@ -35,6 +48,7 @@ from pyfarm.models.agent import (
     Agent, AgentTagAssociation)
 from pyfarm.models.user import User, Role
 from pyfarm.master.application import db
+from pyfarm.master.utility import error_handler
 
 
 def load_before_first(app_instance, database_instance):
@@ -45,11 +59,32 @@ def load_before_first(app_instance, database_instance):
 
 def load_error_handlers(app_instance):
     """loads the error handlers onto application instance"""
-    from pyfarm.master.errors import error_400, error_401, error_404, error_500
-    app_instance.register_error_handler(400, error_400)
-    app_instance.register_error_handler(401, error_401)
-    app_instance.register_error_handler(404, error_404)
-    app_instance.register_error_handler(500, error_500)
+    # create the handlers
+    bad_request = partial(
+        error_handler, code=BAD_REQUEST,
+        default=lambda: "bad request to %s" % request.url)
+    unauthorized = partial(
+        error_handler, code=BAD_REQUEST,
+        default=lambda: "unauthorized request to %s" % request.url)
+    not_found = partial(
+        error_handler, code=NOT_FOUND,
+        default=lambda: "%s was not found" % request.url)
+    method_not_allowed = partial(
+        error_handler, code=METHOD_NOT_ALLOWED,
+        default=lambda:
+        "%s does not allow %s requests" % (request.url, request.method))
+    internal_server_error = partial(
+        error_handler, code=INTERNAL_SERVER_ERROR,
+        default=lambda:
+        "unhandled error while accessing %s" % request.url)
+
+    # apply the handlers to the application instance
+    app_instance.register_error_handler(BAD_REQUEST, bad_request)
+    app_instance.register_error_handler(UNAUTHORIZED, unauthorized)
+    app_instance.register_error_handler(NOT_FOUND, not_found)
+    app_instance.register_error_handler(METHOD_NOT_ALLOWED, method_not_allowed)
+    app_instance.register_error_handler(
+        INTERNAL_SERVER_ERROR, internal_server_error)
 
 
 def load_setup(app_instance):
