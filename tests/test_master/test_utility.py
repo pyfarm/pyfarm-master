@@ -22,19 +22,19 @@ try:
 except ImportError:
     from http.client import OK, BAD_REQUEST
 
-from flask import g
+from flask import g, request
 from werkzeug.datastructures import ImmutableDict
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.core.enums import NOTSET, PY3
+from pyfarm.core.enums import PY3
 from pyfarm.models.core.mixins import UtilityMixins
 from pyfarm.master.utility import (
-    ReducibleDictionary, TemplateDictionary, validate_with_model)
-from pyfarm.master.entrypoints.main import load_error_handlers
-from pyfarm.master.application import db
+    ReducibleDictionary, TemplateDictionary, validate_with_model, error_handler)
+from pyfarm.master.entrypoints.main import load_error_handlers, load_admin
+from pyfarm.master.application import db, get_admin
 from pyfarm.models.core.cfg import TABLE_PREFIX
 
 
@@ -64,12 +64,7 @@ class FakeRequest(object):
         return self.data
 
 
-class TestUtility(BaseTestCase):
-    def setUp(self):
-        super(TestUtility, self).setUp()
-        g.error = NOTSET
-        g.json = NOTSET
-
+class TestDictionary(BaseTestCase):
     def test_reducible_dictionary(self):
         source = {"a": None}
         data = ReducibleDictionary(source)
@@ -248,3 +243,65 @@ class TestValidateWithModel(BaseTestCase):
             response.json,
             {"error": "expected custom type check function for "
                       "'a' to return True or False"})
+
+
+class TestErrorHandler(BaseTestCase):
+    def setup_app(self):
+        super(TestErrorHandler, self).setup_app()
+        admin = get_admin(app=self.app)
+        load_admin(admin)
+
+        if hasattr(request, "_parsed_content_type"):
+            self.original_content_type = request._parsed_content_type
+        else:
+            self.original_content_type = None
+
+    def setUp(self):
+        super(TestErrorHandler, self).setUp()
+        g.error = None
+
+        if self.original_content_type:
+            request._parsed_content_type = self.original_content_type
+
+    def test_invalid_code_type(self):
+        with self.assertRaises(AssertionError):
+            error_handler(None, code="")
+
+    def test_invalid_code(self):
+        with self.assertRaises(AssertionError):
+            error_handler(None, code=9999)
+
+    def test_invalid_error_type(self):
+        with self.assertRaises(AssertionError):
+            error_handler(None, code=BAD_REQUEST, default=None, title="")
+
+    def test_invalid_title_type(self):
+        with self.assertRaises(AssertionError):
+            error_handler(None, code=BAD_REQUEST, default="", title=1)
+
+    def test_callable_default(self):
+        response, code = error_handler(
+            None, code=BAD_REQUEST, default=lambda: "foobar", title="")
+        self.assertIn("foobar", response)
+
+    def test_defaults_to_http_message(self):
+        response, code = error_handler(
+            None, code=BAD_REQUEST, default=lambda: "foobar")
+        self.assertIn("Bad Request", response)
+
+    def test_response_code(self):
+        response, code = error_handler(
+            None, code=BAD_REQUEST, default=lambda: "foobar", title="")
+        self.assertEqual(code, BAD_REQUEST)
+
+    def test_json_response(self):
+        setattr(request, "_parsed_content_type", ["application/json"])
+        response, code = error_handler(
+            None, code=BAD_REQUEST, default=lambda: "foobar", title="")
+        self.assertEqual(response.json, {"error": "foobar"})
+
+    def test_custom_g_error(self):
+        g.error = "custom error"
+        response, code = error_handler(
+            None, code=BAD_REQUEST, default=lambda: "foobar", title="")
+        self.assertIn("custom error", response)
