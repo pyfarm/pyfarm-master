@@ -151,7 +151,7 @@ class TestValidateWithModel(BaseTestCase):
         if PY3:
             error_message = "request is missing field(s): {'a'}"
         else:
-            error_message = "request missing field(s): set(['a'])"
+            error_message = "request is missing field(s): set(['a'])"
         self.assertEqual(response.json["error"], error_message)
 
     def test_type_check(self):
