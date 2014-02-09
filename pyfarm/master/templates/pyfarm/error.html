@@ -1,19 +1,15 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>PyFarm - Not Found</title>
+        <title>PyFarm - {{ title }}</title>
         <link href="{{ url_for('admin.static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/layout.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/headings.css') }}" rel="stylesheet">
     </head>
     <body>
-        <div class="title">Not Found</div>
+        <div class="title">{{ title }}</div>
         <div class="subtitle">
-            {% if not g.error %}
-                {{ path or url }} was not found
-            {% else %}
-                {{ g.error }}
-            {% endif %}
+            {{ error }}
         </div>
     </body>
 </html>
