@@ -333,6 +333,7 @@ def error_handler(e, code=None, default=None, title=None, template=None):
         A alternative template path for HTML responses
     """
     assert isinstance(code, int)
+    assert code in responses, "unknown http code %s" % code
 
     if callable(default):
         default = default()
