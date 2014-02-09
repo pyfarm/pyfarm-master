@@ -133,12 +133,11 @@ class TestValidateWithModel(BaseTestCase):
         response = self.post("/", data=dumps({"foobar": True}))
         self.assertIn("error", response.json)
         if PY3:
-            error_message = "request contains field(s) that do not exist in " \
-                            "%s: {'foobar'}" % ValidationTestModel.__tablename__
+            error_message = "request contains field(s) that do not exist: " \
+                            "{'foobar'}"
         else:
-            error_message = "request contains field(s) that do not exist in " \
-                            "%s: set([u'foobar'])" % \
-                            ValidationTestModel.__tablename__
+            error_message = "request contains field(s) that do not exist: " \
+                            "set([u'foobar'])"
         self.assertEqual(response.json["error"], error_message)
 
     def test_missing_required_fields(self):
@@ -150,11 +149,9 @@ class TestValidateWithModel(BaseTestCase):
         response = self.post("/", data=dumps({"b": 1}))
         self.assertIn("error", response.json)
         if PY3:
-            error_message = "request to %s is missing field(s): " \
-                            "{'a'}" % ValidationTestModel.__tablename__
+            error_message = "request is missing field(s): {'a'}"
         else:
-            error_message = "request to %s is missing field(s): " \
-                            "set(['a'])" % ValidationTestModel.__tablename__
+            error_message = "request missing field(s): set(['a'])"
         self.assertEqual(response.json["error"], error_message)
 
     def test_type_check(self):
