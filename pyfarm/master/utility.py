@@ -25,16 +25,17 @@ import json
 from functools import wraps
 
 try:
-    from httplib import BAD_REQUEST, INTERNAL_SERVER_ERROR
+    from httplib import responses, BAD_REQUEST, INTERNAL_SERVER_ERROR
 except ImportError:
-    from http.client import BAD_REQUEST, INTERNAL_SERVER_ERROR
+    from http.client import responses, BAD_REQUEST, INTERNAL_SERVER_ERROR
 
 try:
     from UserDict import UserDict
 except ImportError:
     from collections import UserDict
 
-from flask import jsonify as _jsonify, current_app, request, g, abort
+from flask import (
+    jsonify as _jsonify, current_app, request, g, abort, render_template)
 from werkzeug.datastructures import ImmutableDict
 
 from pyfarm.core.enums import APIError, STRING_TYPES, PY3, NOTSET
@@ -288,3 +289,66 @@ def validate_with_model(model, type_checks=None):
             return func(*args, **kwargs)
         return wrapped
     return wrapper
+
+
+def error_handler(e, code=None, default=None, title=None, template=None):
+    """
+    Constructor for http errors that respects the current mimetype.  By
+    default this function returns html however when ``request.mimetype`` is
+    ``application/json`` it will return a json response. This function is
+    typically used within a :func:`functools.partial` call:
+
+        >>> from functools import partial
+        >>> try:
+        ...     from httplib import BAD_REQUEST
+        ... except ImportError:
+        ...     from http.client import BAD_REQUEST
+        ...
+        >>> from flask import request
+        >>> error_400 = partial(
+        ...     error_handler, BAD_REQUEST,
+        ...     lambda: "bad request to %s" % request.url, "Bad Request")
+
+    :param flask.Response e:
+        The response object which will be passed into :func:`.error_handler`,
+        this value is ignored by default.
+
+    :param int code:
+        The integer to use in the response.  For the most consistent
+        results you can use the :mod:`httplib` or :mod:`http.client` modules
+        depending on your Python version.
+
+    :type default: str or callable
+    :param callable default:
+        This will be the default error message if g.error does not
+        contain anything.  ``default`` may either be a callable function
+        which will produce the string or it may be a string by itself.
+
+    :param str title:
+        The HTML title of the request being made.  This is not used when
+        dealing with json requests and if not provided at all will default
+        to using the official status code's string representation.
+
+    :param str template:
+        A alternative template path for HTML responses
+    """
+    assert isinstance(code, int)
+
+    if callable(default):
+        default = default()
+
+    if title is None:
+        title = responses[code]
+
+    error = g.error or default
+
+    assert isinstance(error, STRING_TYPES)
+    assert isinstance(title, STRING_TYPES)
+
+    if request.mimetype == "application/json":
+        response = jsonify(error=error)
+    else:
+        response = render_template(
+            template or "pyfarm/error.html", title=title, error=error)
+
+    return response, code
