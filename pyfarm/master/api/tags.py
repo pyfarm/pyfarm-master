@@ -151,9 +151,7 @@ class TagIndexAPI(MethodView):
             db.session.add(new_tag)
             db.session.commit()
             tag_data = new_tag.to_dict()
-            logger.info("created tag %s: %s" %
-                        (new_tag.id,
-                         tag_data))
+            logger.info("created tag %s: %r", new_tag.id, tag_data)
             return jsonify(tag_data), CREATED
 
     def get(self):
@@ -238,7 +236,7 @@ class SingleTagAPI(MethodView):
         A ``GET`` to this endpoint will return the referenced tag, either by
         name or id, including a list of agents and jobs associated with it.
 
-        .. http:get:: /api/v1/tags/interesting HTTP/1.1
+        .. http:get:: /api/v1/tags/<str:tagname> HTTP/1.1
 
             **Request**
 
@@ -274,13 +272,15 @@ class SingleTagAPI(MethodView):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
             tag = Tag.query.filter_by(id=tagname).first()
+
         if tag is None:
-            return jsonify(error="Tag not found"), NOT_FOUND
+            return jsonify(error="tag `%s` not found" % tagname), NOT_FOUND
 
         tag_dict = tag.to_dict()
 
         return jsonify(tag_dict), OK
 
+    @validate_with_model(Tag)
     def put(self, tagname=None):
         """
         A ``PUT`` to this endpoint will create a new tag under the given URI.
@@ -289,7 +289,7 @@ class SingleTagAPI(MethodView):
         You can optionally specify a list of agents or jobs relations as
         integers in the request data.
 
-        .. http:put:: /api/v1/tags/ HTTP/1.1
+        .. http:put:: /api/v1/tags/<str:tagname> HTTP/1.1
 
             **Request**
 
@@ -348,10 +348,11 @@ class SingleTagAPI(MethodView):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
             tag = Tag.query.filter_by(id=tagname).first()
+
         if tag is not None:
             # If tag exists, delete it before recreating it
             db.session.delete(tag)
-            logger.debug("Deleted tag %s as part of PUT operation" % tag.tag)
+            logger.debug("deleted tag %s as part of PUT operation", tag.tag)
             db.session.flush()
 
         data = json_from_request(request)
@@ -359,8 +360,8 @@ class SingleTagAPI(MethodView):
             return data
 
         if (isinstance(tagname, STRING_TYPES) and
-            data["tag"] != tagname):
-                return jsonify(error="Name of tag must equal the name under "
+                data["tag"] != tagname):
+                return jsonify(error="name of tag must equal the name under "
                                      "which it is put"), BAD_REQUEST
 
         agents = []
@@ -397,7 +398,7 @@ class SingleTagAPI(MethodView):
         db.session.add(new_tag)
         db.session.commit()
         tag_data = new_tag.to_dict()
-        logger.info("created tag %s: %s" % (new_tag.id, tag_data))
+        logger.info("created tag %s: %r", new_tag.id, tag_data)
         return jsonify(tag_data), CREATED
 
     def delete(self, tagname=None):
@@ -405,7 +406,7 @@ class SingleTagAPI(MethodView):
         A ``DELETE`` to this endpoint will delete the tag under this URI,
         including all relations to tags or jobs.
 
-        .. http:delete:: /api/v1/tags/ HTTP/1.1
+        .. http:delete:: /api/v1/tags/<str:tagname> HTTP/1.1
 
             **Request**
 
@@ -438,7 +439,7 @@ class SingleTagAPI(MethodView):
         db.session.delete(tag)
         db.session.commit()
 
-        logger.info("Deleted tag %s" % tag.tag)
+        logger.info("deleted tag %s", tag.tag)
 
         return Response(), NO_CONTENT
 
@@ -449,7 +450,7 @@ class AgentsInTagIndexAPI(MethodView):
         A ``POST`` will add an agent to the list of agents tagged with this tag
         The tag can be given as a string or as an integer (its id).
 
-        .. http:post:: /api/v1/tags/interesting/agents HTTP/1.1
+        .. http:post:: /api/v1/tags/<str:tagname>/agents HTTP/1.1
 
             **Request**
 
@@ -507,6 +508,7 @@ class AgentsInTagIndexAPI(MethodView):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
             tag = Tag.query.filter_by(id=tagname).first()
+
         if tag is None:
             return jsonify(error="Tag not found"), NOT_FOUND
 
@@ -516,20 +518,20 @@ class AgentsInTagIndexAPI(MethodView):
             return data
 
         if len(data) > 1:
-            return jsonify(error="Unknown fields in JSON data"), BAD_REQUEST
+            return jsonify(error="unknown fields in JSON data"), BAD_REQUEST
 
         if "agent_id" not in data:
-            return jsonify(error="Field agent_id missing"), BAD_REQUEST
+            return jsonify(error="field agent_id missing"), BAD_REQUEST
 
         agent = Agent.query.filter_by(id=data["agent_id"]).first()
         if agent is None:
-            return jsonify(error="Specified agent does not exist"), NOT_FOUND
+            return jsonify(error="specified agent does not exist"), NOT_FOUND
 
         if agent not in tag.agents:
             tag.agents.append(agent)
             db.session.commit()
-            logger.info("Added agent %s (%s) to tag %s" % (
-                agent.id, agent.hostname, tag.tag))
+            logger.info("added agent %s (%s) to tag %s",
+                        agent.id, agent.hostname, tag.tag)
             return jsonify({"id": agent.id,
                             "href": url_for(".single_agent_api", 
                                               agent_id=agent.id)}), CREATED
@@ -542,7 +544,7 @@ class AgentsInTagIndexAPI(MethodView):
         """
         A ``GET`` to this endpoint will list all agents associated with this tag.
 
-        .. http:get:: /api/v1/tags/interesting/agents HTTP/1.1
+        .. http:get:: /api/v1/tags/<str:tagname>/agents HTTP/1.1
 
             **Request**
 

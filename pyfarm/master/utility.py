@@ -244,16 +244,15 @@ def validate_with_model(model, type_checks=None):
             # in the request
             unknown_keys = request_columns - all_valid_keys
             if unknown_keys:
-                g.error = "request contains field(s) that do not exist " \
-                          "in %s: %r" % (model.__table__, unknown_keys)
+                g.error = "request contains field(s) that do not exist: " \
+                          "%r" % unknown_keys
                 abort(BAD_REQUEST)
 
             # now check to see if we're missing any required fields
             missing_keys = (
                types.required - request_columns) - types.primary_keys
             if missing_keys:
-                g.error = "request to %s is missing field(s): %r" % (
-                    model.__table__, missing_keys)
+                g.error = "request is missing field(s): %r" % missing_keys
                 abort(BAD_REQUEST)
 
             # finally make sure that the types included in the request make
