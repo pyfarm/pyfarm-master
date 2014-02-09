@@ -20,7 +20,6 @@ Job Models
 
 Models and interface classes related to jobs.
 
-.. include:: ../include/references.rst
 """
 
 try:
@@ -42,7 +41,7 @@ from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TYPE, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
-    TABLE_SOFTWARE, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
+    TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin)
@@ -71,7 +70,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
           WorkStateChangedMixin, ReprMixin):
     """
     Defines the attributes and environment for a job.  Individual commands
-    are kept track of by |Task|
+    are kept track of by :class:`Task`
     """
     __tablename__ = TABLE_JOB
     REPR_COLUMNS = ("id", "state", "project")
@@ -278,21 +277,21 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         primaryjoin="(Task.state == %s) & "
                     "(Task.job_id == Job.id)" % DBWorkState.DONE,
         doc=dedent("""
-        Relationship between this job and any |Task| objects which are
+        Relationship between this job and any :class:`Task` objects which are
         done."""))
 
     tasks_failed = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
                     "(Task.job_id == Job.id)" % DBWorkState.FAILED,
         doc=dedent("""
-        Relationship between this job and any |Task| objects which have
+        Relationship between this job and any :class:`Task` objects which have
         failed."""))
 
     tasks_queued = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
                     "(Task.job_id == Job.id)" % DBWorkState.QUEUED,
         doc=dedent("""
-        Relationship between this job and any |Task| objects which
+        Relationship between this job and any :class:`Task` objects which
         are queued."""))
 
     # resource relationships

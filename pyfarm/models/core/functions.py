@@ -16,8 +16,6 @@
 
 
 """
-.. include:: ../include/references.rst
-
 Functions
 =========
 
@@ -108,8 +106,7 @@ def getuuid(value, table, table_attrib, error_tail):
 
 def work_columns(state_default, priority_default):
     """
-    Produces some default columns which are used by models which produce
-    work.  Currently this includes |Job| and |Task|
+    Produces some default columns which are used by models which produce work.
     """
     return (
         # id

@@ -68,18 +68,18 @@ class JSONSerializable(TypeDecorator):
     Base of all custom types which process json data
     to and from the database.
 
-    :cvar serialize_types:
+    :var tuple serialize_types:
         the kinds of objects we expect to serialize to
         and from the database
 
-    :cvar serialize_none:
+    :var bool serialize_none:
         if True then return None instead of converting it to
         its json value
 
-    :cvar allow_blank:
+    :var bool allow_blank:
         if True, do not raise a :class:`ValueError` for empty data
 
-    :cvar allow_empty:
+    :var bool allow_empty:
         if True, do not raise :class:`ValueError` if the input data
         itself is empty
     """
@@ -207,12 +207,12 @@ class EnumType(TypeDecorator):
     Special column type which handles translation from a human
     readable enum into an integer that the database can use.
 
-    :cvar enum:
+    :var enum:
         required class level variable which defines what enum
         this custom column handles
 
     :raises AssertionError:
-        raised if :cvar:`.enum` is not set
+        raised if ``enum`` is not set on the class
     """
     impl = Integer
     enum = NotImplemented
@@ -227,7 +227,8 @@ class EnumType(TypeDecorator):
         Takes ``value`` and maps it to the internal integer.
 
         :raises ValueError:
-            raised if ``value`` is not part of :cvar:`.enum`'s mapping
+            raised if ``value`` is not part of the class level
+            ``enum`` mapping
         """
         if value is None:
             return None

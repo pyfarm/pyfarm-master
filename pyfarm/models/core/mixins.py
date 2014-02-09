@@ -22,16 +22,12 @@ Module containing mixins which can be used by multiple models.
 """
 
 from datetime import datetime
+from collections import namedtuple
 
 try:
     from httplib import INTERNAL_SERVER_ERROR
 except ImportError:
     from http.client import INTERNAL_SERVER_ERROR
-
-try:
-    from collections import namedtuple
-except ImportError:
-    from pyfarm.core.backports import namedtuple
 
 from sqlalchemy.orm import validates, class_mapper
 
