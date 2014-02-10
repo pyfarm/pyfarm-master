@@ -39,7 +39,6 @@ from flask import (
 
 from pyfarm.core.enums import STRING_TYPES, NOTSET
 
-COLUMN_CACHE = {}
 NONE_TYPE = type(None)
 
 
