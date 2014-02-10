@@ -482,7 +482,7 @@ class AgentsInTagIndexAPI(MethodView):
 
             .. sourcecode:: http
 
-                POST /api/v1/tags/interesting/agents HTTP/1.1
+                POST /api/v1/tags/interesting/agents/ HTTP/1.1
                 Accept: application/json
 
                 {
@@ -536,35 +536,43 @@ class AgentsInTagIndexAPI(MethodView):
             tag = Tag.query.filter_by(id=tagname).first()
 
         if tag is None:
-            return jsonify(error="Tag not found"), NOT_FOUND
+            return jsonify(error="tag %s not found" % tagname), NOT_FOUND
 
-        data = json_from_request(request)
-        # json_from_request returns a Response, returncode tuple on error
-        if isinstance(data, tuple):
-            return data
+        if not isinstance(g.json, dict):
+            return jsonify(error="expected a json dictionary"), BAD_REQUEST
 
-        if len(data) > 1:
-            return jsonify(error="unknown fields in JSON data"), BAD_REQUEST
+        request_fields = set(g.json)
+        extra_fields = request_fields - set(["agent_id"])
 
-        if "agent_id" not in data:
-            return jsonify(error="field agent_id missing"), BAD_REQUEST
+        if extra_fields:
+            return jsonify(error="unsupported fields for "
+                                 "this request: %s" % extra_fields), BAD_REQUEST
 
-        agent = Agent.query.filter_by(id=data["agent_id"]).first()
+        if "agent_id" not in request_fields:
+            return jsonify(error="field `agent_id` is missing"), BAD_REQUEST
+
+        if not isinstance(g.json["agent_id"], int):
+            return jsonify(error="expected an integer for `agent_id`"), \
+                   BAD_REQUEST
+
+        agent = Agent.query.filter_by(id=g.json["agent_id"]).first()
         if agent is None:
-            return jsonify(error="specified agent does not exist"), NOT_FOUND
+            return jsonify(
+                error="agent %s does not exist" % g.json["agent_id"]), NOT_FOUND
 
         if agent not in tag.agents:
             tag.agents.append(agent)
             db.session.commit()
-            logger.info("added agent %s (%s) to tag %s",
-                        agent.id, agent.hostname, tag.tag)
-            return jsonify({"id": agent.id,
-                            "href": url_for(".single_agent_api", 
-                                              agent_id=agent.id)}), CREATED
+            logger.debug(
+                "added agent %s (%s) to tag %s",
+                agent.id, agent.hostname, tag.tag)
+            return jsonify(
+                id=agent.id,
+                href=url_for(".single_agent_api", agent_id=agent.id)), CREATED
         else:
-            return jsonify({"id": agent.id,
-                            "href": url_for(".single_agent_api", 
-                                              agent_id=agent.id)}), OK
+            return jsonify(
+                id=agent.id,
+                href=url_for(".single_agent_api", agent_id=agent.id)), OK
 
     def get(self, tagname=None):
         """
