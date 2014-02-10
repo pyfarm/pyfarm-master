@@ -344,55 +344,67 @@ class SingleTagAPI(MethodView):
                             invalid columns being included)
         :statuscode 404: a referenced agent or job does not exist
         """
+        if isinstance(tagname, STRING_TYPES) and g.json["tag"] != tagname:
+            return jsonify(error="name of tag must equal the name under "
+                                 "which it is put"), BAD_REQUEST
+
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
             tag = Tag.query.filter_by(id=tagname).first()
 
+        # If tag exists, delete it before recreating it
         if tag is not None:
-            # If tag exists, delete it before recreating it
+            logger.debug("deleting tag %s as part of PUT operation", tag.tag)
             db.session.delete(tag)
-            logger.debug("deleted tag %s as part of PUT operation", tag.tag)
             db.session.flush()
 
-        data = json_from_request(request)
-        if isinstance(data, tuple):
-            return data
-
-        if (isinstance(tagname, STRING_TYPES) and
-                data["tag"] != tagname):
-                return jsonify(error="name of tag must equal the name under "
-                                     "which it is put"), BAD_REQUEST
-
         agents = []
-        if "agents" in data:
-            agent_ids = data["agents"]
-            del data["agents"]
+        if "agents" in g.json:
+            agent_ids = g.json.pop("agents", [])
+
             if not isinstance(agent_ids, list):
                 return jsonify(error="agents must be a list"), BAD_REQUEST
-            for agent_id in agent_ids:
-                if not isinstance(agent_id, int):
-                    return jsonify(error="agent must be an int"), BAD_REQUEST
-                agent = Agent.query.filter_by(id=agent_id).first()
-                if agent is None:
-                    return jsonify(error="agent not found"), NOT_FOUND
-                agents.append(agent)
+
+            # make sure all ids provided are ints
+            if not all(isinstance(agent_id, int) for agent_id in agent_ids):
+                return jsonify(error="all agent ids must be integers"), \
+                       NOT_FOUND
+
+            # find all models matching the request id(s)
+            agents = Agent.query.filter(Agent.id.in_(agent_ids)).all()
+
+            # make sure all those ids were actually found
+            missing_agents = set(agent_ids) - set(agent.id for agent in agents)
+            if missing_agents:
+                return jsonify(
+                    error="agent(s) not found: %s" % missing_agents), \
+                       NOT_FOUND
 
         jobs = []
-        if "jobs" in data:
-            job_ids = data["jobs"]
-            del data["jobs"]
+        if "jobs" in g.json:
+            job_ids = g.json.pop("jobs", [])
+
             if not isinstance(job_ids, list):
                 return jsonify(error="jobs must be a list"), BAD_REQUEST
-            for job_id in job_ids:
-                if not isinstance(job_id, int):
-                    return jsonify(error="job must be an int"), BAD_REQUEST
-                job = Job.query.filter_by(id=agent_id).first()
-                if job is None:
-                    return jsonify(error="job not found"), NOT_FOUND
-                jobs.append(job)
 
-        new_tag = Tag(**data)
+            # make sure all ids provided are ints
+            if not all(isinstance(job_id, int) for job_id in job_ids):
+                return jsonify(error="all job ids must be integers"), \
+                       BAD_REQUEST
+
+            # find all models matching the request id(s)
+            jobs = Job.query.filter(Agent.id.in_(job_ids)).all()
+
+            # make sure all those ids were actually found
+            missing_jobs = set(job_ids) - set(job.id for job in jobs)
+            if missing_jobs:
+                return jsonify(
+                    error="job(s) not found: %s" % missing_jobs), \
+                       BAD_REQUEST
+
+
+        new_tag = Tag(**g.json)
         new_tag.agents = agents
         new_tag.jobs = jobs
         db.session.add(new_tag)
@@ -450,7 +462,7 @@ class AgentsInTagIndexAPI(MethodView):
         A ``POST`` will add an agent to the list of agents tagged with this tag
         The tag can be given as a string or as an integer (its id).
 
-        .. http:post:: /api/v1/tags/<str:tagname>/agents HTTP/1.1
+        .. http:post:: /api/v1/tags/<str:tagname>/agents/ HTTP/1.1
 
             **Request**
 
@@ -479,7 +491,7 @@ class AgentsInTagIndexAPI(MethodView):
 
             .. sourcecode:: http
 
-                POST /api/v1/tags/interesting/agents HTTP/1.1
+                POST /api/v1/tags/interesting/agents/ HTTP/1.1
                 Accept: application/json
 
                 {
@@ -513,7 +525,7 @@ class AgentsInTagIndexAPI(MethodView):
             return jsonify(error="Tag not found"), NOT_FOUND
 
         data = json_from_request(request)
-        # json_from_request returns a Response, Returncode tuple on error
+        # json_from_request returns a Response, returncode tuple on error
         if isinstance(data, tuple):
             return data
 
@@ -544,13 +556,13 @@ class AgentsInTagIndexAPI(MethodView):
         """
         A ``GET`` to this endpoint will list all agents associated with this tag.
 
-        .. http:get:: /api/v1/tags/<str:tagname>/agents HTTP/1.1
+        .. http:get:: /api/v1/tags/<str:tagname>/agents/ HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                GET /api/v1/tags/interesting/agents HTTP/1.1
+                GET /api/v1/tags/interesting/agents/ HTTP/1.1
                 Accept: application/json
 
             **Response**
