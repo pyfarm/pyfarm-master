@@ -28,7 +28,7 @@ try:
 except ImportError:  # pragma: no cover
     from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 
-from flask import request, url_for, g
+from flask import url_for, g
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
@@ -37,10 +37,7 @@ from pyfarm.models.agent import Agent
 from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
 from pyfarm.master.application import db
-from pyfarm.master.utility import (
-    json_from_request, jsonify, get_column_sets, validate_with_model)
-
-ALL_TAG_COLUMNS, REQUIRED_TAG_COLUMNS = get_column_sets(Tag)
+from pyfarm.master.utility import jsonify, validate_with_model
 
 logger = getLogger("api.tags")
 
@@ -159,9 +156,10 @@ class TagIndexAPI(MethodView):
         A ``GET`` to this endpoint will return a list of known tags, with id.
         Associated agents and jobs can be included for every tag, however that
         feature may become a performance problem if used too much.
-        Only use it if you need that information anyway and the alternative would
-        be separate API calls for every tag returned here.
+        Only use it if you need that information anyway and the alternative
+        would be separate API calls for every tag returned here.
 
+        :rtype : object
         .. http:get:: /api/v1/tags/ HTTP/1.1
 
             **Request**
@@ -381,8 +379,8 @@ class SingleTagAPI(MethodView):
 
             # make sure all ids provided are ints
             if not all(isinstance(agent_id, int) for agent_id in agent_ids):
-                return jsonify(error="all agent ids must be integers"), \
-                       NOT_FOUND
+                return jsonify(
+                    error="all agent ids must be integers"), NOT_FOUND
 
             # find all models matching the request id(s)
             agents = Agent.query.filter(Agent.id.in_(agent_ids)).all()
@@ -392,7 +390,7 @@ class SingleTagAPI(MethodView):
             if missing_agents:
                 return jsonify(
                     error="agent(s) not found: %s" % missing_agents), \
-                       NOT_FOUND
+                    NOT_FOUND
 
         jobs = []
         if "jobs" in g.json:
@@ -403,8 +401,8 @@ class SingleTagAPI(MethodView):
 
             # make sure all ids provided are ints
             if not all(isinstance(job_id, int) for job_id in job_ids):
-                return jsonify(error="all job ids must be integers"), \
-                       BAD_REQUEST
+                return jsonify(
+                    error="all job ids must be integers"), BAD_REQUEST
 
             # find all models matching the request id(s)
             jobs = Job.query.filter(Agent.id.in_(job_ids)).all()
@@ -413,8 +411,7 @@ class SingleTagAPI(MethodView):
             missing_jobs = set(job_ids) - set(job.id for job in jobs)
             if missing_jobs:
                 return jsonify(
-                    error="job(s) not found: %s" % missing_jobs), \
-                       BAD_REQUEST
+                    error="job(s) not found: %s" % missing_jobs), BAD_REQUEST
 
         new_tag = Tag(**g.json)
         new_tag.agents = agents
@@ -552,8 +549,8 @@ class AgentsInTagIndexAPI(MethodView):
             return jsonify(error="field `agent_id` is missing"), BAD_REQUEST
 
         if not isinstance(g.json["agent_id"], int):
-            return jsonify(error="expected an integer for `agent_id`"), \
-                   BAD_REQUEST
+            return jsonify(
+                error="expected an integer for `agent_id`"), BAD_REQUEST
 
         agent = Agent.query.filter_by(id=g.json["agent_id"]).first()
         if agent is None:
@@ -576,7 +573,8 @@ class AgentsInTagIndexAPI(MethodView):
 
     def get(self, tagname=None):
         """
-        A ``GET`` to this endpoint will list all agents associated with this tag.
+        A ``GET`` to this endpoint will list all agents associated with this
+        tag.
 
         .. http:get:: /api/v1/tags/<str:tagname>/agents/ HTTP/1.1
 
@@ -609,13 +607,15 @@ class AgentsInTagIndexAPI(MethodView):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
             tag = Tag.query.filter_by(id=tagname).first()
+
         if tag is None:
-            return jsonify(error="Tag not found"), NOT_FOUND
+            return jsonify(error="tag %s not found" % tagname), NOT_FOUND
 
         out = []
         for agent in tag.agents:
-            out.append({"id": agent.id,
-                        "hostname": agent.hostname,
-                        "href": url_for(".single_agent_api", agent_id=agent.id)})
+            out.append({
+                "id": agent.id,
+                "hostname": agent.hostname,
+                "href": url_for(".single_agent_api", agent_id=agent.id)})
 
         return jsonify(out), OK
