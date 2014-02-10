@@ -32,7 +32,8 @@ from flask import g
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
-from pyfarm.models.software import Software
+from pyfarm.core.enums import STRING_TYPES
+from pyfarm.models.software import Software, SoftwareVersion
 from pyfarm.master.application import db
 from pyfarm.master.utility import jsonify, validate_with_model
 
@@ -141,21 +142,82 @@ class SoftwareIndexAPI(MethodView):
         :statuscode 400: there was something wrong with the request (such as
                             invalid columns being included)
         """
-        existing_software = Software.query.filter_by(
-            software=g.json["software"]).first()
+        from sqlalchemy import func
 
-        if existing_software:
-            # No update needed, because Software only has one column
-            return jsonify(existing_software.to_dict()), OK
+        data = g.json.copy()
+        # json_from_request returns a tuple on error
+        if isinstance(data, tuple):
+            return data
 
+        # Note: This can probably be done a lot simpler with generic parsing
+        # of relations
+        versions = []
+        if "software_versions" in data:
+            version_objects = data["software_versions"]
+            del data["software_versions"]
+            if not isinstance(version_objects, list):
+                return (jsonify(error="software_versions must be a list"),
+                        BAD_REQUEST)
+            for software_obj in version_objects:
+                if not isinstance(software_obj, dict):
+                    return (jsonify(error="""Entries in software_versions
+                                    must be dictionaries."""),
+                            BAD_REQUEST)
+                if not isinstance(software_obj["version"], STRING_TYPES):
+                    return (jsonify(error="Software versions must be strings."),
+                            BAD_REQUEST)
+                version = {"version": software_obj["version"]}
+                if "rank" in software_obj:
+                    if not isinstance(software_obj["rank"], int):
+                        return (jsonify(error="Software rank must be an int."),
+                                BAD_REQUEST)
+                    version["rank"] = software_obj["rank"]
+                if ((len(software_obj) > 2 and "rank" in software_obj) or
+                    (len(software_obj) > 1 and "rank" not in software_obj)):
+                        return (jsonify(error="""Unknown columns in software
+                                        version"""), BAD_REQUEST)
+                versions.append(version)
+
+        software = Software.query.filter_by(software=data["software"]).first()
+
+        new = False
+        if not software:
+            # This software tag does not exist yet, create new one
+            new = True
+            software = Software(**data)
+            current_rank = 100
+            for version_dict in versions:
+                version = SoftwareVersion(**version_dict)
+                version.software = software
+                if "rank" not in version_dict:
+                    version.rank = current_rank
+                current_rank = max(version.rank, current_rank) + 100
         else:
-            new_software = Software(**g.json)
-            db.session.add(new_software)
-            db.session.commit()
-            software_data = new_software.to_dict()
-            logger.debug(
-                "created software %s: %r", new_software.id, software_data)
-            return jsonify(software_data), CREATED
+            max_rank, = db.session.query(func.max(SoftwareVersion.rank))\
+                                 .filter_by(software=software).one()
+            if not max_rank:
+                max_rank = 0
+            # We assume that new software versions with no given rank are the
+            # newest versions available
+            current_rank = max_rank + 100
+            for version_dict in versions:
+                version = (SoftwareVersion.query.filter_by(software=software)
+                           .filter_by(version=version_dict["version"])).first()
+                if not version:
+                    version = SoftwareVersion(**version_dict)
+                    version.software = software
+                if version.rank is None and "rank" not in version_dict:
+                    version.rank = current_rank
+                    current_rank += 100
+                else: # Update the rank
+                    version.rank = version_dict["rank"]
+
+        db.session.add(software)
+        db.session.commit()
+        software_data = software.to_dict()
+        logger.info("created software %s: %s" % (software.id, software_data))
+
+        return jsonify(software_data), CREATED if new else OK
 
     def get(self):
         all_software = Software.query.all()
