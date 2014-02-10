@@ -20,17 +20,11 @@ from textwrap import dedent
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.master.application import db
 from pyfarm.models.jobtype import JobType
 
 
 class JobTypeTest(BaseTestCase):
-    def test_validate_mode(self):
-        jobtype = JobType()
-        with self.assertRaises(ValueError):
-            jobtype.mode = -1
-
     def test_basic_insert(self):
         value_name = "foo"
         value_description = "this is a job type"
@@ -38,7 +32,6 @@ class JobTypeTest(BaseTestCase):
         value_code = dedent("""
         class %s(JobType):
             pass""" % value_classname)
-        value_mode = JobTypeLoadMode.OPEN
 
         # create jobtype
         jobtype = JobType()
@@ -46,7 +39,6 @@ class JobTypeTest(BaseTestCase):
         jobtype.description = value_description
         jobtype.classname = value_classname
         jobtype.code = value_code
-        jobtype.mode = value_mode
         db.session.add(jobtype)
         db.session.commit()
 
@@ -59,7 +51,6 @@ class JobTypeTest(BaseTestCase):
         self.assertEqual(jobtype.description, value_description)
         self.assertEqual(jobtype.classname, value_classname)
         self.assertEqual(jobtype.code, value_code)
-        self.assertEqual(jobtype.mode, value_mode)
 
     def test_before_insert_syntax(self):
         value_name = "foo"
@@ -76,7 +67,6 @@ class JobTypeTest(BaseTestCase):
         jobtype.description = value_description
         jobtype.classname = value_classname
         jobtype.code = value_code
-        jobtype.mode = JobTypeLoadMode.DOWNLOAD
         db.session.add(jobtype)
 
         with self.assertRaises(SyntaxError):
@@ -96,7 +86,6 @@ class JobTypeTest(BaseTestCase):
         jobtype.description = value_description
         jobtype.classname = value_classname
         jobtype.code = value_code
-        jobtype.mode = JobTypeLoadMode.DOWNLOAD
         db.session.add(jobtype)
 
         with self.assertRaises(SyntaxError):

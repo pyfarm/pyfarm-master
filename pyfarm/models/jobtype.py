@@ -27,11 +27,9 @@ import ast
 from textwrap import dedent
 
 from sqlalchemy import event
-from sqlalchemy.orm import validates
 
-from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.master.application import db
-from pyfarm.models.core.types import id_column, JobTypeLoadModeEnum, IDTypeWork
+from pyfarm.models.core.types import id_column, IDTypeWork
 from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH
 
 __all__ = ("JobType", )
@@ -66,37 +64,13 @@ class JobType(db.Model):
                      General field containing the 'code' to retrieve the job
                      type.  See below for information on what this field will
                      contain depending on how the job will be loaded."""))
-    mode = db.Column(JobTypeLoadModeEnum,
-                     default=JobTypeLoadMode.IMPORT,
-                     nullable=False,
-                     doc=dedent("""
-                     Indicates how the job type should be retrieved.
-
-                     .. csv-table:: **JobTypeLoadMode Enums**
-                        :header: Value, Result
-                        :widths: 10, 50
-
-                        DOWNLOAD, job type will be downloaded remotely
-                        IMPORT, the remote agent will import the job type
-                        OPEN, code is loaded directly from a file on disk"""))
-
     jobs = db.relationship("Job", backref="job_type", lazy="dynamic",
                            doc=dedent("""
                            Relationship between this jobtype and
                            :class:`.Job` objects."""))
 
-    @validates("mode")
-    def validates_mode(self, key, value):
-        """ensures the value provided to :attr:`mode` is valid"""
-        if value not in JobTypeLoadMode:
-            raise ValueError("invalid value for mode")
-        return value
-
 
 def jobtype_before_insert(mapper, connection, jobtype):
-    if jobtype.mode != JobTypeLoadMode.DOWNLOAD:
-        return
-
     # TODO: this parsing is extremely basic and needs some expansion
     # If jobtype's says to download a file then we must
     # be sure it's valid.  If we don't, you could probably tip over
