@@ -23,7 +23,6 @@ except ImportError:
     from http.client import OK, BAD_REQUEST
 
 from flask import g, request
-from werkzeug.datastructures import ImmutableDict
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
@@ -31,8 +30,7 @@ BaseTestCase.build_environment()
 
 from pyfarm.core.enums import PY3
 from pyfarm.models.core.mixins import UtilityMixins
-from pyfarm.master.utility import (
-    ReducibleDictionary, TemplateDictionary, validate_with_model, error_handler)
+from pyfarm.master.utility import validate_with_model, error_handler
 from pyfarm.master.entrypoints.main import load_error_handlers, load_admin
 from pyfarm.master.application import db, get_admin
 from pyfarm.models.core.cfg import TABLE_PREFIX
@@ -62,23 +60,6 @@ class FakeRequest(object):
         if self.raise_error:
             raise ValueError("FAILED")
         return self.data
-
-
-class TestDictionary(BaseTestCase):
-    def test_reducible_dictionary(self):
-        source = {"a": None}
-        data = ReducibleDictionary(source)
-        self.assertTrue(issubclass(ReducibleDictionary, dict))
-        self.assertDictEqual(data, source)
-        data.reduce()
-        self.assertDictEqual(data, {})
-        self.assertDictEqual(source, {"a": None})
-
-    def test_template_dictionary(self):
-        template = TemplateDictionary()
-        self.assertIsInstance(template, ImmutableDict)
-        self.assertIsInstance(template(), ReducibleDictionary)
-        self.assertIsInstance(template(reducible=False), dict)
 
 
 class TestValidateWithModel(BaseTestCase):
