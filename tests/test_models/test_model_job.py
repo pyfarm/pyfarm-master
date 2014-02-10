@@ -34,7 +34,6 @@ from pyfarm.models.tag import Tag
 from pyfarm.models.software import Software, JobSoftwareRequirement
 from pyfarm.models.agent import Agent
 from pyfarm.models.job import Job
-from pyfarm.core.enums import JobTypeLoadMode
 from pyfarm.models.jobtype import JobType
 
 
@@ -48,7 +47,6 @@ class TestTags(BaseTestCase):
         jobtype.code = dedent("""
         class Foobar(JobType):
             pass""").encode("utf-8")
-        jobtype.mode = JobTypeLoadMode.OPEN
         db.session.add(jobtype)
 
         job = Job()
@@ -103,7 +101,6 @@ class TestSoftwareRequirement(BaseTestCase):
         jobtype.code = dedent("""
         class Foobar(JobType):
             pass""").encode("utf-8")
-        jobtype.mode = JobTypeLoadMode.OPEN
         db.session.add(jobtype)
 
         job = Job()
@@ -151,7 +148,6 @@ class TestSoftwareRequirement(BaseTestCase):
         jobtype.code = dedent("""
         class Foobar(JobType):
             pass""").encode("utf-8")
-        jobtype.mode = JobTypeLoadMode.OPEN
         db.session.add(jobtype)
 
         job = Job()
