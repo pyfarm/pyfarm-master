@@ -28,25 +28,13 @@ try:
 except ImportError:  # pragma: no cover
     from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 
-from functools import partial
-
-from flask import Response, request
+from flask import request, g
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import APIError, PY2
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
-from pyfarm.master.utility import (
-    json_from_request, get_column_sets, jsonify)
-
-ALL_AGENT_COLUMNS, REQUIRED_AGENT_COLUMNS = get_column_sets(Agent)
-
-# partial function(s) to assist in data conversion
-to_json = partial(
-    json_from_request,
-    all_keys=ALL_AGENT_COLUMNS,
-    required_keys=REQUIRED_AGENT_COLUMNS, disallowed_keys=set(["id"]))
+from pyfarm.master.utility import jsonify, validate_with_model
 
 logger = getLogger("api.agents")
 
@@ -93,6 +81,7 @@ def schema():
 
 
 class AgentIndexAPI(MethodView):
+    @validate_with_model(Agent)
     def post(self):
         """
         A ``POST`` to this endpoint will do one of two things:
@@ -115,13 +104,13 @@ class AgentIndexAPI(MethodView):
         returned.  In all other cases, a ``POST`` to this endpoint will
         result in the creation of a new agent.
 
-        .. http:post:: /api/v1/agents HTTP/1.1
+        .. http:post:: /api/v1/agents/ HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                POST /api/v1/agents HTTP/1.1
+                POST /api/v1/agents/ HTTP/1.1
                 Accept: application/json
 
                 {
@@ -164,7 +153,7 @@ class AgentIndexAPI(MethodView):
 
             .. sourcecode:: http
 
-                POST /api/v1/agents HTTP/1.1
+                POST /api/v1/agents/ HTTP/1.1
                 Accept: application/json
 
                 {
@@ -207,53 +196,32 @@ class AgentIndexAPI(MethodView):
         :statuscode 400: there was something wrong with the request (such as
                          invalid columns being included)
         """
-        # get json data from the request
-        data = to_json(request)
-        if isinstance(data, Response):
-            return data
-
-        request_columns = set(data)
-
-        # request did not include at least the required columns
-        if (request_columns != REQUIRED_AGENT_COLUMNS
-                and request_columns.issubset(REQUIRED_AGENT_COLUMNS)):
-            errorno, msg = APIError.MISSING_FIELDS
-            msg += ": %s" % list(REQUIRED_AGENT_COLUMNS - request_columns)
-            return jsonify(errorno=errorno, message=msg), BAD_REQUEST
-
-        # request included some columns which don't exist
-        elif not request_columns.issubset(ALL_AGENT_COLUMNS):
-            errorno, msg = APIError.EXTRA_FIELDS_ERROR
-            extra_columns = list(request_columns - ALL_AGENT_COLUMNS)
-            msg = "the following columns do not exist: %s" % extra_columns
-            return jsonify(errorno=errorno, message=msg), BAD_REQUEST
-
-        # update with our remote_addr from the request
-        data.setdefault("remote_ip", request.remote_addr)
-
         # check to see if there's already an existing agent with
         # this information
         existing_agent = Agent.query.filter_by(
-            hostname=data["hostname"], port=data["port"]).first()
+            hostname=g.json["hostname"], port=g.json["port"]).first()
 
         # agent already exists, try to update it
         if existing_agent:
             updated = {}
 
-            if PY2:
-                items = data.iteritems
-            else:
-                items = data.items
+            try:
+                items = g.json.iteritems
+            except AttributeError:
+                items = g.json.items
 
             for key, value in items():
                 if getattr(existing_agent, key) != value:
                     setattr(existing_agent, key, value)
                     updated[key] = value
 
+            # make sure remote_ip is updated too
+            updated["remote_ip"] = request.remote_addr
+
             # if not fields were updated, nothing to do here
             if updated:
                 logger.debug(
-                    "updated agent %s: %s" % (existing_agent.id, updated))
+                    "updated agent %s: %r", existing_agent.id, updated)
                 db.session.add(existing_agent)
                 db.session.commit()
 
@@ -262,7 +230,8 @@ class AgentIndexAPI(MethodView):
         # didn't find an agent that matched the incoming data
         # so we'll create one
         else:
-            new_agent = Agent(**data)
+            g.json["remote_ip"] = request.remote_addr
+            new_agent = Agent(**g.json)
             db.session.add(new_agent)
             db.session.commit()
             agent_data = new_agent.to_dict()
@@ -309,7 +278,7 @@ class AgentIndexAPI(MethodView):
 
             .. sourcecode:: http
 
-                GET /api/v1/agents?min_ram=4096&min_cpus=4 HTTP/1.1
+                GET /api/v1/agents/?min_ram=4096&min_cpus=4 HTTP/1.1
                 Accept: application/json
 
             **Response**
@@ -415,15 +384,18 @@ class SingleAgentAPI(MethodView):
         :statuscode 200: no error
         :statuscode 404: no agent could be found using the given id
         """
+        if not isinstance(agent_id, int):
+            return jsonify(
+                error="expected `agent_id` to be an integer"), BAD_REQUEST
+
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is not None:
             return jsonify(agent.to_dict())
         else:
-            errorno, msg = APIError.DATABASE_ERROR
-            msg = "no agent found for `%s`" % agent_id
-            return jsonify(errorno=errorno, message=msg), NOT_FOUND
+            return jsonify(error="agent %s not found" % agent_id), NOT_FOUND
 
     # TODO: docs need a few more examples here
+    @validate_with_model(Agent, disallow=("id", ))
     def post(self, agent_id=None):
         """
         Update an agent's columns with new information
@@ -467,22 +439,19 @@ class SingleAgentAPI(MethodView):
         :statuscode 400: something within the request is invalid
         :statuscode 404: no agent could be found using the given id
         """
-        # get json data
-        data = to_json(request)
-        if isinstance(data, Response):
-            return data
+        if not isinstance(agent_id, int):
+            return jsonify(
+                error="expected an integer for `agent_id`"), BAD_REQUEST
 
         # get model
         model = Agent.query.filter_by(id=agent_id).first()
         if model is None:
-            errorno, msg = APIError.DATABASE_ERROR
-            msg = "no agent found for `%s`" % agent_id
-            return jsonify(errorno=errorno, message=msg), NOT_FOUND
+            return jsonify(error="agent %s not found %s" % agent_id), NOT_FOUND
 
-        if PY2:
-            items = data.iteritems
-        else:
-            items = data.items
+        try:
+            items = g.json.iteritems
+        except AttributeError:
+            items = g.json.items
 
         # update model
         modified = {}
@@ -493,7 +462,7 @@ class SingleAgentAPI(MethodView):
 
         if modified:
             logger.debug(
-                "updated agent %s: %s" % (model.id, modified))
+                "updated agent %s: %r", model.id, modified)
             db.session.add(model)
             db.session.commit()
 
@@ -537,6 +506,10 @@ class SingleAgentAPI(MethodView):
         :statuscode 200: the agent existed and was deleted
         :statuscode 204: the agent did not exist, nothing to delete
         """
+        if not isinstance(agent_id, int):
+            return jsonify(
+                error="expected an integer for `agent_id"), BAD_REQUEST
+
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is None:
             return jsonify(), NO_CONTENT

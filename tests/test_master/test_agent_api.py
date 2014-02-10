@@ -174,8 +174,7 @@ class TestAgentAPI(BaseTestCase):
                 "port": 64995,
                 "time_offset": 5,
                 "state": "running",
-                "free_ram": 4096,
-                "id": id}))
+                "free_ram": 4096}))
         self.assert_ok(response2)
 
         # See if we get the updated data back
