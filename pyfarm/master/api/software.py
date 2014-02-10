@@ -62,8 +62,7 @@ def schema():
 
             {
                 "id": "INTEGER",
-                "software": "VARCHAR(64)",
-                "version": "VARCHAR(64)"
+                "software": "VARCHAR(64)"
             }
 
     :statuscode 200: no error
@@ -83,6 +82,11 @@ class SoftwareIndexAPI(MethodView):
         Software items only have two columns, software and version. Two software
         items are equal if both these columns are equal.
 
+        A list of versions can be included.  If the software item already exists
+        the listed versions will be added to the existing ones.  Versions with no
+        explicit rank are assumed to be the newest version available.  Users
+        should not mix versions with an explicit rank with versions without one.
+
         .. http:post:: /api/v1/software/ HTTP/1.1
 
             **Request**
@@ -93,8 +97,7 @@ class SoftwareIndexAPI(MethodView):
                 Accept: application/json
 
                 {
-                    "software": "blender",
-                    "version": "1.56"
+                    "software": "blender"
                 }
 
 
@@ -108,7 +111,7 @@ class SoftwareIndexAPI(MethodView):
                 {
                     "id": 4,
                     "software": "blender",
-                    "version": "1.56"
+                    "software_versions": []
                 }
 
             **Request**
@@ -120,8 +123,12 @@ class SoftwareIndexAPI(MethodView):
 
                 {
                     "id": 4,
-                    "software": "blender",
-                    "version": "1.56"
+                    "software": "blender"
+                    "software_versions": [
+                        {
+                            "version": "1.69"
+                        }
+                    ]
                 }
 
             **Response (existing software item returned)**
@@ -134,7 +141,13 @@ class SoftwareIndexAPI(MethodView):
                 {
                     "id": 4,
                     "software": "blender",
-                    "version": "1.56"
+                    "software_versions": [
+                        {
+                            "version": "1.69",
+                            "id": 1
+                            "rank": 100
+                        }
+                    ]
                 }
 
         :statuscode 200: an existing software item was found and returned
@@ -220,6 +233,42 @@ class SoftwareIndexAPI(MethodView):
         return jsonify(software_data), CREATED if new else OK
 
     def get(self):
+        """
+        A ``GET`` to this endpoint will return a list of known software, with all
+        known versions.
+
+        .. http:get:: /api/v1/software/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/software/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "software": "Houdini",
+                        "id": 1,
+                        "software_versions": [
+                        {
+                            "version": "13.0.1",
+                            "id": 1
+                            "rank": 100
+                        }
+                        ]
+                    }
+                ]
+
+        :statuscode 200: no error
+        """
         all_software = Software.query.all()
 
         out = []
