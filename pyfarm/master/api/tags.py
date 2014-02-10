@@ -280,7 +280,7 @@ class SingleTagAPI(MethodView):
 
         return jsonify(tag_dict), OK
 
-    @validate_with_model(Tag)
+    @validate_with_model(Tag, ignore=("tag", ))
     def put(self, tagname=None):
         """
         A ``PUT`` to this endpoint will create a new tag under the given URI.
@@ -344,9 +344,17 @@ class SingleTagAPI(MethodView):
                             invalid columns being included)
         :statuscode 404: a referenced agent or job does not exist
         """
-        if isinstance(tagname, STRING_TYPES) and g.json["tag"] != tagname:
+        if "tag" in g.json and g.json["tag"] != tagname:
             return jsonify(error="name of tag must equal the name under "
                                  "which it is put"), BAD_REQUEST
+
+        # `tag` comes in with the url itself so if it's not in
+        # the data be sure we include it
+        g.json.setdefault("tag", tagname)
+
+        if not isinstance(g.json["tag"], STRING_TYPES):
+            return jsonify(error="expected a string for the tag name"), \
+                   BAD_REQUEST
 
         if isinstance(tagname, STRING_TYPES):
             tag = Tag.query.filter_by(tag=tagname).first()

@@ -189,7 +189,7 @@ def jsonify(*args, **kwargs):
         return _jsonify(*args, **kwargs)
 
 
-def validate_with_model(model, type_checks=None):
+def validate_with_model(model, type_checks=None, ignore=None):
     """
     Decorator which will check the contents of the of the json
     request against a model for:
@@ -208,9 +208,16 @@ def validate_with_model(model, type_checks=None):
         incoming request that needs a more detailed check than
         "isinstance(g.json[column_name], <Python type(s) from sql>)" then
         this is the place to add it.
+
+    :param list ignore:
+        A list of fields to completely ignore in the incoming
+        request. Typically this is used but ``PUT`` requests or other
+        similar requests where part of the data is in the url.
     """
     assert type_checks is None or isinstance(type_checks, dict)
     type_checks = type_checks or {}
+    ignore = set(ignore or [])
+    assert isinstance(ignore, (list, tuple, set))
 
     def wrapper(func):
 
@@ -250,8 +257,8 @@ def validate_with_model(model, type_checks=None):
                 abort(BAD_REQUEST)
 
             # now check to see if we're missing any required fields
-            missing_keys = (
-               types.required - request_columns) - types.primary_keys
+            missing_keys = ((types.required - ignore) -
+                            request_columns) - types.primary_keys
             if missing_keys:
                 g.error = "request is missing field(s): %r" % missing_keys
                 abort(BAD_REQUEST)
