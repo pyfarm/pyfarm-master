@@ -28,15 +28,13 @@ try:
 except ImportError:  # pragma: no cover
     from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 
-from flask import Response, request
+from flask import g
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
 from pyfarm.models.software import Software
 from pyfarm.master.application import db
-from pyfarm.master.utility import json_from_request, jsonify, get_column_sets
-
-ALL_SOFTWARE_COLUMNS, REQUIRED_SOFTWARE_COLUMNS = get_column_sets(Software)
+from pyfarm.master.utility import jsonify, validate_with_model
 
 logger = getLogger("api.software")
 
@@ -73,6 +71,7 @@ def schema():
 
 
 class SoftwareIndexAPI(MethodView):
+    @validate_with_model(Software)
     def post(self):
         """
         A ``POST`` to this endpoint will do one of two things:
@@ -142,27 +141,18 @@ class SoftwareIndexAPI(MethodView):
         :statuscode 400: there was something wrong with the request (such as
                             invalid columns being included)
         """
-        data = json_from_request(request,
-                                 all_keys=ALL_SOFTWARE_COLUMNS,
-                                 required_keys=REQUIRED_SOFTWARE_COLUMNS,
-                                 disallowed_keys=set(["id"]))
-        # json_from_request returns a tuple on error
-        if isinstance(data, tuple):
-            return data
-
         existing_software = Software.query.filter_by(
-            software=data["software"]).first()
+            software=g.json["software"]).first()
 
         if existing_software:
             # No update needed, because Software only has those two columns
             return jsonify(existing_software.to_dict()), OK
 
         else:
-            new_software = Software(**data)
+            new_software = Software(**g.json)
             db.session.add(new_software)
             db.session.commit()
             software_data = new_software.to_dict()
-            logger.info("created software %s: %s" %
-                        (new_software.id,
-                         software_data))
+            logger.debug(
+                "created software %s: %r", new_software.id, software_data)
             return jsonify(software_data), CREATED
