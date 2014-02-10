@@ -42,7 +42,8 @@ logger = getLogger("models.mixin")
 # and relationships
 ModelTypes = namedtuple(
     "ModelTypes",
-    ("primary_keys", "columns", "required", "relationships", "mappings"))
+    ("primary_keys", "autoincrementing", "columns", "required",
+     "relationships", "mappings"))
 
 
 class ValidatePriorityMixin(object):
@@ -237,6 +238,7 @@ class UtilityMixins(object):
         attributes:
 
             * primary_keys - set of all primary key(s) names
+            * autoincrementing - set of all columns which have autoincrement set
             * columns - set of all column names
             * required - set of all required columns (non-nullable wo/defaults)
             * relationships - not columns themselves but do store relationships
@@ -245,6 +247,7 @@ class UtilityMixins(object):
         """
         mapper = class_mapper(cls)
         primary_keys = set()
+        autoincrementing = set()
         columns = set()
         required = set()
         relationships = set(
@@ -261,6 +264,9 @@ class UtilityMixins(object):
 
             if column.primary_key:
                 primary_keys.add(name)
+
+            if column.autoincrement:
+                autoincrementing.add(name)
 
             if column.primary_key and not column.autoincrement:
                 required.add(name)
@@ -287,6 +293,7 @@ class UtilityMixins(object):
 
         return ModelTypes(
             primary_keys=primary_keys,
+            autoincrementing=autoincrementing,
             columns=columns,
             required=required,
             relationships=relationships,
