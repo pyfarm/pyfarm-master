@@ -344,26 +344,30 @@ class SingleTagAPI(MethodView):
                             invalid columns being included)
         :statuscode 404: a referenced agent or job does not exist
         """
-        if "tag" in g.json and g.json["tag"] != tagname:
-            return jsonify(error="name of tag must equal the name under "
-                                 "which it is put"), BAD_REQUEST
+        tag = None
 
-        # `tag` comes in with the url itself so if it's not in
-        # the data be sure we include it
-        g.json.setdefault("tag", tagname)
-
-        if not isinstance(g.json["tag"], STRING_TYPES):
-            return jsonify(error="expected a string for the tag name"), \
-                   BAD_REQUEST
-
-        if isinstance(tagname, STRING_TYPES):
-            tag = Tag.query.filter_by(tag=tagname).first()
-        else:
+        if isinstance(tagname, int) and "tag" not in g.json:
             tag = Tag.query.filter_by(id=tagname).first()
+
+            if not tag:
+                return jsonify(error="you must include a `tag` "
+                                     "field when using the id"), BAD_REQUEST
+            else:
+                g.json.setdefault("tag", tag.tag)
+
+        elif isinstance(tagname, STRING_TYPES):
+            g.json.setdefault("tag", tagname)
+
+            if g.json["tag"] != tagname:
+                return jsonify(error="`tag` in data must be equal to the "
+                                     "tag in the requested url"), BAD_REQUEST
+
+            Tag.query.filter_by(tag=g.json["tag"]).first()
 
         # If tag exists, delete it before recreating it
         if tag is not None:
-            logger.debug("deleting tag %s as part of PUT operation", tag.tag)
+            logger.debug(
+                "tag %s will be replaced with %r on commit", tag.tag, g.json)
             db.session.delete(tag)
             db.session.flush()
 
