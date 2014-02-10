@@ -28,7 +28,7 @@ try:
 except ImportError:  # pragma: no cover
     from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 
-from flask import Response, request, url_for, g
+from flask import request, url_for, g
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
@@ -344,16 +344,18 @@ class SingleTagAPI(MethodView):
                             invalid columns being included)
         :statuscode 404: a referenced agent or job does not exist
         """
-        tag = None
-
-        if isinstance(tagname, int) and "tag" not in g.json:
+        if isinstance(tagname, int):
             tag = Tag.query.filter_by(id=tagname).first()
-
             if not tag:
-                return jsonify(error="you must include a `tag` "
-                                     "field when using the id"), BAD_REQUEST
-            else:
-                g.json.setdefault("tag", tag.tag)
+                return jsonify(error="no tag with an id of %s "
+                                     "exists" % tagname), BAD_REQUEST
+
+            if "tag" in g.json and g.json["tag"] != tag.tag:
+                error = "tag name retrieved for %s does not match tag " \
+                        "name in request" % tagname
+                return jsonify(error=error), BAD_REQUEST
+
+            g.json.setdefault("tag", tag.tag)
 
         elif isinstance(tagname, STRING_TYPES):
             g.json.setdefault("tag", tagname)
@@ -362,10 +364,9 @@ class SingleTagAPI(MethodView):
                 return jsonify(error="`tag` in data must be equal to the "
                                      "tag in the requested url"), BAD_REQUEST
 
-            Tag.query.filter_by(tag=g.json["tag"]).first()
-
         # If tag exists, delete it before recreating it
-        if tag is not None:
+        tag = Tag.query.filter_by(tag=g.json["tag"]).first()
+        if tag:
             logger.debug(
                 "tag %s will be replaced with %r on commit", tag.tag, g.json)
             db.session.delete(tag)
@@ -415,15 +416,15 @@ class SingleTagAPI(MethodView):
                     error="job(s) not found: %s" % missing_jobs), \
                        BAD_REQUEST
 
-
         new_tag = Tag(**g.json)
         new_tag.agents = agents
         new_tag.jobs = jobs
+
+        logger.info("creating tag %s: %r", new_tag.tag, new_tag.to_dict())
         db.session.add(new_tag)
         db.session.commit()
-        tag_data = new_tag.to_dict()
-        logger.info("created tag %s: %r", new_tag.id, tag_data)
-        return jsonify(tag_data), CREATED
+
+        return jsonify(new_tag.to_dict()), CREATED
 
     def delete(self, tagname=None):
         """
@@ -457,15 +458,16 @@ class SingleTagAPI(MethodView):
             tag = Tag.query.filter_by(tag=tagname).first()
         else:
             tag = Tag.query.filter_by(id=tagname).first()
+
         if tag is None:
-            return Response(), NO_CONTENT
+            return jsonify(), NO_CONTENT
 
         db.session.delete(tag)
         db.session.commit()
 
         logger.info("deleted tag %s", tag.tag)
 
-        return Response(), NO_CONTENT
+        return jsonify(), NO_CONTENT
 
 
 class AgentsInTagIndexAPI(MethodView):
