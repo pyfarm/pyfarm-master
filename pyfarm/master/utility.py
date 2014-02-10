@@ -41,6 +41,7 @@ from werkzeug.datastructures import ImmutableDict
 from pyfarm.core.enums import APIError, STRING_TYPES, PY3, NOTSET
 
 COLUMN_CACHE = {}
+NONE_TYPE = type(None)
 
 
 def get_column_sets(model, primary_key=False):
@@ -189,7 +190,7 @@ def jsonify(*args, **kwargs):
         return _jsonify(*args, **kwargs)
 
 
-def validate_with_model(model, type_checks=None, ignore=None):
+def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
     """
     Decorator which will check the contents of the of the json
     request against a model for:
@@ -213,11 +214,17 @@ def validate_with_model(model, type_checks=None, ignore=None):
         A list of fields to completely ignore in the incoming
         request. Typically this is used but ``PUT`` requests or other
         similar requests where part of the data is in the url.
+
+    :param list disallow:
+        A list of columns which are never in the request to the decorated
+        function
     """
     assert type_checks is None or isinstance(type_checks, dict)
+    assert isinstance(ignore, (list, tuple, set, NONE_TYPE))
+    assert isinstance(disallow, (list, tuple, set, NONE_TYPE))
     type_checks = type_checks or {}
     ignore = set(ignore or [])
-    assert isinstance(ignore, (list, tuple, set))
+    disallow = set(disallow or [])
 
     def wrapper(func):
 
@@ -246,11 +253,20 @@ def validate_with_model(model, type_checks=None, ignore=None):
 
             types = model.types()
             request_columns = set(g.json)
+
+            # assert that there's not any disallowed
+            # columns in the request
+            disallowed_in_request = disallow & request_columns
+            if disallowed_in_request:
+                g.error = "column(s) not allowed for this " \
+                          "request: %s" % disallowed_in_request
+                abort(BAD_REQUEST)
+
             all_valid_keys = types.columns | types.relationships
+            unknown_keys = request_columns - all_valid_keys
 
             # check to see if there are any fields that do not exist
             # in the request
-            unknown_keys = request_columns - all_valid_keys
             if unknown_keys:
                 g.error = "request contains field(s) that do not exist: " \
                           "%r" % unknown_keys

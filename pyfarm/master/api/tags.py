@@ -280,7 +280,7 @@ class SingleTagAPI(MethodView):
 
         return jsonify(tag_dict), OK
 
-    @validate_with_model(Tag, ignore=("tag", ))
+    @validate_with_model(Tag, ignore=("tag", ), disallow=("id", ))
     def put(self, tagname=None):
         """
         A ``PUT`` to this endpoint will create a new tag under the given URI.
@@ -348,7 +348,7 @@ class SingleTagAPI(MethodView):
             tag = Tag.query.filter_by(id=tagname).first()
             if not tag:
                 return jsonify(error="no tag with an id of %s "
-                                     "exists" % tagname), BAD_REQUEST
+                                     "exists" % tagname), NOT_FOUND
 
             if "tag" in g.json and g.json["tag"] != tag.tag:
                 error = "tag name retrieved for %s does not match tag " \
