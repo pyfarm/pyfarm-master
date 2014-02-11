@@ -162,7 +162,8 @@ class SoftwareIndexAPI(MethodView):
         # of relations
         versions = []
         version_objects = g.json.pop("software_versions", [])
-        del g.json["software_versions"]
+        if "software_versions" in g.json:
+            del g.json["software_versions"]
         if not isinstance(version_objects, list):
             return jsonify(error="software_versions must be a list"), BAD_REQUEST
         for software_obj in version_objects:
