@@ -223,7 +223,7 @@ class SoftwareIndexAPI(MethodView):
         db.session.add(software)
         db.session.commit()
         software_data = software.to_dict()
-        logger.info("created software %s: %s" % (software.id, software_data))
+        logger.info("created software %s: %r", software.id, software_data)
 
         return jsonify(software_data), CREATED if new else OK
 
