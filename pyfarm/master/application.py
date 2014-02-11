@@ -42,7 +42,6 @@ from werkzeug.exceptions import BadRequest
 from pyfarm.core.enums import NOTSET
 from pyfarm.core.config import read_env
 from pyfarm.master.admin.baseview import AdminIndex
-from pyfarm.master.utility import jsonify
 
 POST_METHODS = set(("POST", "PUT"))
 
