@@ -157,34 +157,33 @@ class SoftwareIndexAPI(MethodView):
         """
         from sqlalchemy import func
 
+        # Collect versions to add to the software object
         # Note: This can probably be done a lot simpler with generic parsing
         # of relations
         versions = []
-        if "software_versions" in g.json:
-            version_objects = g.json["software_versions"]
-            del g.json["software_versions"]
-            if not isinstance(version_objects, list):
-                return (jsonify(error="software_versions must be a list"),
+        version_objects = g.json.pop("software_versions", [])
+        del g.json["software_versions"]
+        if not isinstance(version_objects, list):
+            return jsonify(error="software_versions must be a list"), BAD_REQUEST
+        for software_obj in version_objects:
+            if not isinstance(software_obj, dict):
+                return (jsonify(error="""Entries in software_versions
+                                must be dictionaries."""),
                         BAD_REQUEST)
-            for software_obj in version_objects:
-                if not isinstance(software_obj, dict):
-                    return (jsonify(error="""Entries in software_versions
-                                    must be dictionaries."""),
+            if not isinstance(software_obj["version"], STRING_TYPES):
+                return (jsonify(error="Software versions must be strings."),
+                        BAD_REQUEST)
+            version = {"version": software_obj["version"]}
+            if "rank" in software_obj:
+                if not isinstance(software_obj["rank"], int):
+                    return (jsonify(error="Software rank must be an int."),
                             BAD_REQUEST)
-                if not isinstance(software_obj["version"], STRING_TYPES):
-                    return (jsonify(error="Software versions must be strings."),
+                version["rank"] = software_obj["rank"]
+            if ((len(software_obj) > 2 and "rank" in software_obj) or
+                (len(software_obj) > 1 and "rank" not in software_obj)):
+                    return (jsonify(error="unknown columns in software version"),
                             BAD_REQUEST)
-                version = {"version": software_obj["version"]}
-                if "rank" in software_obj:
-                    if not isinstance(software_obj["rank"], int):
-                        return (jsonify(error="Software rank must be an int."),
-                                BAD_REQUEST)
-                    version["rank"] = software_obj["rank"]
-                if ((len(software_obj) > 2 and "rank" in software_obj) or
-                    (len(software_obj) > 1 and "rank" not in software_obj)):
-                        return (jsonify(error="""Unknown columns in software
-                                        version"""), BAD_REQUEST)
-                versions.append(version)
+            versions.append(version)
 
         software = Software.query.filter_by(software=g.json["software"]).first()
 
