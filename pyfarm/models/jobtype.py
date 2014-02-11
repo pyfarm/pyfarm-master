@@ -24,24 +24,35 @@ general implementation.
 """
 
 import ast
+from hashlib import sha1
 from textwrap import dedent
 
 from sqlalchemy import event
 
+from pyfarm.core.config import read_env_int, read_env_bool
+from pyfarm.core.logger import getLogger
 from pyfarm.master.application import db
+from pyfarm.models.core.cfg import (
+    TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH, SHA1_ASCII_LENGTH)
+from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
 from pyfarm.models.core.types import id_column, IDTypeWork
-from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH
+
 
 __all__ = ("JobType", )
 
 JOBTYPE_BASECLASS = "JobType"
 
+logger = getLogger("models.jobtype")
 
-class JobType(db.Model):
+
+class JobType(db.Model, UtilityMixins, ReprMixin):
     """
     Stores the unique information necessary to execute a task
     """
     __tablename__ = TABLE_JOB_TYPE
+    REPR_COLUMNS = (
+        "id", "name", "classname", "max_batch",
+        "batch_contiguous", "batch_non_contiguous")
 
     id = id_column(IDTypeWork)
     name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
@@ -54,6 +65,24 @@ class JobType(db.Model):
                             Human readable description of the job type.  This
                             field is not required and is not directly relied
                             upon anywhere."""))
+    max_batch = db.Column(db.Integer,
+                          default=read_env_int(
+                              "JOBTYPE_DEFAULT_MAX_BATCH",
+                              read_env_int("PYFARM_QUEUE_MAX_BATCH", 1)),
+                          doc=dedent("""
+                          When the queue runs this is the maximum number of
+                          tasks that the queue can select to assign to a single
+                          agent."""))
+    batch_contiguous = db.Column(db.Boolean,
+                                 default=read_env_bool(
+                                     "JOBTYPE_DEFAULT_BATCH_CONTIGUOUS", True),
+                                 doc=dedent("""
+                                 If True then the queue will be forced to batch
+                                 numerically contiguous tasks only for this
+                                 job type.  For example if True it would batch
+                                 frames 1, 2, 3, 4 together but not 2, 4, 6,
+                                 8.  If this column is False however the queue
+                                 will batch non-contiguous tasks too."""))
     classname = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=True,
                           doc=dedent("""
                           The name of the job class contained within the file
@@ -64,6 +93,11 @@ class JobType(db.Model):
                      General field containing the 'code' to retrieve the job
                      type.  See below for information on what this field will
                      contain depending on how the job will be loaded."""))
+    sha1 = db.Column(db.String(SHA1_ASCII_LENGTH), nullable=False,
+                     doc=dedent("""
+                     Contains the SHA1 hash of the source code in the ``code``
+                     column.  This value will automatically be updated whenever
+                     ``code`` is set."""))
     jobs = db.relationship("Job", backref="job_type", lazy="dynamic",
                            doc=dedent("""
                            Relationship between this jobtype and
@@ -81,6 +115,9 @@ def jobtype_before_insert(mapper, connection, jobtype):
     #   * invalid parent class (jobtype must subclass JobType)
     try:
         parsed = ast.parse(jobtype.code)
+
+        if jobtype.classname is None:
+            raise ValueError("required field `classname` not set")
 
         # NOTE: some coverage is skipped because the final except clause
         # prevents coverage from pulling the correct lines in
@@ -102,4 +139,19 @@ def jobtype_before_insert(mapper, connection, jobtype):
     except Exception:
         raise
 
+
+def set_sha1_from_code(mapper, connection, jobtype):
+    """
+    ensure that the sha1 matches the code's sha1 before
+    insertion to prevent an accidental or malicious mismatch
+    """
+    try:
+        jobtype.sha1 = sha1(jobtype.code).hexdigest()
+    except TypeError:
+        jobtype.sha1 = sha1(jobtype.code.encode("utf-8")).hexdigest()
+
+
+
 event.listen(JobType, "before_insert", jobtype_before_insert)
+event.listen(JobType, "before_insert", set_sha1_from_code)
+event.listen(JobType, "before_update", set_sha1_from_code)
