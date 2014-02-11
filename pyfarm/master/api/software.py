@@ -195,10 +195,9 @@ class SoftwareIndexAPI(MethodView):
             software = Software(**g.json)
             current_rank = 100
             for version_dict in versions:
+                version_dict.setdefault("rank", current_rank)
                 version = SoftwareVersion(**version_dict)
                 version.software = software
-                if "rank" not in version_dict:
-                    version.rank = current_rank
                 current_rank = max(version.rank, current_rank) + 100
         else:
             max_rank, = db.session.query(
