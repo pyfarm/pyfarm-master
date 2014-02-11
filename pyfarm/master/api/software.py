@@ -158,9 +158,6 @@ class SoftwareIndexAPI(MethodView):
         from sqlalchemy import func
 
         data = g.json.copy()
-        # json_from_request returns a tuple on error
-        if isinstance(data, tuple):
-            return data
 
         # Note: This can probably be done a lot simpler with generic parsing
         # of relations
