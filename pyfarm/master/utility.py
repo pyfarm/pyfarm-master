@@ -104,6 +104,12 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
 
         @wraps(func)
         def wrapped(*args, **kwargs):
+            # for now, we only support conversion from a json
+            # request
+            if request.mimetype != "application/json":
+                g.error = "only know how to handle application/json here"
+                abort(BAD_REQUEST)
+
             try:
                 # special case where the decorator is being
                 # called before any requests have been made

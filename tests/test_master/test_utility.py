@@ -66,6 +66,8 @@ class TestValidateWithModel(BaseTestCase):
     def setup_app(self):
         super(TestValidateWithModel, self).setup_app()
         load_error_handlers(self.app)
+        admin = get_admin(app=self.app)
+        load_admin(admin)
 
     def setUp(self):
         super(TestValidateWithModel, self).setUp()
@@ -224,6 +226,18 @@ class TestValidateWithModel(BaseTestCase):
             response.json,
             {"error": "expected custom type check function for "
                       "'a' to return True or False"})
+
+    def test_accepts_json_only(self):
+        @validate_with_model(ValidationTestModel)
+        def test():
+            return ""
+
+        self.add_route(test)
+        response = self.post("/", headers={"Content-Type": "foo"})
+        self.assert_bad_request(response)
+        self.assertIn(
+            "only know how to handle application/json here",
+            response.data.decode("utf-8"))
 
 
 class TestErrorHandler(BaseTestCase):
