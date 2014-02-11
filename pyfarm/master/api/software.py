@@ -157,14 +157,12 @@ class SoftwareIndexAPI(MethodView):
         """
         from sqlalchemy import func
 
-        data = g.json.copy()
-
         # Note: This can probably be done a lot simpler with generic parsing
         # of relations
         versions = []
-        if "software_versions" in data:
-            version_objects = data["software_versions"]
-            del data["software_versions"]
+        if "software_versions" in g.json:
+            version_objects = g.json["software_versions"]
+            del g.json["software_versions"]
             if not isinstance(version_objects, list):
                 return (jsonify(error="software_versions must be a list"),
                         BAD_REQUEST)
@@ -188,13 +186,13 @@ class SoftwareIndexAPI(MethodView):
                                         version"""), BAD_REQUEST)
                 versions.append(version)
 
-        software = Software.query.filter_by(software=data["software"]).first()
+        software = Software.query.filter_by(software=g.json["software"]).first()
 
         new = False
         if not software:
             # This software tag does not exist yet, create new one
             new = True
-            software = Software(**data)
+            software = Software(**g.json)
             current_rank = 100
             for version_dict in versions:
                 version = SoftwareVersion(**version_dict)
