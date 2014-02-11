@@ -28,6 +28,7 @@ from hashlib import sha1
 from textwrap import dedent
 
 from sqlalchemy import event
+from sqlalchemy.orm import validates
 
 from pyfarm.core.config import read_env_int, read_env_bool, read_env
 from pyfarm.core.logger import getLogger
@@ -102,41 +103,20 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
                            Relationship between this jobtype and
                            :class:`.Job` objects."""))
 
+    @validates("max_batch")
+    def validate_max_batch(self, key, value):
+        if isinstance(value, int) and not value >= 1:
+            raise ValueError("max_batch must be greater than or equal to 1")
 
-def jobtype_before_insert(mapper, connection, jobtype):
-    # TODO: this parsing is extremely basic and needs some expansion
-    # If jobtype's says to download a file then we must
-    # be sure it's valid.  If we don't, you could probably tip over
-    # the master(s) under the load of rapidly failing tasks due to
-    # any of the following:
-    #   * job class name does not exist in the code (...)
-    #   * invalid Python code (SyntaxError)
-    #   * invalid parent class (jobtype must subclass JobType)
+        return value
+
+
+def compute_sha1(code):
+    """returns a sha1 for the given source code"""
     try:
-        parsed = ast.parse(jobtype.code)
-
-        if jobtype.classname is None:
-            raise ValueError("required field `classname` not set")
-
-        # NOTE: some coverage is skipped because the final except clause
-        # prevents coverage from pulling the correct lines in
-        for node in ast.walk(parsed):
-            if not isinstance(node, ast.ClassDef):
-                continue
-
-            # found the class, make sure it has the proper parent class
-            elif node.name == jobtype.classname:
-                if JOBTYPE_BASECLASS not in set(base.id for base in node.bases):
-                    error_args = (jobtype.classname, JOBTYPE_BASECLASS)
-                    raise SyntaxError("%s is not a subclass of %s" % error_args)
-                else:  # pragma: no cover
-                    break
-        else:  # pragma: no cover
-            raise SyntaxError(
-                "jobtype class `%s` does not exist" % jobtype.classname)
-
-    except Exception:
-        raise
+        return sha1(code).hexdigest()
+    except TypeError:  # required for Python 3
+        return sha1(code.encode("utf-8")).hexdigest()
 
 
 def set_sha1_from_code(mapper, connection, jobtype):
@@ -144,12 +124,13 @@ def set_sha1_from_code(mapper, connection, jobtype):
     ensure that the sha1 matches the code's sha1 before
     insertion to prevent an accidental or malicious mismatch
     """
-    try:
-        jobtype.sha1 = sha1(jobtype.code).hexdigest()
-    except TypeError:
-        jobtype.sha1 = sha1(jobtype.code.encode("utf-8")).hexdigest()
+    jobtype.sha1 = compute_sha1(jobtype.code)
 
 
-event.listen(JobType, "before_insert", jobtype_before_insert)
+def code_set_event(target, value, oldvalue, initiator):
+    """set the sha1 whenever the code column is set"""
+    target.sha1 = compute_sha1(value)
+
+
 event.listen(JobType, "before_insert", set_sha1_from_code)
-event.listen(JobType, "before_update", set_sha1_from_code)
+event.listen(JobType.code, "set", code_set_event)
