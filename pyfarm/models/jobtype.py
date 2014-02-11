@@ -29,7 +29,7 @@ from textwrap import dedent
 
 from sqlalchemy import event
 
-from pyfarm.core.config import read_env_int, read_env_bool
+from pyfarm.core.config import read_env_int, read_env_bool, read_env
 from pyfarm.core.logger import getLogger
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import (
@@ -40,7 +40,7 @@ from pyfarm.models.core.types import id_column, IDTypeWork
 
 __all__ = ("JobType", )
 
-JOBTYPE_BASECLASS = "JobType"
+JOBTYPE_BASECLASS = read_env("PYFARM_JOBTYPE_SUBCLASSES_BASE_CLASS", "JobType")
 
 logger = getLogger("models.jobtype")
 
@@ -51,8 +51,7 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
     """
     __tablename__ = TABLE_JOB_TYPE
     REPR_COLUMNS = (
-        "id", "name", "classname", "max_batch",
-        "batch_contiguous", "batch_non_contiguous")
+        "id", "name", "classname", "max_batch", "batch_contiguous")
 
     id = id_column(IDTypeWork)
     name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
