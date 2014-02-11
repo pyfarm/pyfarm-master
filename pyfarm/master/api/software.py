@@ -201,16 +201,19 @@ class SoftwareIndexAPI(MethodView):
                     version.rank = current_rank
                 current_rank = max(version.rank, current_rank) + 100
         else:
-            max_rank, = db.session.query(func.max(SoftwareVersion.rank))\
-                                 .filter_by(software=software).one()
+            max_rank, = db.session.query(
+                func.max(SoftwareVersion.rank)).filter_by(
+                    software=software).one()
             if not max_rank:
                 max_rank = 0
             # We assume that new software versions with no given rank are the
             # newest versions available
             current_rank = max_rank + 100
             for version_dict in versions:
-                version = (SoftwareVersion.query.filter_by(software=software)
-                           .filter_by(version=version_dict["version"])).first()
+                version = (
+                    SoftwareVersion.query.filter_by(
+                        software=software).filter_by(
+                            version=version_dict["version"])).first()
                 if not version:
                     version = SoftwareVersion(**version_dict)
                     version.software = software
@@ -253,21 +256,19 @@ class SoftwareIndexAPI(MethodView):
                         "software": "Houdini",
                         "id": 1,
                         "software_versions": [
-                        {
-                            "version": "13.0.1",
-                            "id": 1
-                            "rank": 100
-                        }
+                            {
+                                "version": "13.0.1",
+                                "id": 1
+                                "rank": 100
+                            }
                         ]
                     }
                 ]
 
         :statuscode 200: no error
         """
-        all_software = Software.query.all()
-
         out = []
-        for software in all_software:
+        for software in Software.query:
             out.append(software.to_dict())
 
         return jsonify(out), OK
