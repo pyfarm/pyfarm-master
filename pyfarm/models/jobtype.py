@@ -151,7 +151,6 @@ def set_sha1_from_code(mapper, connection, jobtype):
         jobtype.sha1 = sha1(jobtype.code.encode("utf-8")).hexdigest()
 
 
-
 event.listen(JobType, "before_insert", jobtype_before_insert)
 event.listen(JobType, "before_insert", set_sha1_from_code)
 event.listen(JobType, "before_update", set_sha1_from_code)
