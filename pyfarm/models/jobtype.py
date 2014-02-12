@@ -24,24 +24,35 @@ general implementation.
 """
 
 import ast
+from hashlib import sha1
 from textwrap import dedent
 
 from sqlalchemy import event
+from sqlalchemy.orm import validates
 
+from pyfarm.core.config import read_env_int, read_env_bool, read_env
+from pyfarm.core.logger import getLogger
 from pyfarm.master.application import db
+from pyfarm.models.core.cfg import (
+    TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH, SHA1_ASCII_LENGTH)
+from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
 from pyfarm.models.core.types import id_column, IDTypeWork
-from pyfarm.models.core.cfg import TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH
+
 
 __all__ = ("JobType", )
 
-JOBTYPE_BASECLASS = "JobType"
+JOBTYPE_BASECLASS = read_env("PYFARM_JOBTYPE_SUBCLASSES_BASE_CLASS", "JobType")
+
+logger = getLogger("models.jobtype")
 
 
-class JobType(db.Model):
+class JobType(db.Model, UtilityMixins, ReprMixin):
     """
     Stores the unique information necessary to execute a task
     """
     __tablename__ = TABLE_JOB_TYPE
+    REPR_COLUMNS = (
+        "id", "name", "classname", "max_batch", "batch_contiguous")
 
     id = id_column(IDTypeWork)
     name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
@@ -54,6 +65,24 @@ class JobType(db.Model):
                             Human readable description of the job type.  This
                             field is not required and is not directly relied
                             upon anywhere."""))
+    max_batch = db.Column(db.Integer,
+                          default=read_env_int(
+                              "JOBTYPE_DEFAULT_MAX_BATCH",
+                              read_env_int("PYFARM_QUEUE_MAX_BATCH", 1)),
+                          doc=dedent("""
+                          When the queue runs, this is the maximum number of
+                          tasks that the queue can select to assign to a single
+                          agent."""))
+    batch_contiguous = db.Column(db.Boolean,
+                                 default=read_env_bool(
+                                     "JOBTYPE_DEFAULT_BATCH_CONTIGUOUS", True),
+                                 doc=dedent("""
+                                 If True then the queue will be forced to batch
+                                 numerically contiguous tasks only for this
+                                 job type.  For example if True it would batch
+                                 frames 1, 2, 3, 4 together but not 2, 4, 6,
+                                 8.  If this column is False however the queue
+                                 will batch non-contiguous tasks too."""))
     classname = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=True,
                           doc=dedent("""
                           The name of the job class contained within the file
@@ -64,42 +93,44 @@ class JobType(db.Model):
                      General field containing the 'code' to retrieve the job
                      type.  See below for information on what this field will
                      contain depending on how the job will be loaded."""))
+    sha1 = db.Column(db.String(SHA1_ASCII_LENGTH), nullable=False,
+                     doc=dedent("""
+                     Contains the SHA1 hash of the source code in the ``code``
+                     column.  This value will automatically be updated whenever
+                     ``code`` is set."""))
     jobs = db.relationship("Job", backref="job_type", lazy="dynamic",
                            doc=dedent("""
                            Relationship between this jobtype and
                            :class:`.Job` objects."""))
 
+    @validates("max_batch")
+    def validate_max_batch(self, key, value):
+        if isinstance(value, int) and not value >= 1:
+            raise ValueError("max_batch must be greater than or equal to 1")
 
-def jobtype_before_insert(mapper, connection, jobtype):
-    # TODO: this parsing is extremely basic and needs some expansion
-    # If jobtype's says to download a file then we must
-    # be sure it's valid.  If we don't, you could probably tip over
-    # the master(s) under the load of rapidly failing tasks due to
-    # any of the following:
-    #   * job class name does not exist in the code (...)
-    #   * invalid Python code (SyntaxError)
-    #   * invalid parent class (jobtype must subclass JobType)
+        return value
+
+
+def compute_sha1(code):
+    """returns a sha1 for the given source code"""
     try:
-        parsed = ast.parse(jobtype.code)
+        return sha1(code).hexdigest()
+    except TypeError:  # required for Python 3
+        return sha1(code.encode("utf-8")).hexdigest()
 
-        # NOTE: some coverage is skipped because the final except clause
-        # prevents coverage from pulling the correct lines in
-        for node in ast.walk(parsed):
-            if not isinstance(node, ast.ClassDef):
-                continue
 
-            # found the class, make sure it has the proper parent class
-            elif node.name == jobtype.classname:
-                if JOBTYPE_BASECLASS not in set(base.id for base in node.bases):
-                    error_args = (jobtype.classname, JOBTYPE_BASECLASS)
-                    raise SyntaxError("%s is not a subclass of %s" % error_args)
-                else:  # pragma: no cover
-                    break
-        else:  # pragma: no cover
-            raise SyntaxError(
-                "jobtype class `%s` does not exist" % jobtype.classname)
+def set_sha1_from_code(mapper, connection, jobtype):
+    """
+    ensure that the sha1 matches the code's sha1 before
+    insertion to prevent an accidental or malicious mismatch
+    """
+    jobtype.sha1 = compute_sha1(jobtype.code)
 
-    except Exception:
-        raise
 
-event.listen(JobType, "before_insert", jobtype_before_insert)
+def code_set_event(target, value, oldvalue, initiator):
+    """set the sha1 whenever the code column is set"""
+    target.sha1 = compute_sha1(value)
+
+
+event.listen(JobType, "before_insert", set_sha1_from_code)
+event.listen(JobType.code, "set", code_set_event)

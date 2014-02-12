@@ -14,7 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from binascii import hexlify
+from os import urandom
 from textwrap import dedent
+from hashlib import sha1
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
@@ -25,68 +28,62 @@ from pyfarm.models.jobtype import JobType
 
 
 class JobTypeTest(BaseTestCase):
-    def test_basic_insert(self):
-        value_name = "foo"
-        value_description = "this is a job type"
-        value_classname = "Foobar"
-        value_code = dedent("""
-        class %s(JobType):
-            pass""" % value_classname)
+    def produce_jobtype(self):
+        text = lambda: hexlify(urandom(4)).decode("utf-8")
+        jobtype = JobType(name=text(), description=text(), classname=text())
+        jobtype.classname = "f%s" % jobtype.classname  # make a valid classname
+        code = dedent("""
+                class %s(JobType):
+                    pass""" % jobtype.classname).strip()
+        jobtype.code = code
+        return jobtype
 
-        # create jobtype
-        jobtype = JobType()
-        jobtype.name = value_name
-        jobtype.description = value_description
-        jobtype.classname = value_classname
-        jobtype.code = value_code
+    def get_sha1_for_jobtype(self, jobtype):
+        try:
+            return sha1(jobtype.code).hexdigest()
+        except TypeError:
+            return sha1(jobtype.code.encode("utf-8")).hexdigest()
+
+    def test_basic_insert(self):
+        jobtype = self.produce_jobtype()
         db.session.add(jobtype)
         db.session.commit()
 
         # store id and remove the session
         jobtypeid = jobtype.id
+        name = jobtype.name
+        desc = jobtype.description
+        classname = jobtype.classname
+        code = jobtype.code
+        sha1 = jobtype.sha1
         db.session.remove()
 
         jobtype = JobType.query.filter_by(id=jobtypeid).first()
-        self.assertEqual(jobtype.name, value_name)
-        self.assertEqual(jobtype.description, value_description)
-        self.assertEqual(jobtype.classname, value_classname)
-        self.assertEqual(jobtype.code, value_code)
+        self.assertEqual(jobtype.name, name)
+        self.assertEqual(jobtype.description, desc)
+        self.assertEqual(jobtype.classname, classname)
+        self.assertEqual(jobtype.code, code)
+        self.assertEqual(jobtype.sha1, sha1)
 
-    def test_before_insert_syntax(self):
-        value_name = "foo"
-        value_description = "this is a job type"
-        value_classname = "Foobar"
-        value_code = dedent("""
-        class %s(JobType):
-            a = True
-                b = False""" % value_classname).encode("utf-8")
+    def test_validate_batch(self):
+        jobtype = self.produce_jobtype()
+        with self.assertRaises(ValueError):
+            jobtype.max_batch = 0
 
-        # create jobtype
-        jobtype = JobType()
-        jobtype.name = value_name
-        jobtype.description = value_description
-        jobtype.classname = value_classname
-        jobtype.code = value_code
+    def test_sha1_default_correct(self):
+        jobtype = self.produce_jobtype()
+        self.assertEqual(jobtype.sha1, self.get_sha1_for_jobtype(jobtype))
+
+    def test_sha1_correct_after_code_change(self):
+        jobtype = self.produce_jobtype()
+        self.assertEqual(jobtype.sha1, self.get_sha1_for_jobtype(jobtype))
+        jobtype.code = ""
+        self.assertEqual(jobtype.sha1, self.get_sha1_for_jobtype(jobtype))
+
+    def test_sha1_correction_on_insert(self):
+        jobtype = self.produce_jobtype()
+        self.assertEqual(jobtype.sha1, self.get_sha1_for_jobtype(jobtype))
+        jobtype.sha1 = ""
         db.session.add(jobtype)
-
-        with self.assertRaises(SyntaxError):
-            db.session.commit()
-
-    def test_before_insert_parent_class(self):
-        value_name = "foo"
-        value_description = "this is a job type"
-        value_classname = "Foobar"
-        value_code = dedent("""
-        class %s(object):
-            pass""" % value_classname).encode("utf-8")
-
-        # create jobtype
-        jobtype = JobType()
-        jobtype.name = value_name
-        jobtype.description = value_description
-        jobtype.classname = value_classname
-        jobtype.code = value_code
-        db.session.add(jobtype)
-
-        with self.assertRaises(SyntaxError):
-            db.session.commit()
+        db.session.commit()
+        self.assertEqual(jobtype.sha1, self.get_sha1_for_jobtype(jobtype))
