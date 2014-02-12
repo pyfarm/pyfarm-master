@@ -44,6 +44,33 @@ from pyfarm.master.utility import jsonify, validate_with_model
 
 logger = getLogger("api.software")
 
+class VersionParseError(Exception):
+    pass
+
+
+def extract_version_dicts(json_in):
+    out = []
+    version_objects = json_in.pop("software_versions", [])
+    if not isinstance(version_objects, list):
+        raise VersionParseError("Column software_versions must be a list.")
+    for software_obj in version_objects:
+        if not isinstance(software_obj, dict):
+            raise VersionParseError("""Entries in software_versions must be
+                dictionaries.""")
+        if not isinstance(software_obj["version"], STRING_TYPES):
+            raise VersionParseError("Software versions must be strings.")
+        version = {"version": software_obj["version"]}
+        if "rank" in software_obj:
+            if not isinstance(software_obj["rank"], int):
+                raise VersionParseError("Software rank must be an int.")
+            version["rank"] = software_obj["rank"]
+        if ((len(software_obj) > 2 and "rank" in software_obj) or
+            (len(software_obj) > 1 and "rank" not in software_obj)):
+                raise VersionParseError("unknown columns in software version")
+        out.append(version)
+
+    return out
+
 
 def schema():
     """
@@ -163,32 +190,10 @@ class SoftwareIndexAPI(MethodView):
         # Collect versions to add to the software object
         # Note: This can probably be done a lot simpler with generic parsing
         # of relations
-        versions = []
-        version_objects = g.json.pop("software_versions", [])
-        if "software_versions" in g.json:
-            del g.json["software_versions"]
-        if not isinstance(version_objects, list):
-            return jsonify(error="software_versions must be a list"), BAD_REQUEST
-        for software_obj in version_objects:
-            if not isinstance(software_obj, dict):
-                return (jsonify(error="""Entries in software_versions
-                                must be dictionaries."""),
-                        BAD_REQUEST)
-            if not isinstance(software_obj["version"], STRING_TYPES):
-                return (jsonify(error="Software versions must be strings."),
-                        BAD_REQUEST)
-            version = {"version": software_obj["version"]}
-            if "rank" in software_obj:
-                if not isinstance(software_obj["rank"], int):
-                    return (jsonify(error="Software rank must be an int."),
-                            BAD_REQUEST)
-                version["rank"] = software_obj["rank"]
-            if ((len(software_obj) > 2 and "rank" in software_obj) or
-                (len(software_obj) > 1 and "rank" not in software_obj)):
-                    return (jsonify(error="unknown columns in software version"),
-                            BAD_REQUEST)
-            versions.append(version)
-
+        try:
+            versions = extract_version_dicts(g.json)
+        except VersionParseError as e:
+            return jsonify(e.args[0]), BAD_REQUEST
         software = Software.query.filter_by(software=g.json["software"]).first()
 
         new = False
