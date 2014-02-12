@@ -206,7 +206,7 @@ class SoftwareIndexAPI(MethodView):
                         "software_versions": [
                             {
                                 "version": "13.0.1",
-                                "id": 1
+                                "id": 1,
                                 "rank": 100
                             }
                         ]
