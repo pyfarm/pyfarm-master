@@ -31,6 +31,8 @@ except ImportError:  # pragma: no cover
 from flask import g
 from flask.views import MethodView
 
+from sqlalchemy import func
+
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES
 from pyfarm.models.software import Software, SoftwareVersion
@@ -155,8 +157,6 @@ class SoftwareIndexAPI(MethodView):
         :statuscode 400: there was something wrong with the request (such as
                             invalid columns being included)
         """
-        from sqlalchemy import func
-
         # Collect versions to add to the software object
         # Note: This can probably be done a lot simpler with generic parsing
         # of relations
