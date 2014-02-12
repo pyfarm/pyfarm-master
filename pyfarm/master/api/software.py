@@ -24,14 +24,17 @@ manage or query software items using JSON.
 """
 
 try:
-    from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
+    from httplib import (
+        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, INTERNAL_SERVER_ERROR)
 except ImportError:  # pragma: no cover
-    from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
+    from http.client import (
+        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, INTERNAL_SERVER_ERROR)
 
 from flask import g
 from flask.views import MethodView
 
 from sqlalchemy import func
+from sqlalchemy.exc import DatabaseError
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES
@@ -223,7 +226,10 @@ class SoftwareIndexAPI(MethodView):
                     version.rank = version_dict["rank"]
 
         db.session.add(software)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except DatabaseError:
+            return jsonify(error="Database error"), INTERNAL_SERVER_ERROR
         software_data = software.to_dict()
         logger.info("created software %s: %r", software.id, software_data)
 
