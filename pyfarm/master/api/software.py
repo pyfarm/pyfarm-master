@@ -153,7 +153,7 @@ class SoftwareIndexAPI(MethodView):
         try:
             versions = extract_version_dicts(g.json)
         except VersionParseError as e:
-            return jsonify(e.args[0]), BAD_REQUEST
+            return jsonify(error=e.args[0]), BAD_REQUEST
         software = Software.query.filter_by(software=g.json["software"]).first()
 
         if software:
