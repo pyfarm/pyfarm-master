@@ -167,6 +167,15 @@ def load_api(app_instance, api_instance):
         "/tags/<int:tagname>/agents/",
         view_func=AgentsInTagIndexAPI.as_view("agents_in_tag_by_id_index_api"))
 
+    api_instance.add_url_rule(
+        "/software/<string:software_rq>/versions/",
+        view_func=SoftwareVersionsIndexAPI.as_view(
+            "software_by_string_versions_index_api"))
+    api_instance.add_url_rule(
+        "/software/<int:software_rq>/versions/",
+        view_func=SoftwareVersionsIndexAPI.as_view(
+            "software_by_id_versions_index_api"))
+
     # register the api blueprint
     app_instance.register_blueprint(api_instance)
 

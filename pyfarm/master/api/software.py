@@ -430,3 +430,137 @@ class SingleSoftwareAPI(MethodView):
         logger.info("Deleted software %s", software.software)
 
         return jsonify(), NO_CONTENT
+
+
+class SoftwareVersionsIndexAPI(MethodView):
+    def get(self, software_rq):
+        """
+        A ``GET`` to this endpoint will list all known versions for this software
+
+        .. http:get:: /api/v1/software/<str:softwarename>/versions/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/software/Autodesk%20Maya/versions/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "version": "2013",
+                        "id": 1,
+                        "rank": 100
+                    },
+                    {
+                        "version": "2014",
+                        "id": 2,
+                        "rank": 200
+                    }
+                ]
+
+        :statuscode 200: no error
+        :statuscode 404: the requested software tag was not found
+        """
+        if isinstance(software_rq, STRING_TYPES):
+            software = Software.query.filter_by(software=software_rq).first()
+        else:
+            software = Software.query.filter_by(id=software_rq).first()
+
+        if not software:
+            return jsonify(error="Requested software not found"), NOT_FOUND
+
+        out = [{"version": x.version, "id": x.id, "rank": x.rank}
+               for x in software.software_versions]
+        return jsonify(out), OK
+
+    @validate_with_model(SoftwareVersion, ignore=("software_id", "rank"),
+                         disallow=("id", ))
+    def post(self, software_rq):
+        """
+        A ``POST`` to this endpoint will create a new version for this software.
+
+        A rank can optionally be included.  If it isn't, it is assumed that this
+        is the newest version for this software
+
+        .. http:post:: /api/v1/software/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/software/blender/versions/ HTTP/1.1
+                Accept: application/json
+
+                {
+                    "version": "1.70"
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "id": 4,
+                    "version": "1.70",
+                    "rank": "100"
+                }
+
+        :statuscode 201: a new software verison was created
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        :statuscode 409: a software version with that name already exists
+        """
+        if isinstance(software_rq, STRING_TYPES):
+            software = Software.query.filter_by(software=software_rq).first()
+        else:
+            software = Software.query.filter_by(id=software_rq).first()
+
+        if not software:
+            return jsonify(error="Requested software not found"), NOT_FOUND
+
+        existing_version = SoftwareVersion.query.filter(
+            SoftwareVersion.software == software,
+            SoftwareVersion.version == g.json["version"]).first()
+        if existing_version:
+            return (jsonify(error="Version %s already exixts" %
+                            g.json["version"]), CONFLICT)
+
+        version = SoftwareVersion(**g.json)
+        version.software = software
+
+        if version.rank is None:
+            max_rank, = db.session.query(
+                func.max(SoftwareVersion.rank)).filter_by(
+                    software=software).one()
+            version.rank = max_rank + 100 if max_rank is not None else 100
+            if version.rank % 100 != 0:
+                version.rank += 100 - (version.rank % 100)
+
+        db.session.add(version)
+        try:
+            db.session.commit()
+        except DatabaseError as e:
+            logger.error("DatabaseError error on SoftwareVersion POST: %r",
+                         e.args)
+            return jsonify(error="Database error"), INTERNAL_SERVER_ERROR
+
+        version_data = {
+            "id": version.id,
+            "version": version.version,
+            "rank": version.rank
+            }
+        logger.info("created software version %s for software %s: %r",
+                    version.id, software.software, version_data)
+
+        return jsonify(version_data), CREATED
