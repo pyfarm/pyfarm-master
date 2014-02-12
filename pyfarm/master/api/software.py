@@ -25,10 +25,12 @@ manage or query software items using JSON.
 
 try:
     from httplib import (
-        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, INTERNAL_SERVER_ERROR)
+        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, INTERNAL_SERVER_ERROR,
+        CONFLICT)
 except ImportError:  # pragma: no cover
     from http.client import (
-        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, INTERNAL_SERVER_ERROR)
+        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, INTERNAL_SERVER_ERROR,
+        CONFLICT)
 
 from flask import g
 from flask.views import MethodView
@@ -106,13 +108,7 @@ class SoftwareIndexAPI(MethodView):
     @validate_with_model(Software)
     def post(self):
         """
-        A ``POST`` to this endpoint will do one of two things:
-
-            * create a new software item and return the row
-            * return the row for an existing item
-
-        Software items only have two columns, software and version. Two software
-        items are equal if both these columns are equal.
+        A ``POST`` to this endpoint will create a new software tag.
 
         A list of versions can be included.  If the software item already exists
         the listed versions will be added to the existing ones.  Versions with no
@@ -146,46 +142,10 @@ class SoftwareIndexAPI(MethodView):
                     "software_versions": []
                 }
 
-            **Request**
-
-            .. sourcecode:: http
-
-                POST /api/v1/software/ HTTP/1.1
-                Accept: application/json
-
-                {
-                    "id": 4,
-                    "software": "blender"
-                    "software_versions": [
-                        {
-                            "version": "1.69"
-                        }
-                    ]
-                }
-
-            **Response (existing software item returned)**
-
-            .. sourcecode:: http
-
-                HTTP/1.1 200 OK
-                Content-Type: application/json
-
-                {
-                    "id": 4,
-                    "software": "blender",
-                    "software_versions": [
-                        {
-                            "version": "1.69",
-                            "id": 1
-                            "rank": 100
-                        }
-                    ]
-                }
-
-        :statuscode 200: an existing software item was found and returned
         :statuscode 201: a new software item was created
         :statuscode 400: there was something wrong with the request (such as
                             invalid columns being included)
+        :statuscode 409: a software tag with that name already exists
         """
         # Collect versions to add to the software object
         # Note: This can probably be done a lot simpler with generic parsing
@@ -196,39 +156,17 @@ class SoftwareIndexAPI(MethodView):
             return jsonify(e.args[0]), BAD_REQUEST
         software = Software.query.filter_by(software=g.json["software"]).first()
 
-        new = False
-        if not software:
-            # This software tag does not exist yet, create new one
-            new = True
-            software = Software(**g.json)
-            current_rank = 100
-            for version_dict in versions:
-                version_dict.setdefault("rank", current_rank)
-                version = SoftwareVersion(**version_dict)
-                version.software = software
-                current_rank = max(version.rank, current_rank) + 100
-        else:
-            max_rank, = db.session.query(
-                func.max(SoftwareVersion.rank)).filter_by(
-                    software=software).one()
-            if not max_rank:
-                max_rank = 0
-            # We assume that new software versions with no given rank are the
-            # newest versions available
-            current_rank = max_rank + 100
-            for version_dict in versions:
-                version = (
-                    SoftwareVersion.query.filter_by(
-                        software=software).filter_by(
-                            version=version_dict["version"])).first()
-                if not version:
-                    version = SoftwareVersion(**version_dict)
-                    version.software = software
-                if version.rank is None and "rank" not in version_dict:
-                    version.rank = current_rank
-                    current_rank += 100
-                else: # Update the rank
-                    version.rank = version_dict["rank"]
+        if software:
+            return (jsonify(error="Software %s already exixts" %
+                            g.json["software"]), CONFLICT)
+
+        software = Software(**g.json)
+        current_rank = 100
+        for version_dict in versions:
+            version_dict.setdefault("rank", current_rank)
+            version = SoftwareVersion(**version_dict)
+            version.software = software
+            current_rank = max(version.rank, current_rank) + 100
 
         db.session.add(software)
         try:
@@ -238,7 +176,7 @@ class SoftwareIndexAPI(MethodView):
         software_data = software.to_dict()
         logger.info("created software %s: %r", software.id, software_data)
 
-        return jsonify(software_data), CREATED if new else OK
+        return jsonify(software_data), CREATED
 
     def get(self):
         """
