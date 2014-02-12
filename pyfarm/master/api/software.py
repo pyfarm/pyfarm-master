@@ -220,3 +220,213 @@ class SoftwareIndexAPI(MethodView):
             out.append(software.to_dict())
 
         return jsonify(out), OK
+
+
+class SingleSoftwareAPI(MethodView):
+    def put(self, software_rq):
+        """
+        A ``PUT`` to this endpoint will create a new software tag under the
+        given URI or update an existing software tag if one exists.
+        Renaming existing software tags via this call is supported, but when
+        creating new ones, the included software name must be equal to the one in
+        the URI.
+
+        You should only call this by id for overwriting an existing software tag
+        or if you have a reserved software id. There is currently no way to
+        reserve a tag id.
+
+        .. http:put:: /api/v1/software/<str:softwarename> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                PUT /api/v1/software/blender HTTP/1.1
+                Accept: application/json
+
+                {
+                    "software": "blender"
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": 4,
+                    "software": "blender",
+                    "software_versions": []
+                }
+
+            **Request**
+
+            .. sourcecode:: http
+
+                PUT /api/v1/software/blender HTTP/1.1
+                Accept: application/json
+
+                {
+                    "software": "blender",
+                    "software_version": [
+                        {
+                            "version": "1.69"
+                        }
+                    ]
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": 4,
+                    "software": "blender",
+                    "software_versions": [
+                        {
+                            "version": "1.69",
+                            "id": 1,
+                            "rank": 100
+                        }
+                    ]
+                }
+
+        :statuscode 200: an existing software tag was updated
+        :statuscode 201: a new software tag was created
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        """
+        if isinstance(software_rq, STRING_TYPES):
+            if g.json["software"] != software_rq:
+                return jsonify(error="""The name of the software must be equal
+                               to the one in the URI."""), BAD_REQUEST
+            software = Software.query.filter_by(software=software_rq).first()
+        else:
+            software = Software.query.filter_by(id=software_rq).first()
+
+        new = False if software else True
+        if not software:
+            software = Software()
+            # This is only checked when creating new software.  Otherwise,
+            # renaming is allowed
+            if g.json["software"] != software_rq:
+                return jsonify(error="""The name of the software must be equal
+                                     to the one in the URI."""), BAD_REQUEST
+
+        # If this endpoint specified by id, make sure to create the new
+        # software under this same id, too
+        if isinstance(software_rq, int):
+            software.id = software_rq
+
+        software.software = g.json["software"]
+
+        if "software_versions" in g.json:
+            software.software_versions = []
+            db.session.flush()
+            versions = extract_version_dicts(g.json)
+            current_rank = 100
+            for version_dict in versions:
+                version_dict.setdefault("rank", current_rank)
+                version = SoftwareVersion(**version_dict)
+                version.software = software
+                current_rank = max(version.rank, current_rank) + 100
+
+        db.session.add(software)
+        try:
+            db.session.commit()
+        except DatabaseError:
+            return jsonify(error="Database error"), INTERNAL_SERVER_ERROR
+        software_data = software.to_dict()
+        logger.info("created software %s: %r", software.id, software_data)
+
+        return jsonify(software_data), CREATED if new else OK
+
+    def get(self, software_rq):
+        """
+        A ``GET`` to this endpoint will return the requested software tag
+
+        .. http:get:: /api/v1/software/<str:softwarename> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/software/Autodesk%20Maya HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "software": "Autodesk Maya",
+                    "id": 1,
+                    "software_versions": [
+                        {
+                            "version": "2013",
+                            "id": 1,
+                            "rank": 100
+                        },
+                        {
+                            "version": "2014",
+                            "id": 2,
+                            "rank": 200
+                        }
+                    ]
+                }
+
+        :statuscode 200: no error
+        :statuscode 404: the requested software tag was not found
+        """
+        if isinstance(software_rq, STRING_TYPES):
+            software = Software.query.filter_by(software=software_rq).first()
+        else:
+            software = Software.query.filter_by(id=software_rq).first()
+
+        if not software:
+            return jsonify(error="Requested software not found"), NOT_FOUND
+
+        return jsonify(software.to_dict()), OK
+
+    def delete(self, software_rq):
+        """
+        A ``DELETE`` to this endpoint will delete the requested software tag
+
+        .. http:delete:: /api/v1/software/<str:softwarename> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/software/Autodesk%20Maya HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 204 NO_CONTENT
+
+        :statuscode 204: the software tag was deleted or didn't exist
+        """
+        if isinstance(software_rq, STRING_TYPES):
+            software = Software.query.filter_by(software=software_rq).first()
+        else:
+            software = Software.query.filter_by(id=software_rq).first()
+
+        if not software:
+            return jsonify(), NO_CONTENT
+
+        db.session.delete(software)
+        db.session.commit()
+        logger.info("Deleted software %s", software.software)
+
+        return jsonify(), NO_CONTENT
