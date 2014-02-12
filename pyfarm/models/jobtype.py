@@ -70,7 +70,7 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
                               "JOBTYPE_DEFAULT_MAX_BATCH",
                               read_env_int("PYFARM_QUEUE_MAX_BATCH", 1)),
                           doc=dedent("""
-                          When the queue runs this is the maximum number of
+                          When the queue runs, this is the maximum number of
                           tasks that the queue can select to assign to a single
                           agent."""))
     batch_contiguous = db.Column(db.Boolean,
