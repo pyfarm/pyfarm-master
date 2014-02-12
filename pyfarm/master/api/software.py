@@ -564,3 +564,105 @@ class SoftwareVersionsIndexAPI(MethodView):
                     version.id, software.software, version_data)
 
         return jsonify(version_data), CREATED
+
+class SingleSoftwareVersionAPI(MethodView):
+    def delete(self, software_rq, version_name):
+        """
+        A ``DELETE`` to this endpoint will delete the requested software version
+
+        .. http:delete:: /api/v1/software/<str:softwarename>/versions/<str:version> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/software/Autodesk%20Maya/versions/2013 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 204 NO_CONTENT
+
+        :statuscode 204: the software version was deleted or didn't exist
+        :statuscode 404: the software specified does not exist
+        """
+        if isinstance(software_rq, STRING_TYPES):
+            software = Software.query.filter_by(software=software_rq).first()
+        else:
+            software = Software.query.filter_by(id=software_rq).first()
+
+        if not software:
+            return jsonify(error="Requested software not found"), NOT_FOUND
+
+        if isinstance(version_name, STRING_TYPES):
+            version = SoftwareVersion.query.filter(
+                SoftwareVersion.software==software,
+                SoftwareVersion.version==version_name).first()
+        else:
+            version = SoftwareVersion.query.filter_by(id=version_name).first()
+
+        if not version:
+            return jsonify(), NO_CONTENT
+
+        db.session.delete(version)
+        db.session.commit()
+
+        logger.info("deleted software version %s for software %s",
+                    version.id, software.software)
+
+        return jsonify(), NO_CONTENT
+
+    def get(self, software_rq, version_name):
+        """
+        A ``GET`` to this endpoint will return the specified version
+
+        .. http:get:: /api/v1/software/<str:softwarename>/versions/<str:version> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/software/Autodesk%20Maya/versions/2014 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "version": "2013",
+                    "id": 1,
+                    "rank": 100
+                }
+
+        :statuscode 200: no error
+        :statuscode 404: the requested software tag or version was not found
+        """
+        if isinstance(software_rq, STRING_TYPES):
+            software = Software.query.filter_by(software=software_rq).first()
+        else:
+            software = Software.query.filter_by(id=software_rq).first()
+
+        if not software:
+            return jsonify(error="Requested software not found"), NOT_FOUND
+
+        if isinstance(version_name, STRING_TYPES):
+            version = SoftwareVersion.query.filter(
+                SoftwareVersion.software==software,
+                SoftwareVersion.version==version_name).first()
+        else:
+            version = SoftwareVersion.query.filter_by(id=version_name).first()
+
+        if not version:
+            return jsonify(error="Requested version not found"), NOT_FOUND
+
+        out = {
+            "id": version.id,
+            "version": version.version,
+            "rank": version.rank}
+        return jsonify(out), OK

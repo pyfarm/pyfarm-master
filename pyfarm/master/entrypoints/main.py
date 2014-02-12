@@ -115,7 +115,7 @@ def load_api(app_instance, api_instance):
         SingleAgentAPI, AgentIndexAPI, schema as agent_schema)
     from pyfarm.master.api.software import (
         schema as software_schema, SoftwareIndexAPI, SingleSoftwareAPI,
-        SoftwareVersionsIndexAPI)
+        SoftwareVersionsIndexAPI, SingleSoftwareVersionAPI)
     from pyfarm.master.api.tags import (
         schema as tag_schema, TagIndexAPI, SingleTagAPI, AgentsInTagIndexAPI)
 
@@ -175,6 +175,22 @@ def load_api(app_instance, api_instance):
         "/software/<int:software_rq>/versions/",
         view_func=SoftwareVersionsIndexAPI.as_view(
             "software_by_id_versions_index_api"))
+    api_instance.add_url_rule(
+        "/software/<string:software_rq>/versions/<string:version_name>",
+        view_func=SingleSoftwareVersionAPI.as_view(
+            "software_by_string_version_by_string_index_api"))
+    api_instance.add_url_rule(
+        "/software/<string:software_rq>/versions/<int:version_name>",
+        view_func=SingleSoftwareVersionAPI.as_view(
+            "software_by_string_version_by_id_index_api"))
+    api_instance.add_url_rule(
+        "/software/<int:software_rq>/versions/<string:version_name>",
+        view_func=SingleSoftwareVersionAPI.as_view(
+            "software_by_id_version_by_string_index_api"))
+    api_instance.add_url_rule(
+        "/software/<int:software_rq>/versions/<int:version_name>",
+        view_func=SingleSoftwareVersionAPI.as_view(
+            "software_by_id_version_by_id_index_api"))
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)
