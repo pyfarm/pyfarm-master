@@ -77,7 +77,7 @@ def schema():
 
 
 class JobTypeIndexAPI(MethodView):
-    @validate_with_model(JobType, ignore=("sha1",))
+    @validate_with_model(JobType, ignore=("sha1",), disallow=("jobs",))
     def post(self):
         """
         A ``POST`` to this endpoint will create a new jobtype.
