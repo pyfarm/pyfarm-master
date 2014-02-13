@@ -118,6 +118,8 @@ def load_api(app_instance, api_instance):
         SoftwareVersionsIndexAPI, SingleSoftwareVersionAPI)
     from pyfarm.master.api.tags import (
         schema as tag_schema, TagIndexAPI, SingleTagAPI, AgentsInTagIndexAPI)
+    from pyfarm.master.api.jobtypes import (
+        schema as jobtypes_schema, JobTypeIndexAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -129,6 +131,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/tags/",
         view_func=TagIndexAPI.as_view("tag_index_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/",
+        view_func=JobTypeIndexAPI.as_view("jobtype_index_api"))
 
     # schemas
     api_instance.add_url_rule(
@@ -140,6 +145,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/tags/schema",
         "tags_schema", view_func=tag_schema, methods=("GET", ))
+    api_instance.add_url_rule(
+        "/jobtypes/schema",
+        "jobtypes_schema", view_func=jobtypes_schema, methods=("GET", ))
 
     # specific item access
     api_instance.add_url_rule(
