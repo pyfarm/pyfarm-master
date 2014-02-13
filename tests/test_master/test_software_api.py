@@ -50,13 +50,13 @@ class TestSoftwareAPI(BaseTestCase):
             content_type="application/json",
             data=dumps({
                         "software": "foo",
-                        "software_versions": [
+                        "versions": [
                                     {"version": "1.0"}
                             ]
                        }))
         self.assert_created(response1)
         id = response1.json['id']
-        version_id = response1.json["software_versions"][0]["id"]
+        version_id = response1.json["versions"][0]["id"]
 
         response2 = self.client.get("/api/v1/software/%d" % id)
         self.assert_ok(response2)
@@ -64,7 +64,7 @@ class TestSoftwareAPI(BaseTestCase):
             response2.json, {
                             "id": id,
                             "software": "foo", 
-                            "software_versions": [
+                            "versions": [
                                     {
                                     "id": version_id,
                                     "rank": 100,
@@ -79,7 +79,7 @@ class TestSoftwareAPI(BaseTestCase):
             content_type="application/json",
             data=dumps({
                         "software": "foo",
-                        "software_versions": [
+                        "versions": [
                                     {
                                         "version": 1,
                                         "bad_key": "bla"
@@ -94,7 +94,7 @@ class TestSoftwareAPI(BaseTestCase):
             content_type="application/json",
             data=dumps({
                         "software": "foo",
-                        "software_versions": [
+                        "versions": [
                                     {
                                         "version": "1.0",
                                         "rank": 100
@@ -130,7 +130,7 @@ class TestSoftwareAPI(BaseTestCase):
             content_type="application/json",
             data=dumps({
                         "software": "foo",
-                        "software_versions": [
+                        "versions": [
                             {"version": "1.0"}
                         ]
                        }))
@@ -142,7 +142,7 @@ class TestSoftwareAPI(BaseTestCase):
             content_type="application/json",
             data=dumps({
                         "software": "foo",
-                        "software_versions": [
+                        "versions": [
                                 {"version": "1.0"}
                             ]
                        }))
@@ -154,13 +154,13 @@ class TestSoftwareAPI(BaseTestCase):
             content_type="application/json",
             data=dumps({
                         "software": "foo",
-                        "software_versions": [
+                        "versions": [
                                 {"version": "1.0"}
                             ]
                        }))
         self.assert_ok(response2)
         id = response2.json['id']
-        version_id = response2.json["software_versions"][0]["id"]
+        version_id = response2.json["versions"][0]["id"]
 
         response3 = self.client.get("/api/v1/software/foo")
         self.assert_ok(response3)
@@ -168,7 +168,7 @@ class TestSoftwareAPI(BaseTestCase):
             response3.json, {
                             "id": id,
                             "software": "foo", 
-                            "software_versions": [
+                            "versions": [
                                     {
                                     "id": version_id,
                                     "rank": 100,
@@ -228,7 +228,7 @@ class TestSoftwareAPI(BaseTestCase):
             response3.json, {
                             "id": id,
                             "software": "foo", 
-                            "software_versions": [
+                            "versions": [
                                 {
                                     "id": version_id,
                                     "rank": 100,
@@ -243,14 +243,14 @@ class TestSoftwareAPI(BaseTestCase):
             content_type="application/json",
             data=dumps({
                 "software": "foo",
-                            "software_versions": [
+                            "versions": [
                                 {"version": "1.0"},
                                 {"version": "1.1"}
                             ]
                        }))
         self.assert_created(response1)
-        version1_id = response1.json["software_versions"][0]["id"]
-        version2_id = response1.json["software_versions"][1]["id"]
+        version1_id = response1.json["versions"][0]["id"]
+        version2_id = response1.json["versions"][1]["id"]
 
         response2 = self.client.get("/api/v1/software/foo/versions/")
         self.assert_ok(response2)
@@ -274,7 +274,7 @@ class TestSoftwareAPI(BaseTestCase):
             content_type="application/json",
             data=dumps({
                 "software": "foo",
-                "software_versions": [
+                "versions": [
                         {"version": "1.0"}
                     ]
                 }))

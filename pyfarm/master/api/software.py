@@ -52,12 +52,12 @@ class VersionParseError(Exception):
 
 def extract_version_dicts(json_in):
     out = []
-    version_objects = json_in.pop("software_versions", [])
+    version_objects = json_in.pop("versions", [])
     if not isinstance(version_objects, list):
-        raise VersionParseError("Column software_versions must be a list.")
+        raise VersionParseError("Column versions must be a list.")
     for software_obj in version_objects:
         if not isinstance(software_obj, dict):
-            raise VersionParseError("""Entries in software_versions must be
+            raise VersionParseError("""Entries in versions must be
                 dictionaries.""")
         if not isinstance(software_obj["version"], STRING_TYPES):
             raise VersionParseError("Software versions must be strings.")
@@ -139,7 +139,7 @@ class SoftwareIndexAPI(MethodView):
                 {
                     "id": 4,
                     "software": "blender",
-                    "software_versions": []
+                    "versions": []
                 }
 
         :statuscode 201: a new software item was created
@@ -203,7 +203,7 @@ class SoftwareIndexAPI(MethodView):
                     {
                         "software": "Houdini",
                         "id": 1,
-                        "software_versions": [
+                        "versions": [
                             {
                                 "version": "13.0.1",
                                 "id": 1,
@@ -258,7 +258,7 @@ class SingleSoftwareAPI(MethodView):
                 {
                     "id": 4,
                     "software": "blender",
-                    "software_versions": []
+                    "versions": []
                 }
 
             **Request**
@@ -270,7 +270,7 @@ class SingleSoftwareAPI(MethodView):
 
                 {
                     "software": "blender",
-                    "software_version": [
+                    "version": [
                         {
                             "version": "1.69"
                         }
@@ -287,7 +287,7 @@ class SingleSoftwareAPI(MethodView):
                 {
                     "id": 4,
                     "software": "blender",
-                    "software_versions": [
+                    "versions": [
                         {
                             "version": "1.69",
                             "id": 1,
@@ -325,8 +325,8 @@ class SingleSoftwareAPI(MethodView):
 
         software.software = g.json["software"]
 
-        if "software_versions" in g.json:
-            software.software_versions = []
+        if "versions" in g.json:
+            software.versions = []
             db.session.flush()
             versions = extract_version_dicts(g.json)
             current_rank = 100
@@ -369,7 +369,7 @@ class SingleSoftwareAPI(MethodView):
                 {
                     "software": "Autodesk Maya",
                     "id": 1,
-                    "software_versions": [
+                    "versions": [
                         {
                             "version": "2013",
                             "id": 1,
@@ -478,7 +478,7 @@ class SoftwareVersionsIndexAPI(MethodView):
             return jsonify(error="Requested software not found"), NOT_FOUND
 
         out = [{"version": x.version, "id": x.id, "rank": x.rank}
-               for x in software.software_versions]
+               for x in software.versions]
         return jsonify(out), OK
 
     @validate_with_model(SoftwareVersion, ignore=("software_id", "rank"),
@@ -490,7 +490,7 @@ class SoftwareVersionsIndexAPI(MethodView):
         A rank can optionally be included.  If it isn't, it is assumed that this
         is the newest version for this software
 
-        .. http:post:: /api/v1/software/ HTTP/1.1
+        .. http:post:: /api/v1/software/versions/ HTTP/1.1
 
             **Request**
 
@@ -516,7 +516,7 @@ class SoftwareVersionsIndexAPI(MethodView):
                     "rank": "100"
                 }
 
-        :statuscode 201: a new software verison was created
+        :statuscode 201: a new software version was created
         :statuscode 400: there was something wrong with the request (such as
                             invalid columns being included)
         :statuscode 409: a software version with that name already exists
