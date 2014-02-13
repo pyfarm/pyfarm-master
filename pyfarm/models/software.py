@@ -77,8 +77,8 @@ class SoftwareVersion(db.Model, UtilityMixins):
     rank = db.Column(db.Integer, nullable=False,
                      doc=dedent("""
                         The rank of this version relative to other versions of
-                        the same software. Used to determine whether a version is
-                        higher or lower than another."""))
+                        the same software. Used to determine whether a version
+                        is higher or lower than another."""))
 
     software = db.relationship("Software", backref="software_versions")
 

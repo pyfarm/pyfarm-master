@@ -29,7 +29,9 @@ try:
 except ImportError:
     from http.client import INTERNAL_SERVER_ERROR
 
+from flask.ext.sqlalchemy import BaseQuery
 from sqlalchemy.orm import validates, class_mapper
+from sqlalchemy.orm.dynamic import AppenderMixin
 
 from pyfarm.core.enums import DBWorkState, _WorkState, Values, PY2
 from pyfarm.core.logger import getLogger
@@ -153,8 +155,21 @@ class UtilityMixins(object):
         how to unpack a relationship it will raise a ``NotImplementedError``
         """
         values = []
+        iterable = getattr(self, name)
 
-        for relationship in getattr(self, name):
+        # nothing else to do here
+        if iterable is None:
+            return
+
+        # If isinstance(iterable, sqlalchemy.orm.dyanmic.AppenderBaseQuery)
+        # then use all() to pull the data we need.  We can't test using that
+        # class directly however because it doesn't actually exist so we
+        # have to test the base types instead.
+        if isinstance(iterable, AppenderMixin) \
+                and isinstance(iterable, BaseQuery):
+            iterable = iterable.all()
+
+        for relationship in iterable:
             if name == "tags":
                 values.append(relationship.tag)
             elif name == "projects":
