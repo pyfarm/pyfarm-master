@@ -284,8 +284,13 @@ class SingleTagAPI(MethodView):
         A ``PUT`` to this endpoint will create a new tag under the given URI.
         If a tag already exists under that URI, it will be deleted, then
         recreated.
+        Note that when overwriting a tag like that, all relations that are not
+        explicitly specified here will be deleted
         You can optionally specify a list of agents or jobs relations as
         integers in the request data.
+
+        You should only call this by id for overwriting an existing tag or if you
+        have a reserved tag id. There is currently no way to reserve a tag id.
 
         .. http:put:: /api/v1/tags/<str:tagname> HTTP/1.1
 
@@ -344,9 +349,6 @@ class SingleTagAPI(MethodView):
         """
         if isinstance(tagname, int):
             tag = Tag.query.filter_by(id=tagname).first()
-            if not tag:
-                return jsonify(error="no tag with an id of %s "
-                                     "exists" % tagname), NOT_FOUND
 
             if "tag" in g.json and g.json["tag"] != tag.tag:
                 error = "tag name retrieved for %s does not match tag " \
@@ -361,9 +363,9 @@ class SingleTagAPI(MethodView):
             if g.json["tag"] != tagname:
                 return jsonify(error="`tag` in data must be equal to the "
                                      "tag in the requested url"), BAD_REQUEST
+            tag = Tag.query.filter_by(tag=g.json["tag"]).first()
 
         # If tag exists, delete it before recreating it
-        tag = Tag.query.filter_by(tag=g.json["tag"]).first()
         if tag:
             logger.debug(
                 "tag %s will be replaced with %r on commit", tag.tag, g.json)
@@ -414,6 +416,8 @@ class SingleTagAPI(MethodView):
                     error="job(s) not found: %s" % missing_jobs), BAD_REQUEST
 
         new_tag = Tag(**g.json)
+        if isinstance(tagname, int):
+            new_tag.id = tagname
         new_tag.agents = agents
         new_tag.jobs = jobs
 
