@@ -53,6 +53,14 @@ class Software(db.Model, UtilityMixins):
                          doc=dedent("""
                          The name of the software"""))
 
+    software_versions = db.relationship("SoftwareVersion",
+                                        backref=db.backref("software"),
+                                        lazy="dynamic",
+                                        cascade="all, delete-orphan",
+                                        order_by="asc(SoftwareVersion.rank)",
+                                        doc="All known versions of this "
+                                            "software")
+
 
 class SoftwareVersion(db.Model, UtilityMixins):
     """
@@ -77,10 +85,8 @@ class SoftwareVersion(db.Model, UtilityMixins):
     rank = db.Column(db.Integer, nullable=False,
                      doc=dedent("""
                         The rank of this version relative to other versions of
-                        the same software. Used to determine whether a version is
-                        higher or lower than another."""))
-
-    software = db.relationship("Software", backref="software_versions")
+                        the same software. Used to determine whether a version
+                        is higher or lower than another."""))
 
 
 class JobSoftwareRequirement(db.Model, UtilityMixins):

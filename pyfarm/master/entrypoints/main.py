@@ -114,7 +114,8 @@ def load_api(app_instance, api_instance):
     from pyfarm.master.api.agents import (
         SingleAgentAPI, AgentIndexAPI, schema as agent_schema)
     from pyfarm.master.api.software import (
-        schema as software_schema, SoftwareIndexAPI)
+        schema as software_schema, SoftwareIndexAPI, SingleSoftwareAPI,
+        SoftwareVersionsIndexAPI, SingleSoftwareVersionAPI)
     from pyfarm.master.api.tags import (
         schema as tag_schema, TagIndexAPI, SingleTagAPI, AgentsInTagIndexAPI)
 
@@ -150,6 +151,12 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/agents/<int:agent_id>",
         view_func=SingleAgentAPI.as_view("single_agent_api"))
+    api_instance.add_url_rule(
+        "/software/<int:software_rq>",
+        view_func=SingleSoftwareAPI.as_view("single_software_by_id_api"))
+    api_instance.add_url_rule(
+        "/software/<string:software_rq>",
+        view_func=SingleSoftwareAPI.as_view("single_software_by_string_api"))
 
     # subitems
     api_instance.add_url_rule(
@@ -159,6 +166,31 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/tags/<int:tagname>/agents/",
         view_func=AgentsInTagIndexAPI.as_view("agents_in_tag_by_id_index_api"))
+
+    api_instance.add_url_rule(
+        "/software/<string:software_rq>/versions/",
+        view_func=SoftwareVersionsIndexAPI.as_view(
+            "software_by_string_versions_index_api"))
+    api_instance.add_url_rule(
+        "/software/<int:software_rq>/versions/",
+        view_func=SoftwareVersionsIndexAPI.as_view(
+            "software_by_id_versions_index_api"))
+    api_instance.add_url_rule(
+        "/software/<string:software_rq>/versions/<string:version_name>",
+        view_func=SingleSoftwareVersionAPI.as_view(
+            "software_by_string_version_by_string_index_api"))
+    api_instance.add_url_rule(
+        "/software/<string:software_rq>/versions/<int:version_name>",
+        view_func=SingleSoftwareVersionAPI.as_view(
+            "software_by_string_version_by_id_index_api"))
+    api_instance.add_url_rule(
+        "/software/<int:software_rq>/versions/<string:version_name>",
+        view_func=SingleSoftwareVersionAPI.as_view(
+            "software_by_id_version_by_string_index_api"))
+    api_instance.add_url_rule(
+        "/software/<int:software_rq>/versions/<int:version_name>",
+        view_func=SingleSoftwareVersionAPI.as_view(
+            "software_by_id_version_by_id_index_api"))
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)

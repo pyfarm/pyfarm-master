@@ -30,11 +30,11 @@ import uuid
 try:
     from httplib import (
         OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED,
-        FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR)
+        FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR, CONFLICT)
 except ImportError:
     from http.client import (
         OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED,
-        FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR)
+        FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR, CONFLICT)
 
 try:
     from UserDict import UserDict
@@ -269,6 +269,9 @@ class BaseTestCase(TestCase):
 
     def assert_bad_request(self, response):
         self.assert_status(response, status_code=BAD_REQUEST)
+
+    def assert_conflict(self, response):
+        self.assert_status(response, status_code=CONFLICT)
 
     def assert_unauthorized(self, response):
         self.assert_status(response, status_code=UNAUTHORIZED)
