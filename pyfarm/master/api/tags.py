@@ -154,38 +154,10 @@ class TagIndexAPI(MethodView):
     def get(self):
         """
         A ``GET`` to this endpoint will return a list of known tags, with id.
-        Associated agents and jobs can be included for every tag, however that
-        feature may become a performance problem if used too much.
-        Only use it if you need that information anyway and the alternative
-        would be separate API calls for every tag returned here.
+        Associated agents and jobs are included for every tag
 
         :rtype : object
         .. http:get:: /api/v1/tags/ HTTP/1.1
-
-            **Request**
-
-            .. sourcecode:: http
-
-                GET /api/v1/tags/ HTTP/1.1
-                Accept: application/json
-
-            **Response**
-
-            .. sourcecode:: http
-
-                HTTP/1.1 200 OK
-                Content-Type: application/json
-
-                [
-                    {
-                        "id": 1,
-                        "tag": "interesting"
-                    },
-                    {
-                        "id": 2,
-                        "tag": "boring"
-                    }
-                ]
 
             **Request**
 
