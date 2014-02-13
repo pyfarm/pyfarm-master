@@ -24,15 +24,18 @@ This module defines an API for managing and querying jobtypes
 
 try:
     from httplib import (
-        OK, CREATED, CONFLICT)
+        OK, CREATED, CONFLICT, NOT_FOUND)
 except ImportError:  # pragma: no cover
     from http.client import (
-        OK, CREATED, CONFLICT)
+        OK, CREATED, CONFLICT, NOT_FOUND)
 
 from flask import g
 from flask.views import MethodView
 
+from sqlalchemy import or_
+
 from pyfarm.core.logger import getLogger
+from pyfarm.core.enums import STRING_TYPES
 from pyfarm.models.jobtype import JobType
 from pyfarm.master.application import db
 from pyfarm.master.utility import jsonify, validate_with_model
@@ -189,3 +192,136 @@ class JobTypeIndexAPI(MethodView):
             out.append({"id": id, "name": name})
 
         return jsonify(out), OK
+
+
+class SingleJobTypeAPI(MethodView):
+    def get(self, jobtype_name):
+        """
+        A ``GET`` to this endpoint will return the referenced jobtype, by name,
+        id, or sha1 sum.
+
+        .. http:get:: /api/v1/jobtypes/<str:tagname> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobtypes/TestJobType /1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "batch_contiguous": true,
+                    "classname": null,
+                     "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
+                            "JobType\n\nclass TestJobType(JobType):\n"
+                            "    def get_command(self):\n"
+                            "        return \"/usr/bin/touch\"\n\n"
+                            "    def get_arguments(self):\n"
+                            "           return [os.path.join("
+                            "self.assignment_data[\"job\"][\"data\"][\"path\"], "
+                            "\"%04d\" % self.assignment_data[\"tasks\"]"
+                            "[0][\"frame\"])]\n",
+                    "id": 1,
+                    "jobs": [],
+                    "max_batch": 1,
+                    "name": "TestJobType", 
+                    "sha1": "849d564da815f8bdfd9de0aaf4ac4fe6e9013015",
+                    "software_requirements": []
+                }
+
+        :statuscode 200: no error
+        :statuscode 404: tag not found
+        """
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter(
+                or_(JobType.name == jobtype_name,
+                    JobType.sha1 == jobtype_name)).first()
+        else:
+            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+
+        if not jobtype:
+            return (jsonify(error="JobType %s not found" % jobtype_name),
+                    NOT_FOUND)
+
+        return jsonify(jobtype.to_dict()), OK
+
+    @validate_with_model(JobType, ignore=("sha1",), disallow=("jobs",))
+    def put(self, jobtype_name):
+        """
+        A ``PUT`` to this endpoint will create a new jobtag under the given URI.
+        If a jobtype already exists under that URI, it will be deleted, then
+        recreated.
+
+        You should only call this by id for overwriting an existing jobtype or if
+        you have a reserved jobtype id. There is currently no way to reserve a
+        jobtype id.
+
+        .. http:put:: /api/v1/jobtypes/<str:tagname> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                PUT /api/v1/jobtypes/TestJobType /1.1
+                Accept: application/json
+
+                {
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
+                            "JobType\n\nclass TestJobType(JobType):\n"
+                            "    def get_command(self):\n"
+                            "        return \"/usr/bin/touch\"\n\n"
+                            "    def get_arguments(self):\n"
+                            "           return [os.path.join("
+                            "self.assignment_data[\"job\"][\"data\"][\"path\"], "
+                            "\"%04d\" % self.assignment_data[\"tasks\"]"
+                            "[0][\"frame\"])]\n"
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": 1,
+                    "tag": "interesting"
+                }
+
+        :statuscode 201: a new tag was created
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        """
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter(
+                or_(JobType.name == jobtype_name,
+                    JobType.sha1 == jobtype_name)).first()
+        else:
+            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+
+        if jobtype:
+            logger.debug(
+                "jobtype %s will be replaced with %r on commit",
+                jobtype.name, g.json)
+            db.session.delete(jobtype)
+            db.session.flush()
+
+        jobtype = JobType(**g.json)
+
+        db.session.add(jobtype)
+        db.session.commit()
+        jobtype_data = jobtype.to_dict()
+        logger.info("created jobtype %s in put: %r", jobtype.name, jobtype_data)
+
+        return jsonify(jobtype_data), CREATED
+
