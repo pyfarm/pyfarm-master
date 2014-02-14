@@ -250,6 +250,11 @@ class SingleJobTypeAPI(MethodView):
             return (jsonify(error="JobType %s not found" % jobtype_name),
                     NOT_FOUND)
 
+        # For some reason, sqlalchemy sometimes returns this column as bytes
+        # instead of string.  jsonify cannot decode that.
+        if isinstance(jobtype.code, bytes):
+            jobtype.code = jobtype.code.decode()
+
         return jsonify(jobtype.to_dict()), OK
 
     @validate_with_model(JobType, ignore=("sha1",), disallow=("jobs",))
