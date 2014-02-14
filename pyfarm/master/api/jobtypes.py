@@ -392,10 +392,10 @@ class JobTypeCodeAPI(MethodView):
                 from pyfarm.jobtypes.core.jobtype import JobType
 
                 class TestJobType(JobType):
-                        def get_command(self):
+                    def get_command(self):
                         return "/usr/bin/touch"
 
-                        def get_arguments(self):
+                    def get_arguments(self):
                         return [os.path.join(
                             self.assignment_data["job"]["data"]["path"], "%04d" %
                             self.assignment_data["tasks"][0]["frame"])]
