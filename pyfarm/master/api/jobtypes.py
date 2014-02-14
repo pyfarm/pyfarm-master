@@ -206,7 +206,7 @@ class SingleJobTypeAPI(MethodView):
 
             .. sourcecode:: http
 
-                GET /api/v1/jobtypes/TestJobType /1.1
+                GET /api/v1/jobtypes/TestJobType HTTP/1.1
                 Accept: application/json
 
             **Response**
@@ -269,7 +269,7 @@ class SingleJobTypeAPI(MethodView):
 
             .. sourcecode:: http
 
-                PUT /api/v1/jobtypes/TestJobType /1.1
+                PUT /api/v1/jobtypes/TestJobType HTTP/1.1
                 Accept: application/json
 
                 {
