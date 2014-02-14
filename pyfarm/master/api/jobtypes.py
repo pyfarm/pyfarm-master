@@ -29,7 +29,7 @@ except ImportError:  # pragma: no cover
     from http.client import (
         OK, CREATED, CONFLICT, NOT_FOUND)
 
-from flask import g
+from flask import g, Response
 from flask.views import MethodView
 
 from sqlalchemy import or_
@@ -360,3 +360,53 @@ class SingleJobTypeAPI(MethodView):
             logger.info("jobtype %s has been deleted",jobtype.name, g.json)
 
         return jsonify(), NO_CONTENT
+
+
+class JobTypeCodeAPI(MethodView):
+    def get(self, jobtype_name):
+        """
+        A ``GET`` to this endpoint will return just the python code for this
+        jobtype
+
+        .. http:get:: /api/v1/jobtypes/<str:tagname>/code HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobtypes/TestJobType/code HTTP/1.1
+                Accept: text/x-python
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: text/x-python
+
+                from pyfarm.jobtypes.core.jobtype import JobType
+
+                class TestJobType(JobType):
+                        def get_command(self):
+                        return "/usr/bin/touch"
+
+                        def get_arguments(self):
+                        return [os.path.join(
+                            self.assignment_data["job"]["data"]["path"], "%04d" %
+                            self.assignment_data["tasks"][0]["frame"])]
+
+        :statuscode 200: no error
+        :statuscode 404: tag not found
+        """
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter(
+                or_(JobType.name == jobtype_name,
+                    JobType.sha1 == jobtype_name)).first()
+        else:
+            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+
+        if not jobtype:
+            return (jsonify(error="JobType %s not found" % jobtype_name),
+                    NOT_FOUND)
+
+        return Response(jobtype.code, OK, mimetype="text/x-python")
