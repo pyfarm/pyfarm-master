@@ -325,3 +325,38 @@ class SingleJobTypeAPI(MethodView):
 
         return jsonify(jobtype_data), CREATED
 
+    def delete(self, jobtype_name):
+        """
+        A ``DELETE`` to this endpoint will delete the requested jobtyoe
+
+        .. http:delete:: /api/v1/jobtypes/<str:jobtype_name> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/jobtypes/TestJobType HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 204 NO_CONTENT
+
+        :statuscode 204: the jobtype was deleted or didn't exist
+        """
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter(
+                or_(JobType.name == jobtype_name,
+                    JobType.sha1 == jobtype_name)).first()
+        else:
+            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+
+        if jobtype:
+            logger.debug("jobtype %s will be deleted",jobtype.name, g.json)
+            db.session.delete(jobtype)
+            db.session.commit()
+            logger.info("jobtype %s has been deleted",jobtype.name, g.json)
+
+        return jsonify(), NO_CONTENT
