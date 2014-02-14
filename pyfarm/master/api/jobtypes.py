@@ -29,7 +29,7 @@ except ImportError:  # pragma: no cover
     from http.client import (
         OK, CREATED, CONFLICT, NOT_FOUND)
 
-from flask import g, Response
+from flask import g, Response, request
 from flask.views import MethodView
 
 from sqlalchemy import or_
@@ -415,3 +415,66 @@ class JobTypeCodeAPI(MethodView):
                     NOT_FOUND)
 
         return Response(jobtype.code, OK, mimetype="text/x-python")
+
+    def put(self, jobtype_name):
+        """
+        A ``PUT`` to this endpoint will overwrite the code of the given jobtype
+        with the given data.  The sha1 column will be recomputed.
+
+        .. http:put:: /api/v1/jobtypes/<str:tagname>/code HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                PUT /api/v1/jobtypes/TestJobType/code HTTP/1.1
+                Accept: text/x-python
+                Content-Type: text/x-python
+
+                class TestJobType(JobType):
+                    def get_command(self):
+                        return "/bin/true"
+
+                    def get_arguments(self):
+                        return ""
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: text/x-python
+
+                PUT /api/v1/jobtypes/TestJobType/code HTTP/1.1
+                Accept: text/x-python
+                Content-Type: text/x-python
+
+                class TestJobType(JobType):
+                    def get_command(self):
+                        return "/bin/true"
+
+                    def get_arguments(self):
+                        return ""
+
+        :statuscode 201: the jobtype's code was overwritten
+        """
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter(
+                or_(JobType.name == jobtype_name,
+                    JobType.sha1 == jobtype_name)).first()
+        else:
+            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+
+        if not jobtype:
+            return (jsonify(error="JobType %s not found" % jobtype_name),
+                    NOT_FOUND)
+
+        jobtype.code = request.data
+        db.session.add(jobtype)
+        db.session.commit()
+
+        logger.info("Updated code for jobtype %s to %s",
+                    jobtype.name,
+                    jobtype.code)
+
+        return Response(jobtype.code, CREATED, mimetype="text/x-python")
