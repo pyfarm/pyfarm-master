@@ -57,12 +57,17 @@ event.listen(
     WorkStateChangedModel.state, "set", WorkStateChangedModel.stateChangedEvent)
 
 
-MixinModelRelation = db.Table(
-    "%s_mixin_rel_test" % TABLE_PREFIX, db.metadata,
+MixinModelRelation1 = db.Table(
+    "%s_mixin_rel_test1" % TABLE_PREFIX, db.metadata,
     db.Column("mixin_id", db.Integer,
               db.ForeignKey("%s.id" % "%s_mixin_test" % TABLE_PREFIX),
               primary_key=True))
 
+MixinModelRelation2 = db.Table(
+    "%s_mixin_rel_test2" % TABLE_PREFIX, db.metadata,
+    db.Column("mixin_id", db.Integer,
+              db.ForeignKey("%s.id" % "%s_mixin_test" % TABLE_PREFIX),
+              primary_key=True))
 
 class MixinModel(db.Model, UtilityMixins):
     __tablename__ = "%s_mixin_test" % TABLE_PREFIX
@@ -71,7 +76,8 @@ class MixinModel(db.Model, UtilityMixins):
     b = db.Column(db.String(512))
     c = db.Column(IPv4Address)
     d = db.Column(db.Integer, nullable=False)
-    e = db.relationship("MixinModel", secondary=MixinModelRelation)
+    e = db.relationship("MixinModel", secondary=MixinModelRelation1)
+    f = db.relationship("MixinModel", secondary=MixinModelRelation2)
 
 
 class TestMixins(BaseTestCase):
@@ -141,10 +147,28 @@ class TestMixins(BaseTestCase):
         model = MixinModel(a=1, b="hello", d=0)
         db.session.add(model)
         db.session.commit()
-        self.assertDictEqual(
+        self.assertEqual(
             {"a": model.a, "b": model.b, "id": model.id, "c": None,
-             "e": [], "d": model.d},
+             "e": [], "d": model.d, "f": []},
             model.to_dict())
+
+    def to_dict_no_relationships(self):
+        model = MixinModel(a=1, b="hello", d=0)
+        db.session.add(model)
+        db.session.commit()
+        self.assertEqual(
+            {"a": model.a, "b": model.b, "id": model.id, "c": None,
+             "d": model.d},
+            model.to_dict(unpack_relationships=False))
+
+    def to_dict_some_relationships(self):
+        model = MixinModel(a=1, b="hello", d=0)
+        db.session.add(model)
+        db.session.commit()
+        self.assertEqual(
+            {"a": model.a, "b": model.b, "id": model.id, "c": None,
+             "d": model.d, "f": []},
+            model.to_dict(unpack_relationships=("f", )))
 
     def test_to_schema(self):
         model = MixinModel(a=1, b="hello", d=0)
@@ -161,4 +185,4 @@ class TestMixins(BaseTestCase):
         self.assertEqual(types.primary_keys, set(["id"]))
         self.assertEqual(types.columns, set(["b", "c", "a", "id", "d"]))
         self.assertEqual(types.required, set(["id", "d"]))
-        self.assertEqual(types.relationships, set(["e"]))
+        self.assertEqual(types.relationships, set(["e", "f"]))
