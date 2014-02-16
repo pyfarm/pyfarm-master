@@ -176,7 +176,7 @@ class UtilityMixins(object):
                 values.append(relationship.name)
             elif name == "software":
                 values.append(relationship.name)
-            elif name == "software_versions":
+            elif name == "versions" or name == "software_versions":
                 values.append({"id": relationship.id,
                                "version": relationship.version,
                                "rank": relationship.rank})
