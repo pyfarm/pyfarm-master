@@ -110,7 +110,6 @@ class User(db.Model, UserMixin, ReprMixin):
 
     @classmethod
     def create(cls, username, password, email=None, roles=None):
-        print(password)
         # create the list or roles to add
         if roles is None:
             roles = []
