@@ -27,7 +27,6 @@ from textwrap import dedent
 
 from flask.ext.login import UserMixin
 
-from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, PY3
 from pyfarm.master.application import app, db, login_serializer
 from pyfarm.models.core.mixins import ReprMixin
@@ -38,8 +37,6 @@ from pyfarm.models.core.cfg import (
     MAX_ROLE_LENGTH, TABLE_USERS_PROJECTS, TABLE_PROJECT)
 
 __all__ = ("User", )
-
-logger = getLogger("models.users")
 
 # roles the user is a member of
 UserRoles = db.Table(
@@ -113,6 +110,7 @@ class User(db.Model, UserMixin, ReprMixin):
 
     @classmethod
     def create(cls, username, password, email=None, roles=None):
+        print(password)
         # create the list or roles to add
         if roles is None:
             roles = []
@@ -169,7 +167,6 @@ class User(db.Model, UserMixin, ReprMixin):
 
     def is_active(self):
         """returns true if the user and the roles it belongs to are active"""
-        logger.debug("%(self)s.is_active()" % locals())
         now = datetime.now()
 
         # user is not active
@@ -190,10 +187,6 @@ class User(db.Model, UserMixin, ReprMixin):
 
         allowed = split_and_extend(allowed)
         required = split_and_extend(required)
-
-        logger.debug(
-            "%(self)s.has_roles(allowed=%(allowed)s, required=%(required)s)"
-            % locals())
 
         if allowed:
             # Ask the database if the user has any of the allowed roles.  For
