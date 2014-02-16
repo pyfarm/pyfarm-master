@@ -354,7 +354,7 @@ class SingleTagAPI(MethodView):
             # make sure all ids provided are ints
             if not all(isinstance(agent_id, int) for agent_id in agent_ids):
                 return jsonify(
-                    error="all agent ids must be integers"), NOT_FOUND
+                    error="all agent ids must be integers"), BAD_REQUEST
 
             # find all models matching the request id(s)
             agents = Agent.query.filter(Agent.id.in_(agent_ids)).all()
@@ -363,8 +363,7 @@ class SingleTagAPI(MethodView):
             missing_agents = set(agent_ids) - set(agent.id for agent in agents)
             if missing_agents:
                 return jsonify(
-                    error="agent(s) not found: %s" % missing_agents), \
-                    NOT_FOUND
+                    error="agent(s) not found: %s" % missing_agents), NOT_FOUND
 
         jobs = []
         if "jobs" in g.json:
@@ -385,7 +384,7 @@ class SingleTagAPI(MethodView):
             missing_jobs = set(job_ids) - set(job.id for job in jobs)
             if missing_jobs:
                 return jsonify(
-                    error="job(s) not found: %s" % missing_jobs), BAD_REQUEST
+                    error="job(s) not found: %s" % missing_jobs), NOT_FOUND
 
         new_tag = Tag(**g.json)
         if isinstance(tagname, int):

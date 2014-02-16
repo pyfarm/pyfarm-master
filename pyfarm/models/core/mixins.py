@@ -176,7 +176,7 @@ class UtilityMixins(object):
                 values.append(relationship.name)
             elif name == "software":
                 values.append(relationship.name)
-            elif name == "software_versions":
+            elif name == "versions" or name == "software_versions":
                 values.append({"id": relationship.id,
                                "version": relationship.version,
                                "rank": relationship.rank})
@@ -188,8 +188,16 @@ class UtilityMixins(object):
 
         return values
 
-    def to_dict(self):
-        """Produce a dictionary of existing data in the table"""
+    def to_dict(self, unpack_relationships=True):
+        """
+        Produce a dictionary of existing data in the table
+
+        :type unpack_relationships: list, tuple, set, bool
+        :param unpack_relationships:
+            If ``True`` then unpack all relationships.  If
+            ``unpack_relationships`` is an iterable such as a list or
+            tuple object then only unpack those relationships.
+        """
         if not isinstance(self.DICT_CONVERT_COLUMN, dict):
             raise TypeError(
                 "expected %s.DICT_CONVERT_COLUMN to "
@@ -213,8 +221,19 @@ class UtilityMixins(object):
             else:
                 results[name] = converter(name)
 
-        # now convert all of the relationships
-        for name in types.relationships:
+        # unpack all relationships
+        if unpack_relationships is True:
+            relationships = types.relationships
+
+        # unpack the intersection of the requested relationships
+        # and the real relationships
+        elif isinstance(unpack_relationships, (list, set, tuple)):
+            relationships = set(unpack_relationships) & types.relationships
+
+        else:
+            relationships = set()
+
+        for name in relationships:
             converter = self.DICT_CONVERT_COLUMN.get(
                 name, self._to_dict_relationship)
 

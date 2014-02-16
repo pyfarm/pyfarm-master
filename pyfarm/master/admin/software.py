@@ -25,7 +25,6 @@ Objects and classes for working with the software models.
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.application import SessionMixin
 from pyfarm.models.software import Software
-from pyfarm.models.task import Task
 
 
 class SoftwareView(SessionMixin, SQLModelView):
