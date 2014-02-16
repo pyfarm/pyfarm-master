@@ -268,6 +268,7 @@ def run_master():  # pragma: no cover
     if parsed.allow_any_agent_address:
         app.config["DEV_ALLOW_ANY_AGENT_ADDRESS"] = True
 
+    load_setup(app)
     load_master(app, admin, api)
     app.run()
 

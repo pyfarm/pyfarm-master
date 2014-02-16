@@ -54,14 +54,16 @@ def setup_page():
         else:
             admin_users = admin_role.users
 
-        return render_template("pyfarm/setup.html", form=form,
-                               admin_role=admin_role, admin_users=admin_users)
+        return render_template(
+            "pyfarm/setup.html", form=form,
+            admin_role=admin_role, admin_users=admin_users)
 
     elif request.method == "POST":
         if form.validate():
             # make sure we're still the only admin
             admin_role = Role.query.filter_by(name="admin").first()
-            if admin_role and admin_role.users:
+
+            if admin_role and admin_role.users.first():
                 return render_template(
                     "pyfarm/setup.html",
                     error="someone else created an administrator")
@@ -73,7 +75,8 @@ def setup_page():
             user.roles.append(Role.create("admin"))
             db.session.add(user)
             db.session.commit()
-            return render_template("pyfarm/setup.html",
-                                   finished=True, redirect_seconds=5)
+
+            return render_template(
+                "pyfarm/setup.html", finished=True, redirect_seconds=5)
 
         return render_template("pyfarm/setup.html", form=form)
