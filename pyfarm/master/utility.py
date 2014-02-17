@@ -75,7 +75,7 @@ def inside_request():
 
     # We're not inside a request context yet and
     # there's nothing logical to return.
-    except RuntimeError:
+    except RuntimeError:  # pragma: no cover
         return False
 
     # We're inside a request context, this exception is
@@ -123,7 +123,7 @@ def get_g(attribute, instance_types, unset=NOTSET):
     # The resulting value should have the correct type
     if not isinstance(value, instance_types):
         g.error = "expected an instance of %s but got %s instead" % (
-            g.json.__class__.__name__)
+            g.json.__class__.__name__, type(value))
         abort(BAD_REQUEST)
 
     return value
