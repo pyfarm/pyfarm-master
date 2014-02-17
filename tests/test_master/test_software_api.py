@@ -115,7 +115,7 @@ class TestSoftwareAPI(BaseTestCase):
             "/api/v1/software/",
             content_type="something/else",
             data="software=foo")
-        self.assert_bad_request(response1)
+        self.assert_unsupported_media_type(response1)
 
     def test_software_post_existing(self):
         response1 = self.client.post(

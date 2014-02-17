@@ -25,9 +25,11 @@ import json
 from functools import wraps
 
 try:
-    from httplib import responses, BAD_REQUEST, INTERNAL_SERVER_ERROR
+    from httplib import (
+        responses, BAD_REQUEST, INTERNAL_SERVER_ERROR, UNSUPPORTED_MEDIA_TYPE)
 except ImportError:
-    from http.client import responses, BAD_REQUEST, INTERNAL_SERVER_ERROR
+    from http.client import (
+        responses, BAD_REQUEST, INTERNAL_SERVER_ERROR, UNSUPPORTED_MEDIA_TYPE)
 
 try:
     from UserDict import UserDict
@@ -36,10 +38,12 @@ except ImportError:
 
 from flask import (
     jsonify as _jsonify, current_app, request, g, abort, render_template)
+from voluptuous import Schema, Invalid
 
 from pyfarm.core.enums import STRING_TYPES, NOTSET
 
 NONE_TYPE = type(None)
+JSON_MIMETYPES = set(["application/json"])
 
 
 def jsonify(*args, **kwargs):
@@ -62,6 +66,160 @@ def jsonify(*args, **kwargs):
 
     else:
         return _jsonify(*args, **kwargs)
+
+
+def inside_request():
+    """Returns True if we're inside a request, False if not."""
+    try:
+        g.__test_attribute__
+
+    # We're not inside a request context yet and
+    # there's nothing logical to return.
+    except RuntimeError:  # pragma: no cover
+        return False
+
+    # We're inside a request context, this exception is
+    # expected because __test_context__ does not in fact
+    # exist
+    except AttributeError:
+        return True
+
+    # For the off chance that someone creates __test_attribute__,
+    # let's not allow some really odd behavior to happen as a result.
+    else:
+        assert False, "g.__test_attribute__ exists now"
+
+
+def get_g(attribute, instance_types, unset=NOTSET):
+    """
+    Returns data from :attr:`flask.g` after checking to make sure
+    the attribute was set and that it has the correct type.
+
+    This function does not check to see if you're already inside a request.
+
+
+    :param str attribute:
+        The name of the attribute on the :attr:`flask.g` object
+
+    :param tuple instance_types:
+        A tuple of classes which the data we're looking
+        for should be a part of
+    """
+    value = unset  # necessary to silence some lint warnings
+
+    # Either retrieve the value or fail if we can't find it
+    try:
+        value = getattr(g, attribute)
+    except AttributeError:
+        g.error = "`g` is lacking the `%s` attribute" % attribute
+        abort(INTERNAL_SERVER_ERROR)
+
+    # Our before_request handler *should* set a default value, check
+    # that here so
+    if value is unset:
+        g.error = "`g.%s` has not been set" % attribute
+        abort(INTERNAL_SERVER_ERROR)
+
+    # The resulting value should have the correct type
+    if not isinstance(value, instance_types):
+        g.error = "expected an instance of %s but got %s instead" % (
+            g.json.__class__.__name__, type(value))
+        abort(BAD_REQUEST)
+
+    return value
+
+
+def assert_mimetypes(flask_request, mimetypes):
+    """
+    .. warning::
+        This function will produce an unhandled error if you use
+        it outside of a request.
+
+    Check to make sure that the request's mimetype is in ``mimetypes``.  If
+    this is not true then call :func:`flask.abort` with
+    ``UNSUPPORTED_MEDIA_TYPE``
+
+    :param flask_request:
+        The flask request object which we should check the ``mimetype``
+        attribute on.
+
+    :type mimetypes: list, tuple, set
+    :param mimetypes:
+        The mimetypes which ``flask_request`` can be.
+    """
+    assert isinstance(mimetypes, (list, tuple, set))
+
+    if flask_request.mimetype not in mimetypes:
+        g.error = "Unsupported mimetype, only %s mimetype(s) are " \
+                  "supported." % mimetypes
+        abort(UNSUPPORTED_MEDIA_TYPE)
+
+
+def validate_json(validator, json_types=(dict, )):
+    """
+    A decorator, similar to :func:`.validate_with_model`, but greatly
+    simplified and more flexible.  Unlike :func:`.validate_with_model` this
+    decorator is meant to handle data which may not be structured for a model.
+
+    :param tuple mimetype:
+        A tuple of mimetypes that are allowed to be handled by the
+        decorated function.
+
+    :param tuple json_types:
+        The root type or types which the object on ``g.json`` should
+        be an instance of.
+    """
+    def wrapper(func):
+
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            if not inside_request():
+                return func(*args, **kwargs)
+
+            assert_mimetypes(request, JSON_MIMETYPES)
+            data = get_g("json", json_types)
+
+            error = None
+            if isinstance(validator, Schema):
+                try:
+                    validator(data)
+                except Invalid as e:
+                    error = str(e)
+
+            elif callable(validator):
+                try:
+                    result = validator(data)
+                except Exception as e:
+                    g.error = "Error while running validator: %s" % str(e)
+                    abort(INTERNAL_SERVER_ERROR)
+
+                if result is True:
+                    pass
+
+                elif result is False:
+                    error = "Unknown error when validating data " \
+                            "using %s" % validator
+
+                elif isinstance(result, STRING_TYPES):
+                    error = result
+
+                else:
+                    g.error = "Output from callable validator should be a " \
+                              "string or boolean."
+                    abort(INTERNAL_SERVER_ERROR)
+
+            else:
+                g.error = "Only know how to handle callable objects or " \
+                          "instances of instances of voluptuous.Schema."
+                abort(INTERNAL_SERVER_ERROR)
+
+            if error is not None:
+                g.error = error
+                abort(BAD_REQUEST)
+
+            return func(*args, **kwargs)
+        return wrapped
+    return wrapper
 
 
 def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
@@ -104,11 +262,10 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
 
         @wraps(func)
         def wrapped(*args, **kwargs):
-            # for now, we only support conversion from a json
-            # request
-            if request.mimetype != "application/json":
-                g.error = "only know how to handle application/json here"
-                abort(BAD_REQUEST)
+            if not inside_request():
+                return func(*args, **kwargs)
+
+            assert_mimetypes(request, JSON_MIMETYPES)
 
             try:
                 # special case where the decorator is being

@@ -31,7 +31,8 @@ install_requires = [
     "flask-login", 
     "flask-sqlalchemy", 
     "itsdangerous", 
-    "blinker"]
+    "blinker",
+    "voluptuous"]
 
 if sys.version_info[0:2] == (2, 6):
     install_requires += ["argparse"]
