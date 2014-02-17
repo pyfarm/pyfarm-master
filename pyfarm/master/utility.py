@@ -38,10 +38,12 @@ except ImportError:
 
 from flask import (
     jsonify as _jsonify, current_app, request, g, abort, render_template)
+from voluptuous import Schema, Invalid
 
 from pyfarm.core.enums import STRING_TYPES, NOTSET
 
 NONE_TYPE = type(None)
+JSON_MIMETYPES = set(["application/json"])
 
 
 def jsonify(*args, **kwargs):
@@ -103,6 +105,8 @@ def get_g(attribute, instance_types, unset=NOTSET):
         A tuple of classes which the data we're looking
         for should be a part of
     """
+    value = unset  # necessary to silence some lint warnings
+
     # Either retrieve the value or fail if we can't find it
     try:
         value = getattr(g, attribute)
@@ -125,22 +129,33 @@ def get_g(attribute, instance_types, unset=NOTSET):
     return value
 
 
-def validate_mimetypes(flask_request, mimetypes):
+def assert_mimetypes(flask_request, mimetypes):
     """
+    .. warning::
+        This function will produce an unhandled error if you use
+        it outside of a request.
+
     Check to make sure that the request's mimetype is in ``mimetypes``.  If
     this is not true then call :func:`flask.abort` with
     ``UNSUPPORTED_MEDIA_TYPE``
 
-    This function does not check to see if you're already inside a request.
+    :param flask_request:
+        The flask request object which we should check the ``mimetype``
+        attribute on.
+
+    :type mimetypes: list, tuple, set
+    :param mimetypes:
+        The mimetypes which ``flask_request`` can be.
     """
+    assert isinstance(mimetypes, (list, tuple, set))
+
     if flask_request.mimetype not in mimetypes:
         g.error = "Unsupported mimetype, only %s mimetype(s) are " \
                   "supported." % mimetypes
         abort(UNSUPPORTED_MEDIA_TYPE)
 
 
-def simple_validator(validator,
-                     mimetypes=("application/json", ), root_types=(dict, )):
+def validate_json(validator, json_types=(dict, )):
     """
     A decorator, similar to :func:`.validate_with_model`, but greatly
     simplified and more flexible.  Unlike :func:`.validate_with_model` this
@@ -150,8 +165,8 @@ def simple_validator(validator,
         A tuple of mimetypes that are allowed to be handled by the
         decorated function.
 
-    :param tuple root_types:
-        The root type or types which the object on :attr:`flask.g` should
+    :param tuple json_types:
+        The root type or types which the object on ``g.json`` should
         be an instance of.
     """
     def wrapper(func):
@@ -161,15 +176,49 @@ def simple_validator(validator,
             if not inside_request():
                 return func(*args, **kwargs)
 
-            validate_mimetypes(request, mimetypes)
-            data = get_g("json", dict)
-            # TODO: validator is dict - assume values are allowed types
-            # and keys are required
-            # TODO: validator is voluptuous instance - run it
-            # TODO: validator is otherwise callable - run it
+            assert_mimetypes(request, JSON_MIMETYPES)
+            data = get_g("json", json_types)
+
+            error = None
+            if isinstance(validator, Schema):
+                try:
+                    validator(data)
+                except Invalid as e:
+                    error = str(e)
+
+            elif callable(validator):
+                try:
+                    result = validator(data)
+                except Exception as e:
+                    g.error = "Error while running validator: %s" % str(e)
+                    abort(INTERNAL_SERVER_ERROR)
+
+                if result is True:
+                    pass
+
+                elif result is False:
+                    error = "Unknown error when validating data " \
+                            "using %s" % validator
+
+                elif isinstance(result, STRING_TYPES):
+                    error = result
+
+                else:
+                    raise NotImplementedError(
+                        "Output from callable validator should be a "
+                        "string or boolean.")
+
+            else:
+                raise NotImplementedError(
+                    "Only know how to handle callable objects or instances"
+                    "of instances of voluptuous.Schema.")
+
+            if error is not None:
+                g.error = error
+                abort(BAD_REQUEST)
 
             return func(*args, **kwargs)
-
+        return wrapped
     return wrapper
 
 
@@ -216,7 +265,7 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
             if not inside_request():
                 return func(*args, **kwargs)
 
-            validate_mimetypes(request, ["application/json"])
+            assert_mimetypes(request, JSON_MIMETYPES)
 
             try:
                 # special case where the decorator is being

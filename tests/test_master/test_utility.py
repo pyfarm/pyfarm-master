@@ -234,9 +234,9 @@ class TestValidateWithModel(BaseTestCase):
 
         self.add_route(test)
         response = self.post("/", headers={"Content-Type": "foo"})
-        self.assert_bad_request(response)
+        self.assert_unsupported_media_type(response)
         self.assertIn(
-            "only know how to handle application/json here",
+            "415 Unsupported Media Type",
             response.data.decode("utf-8"))
 
 

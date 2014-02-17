@@ -30,11 +30,13 @@ import uuid
 try:
     from httplib import (
         OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED,
-        FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR, CONFLICT)
+        FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR, CONFLICT,
+        UNSUPPORTED_MEDIA_TYPE)
 except ImportError:
     from http.client import (
         OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED,
-        FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR, CONFLICT)
+        FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR, CONFLICT,
+        UNSUPPORTED_MEDIA_TYPE)
 
 try:
     from UserDict import UserDict
@@ -287,3 +289,6 @@ class BaseTestCase(TestCase):
 
     def assert_internal_server_error(self, response):
         self.assert_status(response, status_code=INTERNAL_SERVER_ERROR)
+
+    def assert_unsupported_media_type(self, response):
+        self.assert_status(response, status_code=UNSUPPORTED_MEDIA_TYPE)
