@@ -253,7 +253,7 @@ class SingleJobTypeAPI(MethodView):
 
         # For some reason, sqlalchemy sometimes returns this column as bytes
         # instead of string.  jsonify cannot decode that.
-        if isinstance(jobtype.code, bytes):
+        if PY3 and isinstance(jobtype.code, bytes):
             jobtype.code = jobtype.code.decode()
 
         return jsonify(jobtype.to_dict()), OK
