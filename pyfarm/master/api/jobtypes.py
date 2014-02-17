@@ -36,6 +36,7 @@ from sqlalchemy import or_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES
+from pyfarm.models.software import JobTypeSoftwareRequirement
 from pyfarm.models.jobtype import JobType
 from pyfarm.master.application import db
 from pyfarm.master.utility import jsonify, validate_with_model
@@ -478,3 +479,46 @@ class JobTypeCodeAPI(MethodView):
                     jobtype.code)
 
         return Response(jobtype.code, CREATED, mimetype="text/x-python")
+
+
+class JobTypeSoftwareRequirementsIndexAPI(MethodView):
+    def get(self, jobtype_name):
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter(
+                or_(JobType.name == jobtype_name,
+                    JobType.sha1 == jobtype_name)).first()
+        else:
+            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+
+        if not jobtype:
+            return (jsonify(error="JobType %s not found" % jobtype_name),
+                    NOT_FOUND)
+
+        out = [x.to_dict() for x in jobtype.software_requirements]
+
+        return jsonify(out), OK
+
+    @validate_with_model(JobTypeSoftwareRequirement)
+    def post(self, jobtype_name):
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter(
+                or_(JobType.name == jobtype_name,
+                    JobType.sha1 == jobtype_name)).first()
+        else:
+            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+
+        if not jobtype:
+            return (jsonify(error="JobType %s not found" % jobtype_name),
+                    NOT_FOUND)
+
+        if g.json["jobtype_id"] != jobtype.id:
+            return jsonify(error="Wrong jobtype id in data"), BAD_REQUEST
+
+        requirement = JobTypeSoftwareRequirement(**g.json)
+        db.session.add(requirement)
+        db.session.commit()
+        requirement_data = requirement.to_dict()
+        logger.info("Created new software requirement for for jobtype %s: %r",
+                    jobtype.id, requirement_data)
+
+        return jsonify(requirement_data), CREATED
