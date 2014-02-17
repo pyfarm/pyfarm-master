@@ -220,7 +220,7 @@ class SingleJobTypeAPI(MethodView):
                 {
                     "batch_contiguous": true,
                     "classname": null,
-                     "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
+                    "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
                             "JobType\n\nclass TestJobType(JobType):\n"
                             "    def get_command(self):\n"
                             "        return \"/usr/bin/touch\"\n\n"
@@ -300,8 +300,24 @@ class SingleJobTypeAPI(MethodView):
                 Content-Type: application/json
 
                 {
+                    "batch_contiguous": true,
+                    "classname": null,
+                    "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
+                            "JobType\n\nclass TestJobType(JobType):\n"
+                            "    def get_command(self):\n"
+                            "        return \"/usr/bin/touch\"\n\n"
+                            "    def get_arguments(self):\n"
+                            "           return [os.path.join("
+                            "self.assignment_data[\"job\"][\"data\"][\"path\"], "
+                            "\"%04d\" % self.assignment_data[\"tasks\"]"
+                            "[0][\"frame\"])]\n",
                     "id": 1,
-                    "tag": "interesting"
+                    "jobs": [],
+                    "max_batch": 1,
+                    "name": "TestJobType", 
+                    "description": "Jobtype for testing inserts and queries",
+                    "sha1": "849d564da815f8bdfd9de0aaf4ac4fe6e9013015",
+                    "software_requirements": []
                 }
 
         :statuscode 201: a new tag was created
@@ -374,7 +390,7 @@ class JobTypeCodeAPI(MethodView):
         A ``GET`` to this endpoint will return just the python code for this
         jobtype
 
-        .. http:get:: /api/v1/jobtypes/<str:tagname>/code HTTP/1.1
+        .. http:get:: /api/v1/jobtypes/<str:jobtype>/code HTTP/1.1
 
             **Request**
 
@@ -402,7 +418,7 @@ class JobTypeCodeAPI(MethodView):
                             self.assignment_data["tasks"][0]["frame"])]
 
         :statuscode 200: no error
-        :statuscode 404: tag not found
+        :statuscode 404: jobtype not found
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter(
@@ -422,7 +438,7 @@ class JobTypeCodeAPI(MethodView):
         A ``PUT`` to this endpoint will overwrite the code of the given jobtype
         with the given data.  The sha1 column will be recomputed.
 
-        .. http:put:: /api/v1/jobtypes/<str:tagname>/code HTTP/1.1
+        .. http:put:: /api/v1/jobtypes/<str:jobtype>/code HTTP/1.1
 
             **Request**
 
