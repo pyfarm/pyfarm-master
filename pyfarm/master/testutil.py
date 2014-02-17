@@ -144,7 +144,10 @@ class JsonResponseMixin(object):
         return json.loads(self.data.decode("utf-8"))
 
 
-def make_test_response(response_class):
+def make_test_response(response_class=None):
+    if response_class is None:
+        return
+
     class TestResponse(response_class, JsonResponseMixin):
         pass
 

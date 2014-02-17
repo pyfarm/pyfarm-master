@@ -381,8 +381,12 @@ class TestRequestFunctions(UtilityTestCase):
             return ""
 
         self.add_route(test)
-        with self.assertRaises(NotImplementedError):
-            response = self.post("/", data=dumps({"foo": True}))
+        response = self.post("/", data=dumps({"foo": True}))
+        self.assert_internal_server_error(response)
+        self.assertEqual(
+            response.json,
+            {"error": "Only know how to handle callable objects or instances "
+                      "of instances of voluptuous.Schema."})
 
     def test_validate_json_callable_no_return_data(self):
         def validate(data):
@@ -393,8 +397,13 @@ class TestRequestFunctions(UtilityTestCase):
             return ""
 
         self.add_route(test)
-        with self.assertRaises(NotImplementedError):
-            response = self.post("/", data=dumps({"foo": True}))
+
+        response = self.post("/", data=dumps({"foo": True}))
+        self.assert_internal_server_error(response)
+        self.assertEqual(
+            response.json,
+            {"error": "Output from callable validator should be a "
+                      "string or boolean."})
 
     def test_validate_json_callable_internal_error(self):
         def validate(data):

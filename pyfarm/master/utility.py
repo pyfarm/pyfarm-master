@@ -204,14 +204,14 @@ def validate_json(validator, json_types=(dict, )):
                     error = result
 
                 else:
-                    raise NotImplementedError(
-                        "Output from callable validator should be a "
-                        "string or boolean.")
+                    g.error = "Output from callable validator should be a " \
+                              "string or boolean."
+                    abort(INTERNAL_SERVER_ERROR)
 
             else:
-                raise NotImplementedError(
-                    "Only know how to handle callable objects or instances"
-                    "of instances of voluptuous.Schema.")
+                g.error = "Only know how to handle callable objects or " \
+                          "instances of instances of voluptuous.Schema."
+                abort(INTERNAL_SERVER_ERROR)
 
             if error is not None:
                 g.error = error
