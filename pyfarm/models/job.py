@@ -39,13 +39,13 @@ from pyfarm.master.application import db
 from pyfarm.models.core.functions import work_columns
 from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_JOB_TYPE, TABLE_TAG,
+    TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
     TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin)
-from pyfarm.models.jobtype import JobType  # required for a relationship
+from pyfarm.models.jobtype import JobType, JobTypeVersion
 
 __all__ = ("Job", )
 
@@ -98,10 +98,13 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         work_columns(WorkState.QUEUED, "job.priority")
     project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
                            doc="stores the project id")
-    job_type_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB_TYPE),
-                            nullable=False,
-                            doc=dedent("""
-                            The foreign key which stores :class:`JobType.id`"""))
+    job_type_version_id = db.Column(IDTypeWork,
+                                    db.ForeignKey("%s.id"
+                                        % TABLE_JOB_TYPE_VERSION),
+                                    nullable=False,
+                                    doc=dedent("""
+                                    The foreign key which stores
+                                    :class:`JobTypeVersion.id`"""))
     user = db.Column(db.String(MAX_USERNAME_LENGTH),
                      doc=dedent("""
                      The user this job should execute as.  The agent
