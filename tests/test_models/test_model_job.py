@@ -34,7 +34,7 @@ from pyfarm.models.tag import Tag
 from pyfarm.models.software import Software, JobSoftwareRequirement
 from pyfarm.models.agent import Agent
 from pyfarm.models.job import Job
-from pyfarm.models.jobtype import JobType
+from pyfarm.models.jobtype import JobType, JobTypeVersion
 
 
 class TestTags(BaseTestCase):
@@ -43,14 +43,18 @@ class TestTags(BaseTestCase):
         jobtype = JobType()
         jobtype.name = "foo"
         jobtype.description = "this is a job type"
-        jobtype.classname = "Foobar"
-        jobtype.code = dedent("""
-        class Foobar(JobType):
-            pass""").encode("utf-8")
-        db.session.add(jobtype)
+        jobtype_version = JobTypeVersion()
+        jobtype_version.jobtype = jobtype
+        jobtype_version.version = 1
+        jobtype_version.classname = "Foobar"
+        jobtype_version.code = ("""
+            class Foobar(JobType):
+                pass""").encode("utf-8")
+        db.session.add(jobtype_version)
 
         job = Job()
-        job.job_type = jobtype
+        job.job_type_version = jobtype_version
+
         tag = Tag()
         tag.jobs = [job]
         tag.tag = "foo456"
@@ -97,14 +101,17 @@ class TestSoftwareRequirement(BaseTestCase):
         jobtype = JobType()
         jobtype.name = "foo"
         jobtype.description = "this is a job type"
-        jobtype.classname = "Foobar"
-        jobtype.code = dedent("""
-        class Foobar(JobType):
-            pass""").encode("utf-8")
-        db.session.add(jobtype)
+        jobtype_version = JobTypeVersion()
+        jobtype_version.jobtype = jobtype
+        jobtype_version.version = 1
+        jobtype_version.classname = "Foobar"
+        jobtype_version.code = ("""
+            class Foobar(JobType):
+                pass""").encode("utf-8")
+        db.session.add(jobtype_version)
 
         job = Job()
-        job.job_type = jobtype
+        job.job_type_version = jobtype_version
 
         # Software requirement needs a software first
         software = Software()
