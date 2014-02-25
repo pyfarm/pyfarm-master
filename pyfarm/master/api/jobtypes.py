@@ -286,9 +286,8 @@ class SingleJobTypeAPI(MethodView):
         if PY3 and isinstance(jobtype_version.code, bytes):
             jobtype_version.code = jobtype_version.code.decode()
 
-        jobtype_data = jobtype_version.to_dict(unpack_relationships=False)
-        jobtype_data.update(jobtype.to_dict(
-            unpack_relationships=["software_requirements"]))
+        jobtype_data = jobtype_version.to_dict(unpack_relationships=["software_requirements"])
+        jobtype_data.update(jobtype.to_dict(unpack_relationships=False))
         del jobtype_data["jobtype_id"]
         return jsonify(jobtype_data), OK
 
