@@ -121,14 +121,14 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
 
     @validates("max_batch")
     def validate_max_batch(self, key, value):
-        if isinstance(value, int) and not value >= 1:
+        if isinstance(value, int) and value < 1:
             raise ValueError("max_batch must be greater than or equal to 1")
 
         return value
 
     @validates("version")
     def validate_version(self, key, value):
-        if isinstance(value, int) and not value >= 1:
+        if isinstance(value, int) and value < 1:
             raise ValueError("version must be greater than or equal to 1")
 
         return value
