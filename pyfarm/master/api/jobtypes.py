@@ -444,10 +444,10 @@ class SingleJobTypeAPI(MethodView):
             jobtype = JobType.query.filter_by(id=jobtype_name).first()
 
         if jobtype:
-            logger.debug("jobtype %s will be deleted",jobtype.name, g.json)
+            logger.debug("jobtype %s will be deleted",jobtype.name)
             db.session.delete(jobtype)
             db.session.commit()
-            logger.info("jobtype %s has been deleted",jobtype.name, g.json)
+            logger.info("jobtype %s has been deleted",jobtype.name)
 
         return jsonify(), NO_CONTENT
 
