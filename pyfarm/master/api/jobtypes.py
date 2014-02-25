@@ -452,6 +452,124 @@ class SingleJobTypeAPI(MethodView):
         return jsonify(), NO_CONTENT
 
 
+class VersionedJobTypeAPI(MethodView):
+    def get(self, jobtype_name, version):
+        """
+        A ``GET`` to this endpoint will return the specified version of the
+        referenced jobtype, by name or id.
+
+        .. http:get:: /api/v1/jobtypes/<str:tagname>/versions/<int:version> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobtypes/TestJobType/versions/1 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "batch_contiguous": true,
+                    "classname": null,
+                    "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
+                            "JobType\n\nclass TestJobType(JobType):\n"
+                            "    def get_command(self):\n"
+                            "        return \"/usr/bin/touch\"\n\n"
+                            "    def get_arguments(self):\n"
+                            "           return [os.path.join("
+                            "self.assignment_data[\"job\"][\"data\"][\"path\"], "
+                            "\"%04d\" % self.assignment_data[\"tasks\"]"
+                            "[0][\"frame\"])]\n",
+                    "id": 1,
+                    "version": 1,
+                    "max_batch": 1,
+                    "name": "TestJobType",
+                    "software_requirements": [
+                            {
+                            "id": 1,
+                            "max_version": null,
+                            "max_version_id": null,
+                            "min_version": "8.21",
+                            "min_version_id": 1,
+                            "software": "/bin/touch",
+                            "software_id": 1
+                            }
+                        ]
+                }
+
+        :statuscode 200: no error
+        :statuscode 404: jobtype or version not found
+        """
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
+        else:
+            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+
+        jobtype_version = JobTypeVersion.query.filter_by(
+            jobtype=jobtype, version=version).first()
+
+        if not jobtype or not jobtype_version:
+            return (jsonify(error="JobType %s version %s not found" %
+                            (jobtype_name, version)), NOT_FOUND)
+
+        # For some reason, sqlalchemy sometimes returns this column as bytes
+        # instead of string.  jsonify cannot decode that.
+        if PY3 and isinstance(jobtype_version.code, bytes):
+            jobtype_version.code = jobtype_version.code.decode()
+
+        jobtype_data = jobtype_version.to_dict(
+            unpack_relationships=["software_requirements"])
+        jobtype_data.update(jobtype.to_dict(unpack_relationships=False))
+        del jobtype_data["jobtype_id"]
+        return jsonify(jobtype_data), OK
+
+    def delete(self, jobtype_name, version):
+        """
+        A ``DELETE`` to this endpoint will delete the requested version of the
+        specified jobtype.
+
+        .. http:delete:: /api/v1/jobtypes/<str:jobtype_name>/versions/<int:version> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/jobtypes/TestJobType/versions/1 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 204 NO_CONTENT
+
+        :statuscode 204: the version was deleted or didn't exist
+        """
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
+        else:
+            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+
+        jobtype_version = JobTypeVersion.query.filter_by(
+            jobtype=jobtype, version=version).first()
+
+        if jobtype_version:
+            logger.debug("version %s of jobtype %s will be deleted",
+                         version, jobtype.name)
+            db.session.delete(jobtype_version)
+            db.session.commit()
+            logger.info("version %s of jobtype %s has been deleted",
+                        version, jobtype.name)
+
+        return jsonify(), NO_CONTENT
+
+
 class JobTypeCodeAPI(MethodView):
     def get(self, jobtype_name, version):
         """
