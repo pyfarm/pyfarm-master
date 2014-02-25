@@ -678,7 +678,7 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
         db.session.add(requirement)
         db.session.commit()
         requirement_data = requirement.to_dict()
-        logger.info("Created new software requirement for for jobtype %s: %r",
+        logger.info("Created new software requirement for jobtype %s: %r",
                     jobtype.id, requirement_data)
 
         return jsonify(requirement_data), CREATED
