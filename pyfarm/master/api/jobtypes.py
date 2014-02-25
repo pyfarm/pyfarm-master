@@ -24,10 +24,10 @@ This module defines an API for managing and querying jobtypes
 
 try:
     from httplib import (
-        OK, CREATED, CONFLICT, NOT_FOUND)
+        OK, CREATED, CONFLICT, NOT_FOUND, BAD_REQUEST, NO_CONTENT)
 except ImportError:  # pragma: no cover
     from http.client import (
-        OK, CREATED, CONFLICT, NOT_FOUND)
+        OK, CREATED, CONFLICT, NOT_FOUND, BAD_REQUEST, NO_CONTENT)
 
 from flask import g, Response, request
 from flask.views import MethodView
@@ -35,9 +35,9 @@ from flask.views import MethodView
 from sqlalchemy import or_
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import STRING_TYPES
+from pyfarm.core.enums import STRING_TYPES, PY3
 from pyfarm.models.software import JobTypeSoftwareRequirement
-from pyfarm.models.jobtype import JobType
+from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.master.application import db
 from pyfarm.master.utility import jsonify, validate_with_model
 
@@ -70,18 +70,26 @@ def schema():
                 "code": "TEXT",
                 "description": "TEXT",
                 "id": "INTEGER",
+                "version": "INTEGER",
                 "max_batch": "INTEGER",
-                "name": "VARCHAR(64)",
-                "sha1": "VARCHAR(40)"
+                "name": "VARCHAR(64)"
             }
 
     :statuscode 200: no error
     """
-    return jsonify(JobType.to_schema()), OK
+    schema_dict = {
+        "batch_contiguous": "BOOLEAN",
+        "classname": "VARCHAR(64)",
+        "code": "TEXT",
+        "description": "TEXT",
+        "id": "INTEGER",
+        "version": "INTEGER",
+        "max_batch": "INTEGER",
+        "name": "VARCHAR(64)"}
+    return jsonify(schema_dict), OK
 
 
 class JobTypeIndexAPI(MethodView):
-    @validate_with_model(JobType, ignore=("sha1",), disallow=("jobs",))
     def post(self):
         """
         A ``POST`` to this endpoint will create a new jobtype.
@@ -120,6 +128,7 @@ class JobTypeIndexAPI(MethodView):
                     "id": 1,
                     "batch_contiguous": true,
                     "software_requirements": [],
+                    "version": 1,
                     "max_batch": 1,
                     "name": "TestJobType",
                     "classname": null,
@@ -133,8 +142,6 @@ class JobTypeIndexAPI(MethodView):
                             "self.assignment_data[\"job\"][\"data\"][\"path\"], "
                             "\"%04d\" % self.assignment_data[\"tasks\"]"
                             "[0][\"frame\"])]\n",
-                    "sha1": "849d564da815f8bdfd9de0aaf4ac4fe6e9013015",
-                    "jobs": []
                 }
 
         :statuscode 201: a new jobtype item was created
@@ -142,17 +149,40 @@ class JobTypeIndexAPI(MethodView):
                             invalid columns being included)
         :statuscode 409: a conflicting jobtype already exists
         """
+        if "name" not in g.json:
+            return jsonify(error="Jobtype does not specify a name"), BAD_REQUEST
         jobtype = JobType.query.filter_by(name=g.json["name"]).first()
 
         if jobtype:
             return (jsonify(error="Jobtype %s already exixts" %
                             g.json["name"]), CONFLICT)
 
-        jobtype = JobType(**g.json)
+        try:
+            jobtype = JobType()
+            jobtype.name = g.json.pop("name")
+            jobtype.description = g.json.pop("description", None)
+            jobtype_version = JobTypeVersion()
+            jobtype_version.jobtype = jobtype
+            jobtype_version.version = 1
+            jobtype_version.code = g.json.pop("code")
+            jobtype_version.classname = g.json.pop("classname", None)
+            jobtype_version.batch_contiguous = g.json.pop("batch_contiguous",
+                                                          None)
+            jobtype_version.max_batch = g.json.pop("max_batch", None)
+        except KeyError as e:
+            return (jsonify(error="Missing key in input: %r" % e.args),
+                    BAD_REQUEST)
 
-        db.session.add(jobtype)
+        if g.json:
+            return (jsonify(error="Unexpected keys in input: %s" %
+                            g.json.keys()), BAD_REQUEST)
+
+        db.session.add_all([jobtype, jobtype_version])
         db.session.commit()
-        jobtype_data = jobtype.to_dict()
+        jobtype_data = jobtype_version.to_dict(unpack_relationships=False)
+        jobtype_data.update(jobtype.to_dict(
+            unpack_relationships=["software_requirements"]))
+        del jobtype_data["jobtype_id"]
         logger.info("created jobtype %s: %r", jobtype.name, jobtype_data)
 
         return jsonify(jobtype_data), CREATED
@@ -198,8 +228,8 @@ class JobTypeIndexAPI(MethodView):
 class SingleJobTypeAPI(MethodView):
     def get(self, jobtype_name):
         """
-        A ``GET`` to this endpoint will return the referenced jobtype, by name,
-        id, or sha1 sum.
+        A ``GET`` to this endpoint will return the most recent version of the
+        referenced jobtype, by name or id.
 
         .. http:get:: /api/v1/jobtypes/<str:tagname> HTTP/1.1
 
@@ -230,10 +260,9 @@ class SingleJobTypeAPI(MethodView):
                             "\"%04d\" % self.assignment_data[\"tasks\"]"
                             "[0][\"frame\"])]\n",
                     "id": 1,
-                    "jobs": [],
+                    "version": 1,
                     "max_batch": 1,
-                    "name": "TestJobType", 
-                    "sha1": "849d564da815f8bdfd9de0aaf4ac4fe6e9013015",
+                    "name": "TestJobType",
                     "software_requirements": []
                 }
 
@@ -241,24 +270,28 @@ class SingleJobTypeAPI(MethodView):
         :statuscode 404: tag not found
         """
         if isinstance(jobtype_name, STRING_TYPES):
-            jobtype = JobType.query.filter(
-                or_(JobType.name == jobtype_name,
-                    JobType.sha1 == jobtype_name)).first()
+            jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
         else:
             jobtype = JobType.query.filter_by(id=jobtype_name).first()
 
-        if not jobtype:
+        jobtype_version = JobTypeVersion.query.filter_by(
+            jobtype=jobtype).order_by("version desc").first()
+
+        if not jobtype or not jobtype_version:
             return (jsonify(error="JobType %s not found" % jobtype_name),
                     NOT_FOUND)
 
         # For some reason, sqlalchemy sometimes returns this column as bytes
         # instead of string.  jsonify cannot decode that.
-        if PY3 and isinstance(jobtype.code, bytes):
-            jobtype.code = jobtype.code.decode()
+        if PY3 and isinstance(jobtype_version.code, bytes):
+            jobtype_version.code = jobtype_version.code.decode()
 
-        return jsonify(jobtype.to_dict()), OK
+        jobtype_data = jobtype_version.to_dict(unpack_relationships=False)
+        jobtype_data.update(jobtype.to_dict(
+            unpack_relationships=["software_requirements"]))
+        del jobtype_data["jobtype_id"]
+        return jsonify(jobtype_data), OK
 
-    @validate_with_model(JobType, ignore=("sha1",), disallow=("jobs",))
     def put(self, jobtype_name):
         """
         A ``PUT`` to this endpoint will create a new jobtag under the given URI.
@@ -312,11 +345,9 @@ class SingleJobTypeAPI(MethodView):
                             "\"%04d\" % self.assignment_data[\"tasks\"]"
                             "[0][\"frame\"])]\n",
                     "id": 1,
-                    "jobs": [],
                     "max_batch": 1,
                     "name": "TestJobType", 
                     "description": "Jobtype for testing inserts and queries",
-                    "sha1": "849d564da815f8bdfd9de0aaf4ac4fe6e9013015",
                     "software_requirements": []
                 }
 
@@ -325,31 +356,60 @@ class SingleJobTypeAPI(MethodView):
                             invalid columns being included)
         """
         if isinstance(jobtype_name, STRING_TYPES):
-            jobtype = JobType.query.filter(
-                or_(JobType.name == jobtype_name,
-                    JobType.sha1 == jobtype_name)).first()
+            jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
         else:
             jobtype = JobType.query.filter_by(id=jobtype_name).first()
 
+        max_version = None
+        new = False if jobtype else True
         if jobtype:
             logger.debug(
-                "jobtype %s will be replaced with %r on commit",
+                "jobtype %s will be get a new version with %r on commit",
                 jobtype.name, g.json)
-            db.session.delete(jobtype)
-            db.session.flush()
+            max_version, = db.session.query(
+                JobTypeVersion.version).filter_by(
+                    jobtype=jobtype).order_by("version desc").first()
+        else:
+            jobtype = JobType()
 
-        jobtype = JobType(**g.json)
+        if max_version:
+            version = max_version + 1
+        else:
+            version = 1
 
-        db.session.add(jobtype)
+        try:
+            jobtype.name = g.json.pop("name")
+            jobtype.description = g.json.pop("description", None)
+            jobtype_version = JobTypeVersion()
+            jobtype_version.jobtype = jobtype
+            jobtype_version.version = version
+            jobtype_version.code = g.json.pop("code")
+            jobtype_version.classname = g.json.pop("classname", None)
+            jobtype_version.batch_contiguous = g.json.pop("batch_contiguous",
+                                                          None)
+            jobtype_version.max_batch = g.json.pop("max_batch", None)
+        except KeyError as e:
+            return (jsonify(error="Missing key in input: %r" % e.args),
+                    BAD_REQUEST)
+
+        if g.json:
+            return (jsonify(error="Unexpected keys in input: %s" %
+                            g.json.keys()), BAD_REQUEST)
+
+        db.session.add_all([jobtype, jobtype_version])
         db.session.commit()
-        jobtype_data = jobtype.to_dict()
-        logger.info("created jobtype %s in put: %r", jobtype.name, jobtype_data)
+        jobtype_data = jobtype_version.to_dict(unpack_relationships=False)
+        jobtype_data.update(jobtype.to_dict(
+            unpack_relationships=["software_requirements"]))
+        del jobtype_data["jobtype_id"]
+        logger.info("%s jobtype %s in put: %r"
+            "created" if new else "updated", jobtype.name, jobtype_data)
 
         return jsonify(jobtype_data), CREATED
 
     def delete(self, jobtype_name):
         """
-        A ``DELETE`` to this endpoint will delete the requested jobtyoe
+        A ``DELETE`` to this endpoint will delete the requested jobtype
 
         .. http:delete:: /api/v1/jobtypes/<str:jobtype_name> HTTP/1.1
 
@@ -369,9 +429,7 @@ class SingleJobTypeAPI(MethodView):
         :statuscode 204: the jobtype was deleted or didn't exist
         """
         if isinstance(jobtype_name, STRING_TYPES):
-            jobtype = JobType.query.filter(
-                or_(JobType.name == jobtype_name,
-                    JobType.sha1 == jobtype_name)).first()
+            jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
         else:
             jobtype = JobType.query.filter_by(id=jobtype_name).first()
 
@@ -385,18 +443,18 @@ class SingleJobTypeAPI(MethodView):
 
 
 class JobTypeCodeAPI(MethodView):
-    def get(self, jobtype_name):
+    def get(self, jobtype_name, version):
         """
         A ``GET`` to this endpoint will return just the python code for this
-        jobtype
+        version of the specified jobtype.
 
-        .. http:get:: /api/v1/jobtypes/<str:jobtype>/code HTTP/1.1
+        .. http:get:: /api/v1/jobtypes/<str:jobtype>/versions/<int:version>/code HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                GET /api/v1/jobtypes/TestJobType/code HTTP/1.1
+                GET /api/v1/jobtypes/TestJobType/versions/1/code HTTP/1.1
                 Accept: text/x-python
 
             **Response**
@@ -418,12 +476,10 @@ class JobTypeCodeAPI(MethodView):
                             self.assignment_data["tasks"][0]["frame"])]
 
         :statuscode 200: no error
-        :statuscode 404: jobtype not found
+        :statuscode 404: jobtype or version not found
         """
         if isinstance(jobtype_name, STRING_TYPES):
-            jobtype = JobType.query.filter(
-                or_(JobType.name == jobtype_name,
-                    JobType.sha1 == jobtype_name)).first()
+            jobtype = JobType.query.filter_by(name=jobtype_name).first()
         else:
             jobtype = JobType.query.filter_by(id=jobtype_name).first()
 
@@ -431,78 +487,20 @@ class JobTypeCodeAPI(MethodView):
             return (jsonify(error="JobType %s not found" % jobtype_name),
                     NOT_FOUND)
 
-        return Response(jobtype.code, OK, mimetype="text/x-python")
+        jobtype_version = JobTypeVersion.query.filter_by(
+            jobtype=jobtype, version=version).first()
 
-    def put(self, jobtype_name):
-        """
-        A ``PUT`` to this endpoint will overwrite the code of the given jobtype
-        with the given data.  The sha1 column will be recomputed.
-
-        .. http:put:: /api/v1/jobtypes/<str:jobtype>/code HTTP/1.1
-
-            **Request**
-
-            .. sourcecode:: http
-
-                PUT /api/v1/jobtypes/TestJobType/code HTTP/1.1
-                Accept: text/x-python
-                Content-Type: text/x-python
-
-                class TestJobType(JobType):
-                    def get_command(self):
-                        return "/bin/true"
-
-                    def get_arguments(self):
-                        return ""
-
-            **Response**
-
-            .. sourcecode:: http
-
-                HTTP/1.1 201 CREATED
-                Content-Type: text/x-python
-
-                PUT /api/v1/jobtypes/TestJobType/code HTTP/1.1
-                Accept: text/x-python
-                Content-Type: text/x-python
-
-                class TestJobType(JobType):
-                    def get_command(self):
-                        return "/bin/true"
-
-                    def get_arguments(self):
-                        return ""
-
-        :statuscode 201: the jobtype's code was overwritten
-        """
-        if isinstance(jobtype_name, STRING_TYPES):
-            jobtype = JobType.query.filter(
-                or_(JobType.name == jobtype_name,
-                    JobType.sha1 == jobtype_name)).first()
-        else:
-            jobtype = JobType.query.filter_by(id=jobtype_name).first()
-
-        if not jobtype:
-            return (jsonify(error="JobType %s not found" % jobtype_name),
+        if not jobtype_version:
+            return (jsonify(error="JobType version %s not found" % version),
                     NOT_FOUND)
 
-        jobtype.code = request.data
-        db.session.add(jobtype)
-        db.session.commit()
-
-        logger.info("Updated code for jobtype %s to %s",
-                    jobtype.name,
-                    jobtype.code)
-
-        return Response(jobtype.code, CREATED, mimetype="text/x-python")
+        return Response(jobtype_version.code, OK, mimetype="text/x-python")
 
 
 class JobTypeSoftwareRequirementsIndexAPI(MethodView):
     def get(self, jobtype_name):
         if isinstance(jobtype_name, STRING_TYPES):
-            jobtype = JobType.query.filter(
-                or_(JobType.name == jobtype_name,
-                    JobType.sha1 == jobtype_name)).first()
+            jobtype = JobType.query.filter_by(name=jobtype_name).first()
         else:
             jobtype = JobType.query.filter_by(id=jobtype_name).first()
 
@@ -510,16 +508,21 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
             return (jsonify(error="JobType %s not found" % jobtype_name),
                     NOT_FOUND)
 
-        out = [x.to_dict() for x in jobtype.software_requirements]
+        jobtype_version = JobTypeVersion.query.filter_by(
+            jobtype=jobtype).order_by("version desc").first()
+
+        if not jobtype_version:
+            return jsonify(error="JobType version not found"), NOT_FOUND
+
+        out = [x.to_dict() for x in jobtype_version.software_requirements]
 
         return jsonify(out), OK
 
-    @validate_with_model(JobTypeSoftwareRequirement)
+    @validate_with_model(JobTypeSoftwareRequirement,
+                         ignore=["jobtype_version_id"])
     def post(self, jobtype_name):
         if isinstance(jobtype_name, STRING_TYPES):
-            jobtype = JobType.query.filter(
-                or_(JobType.name == jobtype_name,
-                    JobType.sha1 == jobtype_name)).first()
+            jobtype = JobType.query.filter_by(name=jobtype_name).first()
         else:
             jobtype = JobType.query.filter_by(id=jobtype_name).first()
 
@@ -527,10 +530,14 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
             return (jsonify(error="JobType %s not found" % jobtype_name),
                     NOT_FOUND)
 
-        if g.json["jobtype_id"] != jobtype.id:
-            return jsonify(error="Wrong jobtype id in data"), BAD_REQUEST
+        jobtype_version = JobTypeVersion.query.filter_by(
+            jobtype=jobtype).order_by("version desc").first()
+        if not jobtype_version:
+            return jsonify(error="JobType version not found"), NOT_FOUND
 
         requirement = JobTypeSoftwareRequirement(**g.json)
+        requirement.jobtype_version = jobtype_version
+
         db.session.add(requirement)
         db.session.commit()
         requirement_data = requirement.to_dict()

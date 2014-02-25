@@ -120,7 +120,7 @@ def load_api(app_instance, api_instance):
         schema as tag_schema, TagIndexAPI, SingleTagAPI, AgentsInTagIndexAPI)
     from pyfarm.master.api.jobtypes import (
         schema as jobtypes_schema, JobTypeIndexAPI, SingleJobTypeAPI,
-        JobTypeCodeAPI)
+        JobTypeCodeAPI, JobTypeSoftwareRequirementsIndexAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -176,10 +176,10 @@ def load_api(app_instance, api_instance):
 
     # special case for jobype/code
     api_instance.add_url_rule(
-        "/jobtypes/<int:jobtype_name>/code",
+        "/jobtypes/<int:jobtype_name>/versions/<int:version>/code",
         view_func=JobTypeCodeAPI.as_view("jobtype_by_id_code_api"))
     api_instance.add_url_rule(
-        "/jobtypes/<string:jobtype_name>/code",
+        "/jobtypes/<string:jobtype_name>/versions/<int:version>/code",
         view_func=JobTypeCodeAPI.as_view("jobtype_by_string_code_api"))
 
     # subitems
@@ -215,6 +215,15 @@ def load_api(app_instance, api_instance):
         "/software/<int:software_rq>/versions/<int:version_name>",
         view_func=SingleSoftwareVersionAPI.as_view(
             "software_by_id_version_by_id_index_api"))
+
+    api_instance.add_url_rule(
+        "/jobtypes/<int:jobtype_name>/software_requirements/",
+        view_func=JobTypeSoftwareRequirementsIndexAPI.as_view(
+            "single_jobtype_by_id_soft_rq_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/<string:jobtype_name>/software_requirements/",
+        view_func=JobTypeSoftwareRequirementsIndexAPI.as_view(
+            "single_jobtype_by_string_soft_rq_api"))
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)
