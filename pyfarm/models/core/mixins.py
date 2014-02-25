@@ -175,6 +175,17 @@ class UtilityMixins(object):
                                 "rank": relationship.rank})
                 elif name in ("tasks", "jobs", "agents"):
                     out.append(relationship.id)
+                elif name == "software_requirements":
+                    out.append({"software_id": relationship.software_id,
+                                "software": relationship.software.software,
+                                "min_version_id": relationship.min_version_id,
+                                "min_version":
+                                    (relationship.min_version.version
+                                     if relationship.min_version else None),
+                                "max_version_id": relationship.max_version_id,
+                                "max_version":
+                                    (relationship.max_version.version
+                                     if relationship.max_version else None)})
                 else:
                     raise NotImplementedError(
                         "don't know how to unpack relationships for `%s`" % name)
