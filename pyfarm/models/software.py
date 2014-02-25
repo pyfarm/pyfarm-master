@@ -155,7 +155,10 @@ class JobTypeSoftwareRequirement(db.Model, UtilityMixins):
                                doc="Reference to the maximum required version")
 
     jobtype_version = db.relationship("JobTypeVersion",
-                                      backref="software_requirements")
+                                      backref=db.backref("software_requirements",
+                                                         lazy="dynamic",
+                                                         cascade=
+                                                           "all, delete-orphan"))
     software = db.relationship("Software")
     min_version = db.relationship("SoftwareVersion",
                                   foreign_keys=[min_version_id])
