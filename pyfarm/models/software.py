@@ -157,3 +157,7 @@ class JobTypeSoftwareRequirement(db.Model, UtilityMixins):
     jobtype_version = db.relationship("JobTypeVersion",
                                       backref="software_requirements")
     software = db.relationship("Software")
+    min_version = db.relationship("SoftwareVersion",
+                                  foreign_keys=[min_version_id])
+    max_version = db.relationship("SoftwareVersion",
+                                  foreign_keys=[max_version_id])
