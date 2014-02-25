@@ -663,6 +663,15 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
         if not jobtype_version:
             return jsonify(error="JobType version not found"), NOT_FOUND
 
+        existing_requirement = JobTypeSoftwareRequirement.query.filter(
+            JobTypeSoftwareRequirement.jobtype_version == jobtype_version,
+            JobTypeSoftwareRequirement.software_id == g.json["software_id"]).\
+                first()
+
+        if existing_requirement:
+            return jsonify(error="A software requirement for this jobtype "
+                                 "version and this software exists"), CONFLICT
+
         requirement = JobTypeSoftwareRequirement(**g.json)
         requirement.jobtype_version = jobtype_version
 
