@@ -110,7 +110,8 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
                      contain depending on how the job will be loaded."""))
 
     jobtype = db.relationship("JobType",
-                              backref=db.backref("versions", lazy="dynamic"),
+                              backref=db.backref("versions", lazy="dynamic"
+                                                 , cascade="all, delete-orphan"),
                               doc=dedent("""
                                   Relationship between this version and the
                                   :class:`JobType` it belongs to"""))
