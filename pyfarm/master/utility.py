@@ -244,7 +244,7 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
 
     :param list ignore:
         A list of fields to completely ignore in the incoming
-        request. Typically this is used but ``PUT`` requests or other
+        request. Typically this is used by ``PUT`` requests or other
         similar requests where part of the data is in the url.
 
     :param list disallow:

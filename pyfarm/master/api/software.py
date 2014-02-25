@@ -133,7 +133,7 @@ class SoftwareIndexAPI(MethodView):
 
             .. sourcecode:: http
 
-                HTTP/1.1 200 CREATED
+                HTTP/1.1 201 CREATED
                 Content-Type: application/json
 
                 {
