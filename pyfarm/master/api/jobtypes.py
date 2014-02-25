@@ -263,11 +263,21 @@ class SingleJobTypeAPI(MethodView):
                     "version": 1,
                     "max_batch": 1,
                     "name": "TestJobType",
-                    "software_requirements": []
+                    "software_requirements": [
+                            {
+                            "id": 1,
+                            "max_version": null,
+                            "max_version_id": null,
+                            "min_version": "8.21",
+                            "min_version_id": 1,
+                            "software": "/bin/touch",
+                            "software_id": 1
+                            }
+                        ]
                 }
 
         :statuscode 200: no error
-        :statuscode 404: tag not found
+        :statuscode 404: jobtype or version not found
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
@@ -286,7 +296,8 @@ class SingleJobTypeAPI(MethodView):
         if PY3 and isinstance(jobtype_version.code, bytes):
             jobtype_version.code = jobtype_version.code.decode()
 
-        jobtype_data = jobtype_version.to_dict(unpack_relationships=["software_requirements"])
+        jobtype_data = jobtype_version.to_dict(
+            unpack_relationships=["software_requirements"])
         jobtype_data.update(jobtype.to_dict(unpack_relationships=False))
         del jobtype_data["jobtype_id"]
         return jsonify(jobtype_data), OK
