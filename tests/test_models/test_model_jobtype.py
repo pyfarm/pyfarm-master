@@ -17,32 +17,20 @@
 from binascii import hexlify
 from os import urandom
 from textwrap import dedent
-from hashlib import sha1
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
 from pyfarm.master.application import db
-from pyfarm.models.jobtype import JobType
+from pyfarm.models.jobtype import JobType, JobTypeVersion
 
 
 class JobTypeTest(BaseTestCase):
     def produce_jobtype(self):
-        text = lambda: hexlify(urandom(4)).decode("utf-8")
-        jobtype = JobType(name=text(), description=text(), classname=text())
-        jobtype.classname = "f%s" % jobtype.classname  # make a valid classname
-        code = dedent("""
-                class %s(JobType):
-                    pass""" % jobtype.classname).strip()
-        jobtype.code = code
+        rnd_text = lambda: hexlify(urandom(4)).decode("utf-8")
+        jobtype = JobType(name=rnd_text(), description=rnd_text())
         return jobtype
-
-    def get_sha1_for_jobtype(self, jobtype):
-        try:
-            return sha1(jobtype.code).hexdigest()
-        except TypeError:
-            return sha1(jobtype.code.encode("utf-8")).hexdigest()
 
     def test_basic_insert(self):
         jobtype = self.produce_jobtype()
@@ -53,37 +41,14 @@ class JobTypeTest(BaseTestCase):
         jobtypeid = jobtype.id
         name = jobtype.name
         desc = jobtype.description
-        classname = jobtype.classname
-        code = jobtype.code
-        sha1 = jobtype.sha1
-        db.session.remove()
 
         jobtype = JobType.query.filter_by(id=jobtypeid).first()
         self.assertEqual(jobtype.name, name)
         self.assertEqual(jobtype.description, desc)
-        self.assertEqual(jobtype.classname, classname)
-        self.assertEqual(jobtype.code, code)
-        self.assertEqual(jobtype.sha1, sha1)
 
+
+class JobTypeVersionTest(BaseTestCase):
     def test_validate_batch(self):
-        jobtype = self.produce_jobtype()
+        jobtype_version = JobTypeVersion()
         with self.assertRaises(ValueError):
-            jobtype.max_batch = 0
-
-    def test_sha1_default_correct(self):
-        jobtype = self.produce_jobtype()
-        self.assertEqual(jobtype.sha1, self.get_sha1_for_jobtype(jobtype))
-
-    def test_sha1_correct_after_code_change(self):
-        jobtype = self.produce_jobtype()
-        self.assertEqual(jobtype.sha1, self.get_sha1_for_jobtype(jobtype))
-        jobtype.code = ""
-        self.assertEqual(jobtype.sha1, self.get_sha1_for_jobtype(jobtype))
-
-    def test_sha1_correction_on_insert(self):
-        jobtype = self.produce_jobtype()
-        self.assertEqual(jobtype.sha1, self.get_sha1_for_jobtype(jobtype))
-        jobtype.sha1 = ""
-        db.session.add(jobtype)
-        db.session.commit()
-        self.assertEqual(jobtype.sha1, self.get_sha1_for_jobtype(jobtype))
+            jobtype_version.max_batch = 0
