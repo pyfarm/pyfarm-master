@@ -182,6 +182,10 @@ class UtilityMixins(object):
             if name == "software":
                 out = {"software": relation_object.software,
                        "id":  relation_object.id}
+            elif name == "jobtype_version":
+                out = {"id": relation_object.id,
+                       "version": relation_object.version,
+                       "jobtype": relation_object.jobtype.name}
             else:
                 raise NotImplementedError(
                     "don't know how to unpack relationships for `%s`" % name)
