@@ -738,7 +738,7 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
         jobtype_version = JobTypeVersion.query.filter_by(
             jobtype=jobtype).order_by("version desc").first()
         if not jobtype_version:
-            return jsonify(error="JobType version not found"), NOT_FOUND
+            return jsonify(error="JobType has no versions"), NOT_FOUND
 
         existing_requirement = JobTypeSoftwareRequirement.query.filter(
             JobTypeSoftwareRequirement.jobtype_version == jobtype_version,
