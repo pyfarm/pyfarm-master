@@ -377,9 +377,11 @@ class SingleJobTypeAPI(MethodView):
             logger.debug(
                 "jobtype %s will get a new version with data %r on commit",
                 jobtype.name, g.json)
-            max_version, = db.session.query(
+            mvt = db.session.query(
                 JobTypeVersion.version).filter_by(
                     jobtype=jobtype).order_by("version desc").first()
+            if mvt:
+                max_version, = mvt
         else:
             jobtype = JobType()
 
