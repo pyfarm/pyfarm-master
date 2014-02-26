@@ -304,11 +304,11 @@ class SingleJobTypeAPI(MethodView):
 
     def put(self, jobtype_name):
         """
-        A ``PUT`` to this endpoint will create a new jobtag under the given URI.
-        If a jobtype already exists under that URI, it will be deleted, then
-        recreated.
+        A ``PUT`` to this endpoint will create a new jobtype under the given URI.
+        If a jobtype already exists under that URI, a new version will be created
+        with the given data.
 
-        You should only call this by id for overwriting an existing jobtype or if
+        You should only call this by id for updating an existing jobtype or if
         you have a reserved jobtype id. There is currently no way to reserve a
         jobtype id.
 
@@ -361,7 +361,7 @@ class SingleJobTypeAPI(MethodView):
                     "software_requirements": []
                 }
 
-        :statuscode 201: a new tag was created
+        :statuscode 201: a new jobtype was created
         :statuscode 400: there was something wrong with the request (such as
                             invalid columns being included)
         """
@@ -374,7 +374,7 @@ class SingleJobTypeAPI(MethodView):
         new = False if jobtype else True
         if jobtype:
             logger.debug(
-                "jobtype %s will be get a new version with %r on commit",
+                "jobtype %s will get a new version with data %r on commit",
                 jobtype.name, g.json)
             max_version, = db.session.query(
                 JobTypeVersion.version).filter_by(
