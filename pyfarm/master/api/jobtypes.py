@@ -749,10 +749,23 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
             return jsonify(error="A software requirement for this jobtype "
                                  "version and this software exists"), CONFLICT
 
-        requirement = JobTypeSoftwareRequirement(**g.json)
-        requirement.jobtype_version = jobtype_version
+        new_version = JobTypeVersion()
+        for name in JobTypeVersion.types().columns:
+            if name not in JobTypeVersion.types().primary_keys:
+                setattr(new_version, name, getattr(jobtype_version, name))
+        new_version.version += 1
+        for old_req in jobtype_version.software_requirements:
+            new_req = JobTypeSoftwareRequirement()
+            for name in JobTypeSoftwareRequirement.types().columns:
+                if name not in JobTypeSoftwareRequirement.types().primary_keys:
+                    setattr(new_req, name, getattr(old_req, name))
+            new_req.jobtype_version = new_version
+            db.session.add(new_req)
 
-        db.session.add(requirement)
+        requirement = JobTypeSoftwareRequirement(**g.json)
+        requirement.jobtype_version = new_version
+
+        db.session.add_all([requirement, new_version])
         db.session.commit()
         requirement_data = requirement.to_dict()
         logger.info("Created new software requirement for jobtype %s: %r",
