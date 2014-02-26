@@ -24,10 +24,12 @@ This module defines an API for managing and querying jobtypes
 
 try:
     from httplib import (
-        OK, CREATED, CONFLICT, NOT_FOUND, BAD_REQUEST, NO_CONTENT)
+        OK, CREATED, CONFLICT, NOT_FOUND, BAD_REQUEST, NO_CONTENT,
+        METHOD_NOT_ALLOWED)
 except ImportError:  # pragma: no cover
     from http.client import (
-        OK, CREATED, CONFLICT, NOT_FOUND, BAD_REQUEST, NO_CONTENT)
+        OK, CREATED, CONFLICT, NOT_FOUND, BAD_REQUEST, NO_CONTENT,
+        METHOD_NOT_ALLOWED)
 
 from flask import g, Response, request
 from flask.views import MethodView
@@ -691,7 +693,7 @@ class JobTypeCodeAPI(MethodView):
 
 
 class JobTypeSoftwareRequirementsIndexAPI(MethodView):
-    def get(self, jobtype_name):
+    def get(self, jobtype_name, version=None):
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter_by(name=jobtype_name).first()
         else:
@@ -701,8 +703,13 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
             return (jsonify(error="JobType %s not found" % jobtype_name),
                     NOT_FOUND)
 
-        jobtype_version = JobTypeVersion.query.filter_by(
-            jobtype=jobtype).order_by("version desc").first()
+        if version:
+            jobtype_version = JobTypeVersion.query.filter(
+                JobTypeVersion.jobtype == jobtype,
+                JobTypeVersion.version == version).first()
+        else:
+            jobtype_version = JobTypeVersion.query.filter_by(
+                jobtype=jobtype).order_by("version desc").first()
 
         if not jobtype_version:
             return jsonify(error="JobType version not found"), NOT_FOUND
@@ -713,7 +720,12 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
 
     @validate_with_model(JobTypeSoftwareRequirement,
                          ignore=["jobtype_version_id"])
-    def post(self, jobtype_name):
+    def post(self, jobtype_name, version=None):
+        if version:
+            return (jsonify(
+                error="POST not allowed for specific jobtype versions"),
+                METHOD_NOT_ALLOWED)
+
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter_by(name=jobtype_name).first()
         else:
