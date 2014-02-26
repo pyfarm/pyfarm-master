@@ -52,8 +52,8 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
     Stores the unique information necessary to execute a task
     """
     __tablename__ = TABLE_JOB_TYPE
-    REPR_COLUMNS = (
-        "id", "name")
+    __table_args__ = (UniqueConstraint("name"),)
+    REPR_COLUMNS = ("id", "name")
 
     id = id_column(IDTypeWork)
     name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
