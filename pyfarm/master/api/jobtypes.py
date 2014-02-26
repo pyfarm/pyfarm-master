@@ -694,6 +694,53 @@ class JobTypeCodeAPI(MethodView):
 
 class JobTypeSoftwareRequirementsIndexAPI(MethodView):
     def get(self, jobtype_name, version=None):
+        """
+        A ``GET`` to this endpoint will return a list of all the software
+        requirements of the specified jobtype
+
+        .. http:get:: /api/v1/jobtypes/<str:jobtype>/software_requirements/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobtypes/TestJobType/software_requirements/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                {
+                    "jobtype_version_id": 8,
+                    "software": {
+                        "software": "/bin/touch",
+                        "id": 1
+                        },
+                    "min_version_id": 1,
+                    "max_version": null,
+                    "software_id": 1,
+                    "id": 7,
+                    "max_version_id": null,
+                    "min_version": {
+                        "version": "8.21",
+                        "id": 1
+                        },
+                    "jobtype_version": {
+                        "version": 7,
+                        "jobtype": "TestJobType",
+                        "id": 8
+                        }
+                }
+                ]
+
+        :statuscode 200: no error
+        :statuscode 404: jobtype or version not found
+        """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter_by(name=jobtype_name).first()
         else:
@@ -721,6 +768,60 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
     @validate_with_model(JobTypeSoftwareRequirement,
                          ignore=["jobtype_version_id"])
     def post(self, jobtype_name, version=None):
+        """
+        A ``POST`` to this endpoint will create a new software_requirement for
+        the specified jobtype.
+        This will transparently create a new jobtype version
+
+        .. http:post:: /api/v1/jobtypes/<str:jobtype>/software_requirements/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/jobtypes/TestJobType/software_requirements/ HTTP/1.1
+                Accept: application/json
+
+                {
+                    "software_id": 2,
+                    "min_version_id": 2
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                "id": 8,
+                "jobtype_version": {
+                    "id": 8,
+                    "jobtype": "TestJobType",
+                    "version": 7
+                    },
+                "jobtype_version_id": 8,
+                "max_version": null,
+                "max_version_id": null,
+                "min_version": {
+                    "id": 2,
+                    "version": "1.69"
+                    },
+                "min_version_id": 2,
+                "software": {
+                    "id": 2,
+                    "software": "blender"
+                    },
+                "software_id": 2
+                }
+
+        :statuscode 201: a new software requirement was created
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        :statuscode 405: you tried calling this method on a specific version
+        :statuscode 409: a conflicting software requirement already exists
+        """
         if version:
             return (jsonify(
                 error="POST not allowed for specific jobtype versions"),
