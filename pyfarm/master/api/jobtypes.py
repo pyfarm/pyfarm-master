@@ -289,7 +289,7 @@ class SingleJobTypeAPI(MethodView):
 
         # For some reason, sqlalchemy sometimes returns this column as bytes
         # instead of string.  jsonify cannot decode that.
-        if PY3 and isinstance(jobtype_version.code, bytes):
+        if PY3 and isinstance(jobtype_version.code, bytes): # pragma: no cover
             jobtype_version.code = jobtype_version.code.decode()
 
         jobtype_data = jobtype_version.to_dict(
@@ -584,7 +584,7 @@ class VersionedJobTypeAPI(MethodView):
 
         # For some reason, sqlalchemy sometimes returns this column as bytes
         # instead of string.  jsonify cannot decode that.
-        if PY3 and isinstance(jobtype_version.code, bytes):
+        if PY3 and isinstance(jobtype_version.code, bytes): # pragma: no cover
             jobtype_version.code = jobtype_version.code.decode()
 
         jobtype_data = jobtype_version.to_dict(
