@@ -819,7 +819,7 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
         :statuscode 405: you tried calling this method on a specific version
         :statuscode 409: a conflicting software requirement already exists
         """
-        if version:
+        if version is not None:
             return (jsonify(
                 error="POST not allowed for specific jobtype versions"),
                 METHOD_NOT_ALLOWED)
