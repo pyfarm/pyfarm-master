@@ -34,7 +34,7 @@ except ImportError:  # pragma: no cover
 from flask import g, Response, request
 from flask.views import MethodView
 
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, PY3
@@ -372,15 +372,12 @@ class SingleJobTypeAPI(MethodView):
             logger.debug(
                 "jobtype %s will get a new version with data %r on commit",
                 jobtype.name, g.json)
-            mvt = db.session.query(
-                JobTypeVersion.version).filter_by(
-                    jobtype=jobtype).order_by("version desc").first()
-            if mvt:
-                max_version, = mvt
+            max_version, = db.session.query(func.max(
+                JobTypeVersion.version)).first()
         else:
             jobtype = JobType()
 
-        if max_version:
+        if max_version is not None:
             version = max_version + 1
         else:
             version = 1
