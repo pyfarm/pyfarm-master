@@ -315,7 +315,7 @@ class SingleJobTypeAPI(MethodView):
         you have a reserved jobtype id. There is currently no way to reserve a
         jobtype id.
 
-        .. http:put:: /api/v1/jobtypes/<str:tagname> HTTP/1.1
+        .. http:put:: /api/v1/jobtypes/[<str:name>|<int:id>] HTTP/1.1
 
             **Request**
 
@@ -488,7 +488,7 @@ class SingleJobTypeAPI(MethodView):
         """
         A ``DELETE`` to this endpoint will delete the requested jobtype
 
-        .. http:delete:: /api/v1/jobtypes/<str:jobtype_name> HTTP/1.1
+        .. http:delete:: /api/v1/jobtypes/[<str:name>|<int:id>] HTTP/1.1
 
             **Request**
 
@@ -525,7 +525,7 @@ class VersionedJobTypeAPI(MethodView):
         A ``GET`` to this endpoint will return the specified version of the
         referenced jobtype, by name or id.
 
-        .. http:get:: /api/v1/jobtypes/<str:tagname>/versions/<int:version> HTTP/1.1
+        .. http:get:: /api/v1/jobtypes/[<str:name>|<int:id>]/versions/<int:version> HTTP/1.1
 
             **Request**
 
@@ -601,7 +601,7 @@ class VersionedJobTypeAPI(MethodView):
         A ``DELETE`` to this endpoint will delete the requested version of the
         specified jobtype.
 
-        .. http:delete:: /api/v1/jobtypes/<str:jobtype_name>/versions/<int:version> HTTP/1.1
+        .. http:delete:: /api/v1/jobtypes/[<str:name>|<int:id>]/versions/<int:version> HTTP/1.1
 
             **Request**
 
@@ -643,7 +643,7 @@ class JobTypeCodeAPI(MethodView):
         A ``GET`` to this endpoint will return just the python code for this
         version of the specified jobtype.
 
-        .. http:get:: /api/v1/jobtypes/<str:jobtype>/versions/<int:version>/code HTTP/1.1
+        .. http:get:: /api/v1/jobtypes/[<str:name>|<int:id>]/versions/<int:version>/code HTTP/1.1
 
             **Request**
 
@@ -698,7 +698,7 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
         A ``GET`` to this endpoint will return a list of all the software
         requirements of the specified jobtype
 
-        .. http:get:: /api/v1/jobtypes/<str:jobtype>/software_requirements/ HTTP/1.1
+        .. http:get:: /api/v1/jobtypes/[<str:name>|<int:id>]/software_requirements/ HTTP/1.1
 
             **Request**
 
@@ -773,7 +773,7 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
         the specified jobtype.
         This will transparently create a new jobtype version
 
-        .. http:post:: /api/v1/jobtypes/<str:jobtype>/software_requirements/ HTTP/1.1
+        .. http:post:: /api/v1/jobtypes/[<str:name>|<int:id>]/software_requirements/ HTTP/1.1
 
             **Request**
 
