@@ -177,7 +177,7 @@ class JobTypeIndexAPI(MethodView):
                     BAD_REQUEST)
 
         if g.json:
-            return (jsonify(error="Unexpected keys in input: %s" %
+            return (jsonify(error="Unexpected keys in input: %r" %
                             g.json.keys()), BAD_REQUEST)
 
         db.session.add_all([jobtype, jobtype_version])
