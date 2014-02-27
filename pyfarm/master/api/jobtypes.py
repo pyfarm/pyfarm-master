@@ -671,20 +671,23 @@ class JobTypeCodeAPI(MethodView):
         :statuscode 404: jobtype or version not found
         """
         if isinstance(jobtype_name, STRING_TYPES):
-            jobtype = JobType.query.filter_by(name=jobtype_name).first()
+            jt_tuple = db.session.query(
+                JobType, JobTypeVersion).filter(
+                    JobType.id == JobTypeVersion.jobtype_id,
+                    JobType.name == jobtype_name,
+                    JobTypeVersion.version == version).first()
         else:
-            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+            jt_tuple = db.session.query(
+                JobType, JobTypeVersion).filter(
+                    JobType.id == JobTypeVersion.jobtype_id,
+                    JobType.id == jobtype_name,
+                    JobTypeVersion.version == version).first()
 
-        if not jobtype:
-            return (jsonify(error="JobType %s not found" % jobtype_name),
-                    NOT_FOUND)
+        if not jt_tuple:
+            return (jsonify(error="JobType %s, version %s not found" %
+                            (jobtype_name, version)), NOT_FOUND)
 
-        jobtype_version = JobTypeVersion.query.filter_by(
-            jobtype=jobtype, version=version).first()
-
-        if not jobtype_version:
-            return (jsonify(error="JobType version %s not found" % version),
-                    NOT_FOUND)
+        jobtype, jobtype_version = jt_tuple
 
         return Response(jobtype_version.code, OK, mimetype="text/x-python")
 
