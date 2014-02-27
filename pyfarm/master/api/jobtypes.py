@@ -476,7 +476,7 @@ class SingleJobTypeAPI(MethodView):
             unpack_relationships=["software_requirements"])
         jobtype_data.update(jobtype.to_dict(unpack_relationships=False))
         del jobtype_data["jobtype_id"]
-        logger.info("%s jobtype %s in put: %r"
+        logger.info("%s jobtype %s in put: %r",
             "created" if new else "updated", jobtype.name, jobtype_data)
 
         return jsonify(jobtype_data), CREATED
