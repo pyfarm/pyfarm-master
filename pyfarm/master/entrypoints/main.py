@@ -120,7 +120,8 @@ def load_api(app_instance, api_instance):
         schema as tag_schema, TagIndexAPI, SingleTagAPI, AgentsInTagIndexAPI)
     from pyfarm.master.api.jobtypes import (
         schema as jobtypes_schema, JobTypeIndexAPI, SingleJobTypeAPI,
-        JobTypeCodeAPI, JobTypeSoftwareRequirementsIndexAPI, VersionedJobTypeAPI)
+        JobTypeCodeAPI, JobTypeSoftwareRequirementsIndexAPI, VersionedJobTypeAPI,
+        JobTypeSoftwareRequirementAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -229,11 +230,19 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobtypes/<int:jobtype_name>/software_requirements/",
         view_func=JobTypeSoftwareRequirementsIndexAPI.as_view(
-            "single_jobtype_by_id_soft_rq_api"))
+            "jobtype_by_id_soft_rq_api"))
     api_instance.add_url_rule(
         "/jobtypes/<string:jobtype_name>/software_requirements/",
         view_func=JobTypeSoftwareRequirementsIndexAPI.as_view(
-            "single_jobtype_by_string_soft_rq_api"))
+            "jobtype_by_string_soft_rq_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/<int:jobtype_name>/software_requirements/<int:id>",
+        view_func=JobTypeSoftwareRequirementAPI.as_view(
+            "jobtype_by_id_single_soft_rq_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/<string:jobtype_name>/software_requirements/<int:id>",
+        view_func=JobTypeSoftwareRequirementAPI.as_view(
+            "jobtype_by_string_single_soft_rq_api"))
 
     # Jobtype software requirements for specific versions
     api_instance.add_url_rule(

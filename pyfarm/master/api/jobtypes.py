@@ -873,3 +873,134 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
                     jobtype.id, requirement_data)
 
         return jsonify(requirement_data), CREATED
+
+
+class JobTypeSoftwareRequirementAPI(MethodView):
+    def get(self, jobtype_name, id):
+        """
+        A ``GET`` to this endpoint will return the specified software requirement
+        from the newest version of the requested jobtype
+
+        .. http:get:: /api/v1/jobtypes/[<str:name>|<int:id>]/software_requirements/<int:id> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobtypes/TestJobType/software_requirements/1 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "jobtype_version_id": 3,
+                    "software": {
+                        "software": "/bin/touch",
+                        "id": 1
+                        },
+                    "min_version_id": 1,
+                    "max_version": null,
+                    "software_id": 1,
+                    "id": 1,
+                    "max_version_id": null,
+                    "min_version": {
+                        "version": "8.21",
+                        "id": 1
+                        },
+                    "jobtype_version": {
+                        "version": 7,
+                        "jobtype": "TestJobType",
+                        "id": 8
+                        }
+                }
+
+        :statuscode 200: no error
+        :statuscode 404: jobtype or software requirement not found
+        """
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter_by(name=jobtype_name).first()
+        else:
+            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+
+        if not jobtype:
+            return (jsonify(error="JobType %s not found" % jobtype_name),
+                    NOT_FOUND)
+
+        current_version = JobTypeVersion.query.filter_by(
+            jobtype=jobtype).order_by("version desc").first()
+        if not current_version:
+            return jsonify(error="JobType has no versions"), NOT_FOUND
+
+        requirement = JobTypeSoftwareRequirement.query.filter(
+            JobTypeSoftwareRequirement.jobtype_version == current_version,
+            JobTypeSoftwareRequirement.id == id).first()
+
+        if not requirement:
+            return (jsonify(error="JobType software requirement %s for jobtype "
+                            "%s not found" % (id, jobtype_name)), NOT_FOUND)
+
+        return jsonify(requirement.to_dict()), OK
+
+    def delete(self, jobtype_name, id):
+        """
+        A ``DELETE`` to this endpoint will delete the requested software
+        requirement from the specified jobtype, creating a new version of the
+        jobtype in the process
+
+        .. http:delete:: /api/v1/jobtypes/[<str:name>|<int:id>]/software_requirements/<int:id> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/jobtypes/TestJobType/software_requirements/1 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 204 NO_CONTENT
+
+        :statuscode 204: the software requirement was deleted or didn't exist
+        """
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter_by(name=jobtype_name).first()
+        else:
+            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+
+        if not jobtype:
+            return (jsonify(error="JobType %s not found" % jobtype_name),
+                    NOT_FOUND)
+
+        jobtype_version = JobTypeVersion.query.filter_by(
+            jobtype=jobtype).order_by("version desc").first()
+        if not jobtype_version:
+            return jsonify(error="JobType has no versions"), NOT_FOUND
+
+        new_version = JobTypeVersion()
+        for name in JobTypeVersion.types().columns:
+            if name not in JobTypeVersion.types().primary_keys:
+                setattr(new_version, name, getattr(jobtype_version, name))
+        new_version.version += 1
+        for old_req in jobtype_version.software_requirements:
+            if old_req.id != id:
+                new_req = JobTypeSoftwareRequirement()
+                for name in JobTypeSoftwareRequirement.types().columns:
+                    if name not in JobTypeSoftwareRequirement.types().\
+                        primary_keys:
+                        setattr(new_req, name, getattr(old_req, name))
+                new_req.jobtype_version = new_version
+                db.session.add(new_req)
+
+        db.session.add(new_version)
+        db.session.commit()
+        logger.info("Delete software requirement %s for jobtype %s, creating "
+                    "new version %s", id, jobtype.id, new_version.version)
+
+        return jsonify(), NO_CONTENT
