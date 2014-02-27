@@ -505,7 +505,7 @@ class SingleJobTypeAPI(MethodView):
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
         else:
-            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+            jobtype = JobType.query.filter(JobType.id == jobtype_name).first()
 
         if jobtype:
             logger.debug("jobtype %s will be deleted",jobtype.name)
@@ -573,7 +573,7 @@ class VersionedJobTypeAPI(MethodView):
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
         else:
-            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+            jobtype = JobType.query.filter(JobType.id == jobtype_name).first()
 
         jobtype_version = JobTypeVersion.query.filter_by(
             jobtype=jobtype, version=version).first()
@@ -618,7 +618,7 @@ class VersionedJobTypeAPI(MethodView):
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
         else:
-            jobtype = JobType.query.filter_by(id=jobtype_name).first()
+            jobtype = JobType.query.filter(JobType.id == jobtype_name).first()
 
         jobtype_version = JobTypeVersion.query.filter_by(
             jobtype=jobtype, version=version).first()
