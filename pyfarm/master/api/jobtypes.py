@@ -80,15 +80,8 @@ def schema():
 
     :statuscode 200: no error
     """
-    schema_dict = {
-        "batch_contiguous": "BOOLEAN",
-        "classname": "VARCHAR(64)",
-        "code": "TEXT",
-        "description": "TEXT",
-        "id": "INTEGER",
-        "version": "INTEGER",
-        "max_batch": "INTEGER",
-        "name": "VARCHAR(64)"}
+    schema_dict = JobTypeVersion.to_schema()
+    schema_dict.update(JobType.to_schema())
     return jsonify(schema_dict), OK
 
 
