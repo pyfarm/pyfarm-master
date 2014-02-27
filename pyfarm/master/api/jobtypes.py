@@ -405,17 +405,20 @@ class SingleJobTypeAPI(MethodView):
                 if not isinstance(req, dict):
                     return (jsonify(error="Every software_requirement must be a "
                                     "dict"), BAD_REQUEST)
+
                 requirement = JobTypeSoftwareRequirement()
                 requirement.jobtype_version = jobtype_version
                 try:
                     software_name = req.pop("software")
                     software = Software.query.filter_by(
                         software=software_name).first()
+
                     if not software:
                         return (jsonify(
                             error="Software %s not found" % software_name),
                             NOT_FOUND)
                     requirement.software = software
+
                     min_version_str = req.pop("min_version", None)
                     if min_version_str:
                         min_version = SoftwareVersion.query.filter(
@@ -426,6 +429,7 @@ class SingleJobTypeAPI(MethodView):
                                 error="Version %s of software %s not found" %
                                 (software_name, min_version_str)), NOT_FOUND)
                         requirement.min_version = min_version
+
                     max_version_str = req.pop("max_version", None)
                     if max_version_str:
                         max_version = SoftwareVersion.query.filter(
@@ -436,9 +440,11 @@ class SingleJobTypeAPI(MethodView):
                                 error="Version %s of software %s not found" %
                                 (software_name, max_version_str)), NOT_FOUND)
                         requirement.max_version = max_version
+
                 except KeyError as e:
                     return (jsonify(error="Missing key in software requirement: "
                                           "%r" % e.args), BAD_REQUEST)
+
                 if req:
                     return (jsonify(error="Unexpected keys in software "
                                     "requirement: %s" % req.keys()), BAD_REQUEST)
@@ -450,6 +456,7 @@ class SingleJobTypeAPI(MethodView):
             # version
             previous_version = JobTypeVersion.query.filter_by(
                 jobtype=jobtype).order_by("version desc").first()
+
             if previous_version:
                 for old_req in previous_version.software_requirements:
                     new_req = JobTypeSoftwareRequirement()
