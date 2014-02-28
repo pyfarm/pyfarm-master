@@ -767,8 +767,6 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
 
         return jsonify(out), OK
 
-    @validate_with_model(JobTypeSoftwareRequirement,
-                         ignore=["jobtype_version_id"])
     def post(self, jobtype_name, version=None):
         """
         A ``POST`` to this endpoint will create a new software_requirement for
@@ -785,8 +783,8 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
                 Accept: application/json
 
                 {
-                    "software_id": 2,
-                    "min_version_id": 2
+                    "software": "blender",
+                    "min_version": "2.69"
                 }
 
             **Response**
@@ -803,19 +801,15 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
                     "jobtype": "TestJobType",
                     "version": 7
                     },
-                "jobtype_version_id": 8,
                 "max_version": null,
-                "max_version_id": null,
                 "min_version": {
                     "id": 2,
                     "version": "1.69"
                     },
-                "min_version_id": 2,
                 "software": {
                     "id": 2,
                     "software": "blender"
-                    },
-                "software_id": 2
+                    }
                 }
 
         :statuscode 201: a new software requirement was created
@@ -843,11 +837,18 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
         if not jobtype_version:
             return jsonify(error="JobType has no versions"), NOT_FOUND
 
+        if ("software" not in g.json or
+            not isinstance(g.json["software"], STRING_TYPES)):
+            return (jsonify(error="Software not specified or not a string"),
+                    BAD_REQUEST)
+
+        software = Software.query.filter_by(software=g.json["software"]).first()
+        if not software:
+            return jsonify(error="Software not found"), BAD_REQUEST
+
         existing_requirement = JobTypeSoftwareRequirement.query.filter(
             JobTypeSoftwareRequirement.jobtype_version == jobtype_version,
-            JobTypeSoftwareRequirement.software_id == g.json["software_id"]).\
-                first()
-
+            JobTypeSoftwareRequirement.software == software).first()
         if existing_requirement:
             return jsonify(error="A software requirement for this jobtype "
                                  "version and this software exists"), CONFLICT
@@ -857,6 +858,7 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
             if name not in JobTypeVersion.types().primary_keys:
                 setattr(new_version, name, getattr(jobtype_version, name))
         new_version.version += 1
+        db.session.add(new_version)
         for old_req in jobtype_version.software_requirements:
             new_req = JobTypeSoftwareRequirement()
             for name in JobTypeSoftwareRequirement.types().columns:
@@ -865,19 +867,40 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
             new_req.jobtype_version = new_version
             db.session.add(new_req)
 
-        requirement = JobTypeSoftwareRequirement(**g.json)
-        requirement.jobtype_version = new_version
+        min_version = None
+        if "min_version" in g.json:
+            if not isinstance(g.json["min_version"], STRING_TYPES):
+                return jsonify(error="min_version not a string"), BAD_REQUEST
+            min_version = SoftwareVersion.query.filter_by(
+                version=g.json["min_version"]).first()
+            if not min_version:
+                return jsonify(error="min_version not found"), NOT_FOUND
 
-        db.session.add_all([requirement, new_version])
+        max_version = None
+        if "max_version" in g.json:
+            if not isinstance(g.json["max_version"], STRING_TYPES):
+                return jsonify(error="max_version not a string"), BAD_REQUEST
+            max_version = SoftwareVersion.query.filter_by(
+                version=g.json["max_version"]).first()
+            if not max_version:
+                return jsonify(error="max_version not found"), NOT_FOUND
+
+        requirement = JobTypeSoftwareRequirement()
+        requirement.jobtype_version = new_version
+        requirement.software = software
+        requirement.min_version = min_version
+        requirement.max_version = max_version
+
+        db.session.add(requirement)
         db.session.commit()
         requirement_data = requirement.to_dict()
-        logger.info("Created new software requirement for jobtype %s: %r",
-                    jobtype.id, requirement_data)
-
         del requirement_data["jobtype_version_id"]
         del requirement_data["software_id"]
         del requirement_data["min_version_id"]
         del requirement_data["max_version_id"]
+        logger.info("Created new software requirement for jobtype %s: %r",
+                    jobtype.id, requirement_data)
+
         return jsonify(requirement_data), CREATED
 
 
