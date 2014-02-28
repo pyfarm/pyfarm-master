@@ -973,7 +973,12 @@ class JobTypeSoftwareRequirementAPI(MethodView):
             return (jsonify(error="JobType software requirement %s for jobtype "
                             "%s not found" % (id, jobtype_name)), NOT_FOUND)
 
-        return jsonify(requirement.to_dict()), OK
+        requirement_data = requirement.to_dict()
+        del requirement_data["jobtype_version_id"]
+        del requirement_data["software_id"]
+        del requirement_data["min_version_id"]
+        del requirement_data["max_version_id"]
+        return jsonify(requirement_data), OK
 
     def delete(self, jobtype_name, id):
         """
