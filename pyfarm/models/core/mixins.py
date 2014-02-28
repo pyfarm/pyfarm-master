@@ -195,8 +195,7 @@ class UtilityMixins(object):
                 out = {"software": relation_object.software,
                        "id":  relation_object.id}
             elif name == "jobtype_version":
-                out = {"id": relation_object.id,
-                       "version": relation_object.version,
+                out = {"version": relation_object.version,
                        "jobtype": relation_object.jobtype.name}
             elif name in ("min_version", "max_version"):
                 out = {"id": relation_object.id,

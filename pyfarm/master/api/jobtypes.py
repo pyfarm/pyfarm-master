@@ -716,16 +716,12 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
 
                 [
                 {
-                    "jobtype_version_id": 8,
+                    "id": 7,
                     "software": {
                         "software": "/bin/touch",
                         "id": 1
                         },
-                    "min_version_id": 1,
                     "max_version": null,
-                    "software_id": 1,
-                    "id": 7,
-                    "max_version_id": null,
                     "min_version": {
                         "version": "8.21",
                         "id": 1
@@ -733,7 +729,6 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
                     "jobtype_version": {
                         "version": 7,
                         "jobtype": "TestJobType",
-                        "id": 8
                         }
                 }
                 ]
@@ -761,7 +756,14 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
         if not jobtype_version:
             return jsonify(error="JobType version not found"), NOT_FOUND
 
-        out = [x.to_dict() for x in jobtype_version.software_requirements]
+        out = []
+        for requirement in jobtype_version.software_requirements:
+            rq_data = requirement.to_dict()
+            del rq_data["jobtype_version_id"]
+            del rq_data["software_id"]
+            del rq_data["min_version_id"]
+            del rq_data["max_version_id"]
+            out.append(rq_data)
 
         return jsonify(out), OK
 
@@ -872,6 +874,10 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
         logger.info("Created new software requirement for jobtype %s: %r",
                     jobtype.id, requirement_data)
 
+        del requirement_data["jobtype_version_id"]
+        del requirement_data["software_id"]
+        del requirement_data["min_version_id"]
+        del requirement_data["max_version_id"]
         return jsonify(requirement_data), CREATED
 
 
