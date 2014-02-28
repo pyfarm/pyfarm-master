@@ -927,16 +927,12 @@ class JobTypeSoftwareRequirementAPI(MethodView):
                 Content-Type: application/json
 
                 {
-                    "jobtype_version_id": 3,
                     "software": {
                         "software": "/bin/touch",
                         "id": 1
                         },
-                    "min_version_id": 1,
                     "max_version": null,
-                    "software_id": 1,
                     "id": 1,
-                    "max_version_id": null,
                     "min_version": {
                         "version": "8.21",
                         "id": 1
@@ -944,7 +940,6 @@ class JobTypeSoftwareRequirementAPI(MethodView):
                     "jobtype_version": {
                         "version": 7,
                         "jobtype": "TestJobType",
-                        "id": 8
                         }
                 }
 
@@ -1034,7 +1029,7 @@ class JobTypeSoftwareRequirementAPI(MethodView):
 
         db.session.add(new_version)
         db.session.commit()
-        logger.info("Delete software requirement %s for jobtype %s, creating "
+        logger.info("Deleted software requirement %s for jobtype %s, creating "
                     "new version %s", id, jobtype.id, new_version.version)
 
         return jsonify(), NO_CONTENT
