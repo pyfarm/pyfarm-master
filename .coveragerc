@@ -10,9 +10,10 @@ exclude_lines =
     raise NotImplementedError
     if __name__ == .__main__.:
 omit =
-    *pyfarm/__init__*
+    *pyfarm*__init__*
     *pyfarm/master/templates/*
     *pyfarm/master/static/*
     *pyfarm/master/entrypoints/*
     *pyfarm/master/admin/baseview.py*
-    *pyfarm/models/core/app.py*
+    *pyfarm/master/initial.py*
+
