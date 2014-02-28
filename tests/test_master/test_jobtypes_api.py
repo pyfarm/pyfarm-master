@@ -821,3 +821,726 @@ class TestJobTypeAPI(BaseTestCase):
         response1 = self.client.get(
             "/api/v1/jobtypes/UnknownJobType/versions/1/code")
         self.assert_not_found(response1)
+
+    def test_jobtype_list_requirements(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({
+                        "software": "foo",
+                        "versions": [
+                                    {"version": "1.0"},
+                                    {"version": "1.1"}
+                            ]
+                       }))
+        self.assert_created(response1)
+        software_id = response1.json['id']
+        software_min_version_id = response1.json["versions"][0]["id"]
+        software_max_version_id = response1.json["versions"][1]["id"]
+
+        response2 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code,
+                    "software_requirements": [
+                        {
+                            "software": "foo",
+                            "min_version": "1.0",
+                            "max_version": "1.1"
+                        }
+                        ]
+                    }))
+        self.assert_created(response2)
+        id = response2.json['id']
+        requirements_id = response2.json["software_requirements"][0]["id"]
+
+        response3 = self.client.get(
+            "/api/v1/jobtypes/TestJobType/software_requirements/")
+        self.assert_ok(response3)
+        self.assertEqual(response3.json, [
+                {
+                    "id": requirements_id,
+                    "software": {
+                        "software": "foo",
+                        "id": software_id
+                        },
+                    "max_version": {
+                        "version": "1.1",
+                        "id": software_max_version_id
+                        },
+                    "min_version": {
+                        "version": "1.0",
+                        "id": software_min_version_id
+                        },
+                    "jobtype_version": {
+                        "version": 1,
+                        "jobtype": "TestJobType",
+                        }
+                }
+                ])
+
+        response4 = self.client.get(
+            "/api/v1/jobtypes/%s/versions/1/software_requirements/" % id)
+        self.assert_ok(response4)
+        self.assertEqual(response4.json, [
+                {
+                    "id": requirements_id,
+                    "software": {
+                        "software": "foo",
+                        "id": software_id
+                        },
+                    "max_version": {
+                        "version": "1.1",
+                        "id": software_max_version_id
+                        },
+                    "min_version": {
+                        "version": "1.0",
+                        "id": software_min_version_id
+                        },
+                    "jobtype_version": {
+                        "version": 1,
+                        "jobtype": "TestJobType",
+                        }
+                }
+                ])
+
+    def test_jobtype_list_requirements_unknown_jobtype(self):
+        response1 = self.client.get(
+            "/api/v1/jobtypes/UnknownJobType/software_requirements/")
+        self.assert_not_found(response1)
+
+    def test_jobtype_list_requirements_unknown_version(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+        id = response1.json['id']
+
+        response2 = self.client.get(
+            "/api/v1/jobtypes/TestJobType/versions/100/software_requirements/")
+        self.assert_not_found(response2)
+
+    def test_jobtype_post_requirement(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+        id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({
+                        "software": "foo",
+                        "versions": [
+                                    {"version": "1.0"},
+                                    {"version": "1.1"}
+                            ]
+                       }))
+        self.assert_created(response2)
+        software_id = response2.json['id']
+        software_min_version_id = response2.json["versions"][0]["id"]
+        software_max_version_id = response2.json["versions"][1]["id"]
+
+        response3 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({
+                        "software" : "foo",
+                        "min_version": "1.0",
+                        "max_version": "1.1"}))
+        self.assert_created(response3)
+        requirement_id = response3.json["id"]
+
+        response4 = self.client.get(
+            "/api/v1/jobtypes/TestJobType/software_requirements/")
+        self.assert_ok(response4)
+        self.assertEqual(response4.json, [
+                {
+                    "id": requirement_id,
+                    "software": {
+                        "software": "foo",
+                        "id": software_id
+                        },
+                    "max_version": {
+                        "version": "1.1",
+                        "id": software_max_version_id
+                        },
+                    "min_version": {
+                        "version": "1.0",
+                        "id": software_min_version_id
+                        },
+                    "jobtype_version": {
+                        "version": 2,
+                        "jobtype": "TestJobType",
+                        }
+                }
+                ])
+
+    def test_jobtype_by_id_post_requirement(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+        id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({
+                        "software": "foo",
+                        "versions": []
+                       }))
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobtypes/%s/software_requirements/" % id,
+            content_type="application/json",
+            data=dumps({"software" : "foo"}))
+        self.assert_created(response3)
+
+    def test_jobtype_versioned_post_requirement(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+
+        response2 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({
+                        "software": "foo",
+                        "versions": [
+                                    {"version": "1.0"},
+                                    {"version": "1.1"}
+                            ]
+                       }))
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/versions/1/software_requirements/",
+            content_type="application/json",
+            data=dumps({"software" : "foo"}))
+        self.assert_method_not_allowed(response3)
+
+    def test_jobtype_post_requirement_unknown_jobtype(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({
+                        "software": "foo",
+                        "versions": []
+                       }))
+        self.assert_created(response1)
+
+        response2 = self.client.post(
+            "/api/v1/jobtypes/UnknownJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({"software" : "foo"}))
+        self.assert_not_found(response2)
+
+    def test_jobtype_post_requirement_no_versions(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+
+        response2 = self.client.delete("/api/v1/jobtypes/TestJobType/versions/1")
+        self.assert_no_content(response2)
+
+        response3 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({"software": "foo"}))
+        self.assert_created(response3)
+
+        response4 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({"software" : "foo"}))
+        self.assert_not_found(response4)
+
+    def test_jobtype_post_requirement_bad_software(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+
+        response2 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({}))
+        self.assert_bad_request(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({"software": 42}))
+        self.assert_bad_request(response3)
+
+    def test_jobtype_post_requirement_unknown_software(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+
+        response2 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({"software": "unknown software"}))
+        self.assert_not_found(response2)
+
+    def test_jobtype_post_requirement_with_existing(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({"software": "foo",
+                        "versions": [
+                                    {"version": "1.0"},
+                                    {"version": "1.1"}
+                            ]
+                       }))
+        self.assert_created(response1)
+
+        response2 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code,
+                    "software_requirements": [{
+                        "software" : "foo",
+                        "min_version": "1.0",
+                        "max_version": "1.1"}]
+                    }))
+        self.assert_created(response2)
+
+        response2 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({"software": "bar",
+                        "versions": [
+                                    {"version": "0.1"},
+                                    {"version": "0.2"}
+                            ]
+                       }))
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({"software" : "bar",
+                        "min_version": "0.1",
+                        "max_version": "0.2"}))
+        self.assert_created(response3)
+
+        response4 = self.client.get(
+            "/api/v1/jobtypes/TestJobType/software_requirements/")
+        self.assert_ok(response4)
+        self.assertEqual(len(response4.json), 2)
+
+    def test_jobtype_post_requirement_conflict(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({"software": "foo"}))
+        self.assert_created(response1)
+
+        response2 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code,
+                    "software_requirements": [{"software" : "foo"}]
+                    }))
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({"software" : "foo"}))
+        self.assert_conflict(response3)
+
+    def test_jobtype_post_requirement_bad_min_version(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({"software": "foo"}))
+        self.assert_created(response1)
+
+        response2 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({"software": "foo",
+                        "min_version": 42}))
+        self.assert_bad_request(response3)
+ 
+    def test_jobtype_post_requirement_unknown_min_version(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({"software": "foo"}))
+        self.assert_created(response1)
+
+        response2 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({"software": "foo",
+                        "min_version": "1.0"}))
+        self.assert_not_found(response3)
+
+    def test_jobtype_post_requirement_bad_max_version(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({"software": "foo"}))
+        self.assert_created(response1)
+
+        response2 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({"software": "foo",
+                        "max_version": 42}))
+        self.assert_bad_request(response3)
+ 
+    def test_jobtype_post_requirement_unknown_max_version(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({"software": "foo"}))
+        self.assert_created(response1)
+
+        response2 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobtypes/TestJobType/software_requirements/",
+            content_type="application/json",
+            data=dumps({"software": "foo",
+                        "max_version": "1.0"}))
+        self.assert_not_found(response3)
+
+    def test_jobtype_get_single_requirement(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({
+                        "software": "foo",
+                        "versions": [
+                                    {"version": "1.0"},
+                                    {"version": "1.1"}
+                            ]
+                       }))
+        self.assert_created(response1)
+        software_id = response1.json['id']
+        software_min_version_id = response1.json["versions"][0]["id"]
+        software_max_version_id = response1.json["versions"][1]["id"]
+
+        response2 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code,
+                    "software_requirements": [
+                        {
+                            "software": "foo",
+                            "min_version": "1.0",
+                            "max_version": "1.1"
+                        }
+                        ]
+                    }))
+        self.assert_created(response2)
+        id = response2.json['id']
+        requirements_id = response2.json["software_requirements"][0]["id"]
+
+        response3 = self.client.get(
+            "/api/v1/jobtypes/TestJobType/software_requirements/%s" %
+            requirements_id)
+        self.assert_ok(response3)
+        self.assertEqual(
+            response3.json, {
+                    "id": 1,
+                    "software": {
+                            "software": "foo",
+                            "id": software_id
+                        },
+                    "max_version": {
+                            "version": "1.1",
+                            "id": software_max_version_id
+                        },
+                    "min_version": 
+                        {
+                            "version": "1.0",
+                            "id": software_min_version_id
+                        },
+                    "jobtype_version": {
+                            "version": 1,
+                            "jobtype": "TestJobType",
+                        }
+                })
+
+        response4 = self.client.get(
+            "/api/v1/jobtypes/%s/software_requirements/%s" %
+            (id, requirements_id))
+        self.assert_ok(response4)
+
+    def test_jobtype_single_requirement_unknown_jobtype(self):
+        response1 = self.client.get(
+            "/api/v1/jobtypes/UnknownJobType/software_requirements/1")
+        self.assert_not_found(response1)
+
+    def test_jobtype_single_requirement_no_versions(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+
+        response2 = self.client.delete("/api/v1/jobtypes/TestJobType/versions/1")
+        self.assert_no_content(response2)
+
+        response3 = self.client.get(
+            "/api/v1/jobtypes/TestJobType/software_requirements/1")
+        self.assert_not_found(response3)
+
+    def test_jobtype_single_requirement_not_found(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+
+        response2 = self.client.get(
+            "/api/v1/jobtypes/TestJobType/software_requirements/1")
+        self.assert_not_found(response2)
+
+    def test_jobtype_delete_requirement(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({
+                        "software": "foo",
+                        "versions": [
+                                    {"version": "1.0"},
+                                    {"version": "1.1"}
+                            ]
+                       }))
+        self.assert_created(response1)
+
+        response2 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({
+                        "software": "bar",
+                        "versions": [
+                                    {"version": "0.1"},
+                                    {"version": "0.2"}
+                            ]
+                       }))
+        self.assert_created(response2)
+
+        response3 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code,
+                    "software_requirements": [
+                        {
+                            "software": "foo",
+                            "min_version": "1.0",
+                            "max_version": "1.1"
+                        },
+                        {
+                            "software": "bar",
+                            "min_version": "0.1",
+                            "max_version": "0.2"
+                        }
+                        ]
+                    }))
+        self.assert_created(response3)
+        id = response3.json['id']
+        requirement1_id = response3.json["software_requirements"][0]["id"]
+        requirement2_id = response3.json["software_requirements"][1]["id"]
+
+        response4 = self.client.delete(
+            "/api/v1/jobtypes/TestJobType/software_requirements/%s" %
+            requirement1_id)
+        self.assert_no_content(response4)
+
+        response5 = self.client.delete(
+            "/api/v1/jobtypes/TestJobType/software_requirements/%s" %
+            requirement1_id)
+        self.assert_no_content(response5)
+
+        response6 = self.client.get(
+            "/api/v1/jobtypes/TestJobType/software_requirements/%s" %
+            requirement1_id)
+        self.assert_not_found(response6)
+
+        response7 = self.client.get(
+            "/api/v1/jobtypes/TestJobType/software_requirements/")
+        self.assertEqual(len(response7.json), 1)
+
+    def test_jobtype_by_id_delete_requirement(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({"software": "foo"}))
+        self.assert_created(response1)
+
+        response2 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code,
+                    "software_requirements": [
+                        {"software": "foo"}
+                        ]
+                    }))
+        self.assert_created(response2)
+        id = response2.json['id']
+        requirement_id = response2.json["software_requirements"][0]["id"]
+
+        response3 = self.client.delete(
+            "/api/v1/jobtypes/%s/software_requirements/%s" %
+            (id, requirement_id))
+        self.assert_no_content(response3)
+
+        response4 = self.client.get(
+            "/api/v1/jobtypes/TestJobType/software_requirements/")
+        self.assertEqual(len(response4.json), 0)
+
+    def test_jobtype_delete_requirement_unknown_jobtype(self):
+        response1 = self.client.delete(
+            "/api/v1/jobtypes/UnknownJobType/software_requirements/1")
+        self.assert_not_found(response1)
+
+    def test_jobtype_delete_requirement_no_versions(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+
+        response2 = self.client.delete("/api/v1/jobtypes/TestJobType/versions/1")
+        self.assert_no_content(response2)
+
+        response3 = self.client.delete(
+            "/api/v1/jobtypes/TestJobType/software_requirements/1")
+        self.assert_not_found(response3)
