@@ -29,12 +29,13 @@ from textwrap import dedent
 
 from sqlalchemy import event
 from sqlalchemy.orm import validates
+from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.core.config import read_env_int, read_env_bool, read_env
 from pyfarm.core.logger import getLogger
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import (
-    TABLE_JOB_TYPE, MAX_JOBTYPE_LENGTH, SHA1_ASCII_LENGTH)
+    TABLE_JOB_TYPE, TABLE_JOB_TYPE_VERSION, MAX_JOBTYPE_LENGTH)
 from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
 from pyfarm.models.core.types import id_column, IDTypeWork
 
@@ -51,8 +52,8 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
     Stores the unique information necessary to execute a task
     """
     __tablename__ = TABLE_JOB_TYPE
-    REPR_COLUMNS = (
-        "id", "name", "classname", "max_batch", "batch_contiguous")
+    __table_args__ = (UniqueConstraint("name"),)
+    REPR_COLUMNS = ("id", "name")
 
     id = id_column(IDTypeWork)
     name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
@@ -65,6 +66,20 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
                             Human readable description of the job type.  This
                             field is not required and is not directly relied
                             upon anywhere."""))
+
+
+class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
+    __tablename__ = TABLE_JOB_TYPE_VERSION
+    __table_args__ = (UniqueConstraint("jobtype_id", "version"),)
+
+    REPR_COLUMNS = (
+        "id", "jobtype_id", "version")
+    id = id_column(IDTypeWork)
+    jobtype_id = db.Column(IDTypeWork,
+                           db.ForeignKey("%s.id" % TABLE_JOB_TYPE),
+                           nullable=False,
+                           doc="The jobtype this version belongs to")
+    version = db.Column(db.Integer, nullable=False, doc="The version number")
     max_batch = db.Column(db.Integer,
                           default=read_env_int(
                               "JOBTYPE_DEFAULT_MAX_BATCH",
@@ -93,44 +108,27 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
                      General field containing the 'code' to retrieve the job
                      type.  See below for information on what this field will
                      contain depending on how the job will be loaded."""))
-    sha1 = db.Column(db.String(SHA1_ASCII_LENGTH), nullable=False,
-                     doc=dedent("""
-                     Contains the SHA1 hash of the source code in the ``code``
-                     column.  This value will automatically be updated whenever
-                     ``code`` is set."""))
-    jobs = db.relationship("Job", backref="job_type", lazy="dynamic",
+
+    jobtype = db.relationship("JobType",
+                              backref=db.backref("versions", lazy="dynamic"),
+                              doc=dedent("""
+                                  Relationship between this version and the
+                                  :class:`JobType` it belongs to"""))
+    jobs = db.relationship("Job", backref="job_type_version", lazy="dynamic",
                            doc=dedent("""
-                           Relationship between this jobtype and
+                           Relationship between this jobtype version and
                            :class:`.Job` objects."""))
 
     @validates("max_batch")
     def validate_max_batch(self, key, value):
-        if isinstance(value, int) and not value >= 1:
+        if isinstance(value, int) and value < 1:
             raise ValueError("max_batch must be greater than or equal to 1")
 
         return value
 
+    @validates("version")
+    def validate_version(self, key, value):
+        if isinstance(value, int) and value < 1:
+            raise ValueError("version must be greater than or equal to 1")
 
-def compute_sha1(code):
-    """returns a sha1 for the given source code"""
-    try:
-        return sha1(code).hexdigest()
-    except TypeError:  # required for Python 3
-        return sha1(code.encode("utf-8")).hexdigest()
-
-
-def set_sha1_from_code(mapper, connection, jobtype):
-    """
-    ensure that the sha1 matches the code's sha1 before
-    insertion to prevent an accidental or malicious mismatch
-    """
-    jobtype.sha1 = compute_sha1(jobtype.code)
-
-
-def code_set_event(target, value, oldvalue, initiator):
-    """set the sha1 whenever the code column is set"""
-    target.sha1 = compute_sha1(value)
-
-
-event.listen(JobType, "before_insert", set_sha1_from_code)
-event.listen(JobType.code, "set", code_set_event)
+        return value
