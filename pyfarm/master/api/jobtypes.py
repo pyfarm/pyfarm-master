@@ -515,6 +515,46 @@ class SingleJobTypeAPI(MethodView):
         return jsonify(), NO_CONTENT
 
 
+class JobTypeVersionsIndexAPI(MethodView):
+    def get(self, jobtype_name):
+        """
+        A ``GET`` to this endpoint will return a sorted list of of all known
+        versions of the specified jobtype.
+
+        .. http:get:: /api/v1/jobtypes/[<str:name>|<int:id>]/versions/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobtypes/TestJobType/versions/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [1, 2]
+
+        :statuscode 200: no error
+        :statuscode 404: jobtype not found
+        """
+        if isinstance(jobtype_name, STRING_TYPES):
+            jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
+        else:
+            jobtype = JobType.query.filter(JobType.id == jobtype_name).first()
+
+        if not jobtype:
+            return jsonify(error="jobtype not found"), NOT_FOUND
+
+        out = [x.version for x in jobtype.versions]
+
+        return jsonify(sorted(out)), OK
+
+
 class VersionedJobTypeAPI(MethodView):
     def get(self, jobtype_name, version):
         """

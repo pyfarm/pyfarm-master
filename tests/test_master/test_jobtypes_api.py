@@ -607,6 +607,42 @@ class TestJobTypeAPI(BaseTestCase):
         response5 = self.client.get("/api/v1/jobtypes/%s" % id)
         self.assert_not_found(response5)
 
+    def test_jobtype_list_versions(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+        id = response1.json['id']
+
+        response2 = self.client.put(
+            "/api/v1/jobtypes/%s" % id,
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing (updated)",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response2)
+
+        response3 = self.client.get("/api/v1/jobtypes/TestJobType/versions/")
+        self.assert_ok(response3)
+        self.assertEqual(response3.json, [1, 2])
+
+        response4 = self.client.get("/api/v1/jobtypes/%s/versions/" % id)
+        self.assert_ok(response4)
+        self.assertEqual(response4.json, [1, 2])
+
+    def test_jobtype_list_versions_unknown_jobtype(self):
+        response1 = self.client.get("/api/v1/jobtypes/UnknownJobType/versions/")
+        self.assert_not_found(response1)
+
     def test_jobtype_get_versioned(self):
         response1 = self.client.put(
             "/api/v1/jobtypes/TestJobType",
