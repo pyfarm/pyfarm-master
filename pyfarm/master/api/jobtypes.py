@@ -844,7 +844,7 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
 
         software = Software.query.filter_by(software=g.json["software"]).first()
         if not software:
-            return jsonify(error="Software not found"), BAD_REQUEST
+            return jsonify(error="Software not found"), NOT_FOUND
 
         existing_requirement = JobTypeSoftwareRequirement.query.filter(
             JobTypeSoftwareRequirement.jobtype_version == jobtype_version,
