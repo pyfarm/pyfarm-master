@@ -94,6 +94,29 @@ class TestJobTypeAPI(BaseTestCase):
                 "version": 1
                 })
 
+    def test_jobtype_post_conflict(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+
+        response2 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code
+                    }))
+        self.assert_conflict(response2)
+
     def test_jobtypes_list(self):
         response1 = self.client.post(
             "/api/v1/jobtypes/",
@@ -370,12 +393,28 @@ class TestJobTypeAPI(BaseTestCase):
                     "software_requirements": [
                         {
                             "software": "foo",
-                            "min_version": "1.1",
-                            "max_version": "1.2"
+                            "min_version": "1.1"
                         }
                         ]
                     }))
         self.assert_not_found(response2)
+
+        response3 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code,
+                    "software_requirements": [
+                        {
+                            "software": "foo",
+                            "max_version": "1.1"
+                        }
+                        ]
+                    }))
+        self.assert_not_found(response3)
 
     def test_jobtype_put_with_requirements_unknown_keys(self):
         response1 = self.client.post(
@@ -402,6 +441,21 @@ class TestJobTypeAPI(BaseTestCase):
                         ]
                     }))
         self.assert_bad_request(response2)
+
+    def test_jobtype_put_with_requirements_missing_keys(self):
+        response1 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code,
+                    "software_requirements": [
+                        {}
+                        ]
+                    }))
+        self.assert_bad_request(response1)
 
     def test_jobtype_put_retain_requirements(self):
         response1 = self.client.post(
