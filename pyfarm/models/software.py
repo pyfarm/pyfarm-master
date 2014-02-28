@@ -134,15 +134,14 @@ class JobTypeSoftwareRequirement(db.Model, UtilityMixins):
     __table_args__ = (
         UniqueConstraint("software_id", "jobtype_version_id"), )
 
-    id = id_column()
     software_id = db.Column(db.Integer,
                             db.ForeignKey("%s.id" % TABLE_SOFTWARE),
-                            nullable=False,
+                            primary_key=True,
                             doc="Reference to the required software")
     jobtype_version_id = db.Column(IDTypeWork,
                                    db.ForeignKey("%s.id" %
                                                  TABLE_JOB_TYPE_VERSION),
-                                   nullable=False,
+                                   primary_key=True,
                                    doc="Foreign key to "
                                        ":class:`JobTypeVersion.id`")
     min_version_id = db.Column(db.Integer,

@@ -261,7 +261,6 @@ class SingleJobTypeAPI(MethodView):
                     "name": "TestJobType",
                     "software_requirements": [
                             {
-                            "id": 1,
                             "max_version": null,
                             "max_version_id": null,
                             "min_version": "8.21",
@@ -556,7 +555,6 @@ class VersionedJobTypeAPI(MethodView):
                     "name": "TestJobType",
                     "software_requirements": [
                             {
-                            "id": 1,
                             "max_version": null,
                             "max_version_id": null,
                             "min_version": "8.21",
@@ -716,7 +714,6 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
 
                 [
                 {
-                    "id": 7,
                     "software": {
                         "software": "/bin/touch",
                         "id": 1
@@ -795,7 +792,6 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
                 Content-Type: application/json
 
                 {
-                "id": 8,
                 "jobtype_version": {
                     "id": 8,
                     "jobtype": "TestJobType",
@@ -862,8 +858,7 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
         for old_req in jobtype_version.software_requirements:
             new_req = JobTypeSoftwareRequirement()
             for name in JobTypeSoftwareRequirement.types().columns:
-                if name not in JobTypeSoftwareRequirement.types().primary_keys:
-                    setattr(new_req, name, getattr(old_req, name))
+                setattr(new_req, name, getattr(old_req, name))
             new_req.jobtype_version = new_version
             db.session.add(new_req)
 
@@ -905,10 +900,10 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
 
 
 class JobTypeSoftwareRequirementAPI(MethodView):
-    def get(self, jobtype_name, id):
+    def get(self, jobtype_name, software):
         """
         A ``GET`` to this endpoint will return the specified software requirement
-        from the newest version of the requested jobtype
+        from the newest version of the requested jobtype.
 
         .. http:get:: /api/v1/jobtypes/[<str:name>|<int:id>]/software_requirements/<int:id> HTTP/1.1
 
@@ -932,7 +927,6 @@ class JobTypeSoftwareRequirementAPI(MethodView):
                         "id": 1
                         },
                     "max_version": null,
-                    "id": 1,
                     "min_version": {
                         "version": "8.21",
                         "id": 1
@@ -962,11 +956,13 @@ class JobTypeSoftwareRequirementAPI(MethodView):
 
         requirement = JobTypeSoftwareRequirement.query.filter(
             JobTypeSoftwareRequirement.jobtype_version == current_version,
-            JobTypeSoftwareRequirement.id == id).first()
+            JobTypeSoftwareRequirement.software.has(
+                Software.software == software)).first()
 
         if not requirement:
             return (jsonify(error="JobType software requirement %s for jobtype "
-                            "%s not found" % (id, jobtype_name)), NOT_FOUND)
+                            "%s not found" % (software, jobtype_name)),
+                    NOT_FOUND)
 
         requirement_data = requirement.to_dict()
         del requirement_data["jobtype_version_id"]
@@ -975,7 +971,7 @@ class JobTypeSoftwareRequirementAPI(MethodView):
         del requirement_data["max_version_id"]
         return jsonify(requirement_data), OK
 
-    def delete(self, jobtype_name, id):
+    def delete(self, jobtype_name, software):
         """
         A ``DELETE`` to this endpoint will delete the requested software
         requirement from the specified jobtype, creating a new version of the
@@ -1018,18 +1014,16 @@ class JobTypeSoftwareRequirementAPI(MethodView):
                 setattr(new_version, name, getattr(jobtype_version, name))
         new_version.version += 1
         for old_req in jobtype_version.software_requirements:
-            if old_req.id != id:
+            if old_req.software.software != software:
                 new_req = JobTypeSoftwareRequirement()
                 for name in JobTypeSoftwareRequirement.types().columns:
-                    if name not in JobTypeSoftwareRequirement.types().\
-                        primary_keys:
-                        setattr(new_req, name, getattr(old_req, name))
+                    setattr(new_req, name, getattr(old_req, name))
                 new_req.jobtype_version = new_version
                 db.session.add(new_req)
 
         db.session.add(new_version)
         db.session.commit()
         logger.info("Deleted software requirement %s for jobtype %s, creating "
-                    "new version %s", id, jobtype.id, new_version.version)
+                    "new version %s", software, jobtype.id, new_version.version)
 
         return jsonify(), NO_CONTENT

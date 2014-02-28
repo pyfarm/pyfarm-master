@@ -301,7 +301,6 @@ class TestJobTypeAPI(BaseTestCase):
                     }))
         self.assert_created(response2)
         id = response2.json['id']
-        requirements_id = response2.json["software_requirements"][0]["id"]
 
         response3 = self.client.get("/api/v1/jobtypes/TestJobType")
         self.assert_ok(response3)
@@ -316,7 +315,6 @@ class TestJobTypeAPI(BaseTestCase):
                 "name": "TestJobType",
                 "software_requirements": [
                     {
-                        'id': requirements_id,
                         'max_version': '1.1',
                         'max_version_id': software_max_version_id,
                         'min_version': '1.0',
@@ -502,7 +500,6 @@ class TestJobTypeAPI(BaseTestCase):
                     "code": code
                     }))
         self.assert_created(response3)
-        requirements_id = response3.json["software_requirements"][0]["id"]
 
         response4 = self.client.get("/api/v1/jobtypes/TestJobType")
         self.assert_ok(response4)
@@ -517,7 +514,6 @@ class TestJobTypeAPI(BaseTestCase):
                 "name": "TestJobType",
                 "software_requirements": [
                     {
-                        'id': requirements_id,
                         'max_version': '1.1',
                         'max_version_id': software_max_version_id,
                         'min_version': '1.0',
@@ -856,14 +852,12 @@ class TestJobTypeAPI(BaseTestCase):
                     }))
         self.assert_created(response2)
         id = response2.json['id']
-        requirements_id = response2.json["software_requirements"][0]["id"]
 
         response3 = self.client.get(
             "/api/v1/jobtypes/TestJobType/software_requirements/")
         self.assert_ok(response3)
         self.assertEqual(response3.json, [
                 {
-                    "id": requirements_id,
                     "software": {
                         "software": "foo",
                         "id": software_id
@@ -888,7 +882,6 @@ class TestJobTypeAPI(BaseTestCase):
         self.assert_ok(response4)
         self.assertEqual(response4.json, [
                 {
-                    "id": requirements_id,
                     "software": {
                         "software": "foo",
                         "id": software_id
@@ -966,14 +959,12 @@ class TestJobTypeAPI(BaseTestCase):
                         "min_version": "1.0",
                         "max_version": "1.1"}))
         self.assert_created(response3)
-        requirement_id = response3.json["id"]
 
         response4 = self.client.get(
             "/api/v1/jobtypes/TestJobType/software_requirements/")
         self.assert_ok(response4)
         self.assertEqual(response4.json, [
                 {
-                    "id": requirement_id,
                     "software": {
                         "software": "foo",
                         "id": software_id
@@ -1346,15 +1337,12 @@ class TestJobTypeAPI(BaseTestCase):
                     }))
         self.assert_created(response2)
         id = response2.json['id']
-        requirements_id = response2.json["software_requirements"][0]["id"]
 
         response3 = self.client.get(
-            "/api/v1/jobtypes/TestJobType/software_requirements/%s" %
-            requirements_id)
+            "/api/v1/jobtypes/TestJobType/software_requirements/foo")
         self.assert_ok(response3)
         self.assertEqual(
             response3.json, {
-                    "id": 1,
                     "software": {
                             "software": "foo",
                             "id": software_id
@@ -1375,8 +1363,7 @@ class TestJobTypeAPI(BaseTestCase):
                 })
 
         response4 = self.client.get(
-            "/api/v1/jobtypes/%s/software_requirements/%s" %
-            (id, requirements_id))
+            "/api/v1/jobtypes/%s/software_requirements/foo" % id)
         self.assert_ok(response4)
 
     def test_jobtype_single_requirement_unknown_jobtype(self):
@@ -1467,27 +1454,22 @@ class TestJobTypeAPI(BaseTestCase):
                     }))
         self.assert_created(response3)
         id = response3.json['id']
-        requirement1_id = response3.json["software_requirements"][0]["id"]
-        requirement2_id = response3.json["software_requirements"][1]["id"]
 
         response4 = self.client.delete(
-            "/api/v1/jobtypes/TestJobType/software_requirements/%s" %
-            requirement1_id)
+            "/api/v1/jobtypes/TestJobType/software_requirements/foo")
         self.assert_no_content(response4)
 
         response5 = self.client.delete(
-            "/api/v1/jobtypes/TestJobType/software_requirements/%s" %
-            requirement1_id)
+            "/api/v1/jobtypes/TestJobType/software_requirements/foo")
         self.assert_no_content(response5)
 
         response6 = self.client.get(
-            "/api/v1/jobtypes/TestJobType/software_requirements/%s" %
-            requirement1_id)
+            "/api/v1/jobtypes/TestJobType/software_requirements/foo")
         self.assert_not_found(response6)
 
         response7 = self.client.get(
-            "/api/v1/jobtypes/TestJobType/software_requirements/")
-        self.assertEqual(len(response7.json), 1)
+            "/api/v1/jobtypes/TestJobType/software_requirements/bar")
+        self.assert_ok(response7)
 
     def test_jobtype_by_id_delete_requirement(self):
         response1 = self.client.post(
@@ -1510,11 +1492,9 @@ class TestJobTypeAPI(BaseTestCase):
                     }))
         self.assert_created(response2)
         id = response2.json['id']
-        requirement_id = response2.json["software_requirements"][0]["id"]
 
         response3 = self.client.delete(
-            "/api/v1/jobtypes/%s/software_requirements/%s" %
-            (id, requirement_id))
+            "/api/v1/jobtypes/%s/software_requirements/foo" % id)
         self.assert_no_content(response3)
 
         response4 = self.client.get(

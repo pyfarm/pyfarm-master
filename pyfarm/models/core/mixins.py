@@ -176,8 +176,7 @@ class UtilityMixins(object):
                 elif name in ("tasks", "jobs", "agents"):
                     out.append(relationship.id)
                 elif name == "software_requirements":
-                    out.append({"id": relationship.id,
-                                "software_id": relationship.software_id,
+                    out.append({"software_id": relationship.software_id,
                                 "software": relationship.software.software,
                                 "min_version_id": relationship.min_version_id,
                                 "min_version":

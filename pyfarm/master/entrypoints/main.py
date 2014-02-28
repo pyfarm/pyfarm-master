@@ -236,11 +236,12 @@ def load_api(app_instance, api_instance):
         view_func=JobTypeSoftwareRequirementsIndexAPI.as_view(
             "jobtype_by_string_soft_rq_api"))
     api_instance.add_url_rule(
-        "/jobtypes/<int:jobtype_name>/software_requirements/<int:id>",
+        "/jobtypes/<int:jobtype_name>/software_requirements/<string:software>",
         view_func=JobTypeSoftwareRequirementAPI.as_view(
             "jobtype_by_id_single_soft_rq_api"))
     api_instance.add_url_rule(
-        "/jobtypes/<string:jobtype_name>/software_requirements/<int:id>",
+        "/jobtypes/<string:jobtype_name>/software_requirements/"
+        "<string:software>",
         view_func=JobTypeSoftwareRequirementAPI.as_view(
             "jobtype_by_string_single_soft_rq_api"))
 
