@@ -29,7 +29,7 @@ from sqlalchemy.schema import UniqueConstraint
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import (
     TABLE_SOFTWARE, TABLE_SOFTWARE_VERSION, MAX_TAG_LENGTH,
-    TABLE_JOB, TABLE_JOB_SOFTWARE_REQ, TABLE_JOB_TYPE,
+    TABLE_JOB, TABLE_JOB_SOFTWARE_REQ, TABLE_JOB_TYPE, TABLE_JOB_TYPE_VERSION,
     TABLE_JOB_TYPE_SOFTWARE_REQ)
 from pyfarm.models.core.types import id_column, IDTypeWork
 from pyfarm.models.core.mixins import UtilityMixins
@@ -132,28 +132,34 @@ class JobTypeSoftwareRequirement(db.Model, UtilityMixins):
     """
     __tablename__ = TABLE_JOB_TYPE_SOFTWARE_REQ
     __table_args__ = (
-        UniqueConstraint("software_id", "jobtype_id"), )
+        UniqueConstraint("software_id", "jobtype_version_id"), )
 
-    id = id_column()
     software_id = db.Column(db.Integer,
                             db.ForeignKey("%s.id" % TABLE_SOFTWARE),
-                            nullable=False,
-                            doc=dedent("""
-                                Reference to the required software"""))
-    jobtype_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB_TYPE),
-                           nullable=False,
-                           doc=dedent("""
-                                      Foreign key to :class:`JobType.id`"""))
-    min_version = db.Column(db.Integer,
-                            db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
-                            nullable=True,
-                            doc=dedent("""
-                                Reference to the minimum required version"""))
-    max_version = db.Column(db.Integer,
-                            db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
-                            nullable=True,
-                            doc=dedent("""
-                                Reference to the maximum required version"""))
+                            primary_key=True,
+                            doc="Reference to the required software")
+    jobtype_version_id = db.Column(IDTypeWork,
+                                   db.ForeignKey("%s.id" %
+                                                 TABLE_JOB_TYPE_VERSION),
+                                   primary_key=True,
+                                   doc="Foreign key to "
+                                       ":class:`JobTypeVersion.id`")
+    min_version_id = db.Column(db.Integer,
+                               db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+                               nullable=True,
+                               doc="Reference to the minimum required version")
+    max_version_id = db.Column(db.Integer,
+                               db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+                               nullable=True,
+                               doc="Reference to the maximum required version")
 
-    jobtype = db.relationship("JobType", backref="software_requirements")
+    jobtype_version = db.relationship("JobTypeVersion",
+                                      backref=db.backref("software_requirements",
+                                                         lazy="dynamic",
+                                                         cascade=
+                                                           "all, delete-orphan"))
     software = db.relationship("Software")
+    min_version = db.relationship("SoftwareVersion",
+                                  foreign_keys=[min_version_id])
+    max_version = db.relationship("SoftwareVersion",
+                                  foreign_keys=[max_version_id])

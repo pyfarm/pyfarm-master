@@ -118,6 +118,10 @@ def load_api(app_instance, api_instance):
         SoftwareVersionsIndexAPI, SingleSoftwareVersionAPI)
     from pyfarm.master.api.tags import (
         schema as tag_schema, TagIndexAPI, SingleTagAPI, AgentsInTagIndexAPI)
+    from pyfarm.master.api.jobtypes import (
+        schema as jobtypes_schema, JobTypeIndexAPI, SingleJobTypeAPI,
+        JobTypeCodeAPI, JobTypeSoftwareRequirementsIndexAPI, VersionedJobTypeAPI,
+        JobTypeSoftwareRequirementAPI, JobTypeVersionsIndexAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -129,6 +133,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/tags/",
         view_func=TagIndexAPI.as_view("tag_index_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/",
+        view_func=JobTypeIndexAPI.as_view("jobtype_index_api"))
 
     # schemas
     api_instance.add_url_rule(
@@ -140,6 +147,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/tags/schema",
         "tags_schema", view_func=tag_schema, methods=("GET", ))
+    api_instance.add_url_rule(
+        "/jobtypes/schema",
+        "jobtypes_schema", view_func=jobtypes_schema, methods=("GET", ))
 
     # specific item access
     api_instance.add_url_rule(
@@ -157,6 +167,30 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/software/<string:software_rq>",
         view_func=SingleSoftwareAPI.as_view("single_software_by_string_api"))
+
+    api_instance.add_url_rule(
+        "/jobtypes/<int:jobtype_name>",
+        view_func=SingleJobTypeAPI.as_view("single_jobtype_by_id_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/<string:jobtype_name>",
+        view_func=SingleJobTypeAPI.as_view("single_jobtype_by_string_api"))
+
+    # special case for jobype/code
+    api_instance.add_url_rule(
+        "/jobtypes/<int:jobtype_name>/versions/<int:version>/code",
+        view_func=JobTypeCodeAPI.as_view("jobtype_by_id_code_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/<string:jobtype_name>/versions/<int:version>/code",
+        view_func=JobTypeCodeAPI.as_view("jobtype_by_string_code_api"))
+
+    # versioned jobtypes
+    api_instance.add_url_rule(
+        "/jobtypes/<int:jobtype_name>/versions/<int:version>",
+        view_func=VersionedJobTypeAPI.as_view("versioned_jobtype_by_id_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/<string:jobtype_name>/versions/<int:version>",
+        view_func=VersionedJobTypeAPI.as_view("versioned_jobtype_by_string_api"))
+
 
     # subitems
     api_instance.add_url_rule(
@@ -191,6 +225,44 @@ def load_api(app_instance, api_instance):
         "/software/<int:software_rq>/versions/<int:version_name>",
         view_func=SingleSoftwareVersionAPI.as_view(
             "software_by_id_version_by_id_index_api"))
+
+    # Jobtype versions
+    api_instance.add_url_rule("/jobtypes/<int:jobtype_name>/versions/",
+        view_func=JobTypeVersionsIndexAPI.as_view("jobtype_by_id_versions_api"))
+    api_instance.add_url_rule("/jobtypes/<string:jobtype_name>/versions/",
+        view_func=JobTypeVersionsIndexAPI.as_view(
+            "jobtype_by_string_versions_api"))
+
+    # Jobtype software requirements
+    api_instance.add_url_rule(
+        "/jobtypes/<int:jobtype_name>/software_requirements/",
+        view_func=JobTypeSoftwareRequirementsIndexAPI.as_view(
+            "jobtype_by_id_soft_rq_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/<string:jobtype_name>/software_requirements/",
+        view_func=JobTypeSoftwareRequirementsIndexAPI.as_view(
+            "jobtype_by_string_soft_rq_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/<int:jobtype_name>/software_requirements/<string:software>",
+        view_func=JobTypeSoftwareRequirementAPI.as_view(
+            "jobtype_by_id_single_soft_rq_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/<string:jobtype_name>/software_requirements/"
+        "<string:software>",
+        view_func=JobTypeSoftwareRequirementAPI.as_view(
+            "jobtype_by_string_single_soft_rq_api"))
+
+    # Jobtype software requirements for specific versions
+    api_instance.add_url_rule(
+        "/jobtypes/<int:jobtype_name>/versions/<int:version>"
+        "/software_requirements/",
+        view_func=JobTypeSoftwareRequirementsIndexAPI.as_view(
+            "versioned_jobtype_by_id_soft_rq_api"))
+    api_instance.add_url_rule(
+        "/jobtypes/<string:jobtype_name>/versions/<int:version>"
+        "/software_requirements/",
+        view_func=JobTypeSoftwareRequirementsIndexAPI.as_view(
+            "versioned_jobtype_by_string_soft_rq_api"))
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)

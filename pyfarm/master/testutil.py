@@ -31,12 +31,12 @@ try:
     from httplib import (
         OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED,
         FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR, CONFLICT,
-        UNSUPPORTED_MEDIA_TYPE)
+        UNSUPPORTED_MEDIA_TYPE, METHOD_NOT_ALLOWED)
 except ImportError:
     from http.client import (
         OK, CREATED, ACCEPTED, NO_CONTENT, BAD_REQUEST, UNAUTHORIZED,
         FORBIDDEN, NOT_FOUND, NOT_ACCEPTABLE, INTERNAL_SERVER_ERROR, CONFLICT,
-        UNSUPPORTED_MEDIA_TYPE)
+        UNSUPPORTED_MEDIA_TYPE, METHOD_NOT_ALLOWED)
 
 try:
     from UserDict import UserDict
@@ -271,6 +271,9 @@ class BaseTestCase(TestCase):
 
     def assert_no_content(self, response):
         self.assert_status(response, status_code=NO_CONTENT)
+
+    def assert_method_not_allowed(self, response):
+        self.assert_status(response, status_code=METHOD_NOT_ALLOWED)
 
     def assert_bad_request(self, response):
         self.assert_status(response, status_code=BAD_REQUEST)
