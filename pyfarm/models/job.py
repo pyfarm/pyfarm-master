@@ -135,14 +135,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                     but then the job must be tagged using
                     :class:`.JobSoftware` to limit which agent(s) it will
                     run on."""))
-    start = db.Column(db.Float,
-                      doc=dedent("""
-                      The first frame of the job to run.  This value may
-                      be a float so subframes can be processed."""))
-    end = db.Column(db.Float,
-                      doc=dedent("""
-                      The last frame of the job to run.  This value may
-                      be a float so subframes can be processed."""))
     by = db.Column(db.Float, default=1,
                    doc=dedent("""
                    The number of frames to count by between `start` and
