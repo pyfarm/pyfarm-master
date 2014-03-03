@@ -135,7 +135,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                     but then the job must be tagged using
                     :class:`.JobSoftware` to limit which agent(s) it will
                     run on."""))
-    by = db.Column(db.Float, default=1,
+    by = db.Column(db.Numeric(10, 4), default=1,
                    doc=dedent("""
                    The number of frames to count by between `start` and
                    `end`.  This column may also sometimes be referred to
