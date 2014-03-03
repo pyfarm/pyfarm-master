@@ -53,7 +53,7 @@ class TestTags(BaseTestCase):
         db.session.add(jobtype_version)
 
         job = Job()
-        job.job_type_version = jobtype_version
+        job.jobtype_version = jobtype_version
 
         tag = Tag()
         tag.jobs = [job]
@@ -111,7 +111,7 @@ class TestSoftwareRequirement(BaseTestCase):
         db.session.add(jobtype_version)
 
         job = Job()
-        job.job_type_version = jobtype_version
+        job.jobtype_version = jobtype_version
 
         # Software requirement needs a software first
         software = Software()
