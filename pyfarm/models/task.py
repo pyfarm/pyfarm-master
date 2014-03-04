@@ -71,7 +71,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     hidden = db.Column(db.Boolean, default=False,
                        doc=dedent("""
                        hides the task from queue and web ui"""))
-    attempts = db.Column(db.Integer,
+    attempts = db.Column(db.Integer, nullable=False, default=0,
                          doc=dedent("""
                          The number of attempts which have been made on this
                          task. This value is auto incremented when
