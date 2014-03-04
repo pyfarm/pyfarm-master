@@ -300,7 +300,7 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
                 abort(BAD_REQUEST)
 
             all_valid_keys = types.columns | types.relationships
-            unknown_keys = request_columns - all_valid_keys
+            unknown_keys = request_columns - all_valid_keys - ignore
 
             # check to see if there are any fields that do not exist
             # in the request
