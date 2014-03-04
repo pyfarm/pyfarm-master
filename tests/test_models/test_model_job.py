@@ -53,6 +53,7 @@ class TestTags(BaseTestCase):
         db.session.add(jobtype_version)
 
         job = Job()
+        job.title = "Test Job"
         job.jobtype_version = jobtype_version
 
         tag = Tag()
@@ -111,6 +112,7 @@ class TestSoftwareRequirement(BaseTestCase):
         db.session.add(jobtype_version)
 
         job = Job()
+        job.title = "Test Job"
         job.jobtype_version = jobtype_version
 
         # Software requirement needs a software first
@@ -208,7 +210,5 @@ class TestJobEventsAndValidation(BaseTestCase):
     def test_state_change_event(self):
         model = Job()
         self.assertIsNone(model.time_started)
-        self.assertIsNone(model.attempts)
         model.state = WorkState.RUNNING
         self.assertIsInstance(model.time_started, datetime)
-        self.assertEqual(model.attempts, 1)
