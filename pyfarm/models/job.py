@@ -32,6 +32,7 @@ from textwrap import dedent
 
 from sqlalchemy import event
 from sqlalchemy.orm import validates
+from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.core.config import read_env, read_env_int
 from pyfarm.core.enums import WorkState, DBWorkState
@@ -41,10 +42,10 @@ from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
-    TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
+    MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
-    ValidateWorkStateMixin)
+    ValidateWorkStateMixin, UtilityMixins)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 
 __all__ = ("Job", )
@@ -67,12 +68,13 @@ JobDependencies = db.Table(
 
 
 class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
-          WorkStateChangedMixin, ReprMixin):
+          WorkStateChangedMixin, ReprMixin, UtilityMixins):
     """
     Defines the attributes and environment for a job.  Individual commands
     are kept track of by :class:`Task`
     """
     __tablename__ = TABLE_JOB
+    __table_args__ = (UniqueConstraint("title"), )
     REPR_COLUMNS = ("id", "state", "project")
     REPR_CONVERT_COLUMN = {
         "state": repr}
@@ -105,6 +107,8 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                     doc=dedent("""
                                     The foreign key which stores
                                     :class:`JobTypeVersion.id`"""))
+    title = db.Column(db.String(MAX_JOBTITLE_LENGTH), nullable=False,
+                      doc="The title of this job")
     user = db.Column(db.String(MAX_USERNAME_LENGTH),
                      doc=dedent("""
                      The user this job should execute as.  The agent
