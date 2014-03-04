@@ -194,31 +194,19 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                         -1, agent ram is exclusive for a task from this job
 
                     **configured by**: `job.ram`"""))
-    ram_warning = db.Column(db.Integer, default=-1,
+    ram_warning = db.Column(db.Integer, nullable=True,
                             doc=dedent("""
-                            Amount of ram used by a task before a warning
-                            raised.  A task exceeding this value will not
-                            cause any work stopping behavior.
-
-                            .. csv-table:: **Special Values**
-                                :header: Value, Result
-                                :widths: 10, 50
-
-                                -1, not set"""))
-    ram_max = db.Column(db.Integer, default=-1,
+                            Amount of ram used by a task before a warning raised.
+                            A task exceeding this value will not  cause any work
+                            stopping behavior."""))
+    ram_max = db.Column(db.Integer, nullable=True,
                         doc=dedent("""
                         Maximum amount of ram a task is allowed to consume on
                         an agent.
 
                         .. warning::
-                            The task will be **terminated** if the ram in use
-                            by the process exceeds this value.
-
-                        .. csv-table:: **Special Values**
-                            :header: Value, Result
-                            :widths: 10, 50
-
-                            -1, not set
+                            If set, the task will be **terminated** if the ram in
+                            use by the process exceeds this value.
                         """))
     attempts = db.Column(db.Integer,
                          doc=dedent("""
