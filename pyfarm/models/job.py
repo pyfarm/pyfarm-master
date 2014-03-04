@@ -126,15 +126,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                       searching"""))
 
     # task data
-    cmd = db.Column(db.String(MAX_COMMAND_LENGTH),
-                    doc=dedent("""
-                    The platform independent command to run. Each agent will
-                    resolve this value for itself when the task begins so a
-                    command like `ping` will work on any platform it's
-                    assigned to.  The full command could be provided here,
-                    but then the job must be tagged using
-                    :class:`.JobSoftware` to limit which agent(s) it will
-                    run on."""))
     by = db.Column(db.Numeric(10, 4), default=1,
                    doc=dedent("""
                    The number of frames to count by between `start` and
@@ -208,12 +199,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                             If set, the task will be **terminated** if the ram in
                             use by the process exceeds this value.
                         """))
-    attempts = db.Column(db.Integer,
-                         doc=dedent("""
-                         The number attempts which have been made on this
-                         task. This value is auto incremented when
-                         :attr:`state` changes to a value synonyms with a
-                         running state."""))
     hidden = db.Column(db.Boolean, default=False, nullable=False,
                        doc=dedent("""
                        If True, keep the job hidden from the queue and web
@@ -228,13 +213,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                         .. note::
                             Changes made directly to this object are **not**
                             applied to the session."""))
-    args = db.Column(JSONList,
-                     doc=dedent("""
-                     List containing the command line arguments.
-
-                     .. note::
-                        Changes made directly to this object are **not**
-                        applied to the session."""))
     data = db.Column(JSONDict,
                      doc=dedent("""
                      Json blob containing additional data for a job
