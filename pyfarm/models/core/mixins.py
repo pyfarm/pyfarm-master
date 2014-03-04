@@ -71,7 +71,7 @@ class ValidatePriorityMixin(object):
     @validates("attempts")
     def validate_attempts(self, key, value):
         """ensures the number of attempts provided is valid"""
-        if value > 0 or value is None:
+        if value >= 0 or value is None:
             return value
 
         raise ValueError("%s cannot be less than zero" % key)
