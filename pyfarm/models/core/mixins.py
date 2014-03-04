@@ -173,7 +173,7 @@ class UtilityMixins(object):
                     out.append({"id": relationship.id,
                                 "version": relationship.version,
                                 "rank": relationship.rank})
-                elif name in ("tasks", "jobs", "agents"):
+                elif name in ("jobs", "agents"):
                     out.append(relationship.id)
                 elif name == "software_requirements":
                     out.append({"software_id": relationship.software_id,
@@ -186,6 +186,11 @@ class UtilityMixins(object):
                                 "max_version":
                                     (relationship.max_version.version
                                      if relationship.max_version else None)})
+                elif name in ("tasks", "tasks_queued", "tasks_done",
+                              "tasks_failed"):
+                    out.append({"id": relationship.id,
+                                "frame": relationship.frame,
+                                "state": str(relationship.state)})
                 else:
                     raise NotImplementedError(
                         "don't know how to unpack relationships for `%s`" % name)
