@@ -127,11 +127,13 @@ class JSONSerializable(TypeDecorator):
 class JSONList(JSONSerializable):
     """Column type for storing list objects as json"""
     serialize_types = (list, tuple, UserList)
+    json_types = list
 
 
 class JSONDict(JSONSerializable):
     """Column type for storing dictionary objects as json"""
     serialize_types = (dict, UserDict)
+    json_types = dict
 
 
 class IPAddress(_IPAddress):
