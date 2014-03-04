@@ -104,6 +104,10 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         if new_value is not None:
             target.state = target.STATE_ENUM.ASSIGN
 
+    @staticmethod
+    def incrementAtttempts(target, new_value, old_value, initiator):
+        target.attempts += 1
 
 event.listen(Task.agent_id, "set", Task.agentChangedEvent)
 event.listen(Task.state, "set", Task.stateChangedEvent)
+event.listen(Task.state, "set", Task.incrementAtttempts)

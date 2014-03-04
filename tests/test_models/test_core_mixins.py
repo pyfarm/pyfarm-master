@@ -49,7 +49,7 @@ class WorkStateChangedModel(db.Model, WorkStateChangedMixin):
     __tablename__ = "%s_state_change_test" % TABLE_PREFIX
     id = db.Column(Integer, primary_key=True, autoincrement=True)
     state = db.Column(WorkStateEnum)
-    attempts = db.Column(Integer, default=0)
+    attempts = db.Column(Integer, nullable=False, default=0)
     time_started = db.Column(DateTime)
     time_finished = db.Column(DateTime)
 
@@ -110,7 +110,7 @@ class TestMixins(BaseTestCase):
     def test_attempts_validation(self):
         model = ValidationModel()
         with self.assertRaises(ValueError):
-            model.attempts = 0
+            model.attempts = -1
         model.attempts = 1
         self.assertEqual(model.attempts, 1)
         db.session.commit()
@@ -123,9 +123,7 @@ class TestMixins(BaseTestCase):
             self.assertIsNone(model.time_finished)
             self.assertIsNone(model.time_finished)
             model.state = state_enum.RUNNING
-            self.assertEqual(model.attempts, 1)
             self.assertEqual(model.state, state_enum.RUNNING)
-            self.assertEqual(model.attempts, 1)
             self.assertLessEqual(model.time_started, datetime.now())
             first_started = model.time_started
             self.assertIsNone(model.time_finished)
@@ -137,7 +135,6 @@ class TestMixins(BaseTestCase):
             self.assertEqual(model.state, state_enum.RUNNING)
             self.assertIsNone(model.time_finished)
             self.assertNotEqual(model.time_started, first_started)
-            self.assertEqual(model.attempts, 2)
             model.state = state_enum.DONE
             self.assertNotEqual(model.time_finished, first_finished)
             self.assertLessEqual(model.time_finished, datetime.now())

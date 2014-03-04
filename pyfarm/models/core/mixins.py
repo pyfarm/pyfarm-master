@@ -107,11 +107,6 @@ class WorkStateChangedMixin(object):
             target.time_started = datetime.now()
             target.time_finished = None
 
-            if target.attempts is None:
-                target.attempts = 1
-            else:
-                target.attempts += 1
-
         elif new_value == _WorkState.DONE or new_value == _WorkState.FAILED:
             if target.time_started is None:  # pragma: no cover
                 msg = "job %s has not been started yet, state is " % target.id
