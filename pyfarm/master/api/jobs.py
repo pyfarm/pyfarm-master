@@ -48,12 +48,6 @@ from pyfarm.master.utility import jsonify, validate_with_model
 
 logger = getLogger("api.jobs")
 
-def default_json_encoder(obj):
-    if isinstance(obj, Decimal):
-        return float(obj)
-    elif isinstance(obj, datetime):
-        return str(obj)
-
 
 def schema():
     """
@@ -189,11 +183,4 @@ class JobIndexAPI(MethodView):
         job_data["end"] = min(cur_frame, end)
         logger.info("Created new job %s", job_data)
 
-        indent = None
-        if current_app.config["JSONIFY_PRETTYPRINT_REGULAR"] \
-                and not request.is_xhr:
-            indent = 2
-        response = current_app.response_class(
-            dumps(job_data, indent=indent, default=default_json_encoder),
-            mimetype="application/json")
-        return response, OK
+        return jsonify(job_data), OK
