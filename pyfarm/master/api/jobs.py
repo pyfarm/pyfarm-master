@@ -115,8 +115,8 @@ class JobIndexAPI(MethodView):
     @validate_with_model(Job,
                          type_checks = {"by": lambda x: isinstance(
                              x, (int, float, Decimal))},
-                         ignore=["start", "end", "jobtype",
-                                 "jobtype_version", "jobtype_version_id"])
+                         ignore=["start", "end", "jobtype", "jobtype_version"],
+                         disallow=["jobtype_version_id"])
     def post(self):
         if "jobtype" not in g.json:
             return jsonify(error="No jobtype specified"), BAD_REQUEST
@@ -179,6 +179,7 @@ class JobIndexAPI(MethodView):
         job_data = job.to_dict()
         job_data["start"] = start
         job_data["end"] = min(cur_frame, end)
+        del job_data["jobtype_version_id"]
         logger.info("Created new job %s", job_data)
 
         return jsonify(job_data), OK
