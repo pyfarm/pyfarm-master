@@ -123,7 +123,7 @@ def load_api(app_instance, api_instance):
         JobTypeCodeAPI, JobTypeSoftwareRequirementsIndexAPI, VersionedJobTypeAPI,
         JobTypeSoftwareRequirementAPI, JobTypeVersionsIndexAPI)
     from pyfarm.master.api.jobs import (
-        schema as job_schema, JobIndexAPI)
+        schema as job_schema, JobIndexAPI, SingleJobAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -182,6 +182,13 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobtypes/<string:jobtype_name>",
         view_func=SingleJobTypeAPI.as_view("single_jobtype_by_string_api"))
+
+    api_instance.add_url_rule(
+        "/jobs/<int:job_name>",
+        view_func=SingleJobAPI.as_view("single_job_by_id_api"))
+    api_instance.add_url_rule(
+        "/jobs/<string:job_name>",
+        view_func=SingleJobAPI.as_view("single_job_by_string_api"))
 
     # special case for jobype/code
     api_instance.add_url_rule(

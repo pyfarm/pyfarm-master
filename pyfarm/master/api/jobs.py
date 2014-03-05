@@ -29,10 +29,10 @@ from json import loads, dumps
 
 try:
     from httplib import (
-        OK, BAD_REQUEST, NOT_FOUND)
+        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR)
 except ImportError:  # pragma: no cover
     from http.client import (
-        OK, BAD_REQUEST, NOT_FOUND)
+        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR)
 
 from flask.views import MethodView
 from flask import g, request, current_app
@@ -192,3 +192,119 @@ class JobIndexAPI(MethodView):
             out.append({"id": id, "title": title, "state": str(state)})
 
         return jsonify(out), OK
+
+
+class SingleJobAPI(MethodView):
+    def get(self, job_name):
+        if isinstance(job_name, STRING_TYPES):
+            job = Job.query.filter_by(title=job_name).first()
+        else:
+            job = Job.query.filter_by(id=job_name).first()
+
+        if not job:
+            return jsonify(error="Job not found"), NOT_FOUND
+
+        job_data = job.to_dict(unpack_relationships=["tags",
+                                                     "data",
+                                                     "software_requirements",
+                                                     "parents",
+                                                     "children"])
+
+        first_task = Task.query.filter_by(job=job).order_by("frame asc").first()
+        last_task = Task.query.filter_by(job=job).order_by("frame desc").first()
+
+        if not first_task or not last_task:
+            return (jsonify(error="Job does not have any tasks"),
+                    INTERNAL_SERVER_ERROR)
+
+        job_data["start"] = first_task.frame
+        job_data["end"] = last_task.frame
+        del job_data["jobtype_version_id"]
+
+        return jsonify(job_data), OK
+
+    def post(self, job_name):
+        if isinstance(job_name, STRING_TYPES):
+            job = Job.query.filter_by(title=job_name).first()
+        else:
+            job = Job.query.filter_by(id=job_name).first()
+
+        if not job:
+            return jsonify(error="Job not found"), NOT_FOUND
+
+        if "start" in g.json or "end" in g.json or "by" in g.json:
+            old_first_task = Task.query.filter_by(job=job).order_by(
+                "frame asc").first()
+            old_last_task = Task.query.filter_by(job=job).order_by(
+                "frame desc").first()
+
+            if not first_task or not last_task:
+                return (jsonify(error="Job does not have any tasks"),
+                        INTERNAL_SERVER_ERROR)
+
+            json = loads(request.data.decode(), parse_float=Decimal)
+            start = Decimal(json.pop("start", old_first_task.frame))
+            end = Decimal(json.pop("end", old_last_task.frame))
+            by = Decimal(json.pop("by", job.by))
+
+            if end < start:
+                return jsonify(error="end must be greater than start")
+
+            required_frames = []
+            cur_frame = start
+            while cur_frame <= end:
+                required_frames.append(cur_frame)
+                cur_frame += by
+
+            existing_tasks = Task.query.filter_by(job=job).all()
+            frames_to_create = required_frames
+            for task in existing_tasks:
+                if task.frame not in required_frames:
+                    db.session.delete(task)
+                else:
+                    frames_to_create.remove(task.frame)
+
+            for frame in frames_to_create:
+                task = Task()
+                task.job = job
+                task.frame = frame
+                db.session.add(frame)
+
+        if "time_started" in g.json:
+            return (jsonify(error="\"time_started\" cannot be set manually"),
+                    BAD_REQUEST)
+
+        if "time_finished" in g.json:
+            return (jsonify(error="\"time_finished\" cannot be set manually"),
+                    BAD_REQUEST)
+
+        if "time_submitted" in g.json:
+            return (jsonify(error="\"time_submitted\" cannot be set manually"),
+                    BAD_REQUEST)
+
+        if "jobtype_version_id" in g.json:
+            return (jsonify(error=
+                           "\"jobtype_version_id\" cannot be set manually"),
+                    BAD_REQUEST)
+
+        for name in Job.types().columns:
+            if name in g.json:
+                col_type = getattr(Job.__class__, name)
+                value = g.json.pop(name)
+                if not isinstance(value, col_type.type):
+                    return jsonify(error="Column \"%s\" is of type %r, but we "
+                                   "expected %r" % (name,
+                                                    type(value),
+                                                    col_type.type))
+                setattr(Job, name, value)
+
+        if g.json:
+            return jsonify(error="Unknown columns: %r" % g.json), BAD_REQUEST
+
+        db.session.add(job)
+        db.session.commit()
+        job_data = job.to_dict()
+
+        logger.info("Job %s has been updated to: %r", job.id, job_data)
+
+        return jsonify(job_data), OK
