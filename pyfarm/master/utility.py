@@ -23,6 +23,8 @@ General utility which are not view or tool specific
 
 import json
 from functools import wraps
+from decimal import Decimal
+from datetime import datetime
 
 try:
     from httplib import (
@@ -46,27 +48,38 @@ NONE_TYPE = type(None)
 JSON_MIMETYPES = set(["application/json"])
 
 
+def default_json_encoder(obj):
+    if isinstance(obj, Decimal):
+        return float(obj)
+    elif isinstance(obj, datetime):
+        return str(obj)
+
+
 def jsonify(*args, **kwargs):
     """
     Drop in replacement for :func:`flask.jsonify` that also handles list
-    objects.  Flask does not support this by default because it's considered
-    a security risk in most cases but we do need it in certain cases.
+    objects as well as a few custom objects like Decimal or datetime.
+    Flask does not support lists by default because it's considered a security
+    risk in most cases but we do need it in certain cases.
+    Since flask's jsonify does not allow passing arbitrary arguments to
+    :func:`json.dumps`, we cannot use it if the output data contains custom
+    types.
     """
-    # Single argument that's not a dictionary?  Handle it ourselves just
-    # like Flask would have.
+    indent = None
+    if current_app.config["JSONIFY_PRETTYPRINT_REGULAR"] \
+            and not request.is_xhr:
+        indent = 2
+
     if len(args) == 1 and not isinstance(args[0], (dict, UserDict)):
-        indent = None
-        if current_app.config["JSONIFY_PRETTYPRINT_REGULAR"] \
-                and not request.is_xhr:
-            indent = 2
-
         return current_app.response_class(
-            json.dumps(args[0], indent=indent),
+            json.dumps(args[0], indent=indent, default=default_json_encoder),
             mimetype="application/json")
-
     else:
-        return _jsonify(*args, **kwargs)
-
+        return current_app.response_class(
+            json.dumps(dict(*args, **kwargs),
+                       indent=indent,
+                       default=default_json_encoder),
+            mimetype='application/json')
 
 def inside_request():
     """Returns True if we're inside a request, False if not."""
