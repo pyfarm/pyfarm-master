@@ -183,3 +183,12 @@ class JobIndexAPI(MethodView):
         logger.info("Created new job %s", job_data)
 
         return jsonify(job_data), OK
+
+    def get(self):
+        out = []
+        q = db.session.query(Job.id, Job.title, Job.state)
+
+        for id, title, state in q:
+            out.append({"id": id, "title": title, "state": str(state)})
+
+        return jsonify(out), OK
