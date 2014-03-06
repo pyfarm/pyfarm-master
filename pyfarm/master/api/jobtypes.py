@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover
         OK, CREATED, CONFLICT, NOT_FOUND, BAD_REQUEST, NO_CONTENT,
         METHOD_NOT_ALLOWED)
 
-from flask import g, Response, request
+from flask import g, Response
 from flask.views import MethodView
 
 from sqlalchemy import or_, func
@@ -42,7 +42,7 @@ from pyfarm.models.software import (
     Software, SoftwareVersion, JobTypeSoftwareRequirement)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.master.application import db
-from pyfarm.master.utility import jsonify, validate_with_model
+from pyfarm.master.utility import jsonify
 
 logger = getLogger("api.jobtypes")
 
