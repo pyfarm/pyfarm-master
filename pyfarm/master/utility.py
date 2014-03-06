@@ -323,7 +323,7 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
                 abort(BAD_REQUEST)
 
             # now check to see if we're missing any required fields
-            missing_keys = ((types.required - ignore) -
+            missing_keys = ((types.required - ignore - disallow) -
                             request_columns) - types.primary_keys
             if missing_keys:
                 g.error = "request is missing field(s): %r" % missing_keys
