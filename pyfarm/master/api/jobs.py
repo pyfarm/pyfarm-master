@@ -416,6 +416,68 @@ class JobIndexAPI(MethodView):
 
 class SingleJobAPI(MethodView):
     def get(self, job_name):
+        """
+        A ``GET`` to this endpoint will return the specified job, by name or id.
+
+        .. http:get:: /api/v1/jobtypes/<str:tagname> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobts/Test%20Job%202 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "ram_warning": null,
+                    "title": "Test Job",
+                    "state": "queued",
+                    "environ": null,
+                    "user": null,
+                    "priority": 0,
+                    "time_finished": null,
+                    "start": 2.0,
+                    "id": 1,
+                    "notes": "",
+                    "ram": 32,
+                    "tags": [],
+                    "hidden": false,
+                    "data": {
+                        "foo": "bar"
+                    },
+                    "software_requirements": [
+                        {
+                            "software": "blender",
+                            "software_id": 1,
+                            "min_version": null,
+                            "max_version": null,
+                            "min_version_id": null,
+                            "max_version_id": null
+                        }
+                    ],
+                    "batch": 1,
+                    "time_started": null,
+                    "time_submitted": "2014-03-06 15:40:58.335259",
+                    "requeue": 3,
+                    "end": 4.0,
+                    "parents": [],
+                    "cpus": 1,
+                    "ram_max": null,
+                    "children": [],
+                    "by": 1.0,
+                    "project_id": null
+                }
+
+        :statuscode 200: no error
+        :statuscode 404: job not found
+        """
         if isinstance(job_name, STRING_TYPES):
             job = Job.query.filter_by(title=job_name).first()
         else:
@@ -444,6 +506,118 @@ class SingleJobAPI(MethodView):
         return jsonify(job_data), OK
 
     def post(self, job_name):
+        """
+        A ``POST`` to this endpoint will update the specified job with the data
+        in the request.  Columns not specified in the request will be left as
+        they are.
+        If the "start", "end" or "by" columns are updated, tasks will be created
+        or deleted as required.
+
+        .. http:post:: /api/v1/jobs/[<str:name>|<int:id>] HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                PUT /api/v1/jobtypes/TestJobType HTTP/1.1
+                Accept: application/json
+
+                {
+                    "start": 2.0
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "end": 4.0,
+                    "children": [],
+                    "time_started": null,
+                    "tasks_failed": [],
+                    "project_id": null,
+                    "id": 1,
+                    "tasks": [
+                        {
+                            "state": "queued",
+                            "id": 2,
+                            "frame": 2.0
+                        },
+                        {
+                            "state": "queued",
+                            "id": 5,
+                            "frame": 3.0
+                        },
+                        {
+                            "state": "queued",
+                            "id": 6,
+                            "frame": 4.0
+                        }
+                    ],
+                    "software_requirements": [
+                        {
+                            "software": "blender",
+                            "min_version": null,
+                            "max_version_id": null,
+                            "software_id": 1,
+                            "max_version": null,
+                            "min_version_id": null
+                        }
+                    ],
+                    "tags": [],
+                    "environ": null,
+                    "requeue": 3,
+                    "start": 2.0,
+                    "ram_warning": null,
+                    "title": "Test Job",
+                    "batch": 1,
+                    "time_submitted": "2014-03-06 15:40:58.335259",
+                    "ram_max": null,
+                    "user": null,
+                    "project": null,
+                    "jobtype_version": {
+                        "jobtype": "TestJobType",
+                        "version": 1
+                    },
+                    "notes": "",
+                    "data": {
+                        "foo": "bar"
+                    },
+                    "ram": 32,
+                    "parents": [],
+                    "hidden": false,
+                    "tasks_queued": [
+                        {
+                            "state": "queued",
+                            "id": 2,
+                            "frame": 2.0
+                        },
+                        {
+                            "state": "queued",
+                            "id": 5,
+                            "frame": 3.0
+                        },
+                        {
+                            "state": "queued",
+                            "id": 6,
+                            "frame": 4.0
+                        }
+                    ],
+                    "tasks_done": [],
+                    "priority": 0,
+                    "cpus": 1,
+                    "state": "queued",
+                    "by": 1.0,
+                    "time_finished": null
+                }
+
+        :statuscode 200: the job was updated
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        """
         if isinstance(job_name, STRING_TYPES):
             job = Job.query.filter_by(title=job_name).first()
         else:
@@ -536,6 +710,58 @@ class SingleJobAPI(MethodView):
 
 class JobTasksIndexAPI(MethodView):
     def get(self, job_name):
+        """
+        A ``GET`` to this endpoint will return a list of all tasks in a job.
+
+        .. http:get:: /api/v1/jobs/[<str:name>|<int:id>]/tasks HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobs/Test%20Job%202/tasks/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "hidden": false,
+                        "id": 3,
+                        "attempts": 0,
+                        "priority": 0,
+                        "time_started": null,
+                        "time_submitted": "2014-03-06 15:49:51.892228",
+                        "frame": 1.0,
+                        "time_finished": null,
+                        "job_id": 2,
+                        "project_id": null,
+                        "state": "queued",
+                        "agent_id": null
+                    },
+                    {
+                        "hidden": false,
+                        "id": 4,
+                        "attempts": 0,
+                        "priority": 0,
+                        "time_started": null,
+                        "time_submitted": "2014-03-06 15:49:51.892925",
+                        "frame": 2.0,
+                        "time_finished": null,
+                        "job_id": 2,
+                        "project_id": null,
+                        "state": "queued",
+                        "agent_id": null
+                    }
+                ]
+
+        :statuscode 200: no error
+        """
         if isinstance(job_name, STRING_TYPES):
             job = Job.query.filter_by(title=job_name).first()
         else:
