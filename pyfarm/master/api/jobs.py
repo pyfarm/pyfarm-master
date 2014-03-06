@@ -166,14 +166,12 @@ class JobIndexAPI(MethodView):
         job.by = by
 
         cur_frame = copy(start)
-        num_tasks = 0
         while cur_frame <= end:
             task = Task()
             task.job = job
             task.frame = cur_frame
             db.session.add(task)
             cur_frame += by
-            num_tasks += 1
 
         db.session.add(job)
         db.session.commit()
