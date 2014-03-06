@@ -116,7 +116,10 @@ class JobSoftwareRequirement(db.Model, UtilityMixins):
                             nullable=True,
                             doc="Reference to the maximum required version")
 
-    job = db.relationship("Job", backref="software_requirements")
+    job = db.relationship("Job", backref=db.backref("software_requirements",
+                                                    lazy="dynamic",
+                                                    cascade=
+                                                        "all, delete-orphan"))
     software = db.relationship("Software")
 
 
