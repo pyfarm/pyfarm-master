@@ -103,22 +103,18 @@ class JobSoftwareRequirement(db.Model, UtilityMixins):
     software_id = db.Column(db.Integer,
                             db.ForeignKey("%s.id" % TABLE_SOFTWARE),
                             nullable=False,
-                            doc=dedent("""
-                                Reference to the required software"""))
+                            doc="Reference to the required software")
     job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
                        nullable=False,
-                       doc=dedent("""
-                            Foreign key to :class:`Job.id`"""))
-    min_version = db.Column(db.Integer,
+                       doc="Foreign key to :class:`Job.id`")
+    min_version_id = db.Column(db.Integer,
+                               db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+                               nullable=True,
+                               doc="Reference to the minimum required version")
+    max_version_id = db.Column(db.Integer,
                             db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
                             nullable=True,
-                            doc=dedent("""
-                                Reference to the minimum required version"""))
-    max_version = db.Column(db.Integer,
-                            db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
-                            nullable=True,
-                            doc=dedent("""
-                                Reference to the maximum required version"""))
+                            doc="Reference to the maximum required version")
 
     job = db.relationship("Job", backref="software_requirements")
     software = db.relationship("Software")
