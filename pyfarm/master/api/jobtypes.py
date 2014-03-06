@@ -229,6 +229,17 @@ class JobTypeIndexAPI(MethodView):
             return (jsonify(error="Missing key in input: %r" % e.args),
                     BAD_REQUEST)
 
+        if "software_requirements" in g.json:
+            try:
+                for r in parse_requirements(g.json["software_requirements"]):
+                    r.jobtype_version = jobtype_version
+                    db.session.add(r)
+            except TypeError as e:
+                return jsonify(error=e.args), BAD_REQUEST
+            except ObjectNotFound as e:
+                return jsonify(error=e.args), NOT_FOUND
+            del g.json["software_requirements"]
+
         if g.json:
             return (jsonify(error="Unexpected keys in input: %r" %
                             g.json.keys()), BAD_REQUEST)
