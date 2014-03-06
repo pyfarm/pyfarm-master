@@ -77,9 +77,8 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                          task. This value is auto incremented when
                          :attr:`state` changes to a value synonymous with a
                          running state."""))
-    frame = db.Column(db.Float, nullable=False,
-                      doc=dedent("""
-                      The frame the :class:`Task` will be executing."""))
+    frame = db.Column(db.Numeric(10, 4), nullable=False,
+                      doc="The frame this :class:`Task` will be executing.")
 
     # relationships
     parents = db.relationship("Task",
