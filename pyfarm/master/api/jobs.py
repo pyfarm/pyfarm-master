@@ -116,7 +116,8 @@ class JobIndexAPI(MethodView):
                          type_checks = {"by": lambda x: isinstance(
                              x, (int, float, Decimal))},
                          ignore=["start", "end", "jobtype", "jobtype_version"],
-                         disallow=["jobtype_version_id"])
+                         disallow=["jobtype_version_id", "time_submitted",
+                                   "time_started", "time_finished"])
     def post(self):
         if "jobtype" not in g.json:
             return jsonify(error="No jobtype specified"), BAD_REQUEST
