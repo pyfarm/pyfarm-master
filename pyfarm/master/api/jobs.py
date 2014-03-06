@@ -458,7 +458,7 @@ class SingleJobAPI(MethodView):
             old_last_task = Task.query.filter_by(job=job).order_by(
                 "frame desc").first()
 
-            if not first_task or not last_task:
+            if not old_first_task or not old_last_task:
                 return (jsonify(error="Job does not have any tasks"),
                         INTERNAL_SERVER_ERROR)
 
@@ -488,7 +488,7 @@ class SingleJobAPI(MethodView):
                 task = Task()
                 task.job = job
                 task.frame = frame
-                db.session.add(frame)
+                db.session.add(task)
 
         if "time_started" in g.json:
             return (jsonify(error="\"time_started\" cannot be set manually"),
@@ -518,6 +518,8 @@ class SingleJobAPI(MethodView):
                                                     col_type.type))
                 setattr(Job, name, value)
 
+        g.json.pop("start", None)
+        g.json.pop("end", None)
         if g.json:
             return jsonify(error="Unknown columns: %r" % g.json), BAD_REQUEST
 
