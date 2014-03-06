@@ -94,6 +94,90 @@ class TestJobTypeAPI(BaseTestCase):
                 "version": 1
                 })
 
+    def test_jobtype_post_with_requirements(self):
+        response1 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({
+                        "software": "foo",
+                        "versions": [
+                                    {"version": "1.0"},
+                                    {"version": "1.1"}
+                            ]
+                       }))
+        self.assert_created(response1)
+        software_id = response1.json['id']
+        software_min_version_id = response1.json["versions"][0]["id"]
+        software_max_version_id = response1.json["versions"][1]["id"]
+
+        response2 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code,
+                    "software_requirements": [{
+                                "software": "foo",
+                                "min_version": "1.0",
+                                "max_version": "1.1"
+                            }]
+                    }))
+        self.assert_created(response2)
+        id = response2.json['id']
+
+        response3 = self.client.get("/api/v1/jobtypes/TestJobType")
+        self.assert_ok(response3)
+        self.assertEqual(
+            response3.json, {
+                "batch_contiguous": True,
+                "classname": None,
+                "code": code,
+                "description": "Jobtype for testing inserts and queries",
+                "id": id,
+                "max_batch": 1,
+                "name": "TestJobType",
+                "software_requirements": [{
+                        'max_version': '1.1',
+                        'max_version_id': software_max_version_id,
+                        'min_version': '1.0',
+                        'min_version_id': software_min_version_id,
+                        'software': 'foo',
+                        'software_id': software_id
+                    }],
+                "version": 1
+                })
+
+    def test_jobtype_post_with_bad_requirements(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code,
+                    "software_requirements": [{
+                                "hardware": "bar"
+                            }]
+                    }))
+        self.assert_bad_request(response1)
+
+        response2 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": code,
+                    "software_requirements": [{
+                                "software": "unknown_software"
+                            }]
+                    }))
+        self.assert_not_found(response2)
+
     def test_jobtype_post_conflict(self):
         response1 = self.client.post(
             "/api/v1/jobtypes/",
