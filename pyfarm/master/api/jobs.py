@@ -182,6 +182,118 @@ class JobIndexAPI(MethodView):
                          disallow=["jobtype_version_id", "time_submitted",
                                    "time_started", "time_finished"])
     def post(self):
+        """
+        A ``POST`` to this endpoint will submit a new job.
+
+        .. http:post:: /api/v1/jobs/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/jobs/ HTTP/1.1
+                Accept: application/json
+
+                {
+                    "end": 2.0,
+                    "title": "Test Job 2",
+                    "jobtype": "TestJobType",
+                    "data": {
+                        "foo": "bar"
+                    },
+                    "software_requirements": [
+                        {
+                        "software": "blender"
+                        }
+                    ],
+                    "start": 1.0
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "time_finished": null,
+                    "time_started": null,
+                    "end": 2.0,
+                    "time_submitted": "2014-03-06 15:49:51.890145",
+                    "jobtype_version": {
+                        "version": 1,
+                        "jobtype": "TestJobType"
+                    },
+                    "start": 1.0,
+                    "priority": 0,
+                    "state": "queued",
+                    "parents": [],
+                    "tasks_done": [],
+                    "hidden": false,
+                    "project_id": null,
+                    "ram_warning": null,
+                    "title": "Test Job 2",
+                    "tags": [],
+                    "user": null,
+                    "by": 1.0,
+                    "data": {
+                        "foo": "bar"
+                    },
+                    "ram_max": null,
+                    "notes": "",
+                    "batch": 1,
+                    "project": null,
+                    "environ": null,
+                    "requeue": 3,
+                    "tasks": [
+                        {
+                            "state": "queued",
+                            "frame": 1.0,
+                            "id": 3
+                        },
+                        {
+                            "state": "queued",
+                            "frame": 2.0,
+                            "id": 4
+                        }
+                    ],
+                    "software_requirements": [
+                        {
+                            "min_version": null,
+                            "max_version": null,
+                            "max_version_id": null,
+                            "software_id": 1,
+                            "min_version_id": null,
+                            "software": "blender"
+                        }
+                    ],
+                    "tasks_queued": [
+                        {
+                            "state": "queued",
+                            "frame": 1.0,
+                            "id": 3
+                        },
+                        {
+                            "state": "queued",
+                            "frame": 2.0,
+                            "id": 4
+                        }
+                    ],
+                    "id": 2,
+                    "ram": 32,
+                    "cpus": 1,
+                    "tasks_failed": [],
+                    "children": []
+                }
+
+        :statuscode 201: a new job item was created
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        :statuscode 404: a referenced object, like a software or software
+                            version, does not exist
+        :statuscode 409: a conflicting job already exists
+        """
         if "jobtype" not in g.json:
             return jsonify(error="No jobtype specified"), BAD_REQUEST
         if not isinstance(g.json["jobtype"], STRING_TYPES):
@@ -259,6 +371,40 @@ class JobIndexAPI(MethodView):
         return jsonify(job_data), OK
 
     def get(self):
+        """
+        A ``GET`` to this endpoint will return a list of all jobs.
+
+        .. http:get:: /api/v1/jobs/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobs/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "title": "Test Job",
+                        "state": "queued",
+                        "id": 1
+                    },
+                    {
+                        "title": "Test Job 2",
+                        "state": "queued",
+                        "id": 2
+                    }
+                ]
+
+        :statuscode 200: no error
+        """
         out = []
         q = db.session.query(Job.id, Job.title, Job.state)
 
