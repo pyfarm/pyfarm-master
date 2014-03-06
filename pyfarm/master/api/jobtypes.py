@@ -47,6 +47,66 @@ from pyfarm.master.utility import jsonify
 logger = getLogger("api.jobtypes")
 
 
+class ObjectNotFound(Exception):
+    pass
+
+
+def parse_requirements(requirements_list):
+    """
+    Takes a list dicts specifying a software and optional min- and max-versions
+    and returns a list of :class:`JobTypeSoftwareRequirement` objects.
+
+    Raises TypeError if the input was not as expected or ObjectNotFound if a
+    referenced software of or version was not found.
+
+    :param list requirements_list:
+        A list of of dicts specifying a software and optionally min_version
+        and/or max_version.
+    """
+    if not isinstance(requirements_list, list):
+        raise TypeError("software_requirements must be a list")
+
+    out = []
+    for req in requirements_list:
+        if not isinstance(req, dict):
+            raise TypeError("Every software_requirement must be a dict")
+
+        requirement = JobTypeSoftwareRequirement()
+        software_name = req.pop("software", None)
+        if not software_name:
+            raise TypeError("Software requirement does not specify a software.")
+        software = Software.query.filter_by(software=software_name).first()
+        if not software:
+            raise ObjectNotFound("Software %s not found" % software_name)
+        requirement.software = software
+
+        min_version_str = req.pop("min_version", None)
+        if min_version_str:
+            min_version = SoftwareVersion.query.filter(
+                SoftwareVersion.software == software,
+                SoftwareVersion.version == min_version_str).first()
+            if not min_version:
+                raise ObjectNotFound("Version %s of software %s not found" %
+                                        (software_name, min_version_str))
+            requirement.min_version = min_version
+
+        max_version_str = req.pop("max_version", None)
+        if max_version_str:
+            max_version = SoftwareVersion.query.filter(
+                SoftwareVersion.software == software,
+                SoftwareVersion.version == max_version_str).first()
+            if not max_version:
+                raise ObjectNotFound("Version %s of software %s not found" %
+                                     (software_name, max_version_str))
+            requirement.max_version = max_version
+
+        if req:
+            raise TypeError("Unexpected keys in software requirement: %r" %
+                            req.keys())
+
+        out.append(requirement)
+    return out
+
 def schema():
     """
     Returns the basic schema of :class:`.JobType`
@@ -397,57 +457,14 @@ class SingleJobTypeAPI(MethodView):
                     BAD_REQUEST)
 
         if "software_requirements" in g.json:
-            if not isinstance(g.json["software_requirements"], list):
-                return (jsonify(error="software_requirements must be a list"),
-                        BAD_REQUEST)
-            for req in g.json["software_requirements"]:
-                if not isinstance(req, dict):
-                    return (jsonify(error="Every software_requirement must be a "
-                                    "dict"), BAD_REQUEST)
-
-                requirement = JobTypeSoftwareRequirement()
-                requirement.jobtype_version = jobtype_version
-                try:
-                    software_name = req.pop("software")
-                    software = Software.query.filter_by(
-                        software=software_name).first()
-
-                    if not software:
-                        return (jsonify(
-                            error="Software %s not found" % software_name),
-                            NOT_FOUND)
-                    requirement.software = software
-
-                    min_version_str = req.pop("min_version", None)
-                    if min_version_str:
-                        min_version = SoftwareVersion.query.filter(
-                            SoftwareVersion.software == software,
-                            SoftwareVersion.version == min_version_str).first()
-                        if not min_version:
-                            return (jsonify(
-                                error="Version %s of software %s not found" %
-                                (software_name, min_version_str)), NOT_FOUND)
-                        requirement.min_version = min_version
-
-                    max_version_str = req.pop("max_version", None)
-                    if max_version_str:
-                        max_version = SoftwareVersion.query.filter(
-                            SoftwareVersion.software == software,
-                            SoftwareVersion.version == max_version_str).first()
-                        if not max_version:
-                            return (jsonify(
-                                error="Version %s of software %s not found" %
-                                (software_name, max_version_str)), NOT_FOUND)
-                        requirement.max_version = max_version
-
-                except KeyError as e:
-                    return (jsonify(error="Missing key in software requirement: "
-                                          "%r" % e.args), BAD_REQUEST)
-
-                if req:
-                    return (jsonify(error="Unexpected keys in software "
-                                    "requirement: %s" % req.keys()), BAD_REQUEST)
-                db.session.add(requirement)
+            try:
+                for r in parse_requirements(g.json["software_requirements"]):
+                    r.jobtype_version = jobtype_version
+                    db.session.add(r)
+            except TypeError as e:
+                return jsonify(error=e.args), BAD_REQUEST
+            except ObjectNotFound as e:
+                return jsonify(error=e.args), NOT_FOUND
             del g.json["software_requirements"]
         elif not new:
             # If the user did not specify a list of software requirements and
