@@ -526,6 +526,9 @@ class SingleJobAPI(MethodView):
         db.session.add(job)
         db.session.commit()
         job_data = job.to_dict()
+        job_data["start"] = start
+        job_data["end"] = min(cur_frame, end)
+        del job_data["jobtype_version_id"]
 
         logger.info("Job %s has been updated to: %r", job.id, job_data)
 
