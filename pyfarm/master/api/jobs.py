@@ -43,10 +43,73 @@ from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 from pyfarm.models.job import Job
+from pyfarm.models.software import (
+    Software, SoftwareVersion, JobSoftwareRequirement)
 from pyfarm.master.application import db
 from pyfarm.master.utility import jsonify, validate_with_model
 
 logger = getLogger("api.jobs")
+
+
+class ObjectNotFound(Exception):
+    pass
+
+
+def parse_requirements(requirements_list):
+    """
+    Takes a list dicts specifying a software and optional min- and max-versions
+    and returns a list of :class:`JobRequirement` objects.
+
+    Raises TypeError if the input was not as expected or ObjectNotFound if a
+    referenced software of or version was not found.
+
+    :param list requirements_list:
+        A list of of dicts specifying a software and optionally min_version
+        and/or max_version.
+    """
+    if not isinstance(requirements_list, list):
+        raise TypeError("software_requirements must be a list")
+
+    out = []
+    for req in requirements_list:
+        if not isinstance(req, dict):
+            raise TypeError("Every software_requirement must be a dict")
+
+        requirement = JobSoftwareRequirement()
+        software_name = req.pop("software", None)
+        if not software_name:
+            raise TypeError("Software requirement does not specify a software.")
+        software = Software.query.filter_by(software=software_name).first()
+        if not software:
+            raise ObjectNotFound("Software %s not found" % software_name)
+        requirement.software = software
+
+        min_version_str = req.pop("min_version", None)
+        if min_version_str:
+            min_version = SoftwareVersion.query.filter(
+                SoftwareVersion.software == software,
+                SoftwareVersion.version == min_version_str).first()
+            if not min_version:
+                raise ObjectNotFound("Version %s of software %s not found" %
+                                        (software_name, min_version_str))
+            requirement.min_version = min_version
+
+        max_version_str = req.pop("max_version", None)
+        if max_version_str:
+            max_version = SoftwareVersion.query.filter(
+                SoftwareVersion.software == software,
+                SoftwareVersion.version == max_version_str).first()
+            if not max_version:
+                raise ObjectNotFound("Version %s of software %s not found" %
+                                     (software_name, max_version_str))
+            requirement.max_version = max_version
+
+        if req:
+            raise TypeError("Unexpected keys in software requirement: %r" %
+                            req.keys())
+
+        out.append(requirement)
+    return out
 
 
 def schema():
@@ -138,12 +201,23 @@ class JobIndexAPI(MethodView):
         if not jobtype_version:
             return jsonify("Jobtype or version not found"), NOT_FOUND
 
+        if "software_requirements" in g.json:
+            try:
+                software_requirements = parse_requirements(
+                    g.json["software_requirements"])
+            except TypeError as e:
+                return jsonify(error=e.args), BAD_REQUEST
+            except ObjectNotFound as e:
+                return jsonify(error=e.args), NOT_FOUND
+            del g.json["software_requirements"]
+
         if "start" in g.json:
             del g.json["start"]
         if "end" in g.json:
             del g.json["end"]
         job = Job(**g.json)
         job.jobtype_version = jobtype_version
+        job.software_requirements = software_requirements
 
         json = loads(request.data.decode(), parse_float=Decimal)
         if "start" not in json or "end" not in json:
@@ -174,6 +248,7 @@ class JobIndexAPI(MethodView):
             cur_frame += by
 
         db.session.add(job)
+        db.session.add_all(software_requirements)
         db.session.commit()
         job_data = job.to_dict()
         job_data["start"] = start
