@@ -533,3 +533,18 @@ class SingleJobAPI(MethodView):
         logger.info("Job %s has been updated to: %r", job.id, job_data)
 
         return jsonify(job_data), OK
+
+class JobTasksIndexAPI(MethodView):
+    def get(self, job_name):
+        if isinstance(job_name, STRING_TYPES):
+            job = Job.query.filter_by(title=job_name).first()
+        else:
+            job = Job.query.filter_by(id=job_name).first()
+
+        if not job:
+            return jsonify(error="Job not found"), NOT_FOUND
+
+        tasks_q = Task.query.filter_by(job=job).order_by("frame asc")
+        out = [x.to_dict(unpack_relationships=False) for x in tasks_q]
+
+        return jsonify(out), OK
