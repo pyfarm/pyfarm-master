@@ -116,7 +116,7 @@ def parse_requirements(requirements):
             requirement.max_version = max_version
 
         if entry:
-            raise TypeError("Unexpected keys in software requirement: %r" %
+            raise ValueError("Unexpected keys in software requirement: %r" %
                             entry.keys())
 
         out.append(requirement)
@@ -328,7 +328,7 @@ class JobIndexAPI(MethodView):
             try:
                 software_requirements = parse_requirements(
                     g.json["software_requirements"])
-            except TypeError as e:
+            except (TypeError, ValueError) as e:
                 return jsonify(error=e.args), BAD_REQUEST
             except ObjectNotFound as e:
                 return jsonify(error=e.args), NOT_FOUND
