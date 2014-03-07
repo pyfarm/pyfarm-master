@@ -338,10 +338,8 @@ class JobIndexAPI(MethodView):
                 return jsonify(error=e.args), NOT_FOUND
             del g.json["software_requirements"]
 
-        if "start" in g.json:
-            del g.json["start"]
-        if "end" in g.json:
-            del g.json["end"]
+        g.json.pop("start", None)
+        g.json.pop("end", None)
         job = Job(**g.json)
         job.jobtype_version = jobtype_version
         job.software_requirements = software_requirements
