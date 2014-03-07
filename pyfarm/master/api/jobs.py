@@ -38,7 +38,7 @@ from flask.views import MethodView
 from flask import g, request, current_app
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import STRING_TYPES
+from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
@@ -47,6 +47,8 @@ from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement)
 from pyfarm.master.application import db
 from pyfarm.master.utility import jsonify, validate_with_model
+
+RANGE_TYPES = NUMERIC_TYPES[:-1] + (Decimal, )
 
 logger = getLogger("api.jobs")
 
@@ -190,7 +192,7 @@ def schema():
 class JobIndexAPI(MethodView):
     @validate_with_model(Job,
                          type_checks={"by": lambda x: isinstance(
-                             x, (int, float, Decimal))},
+                             x, RANGE_TYPES)},
                          ignore=["start", "end", "jobtype", "jobtype_version"],
                          disallow=["jobtype_version_id", "time_submitted",
                                    "time_started", "time_finished"])
@@ -349,8 +351,8 @@ class JobIndexAPI(MethodView):
             return jsonify(error="start or end not specified"), BAD_REQUEST
         start = json["start"]
         end = json["end"]
-        if (not isinstance(start, (Decimal, int)) or
-            not isinstance(end, (Decimal, int))):
+        if (not isinstance(start, RANGE_TYPES) or
+            not isinstance(end, RANGE_TYPES)):
             return (jsonify(error="start and end need to be of type decimal or "
                             "int"), BAD_REQUEST)
 
@@ -359,7 +361,7 @@ class JobIndexAPI(MethodView):
                     BAD_REQUEST)
 
         by = json.pop("by", Decimal("1.0"))
-        if not isinstance(by, (Decimal, int)):
+        if not isinstance(by, RANGE_TYPES):
             return (jsonify(error="\"by\" needs to be of type decimal or int"),
                     BAD_REQUEST)
         job.by = by
