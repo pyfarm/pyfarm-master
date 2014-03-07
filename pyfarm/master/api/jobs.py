@@ -364,7 +364,7 @@ class JobIndexAPI(MethodView):
                     BAD_REQUEST)
         job.by = by
 
-        cur_frame = copy(start)
+        cur_frame = start
         while cur_frame <= end:
             task = Task()
             task.job = job
