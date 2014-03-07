@@ -66,6 +66,17 @@ def parse_requirements(requirements_list):
     :param list requirements_list:
         A list of of dicts specifying a software and optionally min_version
         and/or max_version.
+
+    :raises TypeError:
+        Raised if ``requirements_list`` is not a list or if an entry in
+        ``requirements_list`` is not a dictionary.
+
+    :raises ValueError:
+        Raised if there's a problem with the content of at least one of the
+        requirement dictionaries.
+
+    :raises ObjectNotFound:
+        Raised if the referenced software or version was not found
     """
     if not isinstance(requirements_list, list):
         raise TypeError("software_requirements must be a list")
