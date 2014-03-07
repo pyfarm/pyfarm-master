@@ -173,10 +173,12 @@ def schema():
     :statuscode 200: no error
     """
     schema_dict = Job.to_schema()
+
     # These two columns are not part of the actual database model, but will be
     # dynamically computed by the api
     schema_dict["start"] = "NUMERIC(10,4)"
     schema_dict["end"] = "NUMERIC(10,4)"
+
     # In the database, we are storing the jobtype_version_id, but over the wire,
     # we are using the jobtype's name plus version to identify it
     del schema_dict["jobtype_version_id"]
