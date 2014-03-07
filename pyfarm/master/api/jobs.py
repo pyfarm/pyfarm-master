@@ -346,21 +346,21 @@ class JobIndexAPI(MethodView):
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
         if "start" not in custom_json or "end" not in custom_json:
-            return jsonify(error="start or end not specified"), BAD_REQUEST
+            return jsonify(error="`start` or `end` not specified"), BAD_REQUEST
         start = custom_json["start"]
         end = custom_json["end"]
         if (not isinstance(start, RANGE_TYPES) or
             not isinstance(end, RANGE_TYPES)):
-            return (jsonify(error="start and end need to be of type decimal or "
-                            "int"), BAD_REQUEST)
+            return (jsonify(error="`start` and `end` need to be of type decimal "
+                                    "or int"), BAD_REQUEST)
 
         if not end >= start:
-            return (jsonify(error="end must be larger than or equal to start"),
+            return (jsonify(error="`end` must be larger than or equal to start"),
                     BAD_REQUEST)
 
         by = custom_json.pop("by", Decimal("1.0"))
         if not isinstance(by, RANGE_TYPES):
-            return (jsonify(error="\"by\" needs to be of type decimal or int"),
+            return (jsonify(error="`by` needs to be of type decimal or int"),
                     BAD_REQUEST)
         job.by = by
 
@@ -655,7 +655,7 @@ class SingleJobAPI(MethodView):
             by = Decimal(json.pop("by", job.by))
 
             if end < start:
-                return jsonify(error="end must be greater than start")
+                return jsonify(error="`end` must be greater than `start`")
 
             required_frames = []
             cur_frame = start
@@ -678,20 +678,20 @@ class SingleJobAPI(MethodView):
                 db.session.add(task)
 
         if "time_started" in g.json:
-            return (jsonify(error="\"time_started\" cannot be set manually"),
+            return (jsonify(error="`time_started` cannot be set manually"),
                     BAD_REQUEST)
 
         if "time_finished" in g.json:
-            return (jsonify(error="\"time_finished\" cannot be set manually"),
+            return (jsonify(error="`time_finished` cannot be set manually"),
                     BAD_REQUEST)
 
         if "time_submitted" in g.json:
-            return (jsonify(error="\"time_submitted\" cannot be set manually"),
+            return (jsonify(error="`time_submitted` cannot be set manually"),
                     BAD_REQUEST)
 
         if "jobtype_version_id" in g.json:
             return (jsonify(error=
-                           "\"jobtype_version_id\" cannot be set manually"),
+                           "`jobtype_version_id` cannot be set manually"),
                     BAD_REQUEST)
 
         for name in Job.types().columns:
@@ -699,7 +699,7 @@ class SingleJobAPI(MethodView):
                 col_type = getattr(Job.__class__, name)
                 value = g.json.pop(name)
                 if not isinstance(value, col_type.type):
-                    return jsonify(error="Column \"%s\" is of type %r, but we "
+                    return jsonify(error="Column `%s` is of type %r, but we "
                                    "expected %r" % (name,
                                                     type(value),
                                                     col_type.type))
