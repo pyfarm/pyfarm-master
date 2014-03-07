@@ -189,7 +189,7 @@ def schema():
 
 class JobIndexAPI(MethodView):
     @validate_with_model(Job,
-                         type_checks = {"by": lambda x: isinstance(
+                         type_checks={"by": lambda x: isinstance(
                              x, (int, float, Decimal))},
                          ignore=["start", "end", "jobtype", "jobtype_version"],
                          disallow=["jobtype_version_id", "time_submitted",
