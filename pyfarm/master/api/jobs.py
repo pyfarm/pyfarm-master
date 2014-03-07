@@ -377,7 +377,7 @@ class JobIndexAPI(MethodView):
         job_data["start"] = start
         job_data["end"] = min(cur_frame, end)
         del job_data["jobtype_version_id"]
-        logger.info("Created new job %s", job_data)
+        logger.info("Created new job %r", job_data)
 
         return jsonify(job_data), OK
 
