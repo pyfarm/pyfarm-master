@@ -364,20 +364,20 @@ class JobIndexAPI(MethodView):
                     BAD_REQUEST)
         job.by = by
 
-        cur_frame = start
-        while cur_frame <= end:
+        current_frame = start
+        while current_frame <= end:
             task = Task()
             task.job = job
-            task.frame = cur_frame
+            task.frame = current_frame
             db.session.add(task)
-            cur_frame += by
+            current_frame += by
 
         db.session.add(job)
         db.session.add_all(software_requirements)
         db.session.commit()
         job_data = job.to_dict()
         job_data["start"] = start
-        job_data["end"] = min(cur_frame, end)
+        job_data["end"] = min(current_frame, end)
         del job_data["jobtype_version_id"]
         logger.info("Created new job %r", job_data)
 
@@ -658,10 +658,10 @@ class SingleJobAPI(MethodView):
                 return jsonify(error="`end` must be greater than `start`")
 
             required_frames = []
-            cur_frame = start
-            while cur_frame <= end:
-                required_frames.append(cur_frame)
-                cur_frame += by
+            current_frame = start
+            while current_frame <= end:
+                required_frames.append(current_frame)
+                current_frame += by
 
             existing_tasks = Task.query.filter_by(job=job).all()
             frames_to_create = required_frames
@@ -714,7 +714,7 @@ class SingleJobAPI(MethodView):
         db.session.commit()
         job_data = job.to_dict()
         job_data["start"] = start
-        job_data["end"] = min(cur_frame, end)
+        job_data["end"] = min(current_frame, end)
         del job_data["jobtype_version_id"]
 
         logger.info("Job %s has been updated to: %r", job.id, job_data)
