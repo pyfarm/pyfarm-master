@@ -344,11 +344,11 @@ class JobIndexAPI(MethodView):
         job.jobtype_version = jobtype_version
         job.software_requirements = software_requirements
 
-        json = loads(request.data.decode(), parse_float=Decimal)
-        if "start" not in json or "end" not in json:
+        custom_json = loads(request.data.decode(), parse_float=Decimal)
+        if "start" not in custom_json or "end" not in custom_json:
             return jsonify(error="start or end not specified"), BAD_REQUEST
-        start = json["start"]
-        end = json["end"]
+        start = custom_json["start"]
+        end = custom_json["end"]
         if (not isinstance(start, RANGE_TYPES) or
             not isinstance(end, RANGE_TYPES)):
             return (jsonify(error="start and end need to be of type decimal or "
@@ -358,7 +358,7 @@ class JobIndexAPI(MethodView):
             return (jsonify(error="end must be larger than or equal to start"),
                     BAD_REQUEST)
 
-        by = json.pop("by", Decimal("1.0"))
+        by = custom_json.pop("by", Decimal("1.0"))
         if not isinstance(by, RANGE_TYPES):
             return (jsonify(error="\"by\" needs to be of type decimal or int"),
                     BAD_REQUEST)
