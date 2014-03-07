@@ -77,15 +77,15 @@ def parse_requirements(requirements_list):
 
         requirement = JobSoftwareRequirement()
         software_name = req.pop("software", None)
-        if not software_name:
-            raise TypeError("Software requirement does not specify a software.")
+        if software_name is None:
+            raise ValueError("Software requirement does not specify a software.")
         software = Software.query.filter_by(software=software_name).first()
         if not software:
             raise ObjectNotFound("Software %s not found" % software_name)
         requirement.software = software
 
         min_version_str = req.pop("min_version", None)
-        if min_version_str:
+        if min_version_str is not None:
             min_version = SoftwareVersion.query.filter(
                 SoftwareVersion.software == software,
                 SoftwareVersion.version == min_version_str).first()
@@ -95,7 +95,7 @@ def parse_requirements(requirements_list):
             requirement.min_version = min_version
 
         max_version_str = req.pop("max_version", None)
-        if max_version_str:
+        if max_version_str is not None:
             max_version = SoftwareVersion.query.filter(
                 SoftwareVersion.software == software,
                 SoftwareVersion.version == max_version_str).first()
