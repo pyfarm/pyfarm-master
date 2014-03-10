@@ -79,7 +79,7 @@ def parse_requirements(requirements):
 
     out = []
     for entry in requirements:
-        if not isinstance(req, dict):
+        if not isinstance(entry, dict):
             raise TypeError("Every software_requirement must be a dict")
 
         requirement = JobTypeSoftwareRequirement()
