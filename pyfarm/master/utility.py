@@ -52,7 +52,7 @@ def default_json_encoder(obj):
     if isinstance(obj, Decimal):
         return float(obj)
     elif isinstance(obj, datetime):
-        return str(obj)
+        return obj.isoformat()
 
 
 def jsonify(*args, **kwargs):
