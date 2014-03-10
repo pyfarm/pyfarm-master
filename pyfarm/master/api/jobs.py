@@ -236,6 +236,8 @@ class JobIndexAPI(MethodView):
                     "time_started": null,
                     "end": 2.0,
                     "time_submitted": "2014-03-06T15:40:58.335259",
+                    "jobtype_version": 1,
+                    "jobtype": "TestJobType",
                     "start": 1.0,
                     "priority": 0,
                     "state": "queued",
@@ -353,6 +355,8 @@ class JobIndexAPI(MethodView):
         job_data["start"] = start
         job_data["end"] = min(current_frame, end)
         del job_data["jobtype_version_id"]
+        job_data["jobtype"] = job.jobtype_version.jobtype.name
+        job_data["jobtype_version"] = job.jobtype_version.version
         logger.info("Created new job %r", job_data)
 
         return jsonify(job_data), CREATED
@@ -426,6 +430,8 @@ class SingleJobAPI(MethodView):
                     "ram_warning": null,
                     "title": "Test Job",
                     "state": "queued",
+                    "jobtype_version": 1,
+                    "jobtype": "TestJobType",
                     "environ": null,
                     "user": null,
                     "priority": 0,
@@ -488,6 +494,9 @@ class SingleJobAPI(MethodView):
 
         job_data["start"] = first_task.frame
         job_data["end"] = last_task.frame
+        job_data["jobtype"] = job.jobtype_version.jobtype.name
+        job_data["jobtype_version"] = job.jobtype_version.version
+
         del job_data["jobtype_version_id"]
 
         return jsonify(job_data), OK
