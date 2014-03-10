@@ -51,37 +51,48 @@ class ObjectNotFound(Exception):
     pass
 
 
-def parse_requirements(requirements_list):
+def parse_requirements(requirements):
     """
     Takes a list dicts specifying a software and optional min- and max-versions
-    and returns a list of :class:`JobTypeSoftwareRequirement` objects.
+    and returns a list of :class:`JobRequirement` objects.
 
     Raises TypeError if the input was not as expected or ObjectNotFound if a
     referenced software of or version was not found.
 
-    :param list requirements_list:
+    :param list requirements:
         A list of of dicts specifying a software and optionally min_version
         and/or max_version.
+
+    :raises TypeError:
+        Raised if ``requirements`` is not a list or if an entry in
+        ``requirements`` is not a dictionary.
+
+    :raises ValueError:
+        Raised if there's a problem with the content of at least one of the
+        requirement dictionaries.
+
+    :raises ObjectNotFound:
+        Raised if the referenced software or version was not found
     """
-    if not isinstance(requirements_list, list):
+    if not isinstance(requirements, list):
         raise TypeError("software_requirements must be a list")
 
     out = []
-    for req in requirements_list:
+    for entry in requirements:
         if not isinstance(req, dict):
             raise TypeError("Every software_requirement must be a dict")
 
         requirement = JobTypeSoftwareRequirement()
-        software_name = req.pop("software", None)
-        if not software_name:
-            raise TypeError("Software requirement does not specify a software.")
+        software_name = entry.pop("software", None)
+        if software_name is None:
+            raise ValueError("Software requirement does not specify a software.")
         software = Software.query.filter_by(software=software_name).first()
         if not software:
             raise ObjectNotFound("Software %s not found" % software_name)
         requirement.software = software
 
-        min_version_str = req.pop("min_version", None)
-        if min_version_str:
+        min_version_str = entry.pop("min_version", None)
+        if min_version_str is not None:
             min_version = SoftwareVersion.query.filter(
                 SoftwareVersion.software == software,
                 SoftwareVersion.version == min_version_str).first()
@@ -90,8 +101,8 @@ def parse_requirements(requirements_list):
                                         (software_name, min_version_str))
             requirement.min_version = min_version
 
-        max_version_str = req.pop("max_version", None)
-        if max_version_str:
+        max_version_str = entry.pop("max_version", None)
+        if max_version_str is not None:
             max_version = SoftwareVersion.query.filter(
                 SoftwareVersion.software == software,
                 SoftwareVersion.version == max_version_str).first()
@@ -100,12 +111,13 @@ def parse_requirements(requirements_list):
                                      (software_name, max_version_str))
             requirement.max_version = max_version
 
-        if req:
-            raise TypeError("Unexpected keys in software requirement: %r" %
-                            req.keys())
+        if entry:
+            raise ValueError("Unexpected keys in software requirement: %r" %
+                            entry.keys())
 
         out.append(requirement)
     return out
+
 
 def schema():
     """
