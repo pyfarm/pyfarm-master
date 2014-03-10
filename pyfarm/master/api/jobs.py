@@ -236,15 +236,10 @@ class JobIndexAPI(MethodView):
                     "time_started": null,
                     "end": 2.0,
                     "time_submitted": "2014-03-06T15:40:58.335259",
-                    "jobtype_version": {
-                        "version": 1,
-                        "jobtype": "TestJobType"
-                    },
                     "start": 1.0,
                     "priority": 0,
                     "state": "queued",
                     "parents": [],
-                    "tasks_done": [],
                     "hidden": false,
                     "project_id": null,
                     "ram_warning": null,
@@ -261,18 +256,6 @@ class JobIndexAPI(MethodView):
                     "project": null,
                     "environ": null,
                     "requeue": 3,
-                    "tasks": [
-                        {
-                            "state": "queued",
-                            "frame": 1.0,
-                            "id": 3
-                        },
-                        {
-                            "state": "queued",
-                            "frame": 2.0,
-                            "id": 4
-                        }
-                    ],
                     "software_requirements": [
                         {
                             "min_version": null,
@@ -283,22 +266,9 @@ class JobIndexAPI(MethodView):
                             "software": "blender"
                         }
                     ],
-                    "tasks_queued": [
-                        {
-                            "state": "queued",
-                            "frame": 1.0,
-                            "id": 3
-                        },
-                        {
-                            "state": "queued",
-                            "frame": 2.0,
-                            "id": 4
-                        }
-                    ],
                     "id": 2,
                     "ram": 32,
                     "cpus": 1,
-                    "tasks_failed": [],
                     "children": []
                 }
 
@@ -375,7 +345,11 @@ class JobIndexAPI(MethodView):
         db.session.add(job)
         db.session.add_all(software_requirements)
         db.session.commit()
-        job_data = job.to_dict()
+        job_data = job.to_dict(unpack_relationships=["tags",
+                                                     "data",
+                                                     "software_requirements",
+                                                     "parents",
+                                                     "children"])
         job_data["start"] = start
         job_data["end"] = min(current_frame, end)
         del job_data["jobtype_version_id"]
