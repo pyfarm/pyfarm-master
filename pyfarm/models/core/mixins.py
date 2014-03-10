@@ -104,7 +104,7 @@ class WorkStateChangedMixin(object):
     def stateChangedEvent(target, new_value, old_value, initiator):
         """update the datetime objects depending on the new value"""
         if new_value == _WorkState.RUNNING:
-            target.time_started = datetime.now()
+            target.time_started = datetime.utcnow()
             target.time_finished = None
 
         elif new_value == _WorkState.DONE or new_value == _WorkState.FAILED:
