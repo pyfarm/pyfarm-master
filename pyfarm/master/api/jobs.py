@@ -29,10 +29,10 @@ from json import loads, dumps
 
 try:
     from httplib import (
-        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR)
+        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CREATED)
 except ImportError:  # pragma: no cover
     from http.client import (
-        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR)
+        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CREATED)
 
 from flask.views import MethodView
 from flask import g, request, current_app
@@ -228,7 +228,7 @@ class JobIndexAPI(MethodView):
 
             .. sourcecode:: http
 
-                HTTP/1.1 200 OK
+                HTTP/1.1 201 CREATED
                 Content-Type: application/json
 
                 {
@@ -381,7 +381,7 @@ class JobIndexAPI(MethodView):
         del job_data["jobtype_version_id"]
         logger.info("Created new job %r", job_data)
 
-        return jsonify(job_data), OK
+        return jsonify(job_data), CREATED
 
     def get(self):
         """
