@@ -65,13 +65,13 @@ def parse_requirements(requirements):
     Raises TypeError if the input was not as expected or ObjectNotFound if a
     referenced software of or version was not found.
 
-    :param list requirements_list:
+    :param list requirements:
         A list of of dicts specifying a software and optionally min_version
         and/or max_version.
 
     :raises TypeError:
-        Raised if ``requirements_list`` is not a list or if an entry in
-        ``requirements_list`` is not a dictionary.
+        Raised if ``requirements`` is not a list or if an entry in
+        ``requirements`` is not a dictionary.
 
     :raises ValueError:
         Raised if there's a problem with the content of at least one of the
@@ -127,7 +127,7 @@ def parse_requirements(requirements):
 
 def schema():
     """
-    Returns the basic schema of :class:`.JobType`
+    Returns the basic schema of :class:`.Job`
 
     .. http:get:: /api/v1/jobtypes/schema HTTP/1.1
 
@@ -135,7 +135,7 @@ def schema():
 
         .. sourcecode:: http
 
-            GET /api/v1/jobtypes/schema HTTP/1.1
+            GET /api/v1/jobs/schema HTTP/1.1
             Accept: application/json
 
         **Response**
@@ -432,13 +432,13 @@ class SingleJobAPI(MethodView):
         """
         A ``GET`` to this endpoint will return the specified job, by name or id.
 
-        .. http:get:: /api/v1/jobtypes/<str:tagname> HTTP/1.1
+        .. http:get:: /api/v1/jobs/[<str:name>|<int:id>] HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                GET /api/v1/jobts/Test%20Job%202 HTTP/1.1
+                GET /api/v1/jobs/Test%20Job%202 HTTP/1.1
                 Accept: application/json
 
             **Response**
