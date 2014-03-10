@@ -246,7 +246,7 @@ class JobTypeIndexAPI(MethodView):
                 for r in parse_requirements(g.json["software_requirements"]):
                     r.jobtype_version = jobtype_version
                     db.session.add(r)
-            except TypeError as e:
+            except (TypeError, ValueError) as e:
                 return jsonify(error=e.args), BAD_REQUEST
             except ObjectNotFound as e:
                 return jsonify(error=e.args), NOT_FOUND
@@ -484,7 +484,7 @@ class SingleJobTypeAPI(MethodView):
                 for r in parse_requirements(g.json["software_requirements"]):
                     r.jobtype_version = jobtype_version
                     db.session.add(r)
-            except TypeError as e:
+            except (TypeError, ValueError) as e:
                 return jsonify(error=e.args), BAD_REQUEST
             except ObjectNotFound as e:
                 return jsonify(error=e.args), NOT_FOUND
