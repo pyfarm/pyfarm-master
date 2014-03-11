@@ -123,7 +123,8 @@ def load_api(app_instance, api_instance):
         JobTypeCodeAPI, JobTypeSoftwareRequirementsIndexAPI, VersionedJobTypeAPI,
         JobTypeSoftwareRequirementAPI, JobTypeVersionsIndexAPI)
     from pyfarm.master.api.jobs import (
-        schema as job_schema, JobIndexAPI, SingleJobAPI, JobTasksIndexAPI)
+        schema as job_schema, JobIndexAPI, SingleJobAPI, JobTasksIndexAPI,
+        JobSingleTaskAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -286,6 +287,12 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobs/<string:job_name>/tasks/",
         view_func=JobTasksIndexAPI.as_view("job_by_string_tasks_index_api"))
+    api_instance.add_url_rule(
+        "/jobs/<int:job_name>/tasks/<int:task_id>",
+        view_func=JobSingleTaskAPI.as_view("job_by_id_task_api"))
+    api_instance.add_url_rule(
+        "/jobs/<string:job_name>/tasks/<int:task_id>",
+        view_func=JobSingleTaskAPI.as_view("job_by_string_task_api"))
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)

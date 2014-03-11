@@ -750,3 +750,183 @@ class JobTasksIndexAPI(MethodView):
         out = [x.to_dict(unpack_relationships=False) for x in tasks_q]
 
         return jsonify(out), OK
+
+
+class JobSingleTaskAPI(MethodView):
+    def post(self, job_name, task_id):
+        """
+        A ``POST`` to this endpoint will update the specified task with the data
+        in the request.  Columns not specified in the request will be left as
+        they are.
+        The agent will use this endpoint to inform the master of its progress.
+
+        .. http:post:: /api/v1/jobs/[<str:name>|<int:id>]/tasks/<int:task_id> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                PUT /api/v1/job/Test%20Job/tasks/1 HTTP/1.1
+                Accept: application/json
+
+                {
+                    "state": "running"
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "time_finished": null,
+                    "agent": null,
+                    "attempts": 0,
+                    "frame": 2.0,
+                    "agent_id": null,
+                    "job": {
+                        "id": 1,
+                        "title": "Test Job"
+                    },
+                    "time_started": null,
+                    "state": "running",
+                    "project_id": null,
+                    "id": 2,
+                    "time_submitted": "2014-03-06T15:40:58.338904",
+                    "project": null,
+                    "parents": [],
+                    "job_id": 1,
+                    "hidden": false,
+                    "children": [],
+                    "priority": 0
+                }
+
+        :statuscode 200: the task was updated
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        """
+        task_query = Task.query.filter_by(id=task_id)
+        if isinstance(job_name, STRING_TYPES):
+            task_query.filter(Task.job.has(Job.title == job_name))
+        else:
+            task_query.filter(Task.job.has(Job.id == job_name))
+        task = task_query.first()
+
+        if not task:
+            return jsonify(error="Task not found"), NOT_FOUND
+
+        if "time_started" in g.json:
+            return (jsonify(error="`time_started` cannot be set manually"),
+                    BAD_REQUEST)
+
+        if "time_finished" in g.json:
+            return (jsonify(error="`time_finished` cannot be set manually"),
+                    BAD_REQUEST)
+
+        if "time_submitted" in g.json:
+            return (jsonify(error="`time_submitted` cannot be set manually"),
+                    BAD_REQUEST)
+
+        if "job_id" in g.json:
+            return jsonify(error="`job_id` cannot be changed"), BAD_REQUEST
+
+        if "frame" in g.json:
+            return jsonify(error="`frame` cannot be changed"), BAD_REQUEST
+
+        new_state = g.json.pop("state", None)
+        if new_state is not None:
+            logger.info("Task %s of job %s is now in state %s",
+                        task_id, task.job.title, new_state)
+            if new_state is "done" and task.state is not "done":
+                if len(task.job.tasks) == len(task.job.tasks_done) + 1:
+                    task.job.state = "done"
+                    db.session.add(task.job)
+                    logger.info("Job %s is now done", task.job.title)
+                elif (len(task.job.tasks) == len(task.job.tasks_done) +
+                                             len(task.job.tasks_failed) + 1):
+                    task.job.state = "failed"
+                    db.session.add(task.job)
+                    logger.info("Job %s is now failed", task.job.title)
+            elif new_state is "failed" and task.state is not "failed":
+                if (len(task.job.tasks) == len(task.job.tasks_done) +
+                                           len(task.job.tasks_failed) + 1):
+                    task.job.state = "failed"
+                    db.session.add(task.job)
+                    logger.info("Job %s is now failed", task.job.title)
+            task.state = new_state
+
+        for name in Task.types().columns:
+            if name in g.json:
+                type = Job.types().mappings[name]
+                value = g.json.pop(name)
+                if not isinstance(value, type):
+                    return jsonify(error="Column `%s` is of type %r, but we "
+                                   "expected %r" % (name, type(value), type))
+                setattr(task, name, value)
+
+        db.session.add(task)
+        db.session.commit()
+
+        task_data = task.to_dict()
+        logger.info("Task %s of job %s has been updated, new data: %r",
+                    task_id, task.job, task_data)
+        return jsonify(task_data), OK
+
+    def get(self, job_name, task_id):
+        """
+        A ``GET`` to this endpoint will return the requested task
+
+        .. http:get:: /api/v1/jobs/[<str:name>|<int:id>]/tasks/<int:task_id> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobs/Test%20Job%202/tasks/1 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "time_finished": null,
+                    "agent": null,
+                    "attempts": 0,
+                    "frame": 2.0,
+                    "agent_id": null,
+                    "job": {
+                        "id": 1,
+                        "title": "Test Job"
+                    },
+                    "time_started": null,
+                    "state": "running",
+                    "project_id": null,
+                    "id": 2,
+                    "time_submitted": "2014-03-06T15:40:58.338904",
+                    "project": null,
+                    "parents": [],
+                    "job_id": 1,
+                    "hidden": false,
+                    "children": [],
+                    "priority": 0
+                }
+
+        :statuscode 200: no error
+        """
+        task_query = Task.query.filter_by(id=task_id)
+        if isinstance(job_name, STRING_TYPES):
+            task_query.filter(Task.job.has(Job.title == job_name))
+        else:
+            task_query.filter(Task.job.has(Job.id == job_name))
+        task = task_query.first()
+
+        if not task:
+            return jsonify(error="Task not found"), NOT_FOUND
+
+        return jsonify(task.to_dict()), OK
