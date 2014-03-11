@@ -46,7 +46,7 @@ class TestJobAPI(BaseTestCase):
         self.app.register_blueprint(self.api)
         load_api(self.app, self.api)
 
-    def test_jobtype_schema(self):
+    def test_job_schema(self):
         response = self.client.get("/api/v1/jobs/schema")
         self.assert_ok(response)
         schema = Job.to_schema()
@@ -57,8 +57,7 @@ class TestJobAPI(BaseTestCase):
         schema["jobtype_version"] = "INTEGER"
         self.assertEqual(response.json, schema)
 
-    def test_jobtype_post(self):
-        self.maxDiff = None
+    def test_job_post(self):
         response1 = self.client.post(
             "/api/v1/jobtypes/",
             content_type="application/json",
@@ -146,3 +145,598 @@ class TestJobAPI(BaseTestCase):
                             "cpus": 1,
                             "children": []
                          })
+
+    def test_job_post_bad_requirements(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({
+                        "software": "foo",
+                        "versions": [
+                                    {"version": "1.0"},
+                                    {"version": "1.1"}
+                            ]
+                       }))
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": {
+                                "software": "foo",
+                                "min_version": "1.0",
+                                "max_version": "1.1"}
+                    }))
+        self.assert_bad_request(response3)
+
+        response4 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": [1]
+                    }))
+        self.assert_bad_request(response4)
+
+        response5 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": [
+                        {
+                            "software": "foo",
+                            "min_version": "1.0",
+                            "max_version": "1.1",
+                            "unknown_key": 1
+                        }]
+                    }))
+        self.assert_bad_request(response5)
+
+        response6 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": [{}]
+                    }))
+        self.assert_bad_request(response6)
+
+    def test_job_post_unknown_software_version(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/software/",
+            content_type="application/json",
+            data=dumps({
+                        "software": "foo",
+                        "versions": [
+                                    {"version": "1.0"},
+                                    {"version": "1.1"}
+                            ]
+                       }))
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": [
+                        {
+                            "software": "unknown_software",
+                            "min_version": "1.0",
+                            "max_version": "1.1",
+                        }]
+                    }))
+        self.assert_not_found(response3)
+
+        response3 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": [
+                        {
+                            "software": "foo",
+                            "min_version": "unknown_version",
+                            "max_version": "1.1",
+                        }]
+                    }))
+        self.assert_not_found(response3)
+
+        response4 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": [
+                        {
+                            "software": "foo",
+                            "min_version": "1.0",
+                            "max_version": "unknown_version",
+                        }]
+                    }))
+        self.assert_not_found(response4)
+
+    def test_job_post_no_type(self):
+        response1 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "data": {"foo": "bar"}
+                    }))
+        self.assert_bad_request(response1)
+
+    def test_job_post_bad_type(self):
+        response1 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "jobtype": 1,
+                    "title": "Test Job",
+                    "data": {"foo": "bar"}
+                    }))
+        self.assert_bad_request(response1)
+
+    def test_job_post_with_jobtype_version(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.put(
+            "/api/v1/jobtypes/TestJobType",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing (updated)",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "jobtype_version": 1,
+                    "data": {"foo": "bar"},
+                    }))
+        self.assert_created(response3)
+        time_submitted = response3.json["time_submitted"]
+        id = response3.json["id"]
+        self.assertEqual(response3.json,
+                        {
+                            "id": id,
+                            "time_finished": None,
+                            "time_started": None,
+                            "end": 2.0,
+                            "time_submitted": time_submitted,
+                            "jobtype_version": 1,
+                            "jobtype": "TestJobType",
+                            "start": 1.0,
+                            "priority": 0,
+                            "state": "queued",
+                            "parents": [],
+                            "hidden": False,
+                            "project_id": None,
+                            "ram_warning": None,
+                            "title": "Test Job",
+                            "tags": [],
+                            "user": None,
+                            "by": 1.0,
+                            "data": {"foo": "bar"},
+                            "ram_max": None,
+                            "notes": "",
+                            "batch": 1,
+                            "environ": None,
+                            "requeue": 3,
+                            "software_requirements": [],
+                            "ram": 32,
+                            "cpus": 1,
+                            "children": []
+                         })
+
+    def test_job_post_unknown_type(self):
+        response1 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "unknown jobtype",
+                    "data": {"foo": "bar"}
+                    }))
+        self.assert_not_found(response1)
+
+    def test_jobs_list(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+
+        response3 = self.client.get("/api/v1/jobs/")
+        self.assert_ok(response3)
+        self.assertEqual(response3.json,
+                         [
+                            {
+                                "title": "Test Job",
+                                "state": "queued",
+                                "id": id
+                            },
+                         ])
+
+    def test_job_get(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+        time_submitted = response2.json["time_submitted"]
+
+        response3 = self.client.get("/api/v1/jobs/Test%20Job")
+        self.assert_ok(response3)
+        self.assertEqual(response3.json,
+                         {
+                            "ram_warning": None,
+                            "title": "Test Job",
+                            "state": "queued",
+                            "jobtype_version": 1,
+                            "jobtype": "TestJobType",
+                            "environ": None,
+                            "user": None,
+                            "priority": 0,
+                            "time_finished": None,
+                            "start": 1.0,
+                            "id": id,
+                            "notes": "",
+                            "ram": 32,
+                            "tags": [],
+                            "hidden": False,
+                            "data": {"foo": "bar"},
+                            "software_requirements": [],
+                            "batch": 1,
+                            "time_started": None,
+                            "time_submitted": time_submitted,
+                            "requeue": 3,
+                            "end": 2.0,
+                            "parents": [],
+                            "cpus": 1,
+                            "ram_max": None,
+                            "children": [],
+                            "by": 1.0,
+                            "project_id": None
+                        })
+
+        response4 = self.client.get("/api/v1/jobs/%s" % id)
+        self.assert_ok(response4)
+        self.assertEqual(response4.json,
+                         {
+                            "ram_warning": None,
+                            "title": "Test Job",
+                            "state": "queued",
+                            "jobtype_version": 1,
+                            "jobtype": "TestJobType",
+                            "environ": None,
+                            "user": None,
+                            "priority": 0,
+                            "time_finished": None,
+                            "start": 1.0,
+                            "id": id,
+                            "notes": "",
+                            "ram": 32,
+                            "tags": [],
+                            "hidden": False,
+                            "data": {"foo": "bar"},
+                            "software_requirements": [],
+                            "batch": 1,
+                            "time_started": None,
+                            "time_submitted": time_submitted,
+                            "requeue": 3,
+                            "end": 2.0,
+                            "parents": [],
+                            "cpus": 1,
+                            "ram_max": None,
+                            "children": [],
+                            "by": 1.0,
+                            "project_id": None
+                        })
+
+    def test_job_get_unknown(self):
+        response1 = self.client.get("/api/v1/jobs/Unknown%20Job")
+        self.assert_not_found(response1)
+
+    def test_job_update(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+        time_submitted = response2.json["time_submitted"]
+
+        response3 = self.client.post(
+            "/api/v1/jobs/Test%20Job",
+            content_type="application/json",
+            data=dumps({
+                    "start": 2.0,
+                    "end": 3.0,
+                    "ram": 64
+                    }))
+        self.assert_ok(response3)
+        self.assertEqual(response3.json,
+                         {
+                            "ram_warning": None,
+                            "title": "Test Job",
+                            "state": "queued",
+                            "jobtype_version": 1,
+                            "jobtype": "TestJobType",
+                            "environ": None,
+                            "user": None,
+                            "priority": 0,
+                            "time_finished": None,
+                            "start": 2.0,
+                            "id": id,
+                            "notes": "",
+                            "ram": 64,
+                            "tags": [],
+                            "hidden": False,
+                            "data": {"foo": "bar"},
+                            "software_requirements": [],
+                            "batch": 1,
+                            "time_started": None,
+                            "time_submitted": time_submitted,
+                            "requeue": 3,
+                            "end": 3.0,
+                            "parents": [],
+                            "cpus": 1,
+                            "ram_max": None,
+                            "children": [],
+                            "by": 1.0,
+                            "project_id": None
+                        })
+
+        response4 = self.client.post(
+            "/api/v1/jobs/%s" % id,
+            content_type="application/json",
+            data=dumps({
+                    "start": 2.0,
+                    "end": 4.0,
+                    }))
+        self.assert_ok(response4)
+
+    def test_job_update_unknown(self):
+        response1 = self.client.post(
+            "/api/v1/jobs/Unknown%20Job",
+            content_type="application/json",
+            data=dumps({
+                    "start": 2.0
+                    }))
+        self.assert_not_found(response1)
+
+    def test_job_update_bad_start_end(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+        time_submitted = response2.json["time_submitted"]
+
+        response3 = self.client.post(
+            "/api/v1/jobs/Test%20Job",
+            content_type="application/json",
+            data=dumps({
+                    "start": 3.0,
+                    "end": 2.0,
+                    }))
+        self.assert_bad_request(response3)
+
+    def test_job_update_bad_disallowed_columns(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+        time_submitted = response2.json["time_submitted"]
+
+        response3 = self.client.post(
+            "/api/v1/jobs/Test%20Job",
+            content_type="application/json",
+            data=dumps({
+                    "time_started": "2014-03-06T15:40:58.335259"
+                    }))
+        self.assert_bad_request(response3)
+
+        response4 = self.client.post(
+            "/api/v1/jobs/Test%20Job",
+            content_type="application/json",
+            data=dumps({
+                    "time_finished": "2014-03-06T15:40:58.335259"
+                    }))
+        self.assert_bad_request(response4)
+
+        response5 = self.client.post(
+            "/api/v1/jobs/Test%20Job",
+            content_type="application/json",
+            data=dumps({
+                    "time_submitted": "2014-03-06T15:40:58.335259"
+                    }))
+        self.assert_bad_request(response5)
+
+        response6 = self.client.post(
+            "/api/v1/jobs/Test%20Job",
+            content_type="application/json",
+            data=dumps({
+                    "jobtype_version_id": 1
+                    }))
+        self.assert_bad_request(response6)
