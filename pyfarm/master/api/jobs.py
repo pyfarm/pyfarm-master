@@ -300,6 +300,7 @@ class JobIndexAPI(MethodView):
         if not jobtype_version:
             return jsonify("Jobtype or version not found"), NOT_FOUND
 
+        software_requirements = []
         if "software_requirements" in g.json:
             try:
                 software_requirements = parse_requirements(
