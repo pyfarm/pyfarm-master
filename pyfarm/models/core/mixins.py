@@ -199,6 +199,9 @@ class UtilityMixins(object):
             elif name in ("min_version", "max_version"):
                 out = {"id": relation_object.id,
                        "version": relation_object.version}
+            elif name == "job":
+                out = {"id": relation_object.id,
+                       "title": relation_object.title}
             else:
                 raise NotImplementedError(
                     "don't know how to unpack relationships for `%s`" % name)
