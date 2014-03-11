@@ -601,7 +601,8 @@ class SingleJobAPI(MethodView):
             by = Decimal(json.pop("by", job.by))
 
             if end < start:
-                return jsonify(error="`end` must be greater than `start`")
+                return jsonify(error="`end` must be greater than or equal to "
+                                     "`start`"), BAD_REQUEST
 
             required_frames = []
             current_frame = start
