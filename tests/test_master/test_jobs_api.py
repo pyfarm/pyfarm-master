@@ -740,3 +740,215 @@ class TestJobAPI(BaseTestCase):
                     "jobtype_version_id": 1
                     }))
         self.assert_bad_request(response6)
+
+    def test_job_update_unknown_columns(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+        time_submitted = response2.json["time_submitted"]
+
+        response3 = self.client.post(
+            "/api/v1/jobs/Test%20Job",
+            content_type="application/json",
+            data=dumps({
+                    "unknown_column": 1
+                    }))
+        self.assert_bad_request(response3)
+
+    def test_job_update_bad_requiremens(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+        time_submitted = response2.json["time_submitted"]
+
+        response3 = self.client.post(
+            "/api/v1/jobs/Test%20Job",
+            content_type="application/json",
+            data=dumps({
+                    "software_requirements": 1
+                    }))
+        self.assert_bad_request(response3)
+
+    def test_job_get_tasks(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+        time_submitted = response2.json["time_submitted"]
+
+        response3 = self.client.get("/api/v1/jobs/Test%20Job/tasks/")
+        self.assert_ok(response3)
+        self.assertEqual(len(response3.json), 2)
+        task1_id = response3.json[0]["id"]
+        task1_submitted = response3.json[0]["time_submitted"]
+        task2_id = response3.json[1]["id"]
+        task2_submitted = response3.json[1]["time_submitted"]
+
+        self.assertEqual(response3.json,
+                         [
+                             {
+                                "hidden": False,
+                                "id": task1_id,
+                                "attempts": 0,
+                                "priority": 0,
+                                "time_started": None,
+                                "time_submitted": task1_submitted,
+                                "frame": 1.0,
+                                "time_finished": None,
+                                "job_id": id,
+                                "project_id": None,
+                                "state": "queued",
+                                "agent_id": None
+                             },
+                             {
+                                "hidden": False,
+                                "id": task2_id,
+                                "attempts": 0,
+                                "priority": 0,
+                                "time_started": None,
+                                "time_submitted": task2_submitted,
+                                "frame": 2.0,
+                                "time_finished": None,
+                                "job_id": id,
+                                "project_id": None,
+                                "state": "queued",
+                                "agent_id": None
+                             }
+                         ])
+
+    def test_job_get_tasks_by_id(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+        time_submitted = response2.json["time_submitted"]
+
+        response3 = self.client.get("/api/v1/jobs/%s/tasks/" % id)
+        self.assert_ok(response3)
+        self.assertEqual(len(response3.json), 2)
+        task1_id = response3.json[0]["id"]
+        task1_submitted = response3.json[0]["time_submitted"]
+        task2_id = response3.json[1]["id"]
+        task2_submitted = response3.json[1]["time_submitted"]
+
+        self.assertEqual(response3.json,
+                         [
+                             {
+                                "hidden": False,
+                                "id": task1_id,
+                                "attempts": 0,
+                                "priority": 0,
+                                "time_started": None,
+                                "time_submitted": task1_submitted,
+                                "frame": 1.0,
+                                "time_finished": None,
+                                "job_id": id,
+                                "project_id": None,
+                                "state": "queued",
+                                "agent_id": None
+                             },
+                             {
+                                "hidden": False,
+                                "id": task2_id,
+                                "attempts": 0,
+                                "priority": 0,
+                                "time_started": None,
+                                "time_submitted": task2_submitted,
+                                "frame": 2.0,
+                                "time_finished": None,
+                                "job_id": id,
+                                "project_id": None,
+                                "state": "queued",
+                                "agent_id": None
+                             }
+                         ])
+
+    def test_job_get_tasks_unknown_job(self):
+        response1 = self.client.get("/api/v1/jobs/Unknown%20Job/tasks/")
+        self.assert_not_found(response1)
