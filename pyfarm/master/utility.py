@@ -353,7 +353,8 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
 
                         abort(BAD_REQUEST)
 
-                elif not isinstance(value, python_types):
+                elif (not isinstance(value, python_types) and
+                      not name in ignore):
                     g.error = "field %r has type %s but we expected " \
                               "type(s) %s" % (name, type(value), python_types)
                     abort(BAD_REQUEST)
