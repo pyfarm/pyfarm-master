@@ -652,6 +652,16 @@ class SingleJobAPI(MethodView):
                                                     type))
                 setattr(job, name, value)
 
+        if "software_requirements" in g.json:
+            try:
+                job.software_requirements = parse_requirements(
+                    g.json["software_requirements"])
+            except (TypeError, ValueError) as e:
+                return jsonify(error=e.args), BAD_REQUEST
+            except ObjectNotFound as e:
+                return jsonify(error=e.args), NOT_FOUND
+            del g.json["software_requirements"]
+
         g.json.pop("start", None)
         g.json.pop("end", None)
         if g.json:
