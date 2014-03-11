@@ -533,27 +533,12 @@ class SingleJobAPI(MethodView):
                 {
                     "end": 4.0,
                     "children": [],
+                    "jobtype_version": 1,
+                    "jobtype": "TestJobType",
                     "time_started": null,
                     "tasks_failed": [],
                     "project_id": null,
                     "id": 1,
-                    "tasks": [
-                        {
-                            "state": "queued",
-                            "id": 2,
-                            "frame": 2.0
-                        },
-                        {
-                            "state": "queued",
-                            "id": 5,
-                            "frame": 3.0
-                        },
-                        {
-                            "state": "queued",
-                            "id": 6,
-                            "frame": 4.0
-                        }
-                    ],
                     "software_requirements": [
                         {
                             "software": "blender",
@@ -574,11 +559,6 @@ class SingleJobAPI(MethodView):
                     "time_submitted": "2014-03-06T15:40:58.335259",
                     "ram_max": null,
                     "user": null,
-                    "project": null,
-                    "jobtype_version": {
-                        "jobtype": "TestJobType",
-                        "version": 1
-                    },
                     "notes": "",
                     "data": {
                         "foo": "bar"
@@ -586,24 +566,6 @@ class SingleJobAPI(MethodView):
                     "ram": 32,
                     "parents": [],
                     "hidden": false,
-                    "tasks_queued": [
-                        {
-                            "state": "queued",
-                            "id": 2,
-                            "frame": 2.0
-                        },
-                        {
-                            "state": "queued",
-                            "id": 5,
-                            "frame": 3.0
-                        },
-                        {
-                            "state": "queued",
-                            "id": 6,
-                            "frame": 4.0
-                        }
-                    ],
-                    "tasks_done": [],
                     "priority": 0,
                     "cpus": 1,
                     "state": "queued",
@@ -696,10 +658,16 @@ class SingleJobAPI(MethodView):
 
         db.session.add(job)
         db.session.commit()
-        job_data = job.to_dict()
+        job_data = job.to_dict(unpack_relationships=["tags",
+                                                     "data",
+                                                     "software_requirements",
+                                                     "parents",
+                                                     "children"])
         job_data["start"] = start
         job_data["end"] = min(current_frame, end)
         del job_data["jobtype_version_id"]
+        job_data["jobtype"] = job.jobtype_version.jobtype.name
+        job_data["jobtype_version"] = job.jobtype_version.version
 
         logger.info("Job %s has been updated to: %r", job.id, job_data)
 
