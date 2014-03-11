@@ -643,14 +643,14 @@ class SingleJobAPI(MethodView):
 
         for name in Job.types().columns:
             if name in g.json:
-                col_type = getattr(Job.__class__, name)
+                type = Job.types().mappings[name]
                 value = g.json.pop(name)
-                if not isinstance(value, col_type.type):
+                if not isinstance(value, type):
                     return jsonify(error="Column `%s` is of type %r, but we "
                                    "expected %r" % (name,
                                                     type(value),
-                                                    col_type.type))
-                setattr(Job, name, value)
+                                                    type))
+                setattr(job, name, value)
 
         g.json.pop("start", None)
         g.json.pop("end", None)
