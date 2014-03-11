@@ -489,7 +489,7 @@ class SingleJobAPI(MethodView):
         first_task = Task.query.filter_by(job=job).order_by("frame asc").first()
         last_task = Task.query.filter_by(job=job).order_by("frame desc").first()
 
-        if not first_task or not last_task:
+        if not first_task or not last_task: # pragma: no cover
             return (jsonify(error="Job does not have any tasks"),
                     INTERNAL_SERVER_ERROR)
 
@@ -629,7 +629,7 @@ class SingleJobAPI(MethodView):
             old_last_task = Task.query.filter_by(job=job).order_by(
                 "frame desc").first()
 
-            if not old_first_task or not old_last_task:
+            if not old_first_task or not old_last_task: # pragma: no cover
                 return (jsonify(error="Job does not have any tasks"),
                         INTERNAL_SERVER_ERROR)
 
