@@ -878,7 +878,7 @@ class JobSingleTaskAPI(MethodView):
 
         task_data = task.to_dict()
         logger.info("Task %s of job %s has been updated, new data: %r",
-                    task_id, task.job, task_data)
+                    task_id, task.job.title, task_data)
         return jsonify(task_data), OK
 
     def get(self, job_name, task_id):
