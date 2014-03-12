@@ -952,3 +952,237 @@ class TestJobAPI(BaseTestCase):
     def test_job_get_tasks_unknown_job(self):
         response1 = self.client.get("/api/v1/jobs/Unknown%20Job/tasks/")
         self.assert_not_found(response1)
+
+    def test_job_update_task(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+
+        response3 = self.client.get("/api/v1/jobs/Test%20Job/tasks/")
+        self.assert_ok(response3)
+        self.assertEqual(len(response3.json), 2)
+        task1_id = response3.json[0]["id"]
+        task1_submitted = response3.json[0]["time_submitted"]
+        task2_id = response3.json[1]["id"]
+        task2_submitted = response3.json[1]["time_submitted"]
+
+        response4 = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s" % (id, task1_id),
+            content_type="application/json",
+            data=dumps({
+                    "priority": 1,
+                    "state": "done"
+                    }))
+        self.assert_ok(response4)
+        task1_finished = response4.json["time_finished"]
+        self.assertEqual(response4.json,
+                         {
+                            "agent": None,
+                            "hidden": False,
+                            "id": task1_id,
+                            "attempts": 1,
+                            "children": [],
+                            "parents": [],
+                            "priority": 1,
+                            "time_started": None,
+                            "time_submitted": task1_submitted,
+                            "frame": 1.0,
+                            "time_finished": task1_finished,
+                            "job": {"id": id, "title": "Test Job"},
+                            "job_id": id,
+                            "project": None,
+                            "project_id": None,
+                            "state": "done",
+                            "agent_id": None
+                         })
+
+        response5 = self.client.post(
+            "/api/v1/jobs/Test%%20Job/tasks/%s" % task2_id,
+            content_type="application/json",
+            data=dumps({"state": "done"}))
+        self.assert_ok(response5)
+
+        response6 = self.client.get("/api/v1/jobs/Test%20Job")
+        self.assert_ok(response6)
+        self.assertEqual(response6.json["state"], "done")
+
+    def test_job_update_unknown_task(self):
+        response1 = self.client.post(
+            "/api/v1/jobs/Unknown%20Job/tasks/5",
+            content_type="application/json",
+            data=dumps({"state": "done"}))
+        self.assert_not_found(response1)
+
+    def test_job_update_task_disallowed_columns(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+
+        response3 = self.client.get("/api/v1/jobs/Test%20Job/tasks/")
+        self.assert_ok(response3)
+        self.assertEqual(len(response3.json), 2)
+        task1_id = response3.json[0]["id"]
+        task1_submitted = response3.json[0]["time_submitted"]
+        task2_id = response3.json[1]["id"]
+        task2_submitted = response3.json[1]["time_submitted"]
+
+        response4 = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s" % (id, task1_id),
+            content_type="application/json",
+            data=dumps({"time_started": "2014-03-06T15:40:58.338904"}))
+        self.assert_bad_request(response4)
+
+        response5 = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s" % (id, task1_id),
+            content_type="application/json",
+            data=dumps({"time_finished": "2014-03-06T15:40:58.338904"}))
+        self.assert_bad_request(response5)
+
+        response6 = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s" % (id, task1_id),
+            content_type="application/json",
+            data=dumps({"time_submitted": "2014-03-06T15:40:58.338904"}))
+        self.assert_bad_request(response6)
+
+        response7 = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s" % (id, task1_id),
+            content_type="application/json",
+            data=dumps({"job_id": 1}))
+        self.assert_bad_request(response7)
+
+        response8 = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s" % (id, task1_id),
+            content_type="application/json",
+            data=dumps({"frame": 1.0}))
+        self.assert_bad_request(response8)
+
+    def test_job_get_single_task(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        id = response2.json["id"]
+
+        response3 = self.client.get("/api/v1/jobs/Test%20Job/tasks/")
+        self.assert_ok(response3)
+        self.assertEqual(len(response3.json), 2)
+        task1_id = response3.json[0]["id"]
+        task1_submitted = response3.json[0]["time_submitted"]
+        task2_id = response3.json[1]["id"]
+        task2_submitted = response3.json[1]["time_submitted"]
+
+        response4 = self.client.get("/api/v1/jobs/Test%%20Job/tasks/%s" %
+                                    task1_id)
+        self.assert_ok(response4)
+        self.assertEqual(response4.json,
+                         {
+                            "agent": None,
+                            "hidden": False,
+                            "id": task1_id,
+                            "attempts": 0,
+                            "children": [],
+                            "parents": [],
+                            "priority": 0,
+                            "time_started": None,
+                            "time_submitted": task1_submitted,
+                            "frame": 1.0,
+                            "time_finished": None,
+                            "job": {"id": id, "title": "Test Job"},
+                            "job_id": id,
+                            "project": None,
+                            "project_id": None,
+                            "state": "queued",
+                            "agent_id": None
+                         })
+
+        response5 = self.client.get("/api/v1/jobs/%s/tasks/%s" %
+                                    (id, task2_id))
+        self.assert_ok(response5)
+        self.assertEqual(response5.json,
+                         {
+                            "agent": None,
+                            "hidden": False,
+                            "id": task2_id,
+                            "attempts": 0,
+                            "children": [],
+                            "parents": [],
+                            "priority": 0,
+                            "time_started": None,
+                            "time_submitted": task2_submitted,
+                            "frame": 2.0,
+                            "time_finished": None,
+                            "job": {"id": id, "title": "Test Job"},
+                            "job_id": id,
+                            "project": None,
+                            "project_id": None,
+                            "state": "queued",
+                            "agent_id": None
+                         })
+
+    def test_job_get_unknown_single_task(self):
+        response1 = self.client.get("/api/v1/jobs/Unknown%20Job/tasks/1")
+        self.assert_not_found(response1)
