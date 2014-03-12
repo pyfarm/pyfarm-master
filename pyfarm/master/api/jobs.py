@@ -858,6 +858,7 @@ class JobSingleTaskAPI(MethodView):
                     logger.info("Job %s: state transition \"%s\" -> \"failed\"",
                                 job.title, job.state)
                     job.state = "failed"
+                db.session.add(job)
 
         for name in Task.types().columns:
             if name in g.json:
