@@ -836,26 +836,28 @@ class JobSingleTaskAPI(MethodView):
             return jsonify(error="`frame` cannot be changed"), BAD_REQUEST
 
         new_state = g.json.pop("state", None)
-        if new_state is not None:
-            logger.info("Task %s of job %s is now in state %s",
-                        task_id, task.job.title, new_state)
-            if new_state is "done" and task.state is not "done":
-                if len(task.job.tasks) == len(task.job.tasks_done) + 1:
-                    task.job.state = "done"
-                    db.session.add(task.job)
-                    logger.info("Job %s is now done", task.job.title)
-                elif (len(task.job.tasks) == len(task.job.tasks_done) +
-                                             len(task.job.tasks_failed) + 1):
-                    task.job.state = "failed"
-                    db.session.add(task.job)
-                    logger.info("Job %s is now failed", task.job.title)
-            elif new_state is "failed" and task.state is not "failed":
-                if (len(task.job.tasks) == len(task.job.tasks_done) +
-                                           len(task.job.tasks_failed) + 1):
-                    task.job.state = "failed"
-                    db.session.add(task.job)
-                    logger.info("Job %s is now failed", task.job.title)
+        if new_state is not None and new_state is not task.state:
+            logger.info("Task %s of job %s: state transition \"%s\" -> \"%s\"",
+                        task_id, task.job.title, task.state, new_state)
             task.state = new_state
+            db.session.flush()
+            job = task.job
+            num_active_tasks = db.session.query(
+                Task).filter(Task.job == job,
+                             Task.state != "done",
+                             Task.state != "failed").count()
+            if num_active_tasks is 0:
+                num_failed_tasks = db.session.query(
+                    Task).filter(Task.job == job,
+                                  Task.state == "failed").count()
+                if num_failed_tasks is 0:
+                    logger.info("Job %s: state transition \"%s\" -> \"done\"",
+                                job.title, job.state)
+                    job.state = "done"
+                else:
+                    logger.info("Job %s: state transition \"%s\" -> \"failed\"",
+                                job.title, job.state)
+                    job.state = "failed"
 
         for name in Task.types().columns:
             if name in g.json:
