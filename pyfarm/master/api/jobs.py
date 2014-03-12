@@ -842,15 +842,15 @@ class JobSingleTaskAPI(MethodView):
             task.state = new_state
             db.session.flush()
             job = task.job
-            num_active_tasks = db.session.query(
-                Task).filter(Task.job == job,
+            num_active_tasks = db.session.query(Task).\
+                filter(Task.job == job,
                              Task.state != "done",
                              Task.state != "failed").count()
-            if num_active_tasks is 0:
+            if num_active_tasks == 0:
                 num_failed_tasks = db.session.query(
                     Task).filter(Task.job == job,
                                   Task.state == "failed").count()
-                if num_failed_tasks is 0:
+                if num_failed_tasks == 0:
                     logger.info("Job %s: state transition \"%s\" -> \"done\"",
                                 job.title, job.state)
                     job.state = "done"
