@@ -866,6 +866,10 @@ class JobSingleTaskAPI(MethodView):
                                    "expected %r" % (name, type(value), type))
                 setattr(task, name, value)
 
+        if g.json:
+            return (jsonify(error="Unknown columns in request: %r" % g.json),
+                    BAD_REQUEST)
+
         db.session.add(task)
         db.session.commit()
 
