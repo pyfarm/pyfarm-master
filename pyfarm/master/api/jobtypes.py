@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover
         OK, CREATED, CONFLICT, NOT_FOUND, BAD_REQUEST, NO_CONTENT,
         METHOD_NOT_ALLOWED)
 
-from flask import g, Response, request
+from flask import g, Response
 from flask.views import MethodView
 
 from sqlalchemy import or_, func
@@ -42,9 +42,81 @@ from pyfarm.models.software import (
     Software, SoftwareVersion, JobTypeSoftwareRequirement)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.master.application import db
-from pyfarm.master.utility import jsonify, validate_with_model
+from pyfarm.master.utility import jsonify
 
 logger = getLogger("api.jobtypes")
+
+
+class ObjectNotFound(Exception):
+    pass
+
+
+def parse_requirements(requirements):
+    """
+    Takes a list dicts specifying a software and optional min- and max-versions
+    and returns a list of :class:`JobRequirement` objects.
+
+    Raises TypeError if the input was not as expected or ObjectNotFound if a
+    referenced software of or version was not found.
+
+    :param list requirements:
+        A list of of dicts specifying a software and optionally min_version
+        and/or max_version.
+
+    :raises TypeError:
+        Raised if ``requirements`` is not a list or if an entry in
+        ``requirements`` is not a dictionary.
+
+    :raises ValueError:
+        Raised if there's a problem with the content of at least one of the
+        requirement dictionaries.
+
+    :raises ObjectNotFound:
+        Raised if the referenced software or version was not found
+    """
+    if not isinstance(requirements, list):
+        raise TypeError("software_requirements must be a list")
+
+    out = []
+    for entry in requirements:
+        if not isinstance(entry, dict):
+            raise TypeError("Every software_requirement must be a dict")
+
+        requirement = JobTypeSoftwareRequirement()
+        software_name = entry.pop("software", None)
+        if software_name is None:
+            raise ValueError("Software requirement does not specify a software.")
+        software = Software.query.filter_by(software=software_name).first()
+        if not software:
+            raise ObjectNotFound("Software %s not found" % software_name)
+        requirement.software = software
+
+        min_version_str = entry.pop("min_version", None)
+        if min_version_str is not None:
+            min_version = SoftwareVersion.query.filter(
+                SoftwareVersion.software == software,
+                SoftwareVersion.version == min_version_str).first()
+            if not min_version:
+                raise ObjectNotFound("Version %s of software %s not found" %
+                                        (software_name, min_version_str))
+            requirement.min_version = min_version
+
+        max_version_str = entry.pop("max_version", None)
+        if max_version_str is not None:
+            max_version = SoftwareVersion.query.filter(
+                SoftwareVersion.software == software,
+                SoftwareVersion.version == max_version_str).first()
+            if not max_version:
+                raise ObjectNotFound("Version %s of software %s not found" %
+                                     (software_name, max_version_str))
+            requirement.max_version = max_version
+
+        if entry:
+            raise ValueError("Unexpected keys in software requirement: %r" %
+                            entry.keys())
+
+        out.append(requirement)
+    return out
 
 
 def schema():
@@ -168,6 +240,17 @@ class JobTypeIndexAPI(MethodView):
         except KeyError as e:
             return (jsonify(error="Missing key in input: %r" % e.args),
                     BAD_REQUEST)
+
+        if "software_requirements" in g.json:
+            try:
+                for r in parse_requirements(g.json["software_requirements"]):
+                    r.jobtype_version = jobtype_version
+                    db.session.add(r)
+            except (TypeError, ValueError) as e:
+                return jsonify(error=e.args), BAD_REQUEST
+            except ObjectNotFound as e:
+                return jsonify(error=e.args), NOT_FOUND
+            del g.json["software_requirements"]
 
         if g.json:
             return (jsonify(error="Unexpected keys in input: %r" %
@@ -397,57 +480,14 @@ class SingleJobTypeAPI(MethodView):
                     BAD_REQUEST)
 
         if "software_requirements" in g.json:
-            if not isinstance(g.json["software_requirements"], list):
-                return (jsonify(error="software_requirements must be a list"),
-                        BAD_REQUEST)
-            for req in g.json["software_requirements"]:
-                if not isinstance(req, dict):
-                    return (jsonify(error="Every software_requirement must be a "
-                                    "dict"), BAD_REQUEST)
-
-                requirement = JobTypeSoftwareRequirement()
-                requirement.jobtype_version = jobtype_version
-                try:
-                    software_name = req.pop("software")
-                    software = Software.query.filter_by(
-                        software=software_name).first()
-
-                    if not software:
-                        return (jsonify(
-                            error="Software %s not found" % software_name),
-                            NOT_FOUND)
-                    requirement.software = software
-
-                    min_version_str = req.pop("min_version", None)
-                    if min_version_str:
-                        min_version = SoftwareVersion.query.filter(
-                            SoftwareVersion.software == software,
-                            SoftwareVersion.version == min_version_str).first()
-                        if not min_version:
-                            return (jsonify(
-                                error="Version %s of software %s not found" %
-                                (software_name, min_version_str)), NOT_FOUND)
-                        requirement.min_version = min_version
-
-                    max_version_str = req.pop("max_version", None)
-                    if max_version_str:
-                        max_version = SoftwareVersion.query.filter(
-                            SoftwareVersion.software == software,
-                            SoftwareVersion.version == max_version_str).first()
-                        if not max_version:
-                            return (jsonify(
-                                error="Version %s of software %s not found" %
-                                (software_name, max_version_str)), NOT_FOUND)
-                        requirement.max_version = max_version
-
-                except KeyError as e:
-                    return (jsonify(error="Missing key in software requirement: "
-                                          "%r" % e.args), BAD_REQUEST)
-
-                if req:
-                    return (jsonify(error="Unexpected keys in software "
-                                    "requirement: %s" % req.keys()), BAD_REQUEST)
-                db.session.add(requirement)
+            try:
+                for r in parse_requirements(g.json["software_requirements"]):
+                    r.jobtype_version = jobtype_version
+                    db.session.add(r)
+            except (TypeError, ValueError) as e:
+                return jsonify(error=e.args), BAD_REQUEST
+            except ObjectNotFound as e:
+                return jsonify(error=e.args), NOT_FOUND
             del g.json["software_requirements"]
         elif not new:
             # If the user did not specify a list of software requirements and
