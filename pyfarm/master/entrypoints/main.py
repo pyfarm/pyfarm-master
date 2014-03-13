@@ -122,6 +122,9 @@ def load_api(app_instance, api_instance):
         schema as jobtypes_schema, JobTypeIndexAPI, SingleJobTypeAPI,
         JobTypeCodeAPI, JobTypeSoftwareRequirementsIndexAPI, VersionedJobTypeAPI,
         JobTypeSoftwareRequirementAPI, JobTypeVersionsIndexAPI)
+    from pyfarm.master.api.jobs import (
+        schema as job_schema, JobIndexAPI, SingleJobAPI, JobTasksIndexAPI,
+        JobSingleTaskAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -136,6 +139,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobtypes/",
         view_func=JobTypeIndexAPI.as_view("jobtype_index_api"))
+    api_instance.add_url_rule(
+        "/jobs/",
+        view_func=JobIndexAPI.as_view("job_index_api"))
 
     # schemas
     api_instance.add_url_rule(
@@ -150,6 +156,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobtypes/schema",
         "jobtypes_schema", view_func=jobtypes_schema, methods=("GET", ))
+    api_instance.add_url_rule(
+        "/jobs/schema",
+        "jobs_schema", view_func=job_schema, methods=("GET", ))
 
     # specific item access
     api_instance.add_url_rule(
@@ -174,6 +183,13 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobtypes/<string:jobtype_name>",
         view_func=SingleJobTypeAPI.as_view("single_jobtype_by_string_api"))
+
+    api_instance.add_url_rule(
+        "/jobs/<int:job_name>",
+        view_func=SingleJobAPI.as_view("single_job_by_id_api"))
+    api_instance.add_url_rule(
+        "/jobs/<string:job_name>",
+        view_func=SingleJobAPI.as_view("single_job_by_string_api"))
 
     # special case for jobype/code
     api_instance.add_url_rule(
@@ -263,6 +279,20 @@ def load_api(app_instance, api_instance):
         "/software_requirements/",
         view_func=JobTypeSoftwareRequirementsIndexAPI.as_view(
             "versioned_jobtype_by_string_soft_rq_api"))
+
+    # Tasks in jobs
+    api_instance.add_url_rule(
+        "/jobs/<int:job_name>/tasks/",
+        view_func=JobTasksIndexAPI.as_view("job_by_id_tasks_index_api"))
+    api_instance.add_url_rule(
+        "/jobs/<string:job_name>/tasks/",
+        view_func=JobTasksIndexAPI.as_view("job_by_string_tasks_index_api"))
+    api_instance.add_url_rule(
+        "/jobs/<int:job_name>/tasks/<int:task_id>",
+        view_func=JobSingleTaskAPI.as_view("job_by_id_task_api"))
+    api_instance.add_url_rule(
+        "/jobs/<string:job_name>/tasks/<int:task_id>",
+        view_func=JobSingleTaskAPI.as_view("job_by_string_task_api"))
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)

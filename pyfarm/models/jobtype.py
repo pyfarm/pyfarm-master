@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2013 Oliver Palmer
+# Copyright 2014 Ambient Entertainment GmbH & Co. KG
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -115,7 +116,7 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
                               doc=dedent("""
                                   Relationship between this version and the
                                   :class:`JobType` it belongs to"""))
-    jobs = db.relationship("Job", backref="job_type_version", lazy="dynamic",
+    jobs = db.relationship("Job", backref="jobtype_version", lazy="dynamic",
                            doc=dedent("""
                            Relationship between this jobtype version and
                            :class:`.Job` objects."""))

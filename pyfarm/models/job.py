@@ -32,6 +32,7 @@ from textwrap import dedent
 
 from sqlalchemy import event
 from sqlalchemy.orm import validates
+from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.core.config import read_env, read_env_int
 from pyfarm.core.enums import WorkState, DBWorkState
@@ -41,10 +42,10 @@ from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
-    TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
+    MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
-    ValidateWorkStateMixin)
+    ValidateWorkStateMixin, UtilityMixins)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 
 __all__ = ("Job", )
@@ -67,12 +68,13 @@ JobDependencies = db.Table(
 
 
 class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
-          WorkStateChangedMixin, ReprMixin):
+          WorkStateChangedMixin, ReprMixin, UtilityMixins):
     """
     Defines the attributes and environment for a job.  Individual commands
     are kept track of by :class:`Task`
     """
     __tablename__ = TABLE_JOB
+    __table_args__ = (UniqueConstraint("title"), )
     REPR_COLUMNS = ("id", "state", "project")
     REPR_CONVERT_COLUMN = {
         "state": repr}
@@ -98,13 +100,15 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         work_columns(WorkState.QUEUED, "job.priority")
     project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
                            doc="stores the project id")
-    job_type_version_id = db.Column(IDTypeWork,
+    jobtype_version_id = db.Column(IDTypeWork,
                                     db.ForeignKey("%s.id"
                                         % TABLE_JOB_TYPE_VERSION),
                                     nullable=False,
                                     doc=dedent("""
                                     The foreign key which stores
                                     :class:`JobTypeVersion.id`"""))
+    title = db.Column(db.String(MAX_JOBTITLE_LENGTH), nullable=False,
+                      doc="The title of this job")
     user = db.Column(db.String(MAX_USERNAME_LENGTH),
                      doc=dedent("""
                      The user this job should execute as.  The agent
@@ -126,24 +130,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                       searching"""))
 
     # task data
-    cmd = db.Column(db.String(MAX_COMMAND_LENGTH),
-                    doc=dedent("""
-                    The platform independent command to run. Each agent will
-                    resolve this value for itself when the task begins so a
-                    command like `ping` will work on any platform it's
-                    assigned to.  The full command could be provided here,
-                    but then the job must be tagged using
-                    :class:`.JobSoftware` to limit which agent(s) it will
-                    run on."""))
-    start = db.Column(db.Float,
-                      doc=dedent("""
-                      The first frame of the job to run.  This value may
-                      be a float so subframes can be processed."""))
-    end = db.Column(db.Float,
-                      doc=dedent("""
-                      The last frame of the job to run.  This value may
-                      be a float so subframes can be processed."""))
-    by = db.Column(db.Float, default=1,
+    by = db.Column(db.Numeric(10, 4), default=1,
                    doc=dedent("""
                    The number of frames to count by between `start` and
                    `end`.  This column may also sometimes be referred to
@@ -202,38 +189,20 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                         -1, agent ram is exclusive for a task from this job
 
                     **configured by**: `job.ram`"""))
-    ram_warning = db.Column(db.Integer, default=-1,
+    ram_warning = db.Column(db.Integer, nullable=True,
                             doc=dedent("""
-                            Amount of ram used by a task before a warning
-                            raised.  A task exceeding this value will not
-                            cause any work stopping behavior.
-
-                            .. csv-table:: **Special Values**
-                                :header: Value, Result
-                                :widths: 10, 50
-
-                                -1, not set"""))
-    ram_max = db.Column(db.Integer, default=-1,
+                            Amount of ram used by a task before a warning raised.
+                            A task exceeding this value will not  cause any work
+                            stopping behavior."""))
+    ram_max = db.Column(db.Integer, nullable=True,
                         doc=dedent("""
                         Maximum amount of ram a task is allowed to consume on
                         an agent.
 
                         .. warning::
-                            The task will be **terminated** if the ram in use
-                            by the process exceeds this value.
-
-                        .. csv-table:: **Special Values**
-                            :header: Value, Result
-                            :widths: 10, 50
-
-                            -1, not set
+                            If set, the task will be **terminated** if the ram in
+                            use by the process exceeds this value.
                         """))
-    attempts = db.Column(db.Integer,
-                         doc=dedent("""
-                         The number attempts which have been made on this
-                         task. This value is auto incremented when
-                         :attr:`state` changes to a value synonyms with a
-                         running state."""))
     hidden = db.Column(db.Boolean, default=False, nullable=False,
                        doc=dedent("""
                        If True, keep the job hidden from the queue and web
@@ -248,13 +217,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                         .. note::
                             Changes made directly to this object are **not**
                             applied to the session."""))
-    args = db.Column(JSONList,
-                     doc=dedent("""
-                     List containing the command line arguments.
-
-                     .. note::
-                        Changes made directly to this object are **not**
-                        applied to the session."""))
     data = db.Column(JSONDict,
                      doc=dedent("""
                      Json blob containing additional data for a job

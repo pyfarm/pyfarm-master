@@ -71,15 +71,14 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     hidden = db.Column(db.Boolean, default=False,
                        doc=dedent("""
                        hides the task from queue and web ui"""))
-    attempts = db.Column(db.Integer,
+    attempts = db.Column(db.Integer, nullable=False, default=0,
                          doc=dedent("""
                          The number of attempts which have been made on this
                          task. This value is auto incremented when
                          :attr:`state` changes to a value synonymous with a
                          running state."""))
-    frame = db.Column(db.Float, nullable=False,
-                      doc=dedent("""
-                      The frame the :class:`Task` will be executing."""))
+    frame = db.Column(db.Numeric(10, 4), nullable=False,
+                      doc="The frame this :class:`Task` will be executing.")
 
     # relationships
     parents = db.relationship("Task",
@@ -104,6 +103,10 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         if new_value is not None:
             target.state = target.STATE_ENUM.ASSIGN
 
+    @staticmethod
+    def incrementAttempts(target, new_value, old_value, initiator):
+        target.attempts = target.attempts + 1 if target.attempts else 1
 
 event.listen(Task.agent_id, "set", Task.agentChangedEvent)
 event.listen(Task.state, "set", Task.stateChangedEvent)
+event.listen(Task.state, "set", Task.incrementAttempts)

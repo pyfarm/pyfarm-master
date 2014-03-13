@@ -57,8 +57,7 @@ def extract_version_dicts(json_in):
         raise VersionParseError("Column versions must be a list.")
     for software_obj in version_objects:
         if not isinstance(software_obj, dict):
-            raise VersionParseError("""Entries in versions must be
-                dictionaries.""")
+            raise VersionParseError("Entries in versions must be dictionaries.")
         if not isinstance(software_obj["version"], STRING_TYPES):
             raise VersionParseError("Software versions must be strings.")
         version = {"version": software_obj["version"]}

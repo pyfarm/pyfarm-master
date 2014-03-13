@@ -71,7 +71,7 @@ class ValidatePriorityMixin(object):
     @validates("attempts")
     def validate_attempts(self, key, value):
         """ensures the number of attempts provided is valid"""
-        if value > 0 or value is None:
+        if value >= 0 or value is None:
             return value
 
         raise ValueError("%s cannot be less than zero" % key)
@@ -104,13 +104,8 @@ class WorkStateChangedMixin(object):
     def stateChangedEvent(target, new_value, old_value, initiator):
         """update the datetime objects depending on the new value"""
         if new_value == _WorkState.RUNNING:
-            target.time_started = datetime.now()
+            target.time_started = datetime.utcnow()
             target.time_finished = None
-
-            if target.attempts is None:
-                target.attempts = 1
-            else:
-                target.attempts += 1
 
         elif new_value == _WorkState.DONE or new_value == _WorkState.FAILED:
             if target.time_started is None:  # pragma: no cover
@@ -173,7 +168,7 @@ class UtilityMixins(object):
                     out.append({"id": relationship.id,
                                 "version": relationship.version,
                                 "rank": relationship.rank})
-                elif name in ("tasks", "jobs", "agents"):
+                elif name in ("jobs", "agents"):
                     out.append(relationship.id)
                 elif name == "software_requirements":
                     out.append({"software_id": relationship.software_id,
@@ -186,6 +181,11 @@ class UtilityMixins(object):
                                 "max_version":
                                     (relationship.max_version.version
                                      if relationship.max_version else None)})
+                elif name in ("tasks", "tasks_queued", "tasks_done",
+                              "tasks_failed"):
+                    out.append({"id": relationship.id,
+                                "frame": relationship.frame,
+                                "state": str(relationship.state)})
                 else:
                     raise NotImplementedError(
                         "don't know how to unpack relationships for `%s`" % name)
@@ -199,6 +199,9 @@ class UtilityMixins(object):
             elif name in ("min_version", "max_version"):
                 out = {"id": relation_object.id,
                        "version": relation_object.version}
+            elif name == "job":
+                out = {"id": relation_object.id,
+                       "title": relation_object.title}
             else:
                 raise NotImplementedError(
                     "don't know how to unpack relationships for `%s`" % name)
