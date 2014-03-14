@@ -33,6 +33,7 @@ from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
 from pyfarm.models.agent import Agent
+from pyfarm.models.task import Task
 from pyfarm.master.application import db
 from pyfarm.master.utility import jsonify, validate_with_model
 
@@ -439,11 +440,6 @@ class SingleAgentAPI(MethodView):
         :statuscode 400: something within the request is invalid
         :statuscode 404: no agent could be found using the given id
         """
-        if not isinstance(agent_id, int):
-            return jsonify(
-                error="expected an integer for `agent_id`"), BAD_REQUEST
-
-        # get model
         model = Agent.query.filter_by(id=agent_id).first()
         if model is None:
             return jsonify(error="agent %s not found %s" % agent_id), NOT_FOUND
@@ -505,10 +501,6 @@ class SingleAgentAPI(MethodView):
 
         :statuscode 204: the agent was deleted or did not exist
         """
-        if not isinstance(agent_id, int):
-            return jsonify(
-                error="expected an integer for `agent_id"), BAD_REQUEST
-
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is None:
             return jsonify(), NO_CONTENT
@@ -516,3 +508,149 @@ class SingleAgentAPI(MethodView):
             db.session.delete(agent)
             db.session.commit()
             return jsonify(), NO_CONTENT
+
+
+class TasksInAgentAPI(MethodView):
+    def get(self, agent_id):
+        """
+        A ``GET`` to this endpoint will return a list of all tasks assigned to
+        this agent.
+
+        .. http:get:: /api/v1/agents/<int:agent_id>/tasks/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/agents/1/tasks/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "state": "assign",
+                        "priority": 0,
+                        "job": {
+                            "jobtype": "TestJobType",
+                            "id": 1,
+                            "title": "Test Job",
+                            "jobtype_version": 1,
+                            "jobtype_id": 1
+                            },
+                        "hidden": false,
+                        "time_started": null,
+                        "project_id": null,
+                        "frame": 2.0
+                        "agent_id": 1,
+                        "id": 2,
+                        "attempts": 2,
+                        "project": null,
+                        "time_finished": null,
+                        "time_submitted": "2014-03-06T15:40:58.338904",
+                        "job_id": 1
+                    }
+                ]
+
+        :statuscode 200: no error
+        :statuscode 404: agent not found
+        """
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if agent is None:
+            return jsonify(error="agent not found"), NOT_FOUND
+
+        out = []
+        for task in agent.tasks:
+            task_dict = task.to_dict(unpack_relationships=False)
+            task_dict["job"] = {
+                "id": task.job.id,
+                "title": task.job.title,
+                "jobtype": task.job.jobtype_version.jobtype.name,
+                "jobtype_id": task.job.jobtype_version.jobtype_id,
+                "jobtype_version": task.job.jobtype_version.version
+                }
+            out.append(task_dict)
+        return jsonify(out), OK
+
+    def post(self, agent_id):
+        """
+        A ``POST`` to this endpoint will assign am existing task to the agent.
+
+        .. http:post:: /api/v1/agents/<int:agent_id>/tasks/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/agents/1/tasks/ HTTP/1.1
+                Accept: application/json
+
+                {
+                    "id": 2
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "agent_id": 1,
+                    "parents": [],
+                    "attempts": 2,
+                    "children": [],
+                    "job": {
+                        "title": "Test Job",
+                        "id": 1
+                    },
+                    "project_id": null,
+                    "agent": {
+                        "ip": null,
+                        "hostname": "agent1",
+                        "port": 50000,
+                        "id": 1
+                    },
+                    "hidden": false,
+                    "job_id": 1,
+                    "time_submitted": "2014-03-06T15:40:58.338904",
+                    "frame": 2.0,
+                    "priority": 0,
+                    "state": "assign",
+                    "time_finished": null,
+                    "id": 2,
+                    "project": null,
+                    "time_started": null
+                }
+
+        :statuscode 200: no error
+        :statuscode 404: agent not found
+        """
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if agent is None:
+            return jsonify(error="agent not found"), NOT_FOUND
+
+        if "id" not in g.json:
+            return jsonify(error="No id given for task"), BAD_REQUEST
+
+        if len(g.json) > 1:
+            return jsonify(error="Unknown keys in request"), BAD_REQUEST
+
+        task = Task.query.filter_by(id=g.json["id"]).first()
+        if not task:
+            return jsonify(error="Task not found"), NOT_FOUND
+
+        task.agent = agent
+        db.session.add(task)
+        db.session.commit()
+        logger.info("Assigned task %s (frame %s, job %s) to agent %s (%s)",
+                    task.id, task.frame, task.job.title,
+                    agent.id, agent.hostname)
+
+        return jsonify(task.to_dict()), OK
