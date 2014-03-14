@@ -503,8 +503,7 @@ class SingleAgentAPI(MethodView):
                 HTTP/1.1 204 NO CONTENT
                 Content-Type: application/json
 
-        :statuscode 200: the agent existed and was deleted
-        :statuscode 204: the agent did not exist, nothing to delete
+        :statuscode 204: the agent was deleted or did not exist
         """
         if not isinstance(agent_id, int):
             return jsonify(
@@ -516,4 +515,4 @@ class SingleAgentAPI(MethodView):
         else:
             db.session.delete(agent)
             db.session.commit()
-            return jsonify(), OK
+            return jsonify(), NO_CONTENT
