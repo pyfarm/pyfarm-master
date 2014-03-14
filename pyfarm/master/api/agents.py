@@ -329,7 +329,7 @@ class SingleAgentAPI(MethodView):
     API view which is used for retrieving information about and updating
     single agents.
     """
-    def get(self, agent_id=None):
+    def get(self, agent_id):
         """
         Return basic information about a single agent
 
@@ -396,7 +396,7 @@ class SingleAgentAPI(MethodView):
 
     # TODO: docs need a few more examples here
     @validate_with_model(Agent, disallow=("id", ))
-    def post(self, agent_id=None):
+    def post(self, agent_id):
         """
         Update an agent's columns with new information
 
@@ -468,7 +468,7 @@ class SingleAgentAPI(MethodView):
 
         return jsonify(model.to_dict()), OK
 
-    def delete(self, agent_id=None):
+    def delete(self, agent_id):
         """
         Delete a single agent
 
