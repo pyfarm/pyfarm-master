@@ -113,7 +113,7 @@ class WorkStateChangedMixin(object):
                 msg += "being set to %s" % DBWorkState._map[new_value]
                 logger.warning(msg)
 
-            target.time_finished = datetime.now()
+            target.time_finished = datetime.utcnow()
 
 
 class UtilityMixins(object):
