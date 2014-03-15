@@ -274,7 +274,7 @@ class AgentIndexAPI(MethodView):
                     }
                 ]
 
-              **Request (with filters)**
+            **Request (with filters)**
 
             .. sourcecode:: http
 
@@ -296,10 +296,17 @@ class AgentIndexAPI(MethodView):
                 ]
 
 
-        :qparam min_ram: If set, list only agents with min_ram ram or more
-        :qparam max_ram: If set, list only agents with max_ram ram or less
-        :qparam min_cpus: If set, list only agents with min_cpus cpus or more
-        :qparam max_cpus: If set, list only agents with max_cpus cpus or less
+        :qparam min_ram:
+            If set, list only agents with ``min_ram` ram or more
+
+        :qparam max_ram:
+            If set, list only agents with ``max_ram`` ram or less
+
+        :qparam min_cpus:
+            If set, list only agents with ``min_cpus`` cpus or more
+
+        :qparam max_cpus:
+            If set, list only agents with ``max_cpus` cpus or less
 
         :statuscode 200: no error
         """
