@@ -495,7 +495,12 @@ def get_request_argument(argument, default=None, required=False, types=None):
 
 # preconstructed url argument parsers
 get_integer_argument = partial(get_request_argument, types=int)
+get_port_argument = partial(
+    get_request_argument,
+    types=lambda value: Agent.validate_resource("port", int(value)))
 get_hostname_argument = partial(
-    get_request_argument, types=partial(Agent.validate_hostname, "hostname"))
+    get_request_argument,
+    types=lambda value: Agent.validate_hostname("hostname", value))
 get_ipaddr_argument = partial(
-    get_request_argument, types=partial(Agent.validate_ip_address, "ip"))
+    get_request_argument,
+    types=lambda value: Agent.validate_ip_address("ip",  value))
