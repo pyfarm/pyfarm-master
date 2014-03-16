@@ -22,7 +22,7 @@ General utility which are not view or tool specific
 """
 
 import json
-from functools import wraps
+from functools import wraps, partial
 from decimal import Decimal
 from datetime import datetime
 
@@ -38,10 +38,10 @@ try:
 except ImportError:
     from collections import UserDict
 
-from flask import (
-    jsonify as _jsonify, current_app, request, g, abort, render_template)
+from flask import current_app, request, g, abort, render_template
 from voluptuous import Schema, Invalid
 
+from pyfarm.models.agent import Agent
 from pyfarm.core.enums import STRING_TYPES, NOTSET
 
 NONE_TYPE = type(None)
@@ -80,6 +80,7 @@ def jsonify(*args, **kwargs):
                        indent=indent,
                        default=default_json_encoder),
             mimetype='application/json')
+
 
 def inside_request():
     """Returns True if we're inside a request, False if not."""
@@ -427,3 +428,74 @@ def error_handler(e, code=None, default=None, title=None, template=None):
             template or "pyfarm/error.html", title=title, error=error)
 
     return response, code
+
+
+def get_request_argument(argument, default=None, required=False, types=None):
+    """
+    This is a function similar to Flask's ``request.args.get`` except it does
+    type validation and it had the concept of required url arguments.
+
+    :param str argument:
+        The name of the url argument we're trying to retrieve
+
+    :param default:
+        The value to return if ``argument`` is not present in the url and
+        argument is not a required parameter.
+
+    :param bool required:
+        If True and the url argument provided by ``argument`` is not provided
+        respond to the request with ``BAD_REQUEST``
+
+    :param types:
+        A single or list of multiple callable objects which will be used to try
+        and produce a result to return.  This would function similarly
+        to this:
+
+        .. code-block:: python
+
+            value = "5"
+            types = (int, bool)
+
+            for type_callable in types:
+                try:
+                    return type_callable(value)
+                except Exception:
+                    continue
+    """
+    assert isinstance(argument, STRING_TYPES)
+
+    # nothing else to do if the argument is not present
+    # in the url
+    if argument not in request.args:
+        if required:
+            g.error = \
+                "Required argument `%s` is not present in the url" % argument
+            abort(BAD_REQUEST)
+        return default
+
+    value = request.args.get(argument)
+
+    if types is None:
+        return value
+
+    if types is not None and not isinstance(types, (list, tuple, set)):
+        types = [types]
+
+    errors = []
+    for type_callable in types:
+        try:
+            return type_callable(value)
+        except Exception as e:
+            errors.append(str(e))
+    else:
+        g.error = "Failed to convert the url argument `%s` " % argument
+        g.error += "using %s: %s" % (types, ", ".join(errors))
+        abort(BAD_REQUEST)
+
+
+# preconstructed url argument parsers
+get_integer_argument = partial(get_request_argument, types=int)
+get_hostname_argument = partial(
+    get_request_argument, types=partial(Agent.validate_hostname, "hostname"))
+get_ipaddr_argument = partial(
+    get_request_argument, types=partial(Agent.validate_ip_address, "ip"))
