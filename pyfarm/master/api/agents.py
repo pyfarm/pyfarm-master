@@ -352,7 +352,8 @@ class SingleAgentAPI(MethodView):
     @validate_with_model(Agent, disallow=("id", ))
     def post(self, agent_id=None):
         """
-        Update an agent's columns with new information
+        Update an agent's columns with new information by merging the provided
+        data with the agent's current definition in the database.
 
         .. http:post:: /api/v1/agents/(int:agent_id) HTTP/1.1
 
