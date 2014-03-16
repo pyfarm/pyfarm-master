@@ -403,6 +403,9 @@ class SingleAgentAPI(MethodView):
         if model is None:
             return jsonify(error="Agent %s not found %s" % agent_id), NOT_FOUND
 
+        if "remote_ip" not in g.json:
+            g.json["remote_ip"] = request.remote_addr
+
         try:
             items = g.json.iteritems
         except AttributeError:
