@@ -303,10 +303,33 @@ class TestAgentAPIFilter(BaseTestCase):
                 "ram_allocation": 0.8,
                 "state": "running"})))
 
+    def test_filter_bad_arguments(self):
+        response = self.client.get("/api/v1/agents/?min_ram=!")
+        self.assert_bad_request(response)
+        response = self.client.get("/api/v1/agents/?max_ram=!")
+        self.assert_bad_request(response)
+        response = self.client.get("/api/v1/agents/?min_cpus=!")
+        self.assert_bad_request(response)
+        response = self.client.get("/api/v1/agents/?max_cpus=!")
+        self.assert_bad_request(response)
+        response = self.client.get("/api/v1/agents/?hostname=!")
+        self.assert_bad_request(response)
+        response = self.client.get("/api/v1/agents/?ip=!")
+        self.assert_bad_request(response)
+        response = self.client.get("/api/v1/agents/?port=!")
+        self.assert_bad_request(response)
+
     def test_no_results(self):
         response = self.client.get("/api/v1/agents/?min_cpus=1234567890")
         self.assertEqual(response.json, None)
         self.assert_not_found(response)
+
+    def test_filter_hostname(self):
+        response = self.client.get("/api/v1/agents/?hostname=highcpu-lowram")
+        self.assert_ok(response)
+        self.assertEqual(response.json, [
+            {'hostname': 'highcpu-lowram', 'ip': '10.0.200.8',
+             'id': 3, 'port': 64994}])
 
     def test_filter_min_cpus(self):
         response = self.client.get("/api/v1/agents/?min_cpus=9")
