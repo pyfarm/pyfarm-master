@@ -498,7 +498,7 @@ class TestRequestArgumentParser(UtilityTestCase):
         self.assert_bad_request(response)
         self.assertEqual(
             response.json,
-            {"error": "Required argument `number` is not present in the url"})
+            {u"error": u"Required argument `number` is not present in the url"})
 
     def test_type_conversion(self):
         def test():
@@ -520,7 +520,7 @@ class TestRequestArgumentParser(UtilityTestCase):
         self.assert_bad_request(response)
         self.assertEqual(
             response.json,
-            {"error": "Failed to convert the url argument `number` "
+            {u"error": u"Failed to convert the url argument `number` "
                       "using [<class 'int'>]: invalid literal for int() "
                       "with base 10: '!'"})
 
@@ -542,7 +542,7 @@ class TestRequestArgumentParser(UtilityTestCase):
         self.add_route(test)
         response = self.get("/?number=1")
         self.assert_ok(response)
-        self.assertEqual(response.json, "1")
+        self.assertEqual(response.json, u"1")
 
     def test_multiple_type_functions(self):
         def test():
@@ -552,7 +552,7 @@ class TestRequestArgumentParser(UtilityTestCase):
         self.add_route(test)
         response = self.get("/?number=!")
         self.assert_ok(response)
-        self.assertEqual(response.json, "!")
+        self.assertEqual(response.json, u"!")
 
     def test_multiple_failures(self):
         def test():
@@ -564,7 +564,7 @@ class TestRequestArgumentParser(UtilityTestCase):
         self.assert_bad_request(response)
         self.assertEqual(
             response.json,
-            {"error": "Failed to convert the url argument `number` "
+            {u"error": u"Failed to convert the url argument `number` "
                       "using (<class 'int'>, <built-in function hex>): "
                       "invalid literal for int() with base 10: '!', 'str' "
                       "object cannot be interpreted as an integer"})
