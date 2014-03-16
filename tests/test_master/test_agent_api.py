@@ -327,21 +327,21 @@ class TestAgentAPIFilter(BaseTestCase):
     def test_hostname(self):
         response = self.client.get("/api/v1/agents/?hostname=highcpu-lowram")
         self.assert_ok(response)
-        self.assertEqual(response.json, [
+        self.assert_contents_equal(response.json, [
             {"hostname": "highcpu-lowram", "ip": "10.0.200.8",
              "id": 3, "port": 64994}])
 
     def test_ip(self):
         response = self.client.get("/api/v1/agents/?ip=10.0.200.8")
         self.assert_ok(response)
-        self.assertEqual(response.json, [
+        self.assert_contents_equal(response.json, [
             {"hostname": "highcpu-lowram", "id": 3,
              "port": 64994, "ip": "10.0.200.8"}])
 
     def test_port(self):
         response = self.client.get("/api/v1/agents/?port=64994")
         self.assert_ok(response)
-        self.assertEqual(response.json, [
+        self.assert_contents_equal(response.json, [
             {"port": 64994, "ip": "10.0.200.9",
              "hostname": "highcpu-highram", "id": 4},
             {"port": 64994, "ip": "10.0.200.8",
@@ -356,7 +356,7 @@ class TestAgentAPIFilter(BaseTestCase):
     def test_min_cpus(self):
         response = self.client.get("/api/v1/agents/?min_cpus=9")
         self.assert_ok(response)
-        self.assertEqual(response.json, [
+        self.assert_contents_equal(response.json, [
             {"id": 3, "port": 64994,
              "hostname": "highcpu-lowram", "ip": "10.0.200.8"},
             {"id": 4, "port": 64994,
@@ -366,7 +366,7 @@ class TestAgentAPIFilter(BaseTestCase):
 
         response = self.client.get("/api/v1/agents/?min_cpus=8")
         self.assert_ok(response)
-        self.assertEqual(response.json, [
+        self.assert_contents_equal(response.json, [
             {"port": 64994, "ip": "10.0.200.6",
              "id": 1, "hostname": "lowcpu-lowram"},
             {"port": 64994, "ip": "10.0.200.7",
@@ -381,7 +381,7 @@ class TestAgentAPIFilter(BaseTestCase):
     def test_max_cpus(self):
         response = self.client.get("/api/v1/agents/?max_cpus=12")
         self.assert_ok(response)
-        self.assertEqual(response.json, [
+        self.assert_contents_equal(response.json, [
             {"id": 1, "hostname": "lowcpu-lowram",
              "ip": "10.0.200.6", "port": 64994},
             {"id": 2, "hostname": "lowcpu-highram",
@@ -399,7 +399,7 @@ class TestAgentAPIFilter(BaseTestCase):
     def test_min_ram(self):
         response = self.client.get("/api/v1/agents/?min_ram=1024")
         self.assert_ok(response)
-        self.assertEqual(response.json, [
+        self.assert_contents_equal(response.json, [
             {"hostname": "lowcpu-lowram", "id": 1,
              "ip": "10.0.200.6", "port": 64994},
             {"hostname": "lowcpu-highram", "id": 2,
@@ -413,7 +413,7 @@ class TestAgentAPIFilter(BaseTestCase):
 
         response = self.client.get("/api/v1/agents/?min_ram=2048")
         self.assert_ok(response)
-        self.assertEqual(response.json, [
+        self.assert_contents_equal(response.json, [
             {"hostname": "lowcpu-highram", "ip": "10.0.200.7",
              "port": 64994, "id": 2},
             {"hostname": "highcpu-highram", "ip": "10.0.200.9",
@@ -424,7 +424,7 @@ class TestAgentAPIFilter(BaseTestCase):
     def test_max_ram(self):
         response = self.client.get("/api/v1/agents/?max_ram=2048")
         self.assert_ok(response)
-        self.assertEqual(response.json, [
+        self.assert_contents_equal(response.json, [
             {"hostname": "lowcpu-lowram", "ip": "10.0.200.6",
              "port": 64994, "id": 1},
             {"hostname": "highcpu-lowram", "ip": "10.0.200.8",
@@ -435,7 +435,7 @@ class TestAgentAPIFilter(BaseTestCase):
         response = self.client.get(
             "/api/v1/agents/?min_ram=1025&max_ram=2049")
         self.assert_ok(response)
-        self.assertEqual(response.json, [
+        self.assert_contents_equal(response.json, [
             {"hostname": "middlecpu-middleram", "ip": "10.0.200.10",
              "port": 64994, "id": 5}])
 
@@ -443,6 +443,6 @@ class TestAgentAPIFilter(BaseTestCase):
         response = self.client.get(
             "/api/v1/agents/?min_ram=2048&min_cpus=16")
         self.assert_ok(response)
-        self.assertEqual(response.json, [
+        self.assert_contents_equal(response.json, [
             {"hostname": "highcpu-highram",
              "ip": "10.0.200.9", "port": 64994, "id": 4}])
