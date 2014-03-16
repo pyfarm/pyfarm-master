@@ -281,7 +281,7 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
 
             assert_mimetypes(request, JSON_MIMETYPES)
 
-            try:
+            try:  # pragma: no cover
                 # special case where the decorator is being
                 # called before any requests have been made
                 if not hasattr(g, "json"):
@@ -308,7 +308,7 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
             # assert that there's not any disallowed
             # columns in the request
             disallowed_in_request = disallow & request_columns
-            if disallowed_in_request:
+            if disallowed_in_request:  # pragma: no cover
                 g.error = "column(s) not allowed for this " \
                           "request: %s" % disallowed_in_request
                 abort(BAD_REQUEST)
