@@ -341,15 +341,14 @@ class SingleAgentAPI(MethodView):
         """
         if not isinstance(agent_id, int):
             return jsonify(
-                error="expected `agent_id` to be an integer"), BAD_REQUEST
+                error="Expected `agent_id` to be an integer"), BAD_REQUEST
 
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is not None:
             return jsonify(agent.to_dict())
         else:
-            return jsonify(error="agent %s not found" % agent_id), NOT_FOUND
+            return jsonify(error="Agent %s not found" % agent_id), NOT_FOUND
 
-    # TODO: docs need a few more examples here
     @validate_with_model(Agent, disallow=("id", ))
     def post(self, agent_id=None):
         """
@@ -396,12 +395,12 @@ class SingleAgentAPI(MethodView):
         """
         if not isinstance(agent_id, int):
             return jsonify(
-                error="expected an integer for `agent_id`"), BAD_REQUEST
+                error="Expected an integer for `agent_id`"), BAD_REQUEST
 
         # get model
         model = Agent.query.filter_by(id=agent_id).first()
         if model is None:
-            return jsonify(error="agent %s not found %s" % agent_id), NOT_FOUND
+            return jsonify(error="Agent %s not found %s" % agent_id), NOT_FOUND
 
         try:
             items = g.json.iteritems
@@ -417,7 +416,7 @@ class SingleAgentAPI(MethodView):
 
         if modified:
             logger.debug(
-                "updated agent %s: %r", model.id, modified)
+                "Updated agent %s: %r", model.id, modified)
             db.session.add(model)
             db.session.commit()
 
@@ -463,7 +462,7 @@ class SingleAgentAPI(MethodView):
         """
         if not isinstance(agent_id, int):
             return jsonify(
-                error="expected an integer for `agent_id"), BAD_REQUEST
+                error="Expected an integer for `agent_id"), BAD_REQUEST
 
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is None:
