@@ -22,7 +22,6 @@ Contained within this module are an API handling functions which can
 manage or query agents using JSON.
 """
 
-
 try:
     from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 except ImportError:  # pragma: no cover
@@ -34,7 +33,9 @@ from flask.views import MethodView
 from pyfarm.core.logger import getLogger
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
-from pyfarm.master.utility import jsonify, validate_with_model
+from pyfarm.master.utility import (
+    jsonify, validate_with_model, get_ipaddr_argument, get_integer_argument,
+    get_hostname_argument)
 
 logger = getLogger("api.agents")
 
@@ -287,14 +288,14 @@ class AgentIndexAPI(MethodView):
 
                 HTTP/1.1 200 OK
                 Content-Type: application/json
-
                 [
-                    {
-                        "hostname": "agent1",
-                        "id": 1
-                    }
+                  {
+                    "hostname": "foobar",
+                    "port": 50000,
+                    "ip": "127.0.0.1",
+                    "id": 1
+                  }
                 ]
-
 
         :qparam min_ram:
             If set, list only agents with ``min_ram` ram or more
@@ -308,27 +309,64 @@ class AgentIndexAPI(MethodView):
         :qparam max_cpus:
             If set, list only agents with ``max_cpus` cpus or less
 
-        :statuscode 200: no error
+        :qparam hostname:
+            If set, list only agents matching ``hostname``
+
+        :qparam ip:
+            If set, list only agents matching ``ip``
+
+        :qparam port:
+            If set, list only agents matching ``port``.
+
+        :statuscode 200: no error, hosts were found for the provided query
+        :statuscode 404: error, no hosts were found for the provided query
         """
-        out = []
-        q = db.session.query(Agent.id, Agent.hostname)
+        query = db.session.query(
+            Agent.id, Agent.hostname, Agent.port, Agent.ip)
 
-        if request.args.get("min_ram") is not None:
-            q = q.filter(Agent.ram >= request.args.get("min_ram", type=int))
+        # parse url arguments
+        min_ram = get_integer_argument("min_ram")
+        max_ram = get_integer_argument("max_ram")
+        min_cpus = get_integer_argument("min_cpus")
+        max_cpus = get_integer_argument("max_cpus")
+        hostname = get_hostname_argument("hostname")
+        ip = get_ipaddr_argument("ip")
+        port = get_integer_argument("port")
 
-        if request.args.get("max_ram") is not None:
-            q = q.filter(Agent.ram <= request.args.get("max_ram", type=int))
+        # construct query
+        if min_ram is not None:
+            query = query.filter(Agent.ram >= min_ram)
 
-        if request.args.get("min_cpus") is not None:
-            q = q.filter(Agent.cpus >= request.args.get("min_cpus", type=int))
+        if max_ram is not None:
+            query = query.filter(Agent.ram <= max_ram)
 
-        if request.args.get("max_cpus") is not None:
-            q = q.filter(Agent.cpus <= request.args.get("max_cpus", type=int))
+        if min_cpus is not None:
+            query = query.filter(Agent.cpus >= min_cpus)
 
-        for agent_id, hostname in q:
-            out.append({"id": agent_id, "hostname": hostname})
+        if max_cpus is not None:
+            query = query.filter(Agent.cpus <= max_cpus)
 
-        return jsonify(out), OK
+        if hostname is not None:
+            query = query.filter(Agent.hostname == hostname)
+
+        if ip is not None:
+            query = query.filter(Agent.ip == ip)
+
+        if port is not None:
+            query = query.filter(Agent.port == port)
+
+        # run query and convert the results
+        output = []
+        for host in query:
+            host = dict(zip(host.keys(), host))
+
+            # convert the IPAddress object, if set
+            if host["ip"] is not None:
+                host["ip"] = str(host["ip"])
+
+            output.append(host)
+
+        return jsonify(output), OK if output else NOT_FOUND
 
 
 class SingleAgentAPI(MethodView):
