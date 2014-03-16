@@ -29,6 +29,7 @@ except ImportError:  # pragma: no cover
 
 from flask import request, g
 from flask.views import MethodView
+from sqlalchemy.exc import IntegrityError
 
 from pyfarm.core.logger import getLogger
 from pyfarm.models.agent import Agent
@@ -141,7 +142,18 @@ class AgentIndexAPI(MethodView):
         g.json["remote_ip"] = request.remote_addr
         new_agent = Agent(**g.json)
         db.session.add(new_agent)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            if "UNIQUE constraint failed" in e.args[0]:
+                error = "Cannot create agent because the provided data for " \
+                        "`ip`, `hostname` and `port` was not unique enough."
+            else:
+                error = "Unhandled error: %s" % e
+
+            return jsonify(error=error), BAD_REQUEST
+
         agent_data = new_agent.to_dict()
         logger.info("Created agent %r: %r", new_agent.id, agent_data)
         return jsonify(agent_data), CREATED
