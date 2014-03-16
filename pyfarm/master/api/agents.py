@@ -29,7 +29,7 @@ except ImportError:  # pragma: no cover
 
 from flask import request, g
 from flask.views import MethodView
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, ProgrammingError
 
 from pyfarm.core.logger import getLogger
 from pyfarm.models.agent import Agent
@@ -144,14 +144,15 @@ class AgentIndexAPI(MethodView):
         db.session.add(new_agent)
         try:
             db.session.commit()
-        except IntegrityError as e:
+        except (ProgrammingError, IntegrityError) as e:
             db.session.rollback()
 
             # Output varies by db and api so we're not going to be explicit
             # here in terms of what we're checking.  Between the exception
             # type we're catching and this check it should be *very* rare
             # that we get this error message wrong.
-            if "unique" in e.args[0].lower():
+            db_error = e.args[0].lower()
+            if "unique" in db_error or "duplicate" in db_error:
                 error = "Cannot create agent because the provided data for " \
                         "`ip`, `hostname` and/or `port` was not unique enough."
             else:
