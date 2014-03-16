@@ -22,8 +22,6 @@ View and code necessary for providing the basic login and authentication
 services
 """
 
-import json
-
 try:
     from httplib import UNAUTHORIZED, BAD_REQUEST
 except ImportError:
@@ -104,9 +102,9 @@ def login_page():
 
         if user and user.check_password(request.json["password"]):
             login_user(user, remember=True)
-            return jsonify()
+            return jsonify(None)
 
-        return jsonify(), UNAUTHORIZED
+        return jsonify(None), UNAUTHORIZED
 
     form = LoginForm(request.form)
     if request.method == "POST" and form.validate():

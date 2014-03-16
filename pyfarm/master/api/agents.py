@@ -398,7 +398,7 @@ class SingleAgentAPI(MethodView):
             return jsonify(
                 error="Expected an integer for `agent_id`"), BAD_REQUEST
 
-        # get model
+        # find an existing agent
         model = Agent.query.filter_by(id=agent_id).first()
         if model is None:
             return jsonify(error="Agent %s not found %s" % agent_id), NOT_FOUND
@@ -411,7 +411,7 @@ class SingleAgentAPI(MethodView):
         except AttributeError:
             items = g.json.items
 
-        # update model
+        # update the model we found
         modified = {}
         for key, value in items():
             if value != getattr(model, key):
@@ -420,7 +420,7 @@ class SingleAgentAPI(MethodView):
 
         if modified:
             logger.debug(
-                "Updated agent %s: %r", model.id, modified)
+                "Updated agent %r: %r", model.id, modified)
             db.session.add(model)
             db.session.commit()
 
@@ -470,8 +470,8 @@ class SingleAgentAPI(MethodView):
 
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is None:
-            return jsonify(), NO_CONTENT
+            return jsonify(None), NO_CONTENT
         else:
             db.session.delete(agent)
             db.session.commit()
-            return jsonify(), OK
+            return jsonify(None), OK
