@@ -27,13 +27,14 @@ try:
 except ImportError:
     from http.client import UNAUTHORIZED, BAD_REQUEST
 
-from flask import request, redirect, render_template, abort, jsonify
+from flask import request, redirect, render_template, abort
 from flask.ext.login import login_user, logout_user, current_user
 from itsdangerous import BadTimeSignature
 from wtforms import Form, TextField, PasswordField, validators, ValidationError
 
 from pyfarm.models.user import User
 from pyfarm.master.application import app, login_manager, login_serializer
+from pyfarm.master.utility import jsonify
 
 @login_manager.user_loader
 def load_user(user):
