@@ -146,9 +146,14 @@ class AgentIndexAPI(MethodView):
             db.session.commit()
         except IntegrityError as e:
             db.session.rollback()
-            if "UNIQUE constraint failed" in e.args[0]:
+
+            # Output varies by db and api so we're not going to be explicit
+            # here in terms of what we're checking.  Between the exception
+            # type we're catching and this check it should be *very* rare
+            # that we get this error message wrong.
+            if "unique" in e.args[0].lower():
                 error = "Cannot create agent because the provided data for " \
-                        "`ip`, `hostname` and `port` was not unique enough."
+                        "`ip`, `hostname` and/or `port` was not unique enough."
             else:
                 error = "Unhandled error: %s" % e
 
