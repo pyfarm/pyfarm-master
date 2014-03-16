@@ -35,7 +35,7 @@ from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     jsonify, validate_with_model, get_ipaddr_argument, get_integer_argument,
-    get_hostname_argument)
+    get_hostname_argument, get_port_argument)
 
 logger = getLogger("api.agents")
 
@@ -331,7 +331,7 @@ class AgentIndexAPI(MethodView):
         max_cpus = get_integer_argument("max_cpus")
         hostname = get_hostname_argument("hostname")
         ip = get_ipaddr_argument("ip")
-        port = get_integer_argument("port")
+        port = get_port_argument("port")
 
         # construct query
         if min_ram is not None:
