@@ -82,64 +82,65 @@ class TestAgentAPI(BaseTestCase):
                 "projects": [],
                 "software_versions": []})
 
-    # There are two ways to update an agent, with a POST to /api/v1/agents
-    # or with a POST to /api/v1/agents/<id>
-    # Those are two different endpoints, and we have to test them both
-    def test_agent_posts_by_id(self):
-        response1 = self.client.post(
+    def test_create_agent(self):
+        agents = [
+            {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
+             "hostname": "testagent2", "ip": "10.0.200.2", "port": 64994,
+             "ram": 2048, "ram_allocation": 0.8, "state": "running"},
+            {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
+             "hostname": "testagent2", "ip": "10.0.200.2", "port": 64995,
+             "ram": 2048, "ram_allocation": 0.8, "state": "running"},
+            {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
+             "hostname": "testagent2", "ip": "10.0.200.2", "port": 64996,
+             "ram": 2048, "ram_allocation": 0.8, "state": "running"}]
+        expected_agents = [
+            {"free_ram": 133, "tags": [], "ram_allocation": 0.8, "id": 1,
+             "projects": [], "ram": 2048, "time_offset": 0,
+             "cpu_allocation": 1.0, "state": "running", "tasks": [],
+             "port": 64994, "cpus": 16, "hostname": "testagent2",
+             "use_address": "remote", "remote_ip": None,
+             "software_versions": [], "ip": "10.0.200.2"},
+            {"free_ram": 133, "tags": [], "ram_allocation": 0.8, "id": 2,
+             "projects": [], "ram": 2048, "time_offset": 0,
+             "cpu_allocation": 1.0, "state": "running", "tasks": [],
+             "port": 64995, "cpus": 16, "hostname": "testagent2",
+             "use_address": "remote", "remote_ip": None,
+             "software_versions": [], "ip": "10.0.200.2"},
+            {"free_ram": 133, "tags": [], "ram_allocation": 0.8, "id": 3,
+             "projects": [], "ram": 2048, "time_offset": 0,
+             "cpu_allocation": 1.0, "state": "running", "tasks": [],
+             "port": 64996, "cpus": 16, "hostname": "testagent2",
+             "use_address": "remote", "remote_ip": None,
+             "software_versions": [], "ip": "10.0.200.2"}]
+
+        created_agents = []
+        for agent in agents:
+            response = self.client.post(
+                "/api/v1/agents/",
+                content_type="application/json",
+                data=dumps(agent))
+            self.assert_created(response)
+            created_agents.append(response.json)
+
+        self.assert_contents_equal(created_agents, expected_agents)
+
+    def test_create_agent_not_unique_enough(self):
+        agent = {
+            "cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
+             "hostname": "testagent2", "ip": "10.0.200.2", "port": 64996,
+             "ram": 2048, "ram_allocation": 0.8, "state": "running"}
+        response = self.client.post(
             "/api/v1/agents/",
             content_type="application/json",
-            data=dumps({
-                "cpu_allocation": 1.0,
-                "cpus": 16,
-                "free_ram": 133,
-                "hostname": "testagent2",
-                "ip": "10.0.200.2",
-                "port": 64994,
-                "ram": 2048,
-                "ram_allocation": 0.8,
-                "state": "running"}))
-        self.assert_created(response1)
-        id = response1.json["id"]
-
-        # When doing POST to /api/v1/agents with an already existing
-        # hostname+port combination, the existing agent should be updated
-        response2 = self.client.post(
+            data=dumps(agent))
+        self.assert_created(response)
+        response = self.client.post(
             "/api/v1/agents/",
             content_type="application/json",
-            data=dumps({
-                "cpu_allocation": 1.1,
-                "cpus": 32,
-                "free_ram": 128,
-                "hostname": "testagent2",
-                "ip": "10.0.200.2",
-                "port": 64994,
-                "ram": 4096,
-                "ram_allocation": 0.7,
-                "state": "running"}))
-        self.assert_ok(response2)
-
-        # See if we get the updated data back
-        response3 = self.client.get("/api/v1/agents/%d" % id)
-        self.assert_ok(response3)
-        self.assertEqual(response3.json, {
-            "ram": 4096,
-            "cpu_allocation": 1.1,
-            "use_address": "remote",
-            "ip": "10.0.200.2",
-            "hostname": "testagent2",
-            "cpus": 32,
-            "ram_allocation": 0.7,
-            "port": 64994,
-            "time_offset": 0,
-            "state": "running",
-            "free_ram": 128,
-            "id": id,
-            "remote_ip": None,
-            "tags": [],
-            "tasks": [],
-            "projects": [],
-            "software_versions": []})
+            data=dumps(agent))
+        self.assert_bad_request(response)
+        self.assertIn("Cannot create agent", response.json["error"])
+        self.assertIn("was not unique enough", response.json["error"])
 
     def test_post_agents(self):
         response1 = self.client.post(
