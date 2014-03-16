@@ -303,7 +303,7 @@ class TestAgentAPIFilter(BaseTestCase):
                 "ram_allocation": 0.8,
                 "state": "running"})))
 
-    def test_filter_bad_arguments(self):
+    def test_bad_arguments(self):
         response = self.client.get("/api/v1/agents/?min_ram=!")
         self.assert_bad_request(response)
         response = self.client.get("/api/v1/agents/?max_ram=!")
@@ -324,14 +324,36 @@ class TestAgentAPIFilter(BaseTestCase):
         self.assertEqual(response.json, None)
         self.assert_not_found(response)
 
-    def test_filter_hostname(self):
+    def test_hostname(self):
         response = self.client.get("/api/v1/agents/?hostname=highcpu-lowram")
         self.assert_ok(response)
         self.assertEqual(response.json, [
-            {'hostname': 'highcpu-lowram', 'ip': '10.0.200.8',
-             'id': 3, 'port': 64994}])
+            {"hostname": "highcpu-lowram", "ip": "10.0.200.8",
+             "id": 3, "port": 64994}])
 
-    def test_filter_min_cpus(self):
+    def test_ip(self):
+        response = self.client.get("/api/v1/agents/?ip=10.0.200.8")
+        self.assert_ok(response)
+        self.assertEqual(response.json, [
+            {"hostname": "highcpu-lowram", "id": 3,
+             "port": 64994, "ip": "10.0.200.8"}])
+
+    def test_port(self):
+        response = self.client.get("/api/v1/agents/?port=64994")
+        self.assert_ok(response)
+        self.assertEqual(response.json, [
+            {"port": 64994, "ip": "10.0.200.9",
+             "hostname": "highcpu-highram", "id": 4},
+            {"port": 64994, "ip": "10.0.200.8",
+             "hostname": "highcpu-lowram", "id": 3},
+            {"port": 64994, "ip": "10.0.200.7",
+             "hostname": "lowcpu-highram", "id": 2},
+            {"port": 64994, "ip": "10.0.200.6",
+             "hostname": "lowcpu-lowram", "id": 1},
+            {"port": 64994, "ip": "10.0.200.10",
+             "hostname": "middlecpu-middleram", "id": 5}])
+
+    def test_min_cpus(self):
         response = self.client.get("/api/v1/agents/?min_cpus=9")
         self.assert_ok(response)
         self.assertEqual(response.json, [
