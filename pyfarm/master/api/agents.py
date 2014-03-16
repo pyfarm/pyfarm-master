@@ -366,7 +366,10 @@ class AgentIndexAPI(MethodView):
 
             output.append(host)
 
-        return jsonify(output), OK if output else NOT_FOUND
+        if not output:
+            return jsonify(None), NOT_FOUND
+        else:
+            return jsonify(output), OK
 
 
 class SingleAgentAPI(MethodView):

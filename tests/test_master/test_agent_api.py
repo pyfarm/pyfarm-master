@@ -303,6 +303,11 @@ class TestAgentAPIFilter(BaseTestCase):
                 "ram_allocation": 0.8,
                 "state": "running"})))
 
+    def test_no_results(self):
+        response = self.client.get("/api/v1/agents/?min_cpus=1234567890")
+        self.assertEqual(response.json, None)
+        self.assert_not_found(response)
+
     def test_filter_min_cpus(self):
         response = self.client.get("/api/v1/agents/?min_cpus=9")
         self.assert_ok(response)
