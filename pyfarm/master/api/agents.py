@@ -82,73 +82,15 @@ def schema():
 
 
 class AgentIndexAPI(MethodView):
-    @validate_with_model(Agent)
+    @validate_with_model(Agent, disallow=("id", ))
     def post(self):
         """
-        A ``POST`` to this endpoint will do one of two things:
-
-            * update an existing agent and return the row
-            * create a new agent and return the row
-
-        In order to update an existing agent the following columns
-        must match an existing agent.  Generally speaking however, this
-        functionality is included solely limit the number of duplicate
-        agents:
-
-            * hostname
-            * port
-            * ram
-            * cpus
-
-        If the incoming request contains data (from the list above) that
-        matches an existing agent, the existing agent will be updated and
-        returned.  In all other cases, a ``POST`` to this endpoint will
-        result in the creation of a new agent.
+        A ``POST`` to this endpoint will always create a new agent. If you're
+        looking to update an existing agent you should use url parameters and
+        ``GET`` on ``/api/v1/agents/`` to find the agent you're looking for
+         before performing an update or replacement of an agent's data.
 
         .. http:post:: /api/v1/agents/ HTTP/1.1
-
-            **Request**
-
-            .. sourcecode:: http
-
-                POST /api/v1/agents/ HTTP/1.1
-                Accept: application/json
-
-                {
-                    "cpu_allocation": 1.0,
-                    "cpus": 14,
-                    "free_ram": 133,
-                    "hostname": "agent1",
-                    "ip": "10.196.200.115",
-                    "port": 64994,
-                    "ram": 2157,
-                    "ram_allocation": 0.8,
-                    "state": "running"
-                 }
-
-
-            **Response (existing agent updated)**
-
-            .. sourcecode:: http
-
-                HTTP/1.1 200 OK
-                Content-Type: application/json
-
-                {
-                    "cpu_allocation": 1.0,
-                    "cpus": 14,
-                    "use_address": 311,
-                    "free_ram": 133,
-                    "time_offset": 0,
-                    "hostname": "agent1",
-                    "id": 1,
-                    "ip": "10.196.200.115",
-                    "port": 64994,
-                    "ram": 2157,
-                    "ram_allocation": 0.8,
-                    "state": "running",
-                    "remote_ip": "10.196.200.115"
-                 }
 
             **Request**
 
@@ -169,7 +111,7 @@ class AgentIndexAPI(MethodView):
                     "state": 8
                  }
 
-            **Response (agent created)**
+            **Response**
 
             .. sourcecode:: http
 
@@ -192,52 +134,17 @@ class AgentIndexAPI(MethodView):
                     "remote_ip": "10.196.200.115"
                  }
 
-        :statuscode 200: an existing agent was updated
         :statuscode 201: a new agent was created
         :statuscode 400: there was something wrong with the request (such as
                          invalid columns being included)
         """
-        # check to see if there's already an existing agent with
-        # this information
-        existing_agent = Agent.query.filter_by(
-            hostname=g.json["hostname"], port=g.json["port"]).first()
-
-        # agent already exists, try to update it
-        if existing_agent:
-            updated = {}
-
-            try:
-                items = g.json.iteritems
-            except AttributeError:
-                items = g.json.items
-
-            for key, value in items():
-                if getattr(existing_agent, key) != value:
-                    setattr(existing_agent, key, value)
-                    updated[key] = value
-
-            # make sure remote_ip is updated too
-            updated["remote_ip"] = request.remote_addr
-
-            # if not fields were updated, nothing to do here
-            if updated:
-                logger.debug(
-                    "updated agent %s: %r", existing_agent.id, updated)
-                db.session.add(existing_agent)
-                db.session.commit()
-
-            return jsonify(existing_agent.to_dict()), OK
-
-        # didn't find an agent that matched the incoming data
-        # so we'll create one
-        else:
-            g.json["remote_ip"] = request.remote_addr
-            new_agent = Agent(**g.json)
-            db.session.add(new_agent)
-            db.session.commit()
-            agent_data = new_agent.to_dict()
-            logger.info("created agent %s: %s" % (new_agent.id, agent_data))
-            return jsonify(agent_data), CREATED
+        g.json["remote_ip"] = request.remote_addr
+        new_agent = Agent(**g.json)
+        db.session.add(new_agent)
+        db.session.commit()
+        agent_data = new_agent.to_dict()
+        logger.info("Created agent %r: %r", new_agent.id, agent_data)
+        return jsonify(agent_data), CREATED
 
     def get(self):
         """
