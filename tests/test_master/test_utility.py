@@ -496,9 +496,9 @@ class TestRequestArgumentParser(UtilityTestCase):
         self.add_route(test)
         response = self.get("/")
         self.assert_bad_request(response)
-        self.assertEqual(
-            response.json,
-            {u"error": u"Required argument `number` is not present in the url"})
+        self.assertIn(
+            "Required argument `number` is not present",
+            response.json["error"])
 
     def test_type_conversion(self):
         def test():
@@ -518,11 +518,12 @@ class TestRequestArgumentParser(UtilityTestCase):
         self.add_route(test)
         response = self.get("/?number=!")
         self.assert_bad_request(response)
-        self.assertEqual(
-            response.json,
-            {u"error": u"Failed to convert the url argument `number` "
-                      "using [<class 'int'>]: invalid literal for int() "
-                      "with base 10: '!'"})
+        self.assertIn(
+            "Failed to convert the url argument `number",
+            response.json["error"])
+        self.assertIn(
+            "invalid literal for int() with base 10",
+            response.json["error"])
 
     def test_fallback_on_default(self):
         def test():
@@ -562,9 +563,10 @@ class TestRequestArgumentParser(UtilityTestCase):
         self.add_route(test)
         response = self.get("/?number=!")
         self.assert_bad_request(response)
-        self.assertEqual(
-            response.json,
-            {u"error": u"Failed to convert the url argument `number` "
-                      "using (<class 'int'>, <built-in function hex>): "
-                      "invalid literal for int() with base 10: '!', 'str' "
-                      "object cannot be interpreted as an integer"})
+
+        self.assertIn(
+            "Failed to convert the url argument `number",
+            response.json["error"])
+        self.assertIn(
+            "invalid literal for int() with base 10",
+            response.json["error"])
