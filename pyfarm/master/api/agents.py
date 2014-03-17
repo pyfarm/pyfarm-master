@@ -573,7 +573,7 @@ class TasksInAgentAPI(MethodView):
                 "jobtype": task.job.jobtype_version.jobtype.name,
                 "jobtype_id": task.job.jobtype_version.jobtype_id,
                 "jobtype_version": task.job.jobtype_version.version
-                }
+            }
             out.append(task_dict)
         return jsonify(out), OK
 
