@@ -632,15 +632,15 @@ class TasksInAgentAPI(MethodView):
         :statuscode 200: no error
         :statuscode 404: agent not found
         """
-        agent = Agent.query.filter_by(id=agent_id).first()
-        if agent is None:
-            return jsonify(error="agent not found"), NOT_FOUND
-
         if "id" not in g.json:
             return jsonify(error="No id given for task"), BAD_REQUEST
 
         if len(g.json) > 1:
             return jsonify(error="Unknown keys in request"), BAD_REQUEST
+
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if agent is None:
+            return jsonify(error="agent not found"), NOT_FOUND
 
         task = Task.query.filter_by(id=g.json["id"]).first()
         if not task:
