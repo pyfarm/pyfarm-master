@@ -507,7 +507,7 @@ class SingleAgentAPI(MethodView):
         else:
             db.session.delete(agent)
             db.session.commit()
-            return jsonify(), NO_CONTENT
+            return jsonify(None), NO_CONTENT
 
 
 class TasksInAgentAPI(MethodView):
