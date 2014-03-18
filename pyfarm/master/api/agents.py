@@ -246,7 +246,7 @@ class AgentIndexAPI(MethodView):
             If set, list only agents matching ``port``.
 
         :statuscode 200: no error, hosts were found for the provided query
-        :statuscode 404: error, no hosts were found for the provided query
+        :statuscode 204: no error, no hosts were found for the provided query
         """
         query = db.session.query(
             Agent.id, Agent.hostname, Agent.port, Agent.ip)
