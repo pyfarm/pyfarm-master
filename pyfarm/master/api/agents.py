@@ -291,10 +291,7 @@ class AgentIndexAPI(MethodView):
 
             output.append(host)
 
-        if not output:
-            return jsonify(None), NOT_FOUND
-        else:
-            return jsonify(output), OK
+        return jsonify(output), OK if output else NO_CONTENT
 
 
 class SingleAgentAPI(MethodView):
