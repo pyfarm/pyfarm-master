@@ -299,7 +299,8 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
                         g.json.__class__.__name__)
                     abort(BAD_REQUEST)
 
-            except RuntimeError:  # outside of a request context
+            # outside of a request context
+            except RuntimeError:  # pragma: no cover
                 pass
 
             types = model.types()
@@ -308,7 +309,7 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
             # assert that there's not any disallowed
             # columns in the request
             disallowed_in_request = disallow & request_columns
-            if disallowed_in_request:  # pragma: no cover
+            if disallowed_in_request:
                 g.error = "column(s) not allowed for this " \
                           "request: %s" % disallowed_in_request
                 abort(BAD_REQUEST)

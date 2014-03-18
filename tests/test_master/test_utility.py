@@ -246,6 +246,18 @@ class TestValidateWithModel(UtilityTestCase):
             "415 Unsupported Media Type",
             response.data.decode("utf-8"))
 
+    def test_disallowed_in_request(self):
+        @validate_with_model(ValidationTestModel, disallow=("a", ))
+        def test():
+            return ""
+
+        self.add_route(test)
+        response = self.post("/", data=dumps({"a": 1}))
+        self.assert_bad_request(response)
+        self.assertEqual(
+            response.json,
+            {"error": "column(s) not allowed for this request: {'a'}"})
+
 
 class TestErrorHandler(BaseTestCase):
     def setup_app(self):
