@@ -433,7 +433,7 @@ def error_handler(e, code=None, default=None, title=None, template=None):
 def get_request_argument(argument, default=None, required=False, types=None):
     """
     This is a function similar to Flask's ``request.args.get`` except it does
-    type validation and it had the concept of required url arguments.
+    type validation and it has the concept of required url arguments.
 
     :param str argument:
         The name of the url argument we're trying to retrieve
