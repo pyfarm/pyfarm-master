@@ -138,7 +138,7 @@ class TestAgentAPI(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps(agent))
-        self.assert_bad_request(response)
+        self.assert_conflict(response)
         self.assertIn("Cannot create agent", response.json["error"])
         self.assertIn("was not unique enough", response.json["error"])
 
@@ -322,8 +322,7 @@ class TestAgentAPIFilter(BaseTestCase):
 
     def test_no_results(self):
         response = self.client.get("/api/v1/agents/?min_cpus=1234567890")
-        self.assertEqual(response.json, None)
-        self.assert_not_found(response)
+        self.assert_no_content(response)
 
     def test_hostname(self):
         response = self.client.get("/api/v1/agents/?hostname=highcpu-lowram")
