@@ -24,10 +24,12 @@ manage or query agents using JSON.
 
 try:
     from httplib import (
-        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, CONFLICT)
+        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, CONFLICT,
+        INTERNAL_SERVER_ERROR)
 except ImportError:  # pragma: no cover
     from http.client import (
-        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, CONFLICT)
+        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, CONFLICT,
+        INTERNAL_SERVER_ERROR)
 
 from flask import request, g
 from flask.views import MethodView
@@ -144,8 +146,10 @@ class AgentIndexAPI(MethodView):
         g.json["remote_ip"] = request.remote_addr
         new_agent = Agent(**g.json)
         db.session.add(new_agent)
+
         try:
             db.session.commit()
+
         except (ProgrammingError, IntegrityError) as e:
             db.session.rollback()
 
@@ -158,9 +162,20 @@ class AgentIndexAPI(MethodView):
                 error = "Cannot create agent because the provided data for " \
                         "`ip`, `hostname` and/or `port` was not unique enough."
             else:
-                error = "Unhandled error: %s" % e
+                error = "Unhandled error: %s.  This is most likely an issue " \
+                        "with the agent's data for `ip`, `hostname` and/or " \
+                        "`port` not being unique enough." % e
 
             return jsonify(error=error), CONFLICT
+
+        # Not covered by tests because it's a case we have not encountered yet.
+        except Exception as e:  # pragma: no cover
+            db.session.rollback()
+            error = "There was an unhandled error while trying create the " \
+                    "agent: %s.  This may be a problem with the agent's  " \
+                    "data not being unique enough or it may be some other " \
+                    "error we have not seen before." % e
+            return jsonify(error=error), INTERNAL_SERVER_ERROR
 
         agent_data = new_agent.to_dict()
         logger.info("Created agent %r: %r", new_agent.id, agent_data)
