@@ -260,7 +260,7 @@ class BaseTestCase(TestCase):
         Explicitly check to see of the two iterable objects
         contain the same data.  This method exists to check to make
         sure two iterables contain the same data without regards to order. This
-        is mainly mostly meant for cases where two lists contain unhashable
+        is mostly meant for cases where two lists contain unhashable
         types.
         """
         # for now, we only support lists
