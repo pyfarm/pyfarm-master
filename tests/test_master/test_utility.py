@@ -254,9 +254,9 @@ class TestValidateWithModel(UtilityTestCase):
         self.add_route(test)
         response = self.post("/", data=dumps({"a": 1}))
         self.assert_bad_request(response)
-        self.assertEqual(
-            response.json,
-            {"error": "column(s) not allowed for this request: {'a'}"})
+        self.assertIn(
+            "column(s) not allowed for this request:", response.json["error"])
+        self.assertIn("'a'", response.json["error"])
 
 
 class TestErrorHandler(BaseTestCase):
