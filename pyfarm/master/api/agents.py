@@ -23,9 +23,11 @@ manage or query agents using JSON.
 """
 
 try:
-    from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
+    from httplib import (
+        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, CONFLICT)
 except ImportError:  # pragma: no cover
-    from http.client import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
+    from http.client import (
+        NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, CONFLICT)
 
 from flask import request, g
 from flask.views import MethodView
@@ -158,7 +160,7 @@ class AgentIndexAPI(MethodView):
             else:
                 error = "Unhandled error: %s" % e
 
-            return jsonify(error=error), BAD_REQUEST
+            return jsonify(error=error), CONFLICT
 
         agent_data = new_agent.to_dict()
         logger.info("Created agent %r: %r", new_agent.id, agent_data)
