@@ -13,4 +13,5 @@
 build
 dist
 *.kdev4
-*cov
+resources/dev/*/*.conf
+resources/dev/*/*.ini
