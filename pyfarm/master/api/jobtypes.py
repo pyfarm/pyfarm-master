@@ -552,7 +552,7 @@ class SingleJobTypeAPI(MethodView):
             db.session.commit()
             logger.info("jobtype %s has been deleted",jobtype.name)
 
-        return jsonify(), NO_CONTENT
+        return jsonify(None), NO_CONTENT
 
 
 class JobTypeVersionsIndexAPI(MethodView):
@@ -709,7 +709,7 @@ class VersionedJobTypeAPI(MethodView):
             logger.info("version %s of jobtype %s has been deleted",
                         version, jobtype.name)
 
-        return jsonify(), NO_CONTENT
+        return jsonify(None), NO_CONTENT
 
 
 class JobTypeCodeAPI(MethodView):
@@ -1106,4 +1106,4 @@ class JobTypeSoftwareRequirementAPI(MethodView):
         logger.info("Deleted software requirement %s for jobtype %s, creating "
                     "new version %s", software, jobtype.id, new_version.version)
 
-        return jsonify(), NO_CONTENT
+        return jsonify(None), NO_CONTENT

@@ -36,7 +36,7 @@ from pyfarm.master.application import db, get_admin
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.master.utility import (
     validate_with_model, error_handler, assert_mimetypes, inside_request,
-    get_g, validate_json, jsonify)
+    get_g, validate_json, jsonify, get_request_argument)
 
 
 class ColumnSetTest(db.Model):
@@ -76,11 +76,13 @@ class UtilityTestCase(BaseTestCase):
         super(UtilityTestCase, self).setUp()
         self.post = partial(
             self.client.post, headers={"Content-Type": "application/json"})
+        self.get = partial(
+            self.client.get, headers={"Content-Type": "application/json"})
 
     def add_route(self, function, methods=None):
         assert callable(function)
 
-        @self.app.route("/", methods=methods or ("POST", ))
+        @self.app.route("/", methods=methods or ("GET", "POST"))
         def view():
             return function()
 
@@ -243,6 +245,18 @@ class TestValidateWithModel(UtilityTestCase):
         self.assertIn(
             "415 Unsupported Media Type",
             response.data.decode("utf-8"))
+
+    def test_disallowed_in_request(self):
+        @validate_with_model(ValidationTestModel, disallow=("a", ))
+        def test():
+            return ""
+
+        self.add_route(test)
+        response = self.post("/", data=dumps({"a": 1}))
+        self.assert_bad_request(response)
+        self.assertIn(
+            "column(s) not allowed for this request:", response.json["error"])
+        self.assertIn("'a'", response.json["error"])
 
 
 class TestErrorHandler(BaseTestCase):
@@ -476,10 +490,95 @@ class TestRequestFunctions(UtilityTestCase):
         self.assert_bad_request(response)
 
         if PY3:
-            error = {'error': "expected str for dictionary value @ data['foo']"}
+            error = {"error": "expected str for dictionary value @ data['foo']"}
 
         else:
             error = {
-                u'error': u"expected str for dictionary value @ data[u'foo']"}
+                u"error": u"expected str for dictionary value @ data[u'foo']"}
 
         self.assertEqual(response.json, error)
+
+
+class TestRequestArgumentParser(UtilityTestCase):
+    def test_required(self):
+        def test():
+            return jsonify(
+                get_request_argument("number", types=int, required=True))
+
+        self.add_route(test)
+        response = self.get("/")
+        self.assert_bad_request(response)
+        self.assertIn(
+            "Required argument `number` is not present",
+            response.json["error"])
+
+    def test_type_conversion(self):
+        def test():
+            return jsonify(
+                get_request_argument("number", types=int))
+
+        self.add_route(test)
+        response = self.get("/?number=1")
+        self.assert_ok(response)
+        self.assertEqual(response.json, 1)
+
+    def test_failed_type_conversion(self):
+        def test():
+            return jsonify(
+                get_request_argument("number", types=int))
+
+        self.add_route(test)
+        response = self.get("/?number=!")
+        self.assert_bad_request(response)
+        self.assertIn(
+            "Failed to convert the url argument `number",
+            response.json["error"])
+        self.assertIn(
+            "invalid literal for int() with base 10",
+            response.json["error"])
+
+    def test_fallback_on_default(self):
+        def test():
+            return jsonify(
+                get_request_argument("number", 2, types=int))
+
+        self.add_route(test)
+        response = self.get("/")
+        self.assert_ok(response)
+        self.assertEqual(response.json, 2)
+
+    def test_no_type_conversion(self):
+        def test():
+            return jsonify(
+                get_request_argument("number"))
+
+        self.add_route(test)
+        response = self.get("/?number=1")
+        self.assert_ok(response)
+        self.assertEqual(response.json, u"1")
+
+    def test_multiple_type_functions(self):
+        def test():
+            return jsonify(
+                get_request_argument("number", types=(int, str)))
+
+        self.add_route(test)
+        response = self.get("/?number=!")
+        self.assert_ok(response)
+        self.assertEqual(response.json, u"!")
+
+    def test_multiple_failures(self):
+        def test():
+            return jsonify(
+                get_request_argument("number", types=(int, hex)))
+
+        self.add_route(test)
+        response = self.get("/?number=!")
+        self.assert_bad_request(response)
+
+        self.assertIn(
+            "Failed to convert the url argument `number",
+            response.json["error"])
+        self.assertIn(
+            "invalid literal for int() with base 10",
+            response.json["error"])

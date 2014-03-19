@@ -124,12 +124,12 @@ class TestMixins(BaseTestCase):
             self.assertIsNone(model.time_finished)
             model.state = state_enum.RUNNING
             self.assertEqual(model.state, state_enum.RUNNING)
-            self.assertLessEqual(model.time_started, datetime.now())
+            self.assertLessEqual(model.time_started, datetime.utcnow())
             first_started = model.time_started
             self.assertIsNone(model.time_finished)
             model.state = state_enum.DONE
             self.assertIsNotNone(model.time_finished)
-            self.assertLessEqual(model.time_finished, datetime.now())
+            self.assertLessEqual(model.time_finished, datetime.utcnow())
             first_finished = model.time_finished
             model.state = state_enum.RUNNING
             self.assertEqual(model.state, state_enum.RUNNING)
@@ -137,7 +137,7 @@ class TestMixins(BaseTestCase):
             self.assertNotEqual(model.time_started, first_started)
             model.state = state_enum.DONE
             self.assertNotEqual(model.time_finished, first_finished)
-            self.assertLessEqual(model.time_finished, datetime.now())
+            self.assertLessEqual(model.time_finished, datetime.utcnow())
             db.session.commit()
 
     def test_to_dict(self):
