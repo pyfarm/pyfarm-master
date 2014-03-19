@@ -150,32 +150,32 @@ class AgentIndexAPI(MethodView):
         try:
             db.session.commit()
 
-        except (ProgrammingError, IntegrityError) as e:
+        except Exception as e:
             db.session.rollback()
+            db_error = e.args[0].lower()
+
+            # known cases for CONFLICT
+            if isinstance(e, (ProgrammingError, IntegrityError)) \
+                    and "unique" in db_error or "duplicate" in db_error:
+                error = "Cannot create agent because the provided data for " \
+                        "`ip`, `hostname` and/or `port` was not unique enough."
+                return jsonify(error=error), CONFLICT
 
             # Output varies by db and api so we're not going to be explicit
             # here in terms of what we're checking.  Between the exception
-            # type we're catching and this check it should be *very* rare
-            # that we get this error message wrong.
-            db_error = e.args[0].lower()
-            if "unique" in db_error or "duplicate" in db_error:
-                error = "Cannot create agent because the provided data for " \
-                        "`ip`, `hostname` and/or `port` was not unique enough."
-            else:
-                error = "Unhandled error: %s.  This is most likely an issue " \
+            # type we're catching and this check it should be rare
+            # that we hit this case.
+            else:  # pragma: no cover
+                error = "Unhandled error: %s.  This is often an issue " \
                         "with the agent's data for `ip`, `hostname` and/or " \
-                        "`port` not being unique enough." % e
+                        "`port` not being unique enough.  In other cases " \
+                        "this can sometimes happen if the underlying " \
+                        "database driver is either non-compliant with " \
+                        "expectations or we've encountered a database error " \
+                        "that we don't know how to handle yet.  If the " \
+                        "latter is the case, please report this as a bug." % e
 
-            return jsonify(error=error), CONFLICT
-
-        # Not covered by tests because it's a case we have not encountered yet.
-        except Exception as e:  # pragma: no cover
-            db.session.rollback()
-            error = "There was an unhandled error while trying create the " \
-                    "agent: %s.  This may be a problem with the agent's  " \
-                    "data not being unique enough or it may be some other " \
-                    "error we have not seen before." % e
-            return jsonify(error=error), INTERNAL_SERVER_ERROR
+                return jsonify(error=error), INTERNAL_SERVER_ERROR
 
         agent_data = new_agent.to_dict()
         logger.info("Created agent %r: %r", new_agent.id, agent_data)
