@@ -2,16 +2,20 @@ server {
     listen 80;
     server_name _;
 
+    location @application {
+      include uwsgi_params;
+      uwsgi_pass unix:/tmp/uwsgi_pyfarm_master.sock;
+    }
+
     location / {
         try_files $uri @application;
     }
-    
+
     location /static/ {
-        alias <absolute path to your_clone/pyfarm/master/static/;
+        alias absolute path to your pyfarm/master/static/;
     }
 
-    location @application {
-      include uwsgi_params;
-      uwsgi_pass unix:/tmp/pyfarm-master.sock;
+    location /admin/static/ {
+        alias absolute path to your virtualenv/lib/pythonMAJOR.MINOR/site-packages/Flask_Admin-VERSION.egg/flask_admin/static/;
     }
 }

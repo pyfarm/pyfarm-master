@@ -1,6 +1,30 @@
 [uwsgi]
-name = pyfarm-master
+# === Process Management ===
+# You can either uncomment daemonize or use --daemonize <path> to run
+# in the backround.
 master = true
-processes = 4
-pidfile = /tmp/uwsgi-pyfarm-master.pid
-soket = /tmp/uwsgi-pyfarm-master.sock
+processes = 3
+py-autorelaod = true
+pidfile = /tmp/uwsgi_pyfarm_master.pid
+#daemonize = /tmp/uwsgi_pyfarm_master.log
+
+# === Socket for Reverse Proxy ===
+socket = /tmp/uwsgi_pyfarm_master.sock
+chmod-socket = 666
+
+# === Environment ===
+# You may want to hit http://127.0.0.1/setup/ on the first run,
+# this endpoint would not be provided in production but is useful for making
+# sure the DB is setup properly.  I would not suggest using SQLite for anything
+# beyond single user testing.
+env = PYFARM_APP_INSTANCE=true
+env = PYFARM_DEV_APP_DB_DROP_ALL=false
+env = PYFARM_DEV_APP_DB_CREATE_ALL=true
+env = PYFARM_DEV_APP_ALLOW_ANY_AGENT_ADDRESS=true
+env = PYFARM_DATABASE_URI=sqlite:///pyfarm.sqlite
+env = PYFARM_CONFIG=debug
+
+# virtual environment setup
+virtualenv = <absolute path to your virtualenv root>
+module = pyfarm.master.entrypoints.main
+callable = run_master_uwsgi
