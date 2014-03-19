@@ -1,0 +1,6 @@
+[uwsgi]
+name = pyfarm-master
+master = true
+processes = 4
+pidfile = /tmp/uwsgi-pyfarm-master.pid
+soket = /tmp/uwsgi-pyfarm-master.sock
