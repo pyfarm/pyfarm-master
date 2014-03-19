@@ -168,6 +168,11 @@ class UtilityMixins(object):
                     out.append({"id": relationship.id,
                                 "version": relationship.version,
                                 "rank": relationship.rank})
+                elif name == "software_versions":
+                    out.append({"id": relationship.id,
+                                "software": relationship.software.software,
+                                "version": relationship.version,
+                                "rank": relationship.rank})
                 elif name in ("jobs", "agents"):
                     out.append(relationship.id)
                 elif name == "software_requirements":
@@ -202,6 +207,11 @@ class UtilityMixins(object):
             elif name == "job":
                 out = {"id": relation_object.id,
                        "title": relation_object.title}
+            elif name == "agent":
+                out = {"id": relation_object.id,
+                       "hostname": relation_object.hostname,
+                       "ip": relation_object.ip,
+                       "port": relation_object.port}
             else:
                 raise NotImplementedError(
                     "don't know how to unpack relationships for `%s`" % name)

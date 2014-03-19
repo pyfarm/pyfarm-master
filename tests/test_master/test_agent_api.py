@@ -218,7 +218,7 @@ class TestAgentAPI(BaseTestCase):
         id = response1.json["id"]
 
         response2 = self.client.delete("/api/v1/agents/%d" % id)
-        self.assert_ok(response2)
+        self.assert_no_content(response2)
         response3 = self.client.delete("/api/v1/agents/%d" % id)
         self.assert_no_content(response3)
         response4 = self.client.get("/api/v1/agents/%d" % id)
