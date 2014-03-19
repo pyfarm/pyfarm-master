@@ -381,7 +381,9 @@ class SingleAgentAPI(MethodView):
         else:
             return jsonify(error="Agent %s not found" % agent_id), NOT_FOUND
 
-    @validate_with_model(Agent, disallow=("id", ))
+    @validate_with_model(
+        Agent, disallow=("id", ),
+        ignore_missing=("ram", "cpus", "port", "free_ram", "hostname"))
     def post(self, agent_id):
         """
         Update an agent's columns with new information by merging the provided

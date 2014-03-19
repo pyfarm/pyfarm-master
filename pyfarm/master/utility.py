@@ -236,7 +236,8 @@ def validate_json(validator, json_types=(dict, )):
     return wrapper
 
 
-def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
+def validate_with_model(model, type_checks=None, ignore=None,
+                        ignore_missing=None, disallow=None):
     """
     Decorator which will check the contents of the of the json
     request against a model for:
@@ -256,10 +257,14 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
         "isinstance(g.json[column_name], <Python type(s) from sql>)" then
         this is the place to add it.
 
-    :param list ignore:
+    :param list ignore_missing:
         A list of fields to completely ignore in the incoming
         request. Typically this is used by ``PUT`` requests or other
         similar requests where part of the data is in the url.
+
+    :param list allow_missing:
+        A list of fields which are allowed to be missing in the request.  These
+        fields will still be checked for type however.
 
     :param list disallow:
         A list of columns which are never in the request to the decorated
@@ -270,6 +275,7 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
     assert isinstance(disallow, (list, tuple, set, NONE_TYPE))
     type_checks = type_checks or {}
     ignore = set(ignore or [])
+    ignore_missing = set(ignore_missing or [])
     disallow = set(disallow or [])
 
     def wrapper(func):
@@ -326,7 +332,8 @@ def validate_with_model(model, type_checks=None, ignore=None, disallow=None):
 
             # now check to see if we're missing any required fields
             missing_keys = ((types.required - ignore - disallow) -
-                            request_columns) - types.primary_keys
+                            request_columns -
+                            ignore_missing) - types.primary_keys
             if missing_keys:
                 g.error = "request is missing field(s): %r" % missing_keys
                 abort(BAD_REQUEST)
