@@ -322,7 +322,8 @@ class TestAgentAPIFilter(BaseTestCase):
 
     def test_no_results(self):
         response = self.client.get("/api/v1/agents/?min_cpus=1234567890")
-        self.assert_no_content(response)
+        self.assert_ok(response)
+        self.assertEqual(response.json, [])
 
     def test_hostname(self):
         response = self.client.get("/api/v1/agents/?hostname=highcpu-lowram")

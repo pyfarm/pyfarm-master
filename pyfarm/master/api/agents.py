@@ -260,8 +260,7 @@ class AgentIndexAPI(MethodView):
         :qparam port:
             If set, list only agents matching ``port``.
 
-        :statuscode 200: no error, hosts were found for the provided query
-        :statuscode 204: no error, no hosts were found for the provided query
+        :statuscode 200: no error, host may or may not have been found
         """
         query = db.session.query(
             Agent.id, Agent.hostname, Agent.port, Agent.ip)
@@ -308,7 +307,7 @@ class AgentIndexAPI(MethodView):
 
             output.append(host)
 
-        return jsonify(output), OK if output else NO_CONTENT
+        return jsonify(output), OK
 
 
 class SingleAgentAPI(MethodView):
