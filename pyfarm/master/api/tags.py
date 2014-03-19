@@ -432,14 +432,14 @@ class SingleTagAPI(MethodView):
             tag = Tag.query.filter_by(id=tagname).first()
 
         if tag is None:
-            return jsonify(), NO_CONTENT
+            return jsonify(None), NO_CONTENT
 
         db.session.delete(tag)
         db.session.commit()
 
         logger.info("deleted tag %s", tag.tag)
 
-        return jsonify(), NO_CONTENT
+        return jsonify(None), NO_CONTENT
 
 
 class AgentsInTagIndexAPI(MethodView):

@@ -255,6 +255,31 @@ class BaseTestCase(TestCase):
         self.teardown_database()
         self.teardown_warning_filter()
 
+    def assert_contents_equal(self, a_source, b_source):
+        """
+        Explicitly check to see of the two iterable objects
+        contain the same data.  This method exists to check to make
+        sure two iterables contain the same data without regards to order. This
+        is mostly meant for cases where two lists contain unhashable
+        types.
+        """
+        # for now, we only support lists
+        self.assertIsInstance(a_source, list)
+        self.assertIsInstance(b_source, list)
+        a_copy = a_source[:]
+        b_copy = b_source[:]
+
+        for a_value, b_value in zip(a_source, b_source):
+            self.assertIn(a_value, b_source)
+            self.assertIn(b_value, a_source)
+            a_copy.pop()
+            b_copy.pop()
+
+        # There should not be any data left over after the above
+        # has completed.
+        self.assertEqual(len(b_copy), 0)
+        self.assertEqual(len(a_copy), 0)
+
     def assert_status(self, response, status_code=None):
         assert status_code is not None
         self.assertIsInstance(response, Response)

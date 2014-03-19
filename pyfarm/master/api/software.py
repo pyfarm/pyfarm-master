@@ -422,13 +422,13 @@ class SingleSoftwareAPI(MethodView):
             software = Software.query.filter_by(id=software_rq).first()
 
         if not software:
-            return jsonify(), NO_CONTENT
+            return jsonify(None), NO_CONTENT
 
         db.session.delete(software)
         db.session.commit()
         logger.info("Deleted software %s", software.software)
 
-        return jsonify(), NO_CONTENT
+        return jsonify(None), NO_CONTENT
 
 
 class SoftwareVersionsIndexAPI(MethodView):
@@ -603,7 +603,7 @@ class SingleSoftwareVersionAPI(MethodView):
             version = SoftwareVersion.query.filter_by(id=version_name).first()
 
         if not version:
-            return jsonify(), NO_CONTENT
+            return jsonify(None), NO_CONTENT
 
         db.session.delete(version)
         db.session.commit()
@@ -611,7 +611,7 @@ class SingleSoftwareVersionAPI(MethodView):
         logger.info("deleted software version %s for software %s",
                     version.id, software.software)
 
-        return jsonify(), NO_CONTENT
+        return jsonify(None), NO_CONTENT
 
     def get(self, software_rq, version_name):
         """
