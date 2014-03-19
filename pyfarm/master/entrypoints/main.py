@@ -22,6 +22,7 @@ Contains the functions necessary to run individual components
 of PyFarm's master.
 """
 
+import os
 from functools import partial
 
 try:
@@ -35,6 +36,7 @@ except ImportError:
 
 from flask import request
 
+from pyfarm.core.config import read_env_bool
 from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
@@ -378,6 +380,29 @@ def run_master():  # pragma: no cover
     load_setup(app)
     load_master(app, admin, api)
     app.run()
+
+
+def create_app():
+    """An entry point specifically for uWSGI or similar to use"""
+    from pyfarm.master.application import app, admin, api
+
+    if read_env_bool("PYFARM_DEV_APP_DB_DROP_ALL", False):
+        db.drop_all()
+
+    if read_env_bool("PYFARM_DEV_APP_DB_CREATE_ALL", False):
+        db.create_all()
+
+    app.config["DEV_ALLOW_ANY_AGENT_ADDRESS"] = read_env_bool(
+        "PYFARM_DEV_APP_ALLOW_ANY_AGENT_ADDRESS", False)
+
+    load_setup(app)
+    load_master(app, admin, api)
+    return app
+
+
+if read_env_bool("PYFARM_APP_INSTANCE", False):
+    app = create_app()
+
 
 if __name__ == "__main__":
     run_master()
