@@ -430,7 +430,7 @@ class SingleAgentAPI(MethodView):
         """
         model = Agent.query.filter_by(id=agent_id).first()
         if model is None:
-            return jsonify(error="Agent %s not found %s" % agent_id), NOT_FOUND
+            return jsonify(error="Agent %s not found" % agent_id), NOT_FOUND
 
         if "remote_ip" not in g.json:
             g.json["remote_ip"] = request.remote_addr
