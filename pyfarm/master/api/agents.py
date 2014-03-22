@@ -152,7 +152,6 @@ class AgentIndexAPI(MethodView):
             db.session.commit()
 
         except Exception as e:
-            db.session.rollback()
             db_error = e.args[0].lower()
 
             # known cases for CONFLICT
