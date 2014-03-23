@@ -24,6 +24,7 @@ necessary to run the master.
 
 import os
 from datetime import timedelta
+from multiprocessing.util import register_after_fork
 
 try:
     from httplib import BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE
@@ -139,6 +140,21 @@ def get_sqlalchemy(app=None, use_native_unicode=True, session_options=None):
             cursor.execute("PRAGMA synchronous=OFF")
             cursor.execute("PRAGMA journal_mode=MEMORY")
             cursor.close()
+
+    # When the web application is forked any existing connections
+    # need to be disposed of.  This generally only seems to be a problem
+    # with Postgres, more specifically psycopg2, but doing this globally
+    # should not have any ill effects.  This problem was discovered while
+    # testing the Agent using uwsgi 2.0.3, nginx 1.4.6, Postgres 9.1, and
+    # psycopg2 2.5.2.  The bug does not present itself 100% of the time
+    # making it difficult to test reliably.  The fix below is based
+    # on a fix made to Celery which had the exact same problem ours did:
+    #   https://github.com/celery/celery/issues/1564
+    #
+    # This implementation however is based on the suggestion made in Celery
+    # 3.1's release notes:
+    #    https://celery.readthedocs.org/en/latest/whatsnew-3.1.html
+    register_after_fork(db.engine, db.engine.dispose)
 
     return db
 
