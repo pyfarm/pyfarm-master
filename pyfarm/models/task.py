@@ -55,7 +55,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     """
     __tablename__ = TABLE_TASK
     STATE_ENUM = WorkState
-    STATE_DEFAULT = STATE_ENUM.QUEUED
+    STATE_DEFAULT = None
     REPR_COLUMNS = ("id", "state", "frame", "project")
     REPR_CONVERT_COLUMN = {"state": partial(repr_enum, enum=STATE_ENUM)}
 
@@ -98,15 +98,8 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                           associated job for this task"""))
 
     @staticmethod
-    def agentChangedEvent(target, new_value, old_value, initiator):
-        """set the state to ASSIGN whenever the agent is changed"""
-        if new_value is not None:
-            target.state = target.STATE_ENUM.ASSIGN
-
-    @staticmethod
     def incrementAttempts(target, new_value, old_value, initiator):
         target.attempts = target.attempts + 1 if target.attempts else 1
 
-event.listen(Task.agent_id, "set", Task.agentChangedEvent)
 event.listen(Task.state, "set", Task.stateChangedEvent)
 event.listen(Task.state, "set", Task.incrementAttempts)

@@ -97,7 +97,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
-        work_columns(WorkState.QUEUED, "job.priority")
+        work_columns(None, "job.priority")
     project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
                            doc="stores the project id")
     jobtype_version_id = db.Column(IDTypeWork,
@@ -251,13 +251,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         doc=dedent("""
         Relationship between this job and any :class:`Task` objects which have
         failed."""))
-
-    tasks_queued = db.relationship("Task", lazy="dynamic",
-        primaryjoin="(Task.state == %s) & "
-                    "(Task.job_id == Job.id)" % DBWorkState.QUEUED,
-        doc=dedent("""
-        Relationship between this job and any :class:`Task` objects which
-        are queued."""))
 
     # resource relationships
     tags = db.relationship("Tag", backref="jobs", lazy="dynamic",
