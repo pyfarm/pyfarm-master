@@ -145,7 +145,14 @@ class AgentIndexAPI(MethodView):
                          invalid columns being included)
         """
         g.json["remote_ip"] = request.remote_addr
-        new_agent = Agent(**g.json)
+
+        try:
+            new_agent = Agent(**g.json)
+
+        # There may be something wrong with one of the fields
+        # that's causing our sqlalchemy model raise a ValueError.
+        except ValueError as e:
+            return jsonify(error=str(e)), BAD_REQUEST
         db.session.add(new_agent)
 
         try:
@@ -443,7 +450,14 @@ class SingleAgentAPI(MethodView):
         modified = {}
         for key, value in items():
             if value != getattr(model, key):
-                setattr(model, key, value)
+                try:
+                    setattr(model, key, value)
+
+                # There may be something wrong with one of the fields
+                # that's causing our sqlalchemy model raise a ValueError.
+                except ValueError as e:
+                    return jsonify(error=str(e)), BAD_REQUEST
+
                 modified[key] = value
 
         if modified:
