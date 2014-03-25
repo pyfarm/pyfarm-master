@@ -342,6 +342,7 @@ class JobIndexAPI(MethodView):
             task = Task()
             task.job = job
             task.frame = current_frame
+            task.priority = job.priority
             db.session.add(task)
             current_frame += by
 
@@ -622,6 +623,7 @@ class SingleJobAPI(MethodView):
                 task = Task()
                 task.job = job
                 task.frame = frame
+                task.priority = job.priority
                 db.session.add(task)
 
         if "time_started" in g.json:
