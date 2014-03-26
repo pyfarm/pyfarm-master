@@ -93,18 +93,29 @@ class TestMixins(BaseTestCase):
         self.assertEqual(model.state, state)
         db.session.commit()
 
-    def test_priority_validation(self):
-        min_priority = ValidatePriorityMixin.MIN_PRIORITY
-        max_priority = ValidatePriorityMixin.MAX_PRIORITY
-        model = ValidationModel()
+    def test_priority_validation_min(self):
+        model = ValidationModel(priority=ValidatePriorityMixin.MIN_PRIORITY)
         db.session.add(model)
-        for value in (min_priority-1, max_priority+1):
-            with self.assertRaises(ValueError):
-                model.priority = value
-        model.priority = min_priority
-        self.assertEqual(model.priority, min_priority)
-        model.priority = max_priority
-        self.assertEqual(model.priority, max_priority)
+        db.session.commit()
+
+    def test_priority_validation_max(self):
+        model = ValidationModel(priority=ValidatePriorityMixin.MAX_PRIORITY)
+        db.session.add(model)
+        db.session.commit()
+
+    def test_priority_validation_max_plus_one(self):
+        with self.assertRaises(ValueError):
+            ValidationModel(priority=ValidatePriorityMixin.MAX_PRIORITY + 1)
+
+    def test_priority_validation_min_minus_one(self):
+        with self.assertRaises(ValueError):
+            ValidationModel(priority=ValidatePriorityMixin.MIN_PRIORITY -1)
+
+    def test_priority_validating_null(self):
+        model = ValidationModel()
+        model.priority = None
+        self.assertIsNone(model.priority)
+        db.session.add(model)
         db.session.commit()
 
     def test_attempts_validation(self):
@@ -113,6 +124,7 @@ class TestMixins(BaseTestCase):
             model.attempts = -1
         model.attempts = 1
         self.assertEqual(model.attempts, 1)
+        db.session.add(model)
         db.session.commit()
 
     def test_state_changed_event(self):
@@ -138,6 +150,7 @@ class TestMixins(BaseTestCase):
             model.state = state_enum.DONE
             self.assertNotEqual(model.time_finished, first_finished)
             self.assertLessEqual(model.time_finished, datetime.utcnow())
+            db.session.add(model)
             db.session.commit()
 
     def test_to_dict(self):

@@ -29,9 +29,7 @@ try:
 except ImportError:
     from http.client import INTERNAL_SERVER_ERROR
 
-from flask.ext.sqlalchemy import BaseQuery
 from sqlalchemy.orm import validates, class_mapper
-from sqlalchemy.orm.dynamic import AppenderMixin
 
 from pyfarm.core.enums import DBWorkState, _WorkState, Values, PY2
 from pyfarm.core.logger import getLogger
@@ -62,16 +60,17 @@ class ValidatePriorityMixin(object):
     @validates("priority")
     def validate_priority(self, key, value):
         """ensures the value provided to priority is valid"""
-        if self.MIN_PRIORITY <= value <= self.MAX_PRIORITY:
+        if value is None or self.MIN_PRIORITY <= value <= self.MAX_PRIORITY:
             return value
 
-        err_args = (key, self.MIN_PRIORITY, self.MAX_PRIORITY)
-        raise ValueError("%s must be between %s and %s" % err_args)
+        err_args = (key, self.MIN_PRIORITY, self.MAX_PRIORITY, value)
+        raise ValueError(
+            "%s must be between %s and %s, got %s instead" % err_args)
 
     @validates("attempts")
     def validate_attempts(self, key, value):
         """ensures the number of attempts provided is valid"""
-        if value >= 0 or value is None:
+        if value is None or value >= 0:
             return value
 
         raise ValueError("%s cannot be less than zero" % key)
