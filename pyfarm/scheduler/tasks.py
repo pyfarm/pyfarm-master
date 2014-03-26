@@ -128,8 +128,8 @@ def assign_batch_at_prio(prio, except_job_ids=[]):
         if job:
             logger.debug("Starting job \"%s\" (id %s) now", job.title, job.id)
         else:
-            logger.debug("Did not find a job with unassigned tasks at priority %s" %
-                  prio)
+            logger.debug("Did not find a job with unassigned tasks at "
+                         "priority %s" % prio)
             return 0, 0
 
     tasks_query = Task.query.filter(Task.job == job,
