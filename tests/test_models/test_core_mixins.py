@@ -107,6 +107,12 @@ class TestMixins(BaseTestCase):
         self.assertEqual(model.priority, max_priority)
         db.session.commit()
 
+    def test_priority_validating_null(self):
+        model = ValidationModel()
+        model.priority = None
+        db.session.add(model)
+        db.session.commit()
+
     def test_attempts_validation(self):
         model = ValidationModel()
         with self.assertRaises(ValueError):
