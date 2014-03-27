@@ -224,10 +224,8 @@ def assign_tasks():
 
     num_tasks_by_prio = {}
     for task in runnable_tasks:
-        if task.priority in num_tasks_by_prio:
-            num_tasks_by_prio[task.priority] += 1
-        else:
-            num_tasks_by_prio[task.priority] = 1
+        num_tasks_by_prio.setdefault(task.priority, 0)
+        num_tasks_by_prio[task.priority] += 1
 
     max_prio = max(num_tasks_by_prio.keys())
     min_prio = min(num_tasks_by_prio.keys())
