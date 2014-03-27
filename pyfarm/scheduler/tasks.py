@@ -49,10 +49,10 @@ logger = getLogger("scheduler.tasks")
 logger.setLevel(DEBUG)
 
 
-def agents_with_tasks_at_prio(prio):
+def agents_with_tasks_at_prio(priority):
     query = Agent.query.filter(~Agent.state.in_([AgentState.OFFLINE,
                                                  AgentState.DISABLED]))
-    query = query.filter(Agent.tasks.any(Task.priority == prio))
+    query = query.filter(Agent.tasks.any(Task.priority == priority))
     return query.count()
 
 
@@ -80,15 +80,15 @@ def satisfies_requirements(agent, job):
     return len(requirements_to_satisfy) <= len(satisfied_requirements)
 
 
-def assign_batch_at_prio(prio, except_job_ids=None):
+def assign_batch_at_prio(priority, except_job_ids=None):
     """
-    Assign one batch of tasks with priority :attr:`prio` to a suitable agent.
-    Does nothing if no waiting tasks with exactly priority :attr:`prio` can be
-    found or no suitable agents can be found for any waiting tasks at priority
-    :attr:`prio`.
+    Assign one batch of tasks with priority :attr:`priority` to a suitable agent.
+    Does nothing if no waiting tasks with exactly priority :attr:`priority` can
+    be found or no suitable agents can be found for any waiting tasks at priority
+    :attr:`priority`.
     Will not give more than one agent any new tasks.
 
-    :param int prio:
+    :param int priority:
         The priority the assigned tasks must have
 
     :param list except_job_ids:
@@ -111,7 +111,7 @@ def assign_batch_at_prio(prio, except_job_ids=None):
         or_(Task.state == None,
             ~Task.state.in_([WorkState.DONE, WorkState.FAILED])),
         Task.agent == None,
-        Task.priority == prio)))
+        Task.priority == priority)))
     job = job_query.first()
     if job:
         logger.info("Trying to assign agents to started job %s", job.title)
@@ -130,13 +130,13 @@ def assign_batch_at_prio(prio, except_job_ids=None):
                 and_(or_(Task.state == None,
                          ~Task.state.in_([WorkState.DONE, WorkState.FAILED])),
                      Task.agent == None,
-                     Task.priority == prio)))
+                     Task.priority == priority)))
         job = job_query.order_by("time_submitted asc").first()
         if job:
             logger.debug("Starting job \"%s\" (id %s) now", job.title, job.id)
         else:
             logger.debug("Did not find a job with unassigned tasks at "
-                         "priority %s", prio)
+                         "priority %s", priority)
             return 0, 0
 
     tasks_query = Task.query.filter(Task.job == job,
@@ -147,7 +147,7 @@ def assign_batch_at_prio(prio, except_job_ids=None):
                                         Task.agent.has(Agent.state.in_(
                                             [AgentState.OFFLINE,
                                              AgentState.DISABLED]))),
-                                    Task.priority == prio).order_by("frame asc")
+                                    Task.priority == priority).order_by("frame asc")
     batch = []
     for task in tasks_query:
         if (len(batch) < job.batch and
@@ -161,32 +161,32 @@ def assign_batch_at_prio(prio, except_job_ids=None):
 
     # First look for an agent that has already successfully worked on tasks from
     # the same job in the past
-    q = db.session.query(Agent, func.count(
+    query = db.session.query(Agent, func.count(
         SoftwareVersion.id).label("num_versions"))
-    q = q.filter(Agent.free_ram >= job.ram)
-    q = q.filter(~Agent.tasks.any(or_(Task.state == None,
+    query = query.filter(Agent.free_ram >= job.ram)
+    query = query.filter(~Agent.tasks.any(or_(Task.state == None,
                                       and_(Task.state != WorkState.DONE,
                                            Task.state != WorkState.FAILED))))
-    q = q.filter(Agent.tasks.any(and_(Task.state == WorkState.DONE,
+    query = query.filter(Agent.tasks.any(and_(Task.state == WorkState.DONE,
                                       Task.job == job)))
     # Order by num_versions so we select agents with the fewest supported
     # software versions first
-    q = q.group_by(Agent).order_by("num_versions asc")
+    query = query.group_by(Agent).order_by("num_versions asc")
 
     selected_agent = None
-    for agent, num_versions in q:
+    for agent, num_versions in query:
         if not selected_agent and satisfies_requirements(agent, job):
             selected_agent = agent
 
     if not selected_agent:
-        q = db.session.query(Agent, func.count(
+        query = db.session.query(Agent, func.count(
             SoftwareVersion.id).label("num_versions"))
-        q = q.filter(Agent.free_ram >= job.ram)
-        q = q.filter(~Agent.tasks.any(or_(Task.state == None,
+        query = query.filter(Agent.free_ram >= job.ram)
+        query = query.filter(~Agent.tasks.any(or_(Task.state == None,
                                           and_(Task.state != WorkState.DONE,
                                                Task.state != WorkState.FAILED))))
-        q = q.group_by(Agent).order_by("num_versions asc")
-        for agent, num_versions in q:
+        query = query.group_by(Agent).order_by("num_versions asc")
+        for agent, num_versions in query:
             if not selected_agent and satisfies_requirements(agent, job):
                 selected_agent = agent
 
@@ -195,7 +195,7 @@ def assign_batch_at_prio(prio, except_job_ids=None):
         # some for some other job
         logger.debug("Did not find a suitable agent for job %s, trying to find "
                      "another job", job.title)
-        assign_batch_at_prio(prio, except_job_ids + [job.id])
+        assign_batch_at_prio(priority, except_job_ids + [job.id])
     else:
         for task in batch:
             task.agent = selected_agent
@@ -250,8 +250,8 @@ def assign_tasks():
 
     # Preexisting assignments
     agent_with_tasks_at_prio = {}
-    for prio in range_(min_prio, max_prio + 1):
-        agent_with_tasks_at_prio[prio] = agents_with_tasks_at_prio(prio)
+    for priority in range_(min_prio, max_prio + 1):
+        agent_with_tasks_at_prio[priority] = agents_with_tasks_at_prio(priority)
 
     # main scheduler loop
     # This works like a weighted fair queue with every priority forming its own
