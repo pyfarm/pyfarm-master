@@ -40,6 +40,11 @@ from pyfarm.master.application import db
 from pyfarm.scheduler.celery import celery_app
 
 
+try:
+    range_ = xrange
+except NameError:
+    range_ = range
+
 logger = getLogger("scheduler.tasks")
 logger.setLevel(DEBUG)
 
@@ -245,7 +250,7 @@ def assign_tasks():
 
     # Preexisting assignments
     agent_with_tasks_at_prio = {}
-    for prio in range(min_prio, max_prio + 1):
+    for prio in range_(min_prio, max_prio + 1):
         agent_with_tasks_at_prio[prio] = agents_with_tasks_at_prio(prio)
 
     # main scheduler loop
@@ -253,9 +258,9 @@ def assign_tasks():
     # input queue.
     matchables_left = True
     while unassigned_tasks and idle_agents and matchables_left:
-        for floor in range(max_prio, min_prio-1, -1):
+        for floor in range_(max_prio, min_prio-1, -1):
             assigned = 0
-            for current_prio in range(max_prio, floor-1, -1):
+            for current_prio in range_(max_prio, floor-1, -1):
                 if agent_with_tasks_at_prio[current_prio] > 0:
                     agent_with_tasks_at_prio[current_prio] -= 1
                     assigned += 1
