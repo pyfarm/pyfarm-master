@@ -73,7 +73,7 @@ def satisfies_requirements(agent, job):
     return len(requirements_to_satisfy) <= len(satisfied_requirements)
 
 
-def assign_batch_at_prio(prio, except_job_ids=[]):
+def assign_batch_at_prio(prio, except_job_ids=None):
     """
     Assign one batch of tasks with priority :attr:`prio` to a suitable agent.
     Does nothing if no waiting tasks with exactly priority :attr:`prio` can be
