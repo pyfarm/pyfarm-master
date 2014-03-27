@@ -70,10 +70,7 @@ def satisfies_requirements(agent, job):
                 logger.debug("Software version %r does not satisfy "
                              "requirement %r" % (software_version, requirement))
 
-    if len(requirements_to_satisfy) > len(satisfied_requirements):
-        return False
-    else:
-        return True
+    return len(requirements_to_satisfy) <= len(satisfied_requirements)
 
 
 def assign_batch_at_prio(prio, except_job_ids=[]):
