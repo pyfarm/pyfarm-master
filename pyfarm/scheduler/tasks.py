@@ -22,6 +22,7 @@ from sqlalchemy import or_, and_, func
 
 from celery.utils.log import get_task_logger
 
+from pyfarm.core.enums import AgentState, WorkState
 from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
@@ -39,12 +40,13 @@ from pyfarm.master.application import db
 from pyfarm.scheduler.celery import celery_app
 
 
-logger = get_task_logger("scheduler.tasks")
+logger = getLogger("scheduler.tasks")
 logger.setLevel(DEBUG)
 
 
 def agents_with_tasks_at_prio(prio):
-    query = Agent.query.filter(~Agent.state.in_(["offline", "disabled"]))
+    query = Agent.query.filter(~Agent.state.in_([AgentState.OFFLINE,
+                                                 AgentState.DISABLED]))
     query = query.filter(Agent.tasks.any(Task.priority == prio))
     return query.count()
 
@@ -93,14 +95,16 @@ def assign_batch_at_prio(prio, except_job_ids=None):
     job_query = Job.query
     job_query = job_query.filter(or_(Job.state == None,
                                      ~Job.state.in_(
-                                         ["paused", "done", "failed"])))
+                                         [WorkState.PAUSED,
+                                          WorkState.DONE,
+                                          WorkState.FAILED])))
     if except_job_ids:
         job_query = job_query.filter(~Job.id.in_(except_job_ids))
     job_query = job_query.filter(Job.tasks.any(Task.state.in_(
-        ["running", "done", "failed"])))
+        [WorkState.RUNNING, WorkState.DONE, WorkState.FAILED])))
     job_query = job_query.filter(Job.tasks.any(and_(
         or_(Task.state == None,
-            ~Task.state.in_(["done", "failed"])),
+            ~Task.state.in_([WorkState.DONE, WorkState.FAILED])),
         Task.agent == None,
         Task.priority == prio)))
     job = job_query.first()
@@ -111,13 +115,15 @@ def assign_batch_at_prio(prio, except_job_ids=None):
         job_query = Job.query
         job_query = job_query.filter(or_(Job.state == None,
                                          ~Job.state.in_(
-                                             ["paused", "done", "failed"])))
+                                             [WorkState.PAUSED,
+                                              WorkState.DONE,
+                                              WorkState.FAILED])))
         if except_job_ids:
             job_query = job_query.filter(~Job.id.in_(except_job_ids))
         job_query = job_query.filter(
             Job.tasks.any(
                 and_(or_(Task.state == None,
-                         ~Task.state.in_(["done", "failed"])),
+                         ~Task.state.in_([WorkState.DONE, WorkState.FAILED])),
                      Task.agent == None,
                      Task.priority == prio)))
         job = job_query.order_by("time_submitted asc").first()
@@ -130,10 +136,12 @@ def assign_batch_at_prio(prio, except_job_ids=None):
 
     tasks_query = Task.query.filter(Task.job == job,
                                     or_(Task.state == None,
-                                        ~Task.state.in_(["done", "failed"])),
+                                        ~Task.state.in_([WorkState.DONE,
+                                                         WorkState.FAILED])),
                                     or_(Task.agent == None,
                                         Task.agent.has(Agent.state.in_(
-                                            ["offline", "disabled"]))),
+                                            [AgentState.OFFLINE,
+                                             AgentState.DISABLED]))),
                                     Task.priority == prio).order_by("frame asc")
     batch = []
     for task in tasks_query:
@@ -152,9 +160,10 @@ def assign_batch_at_prio(prio, except_job_ids=None):
         SoftwareVersion.id).label("num_versions"))
     q = q.filter(Agent.free_ram >= job.ram)
     q = q.filter(~Agent.tasks.any(or_(Task.state == None,
-                                      and_(Task.state != "done",
-                                           Task.state != "failed"))))
-    q = q.filter(Agent.tasks.any(and_(Task.state == "done", Task.job == job)))
+                                      and_(Task.state != WorkState.DONE,
+                                           Task.state != WorkState.FAILED))))
+    q = q.filter(Agent.tasks.any(and_(Task.state == WorkState.DONE,
+                                      Task.job == job)))
     # Order by num_versions so we select agents with the fewest supported
     # software versions first
     q = q.group_by(Agent).order_by("num_versions asc")
@@ -169,8 +178,8 @@ def assign_batch_at_prio(prio, except_job_ids=None):
             SoftwareVersion.id).label("num_versions"))
         q = q.filter(Agent.free_ram >= job.ram)
         q = q.filter(~Agent.tasks.any(or_(Task.state == None,
-                                          and_(Task.state != "done",
-                                               Task.state != "failed"))))
+                                          and_(Task.state != WorkState.DONE,
+                                               Task.state != WorkState.FAILED))))
         q = q.group_by(Agent).order_by("num_versions asc")
         for agent, num_versions in q:
             if not selected_agent and satisfies_requirements(agent, job):
@@ -203,24 +212,28 @@ def assign_tasks():
     """
     logger.info("Assigning tasks to agents")
     tasks_query = Task.query.filter(
-        or_(Task.state == None, ~Task.state.in_(["done", "failed"])))
+        or_(Task.state == None, ~Task.state.in_([WorkState.DONE,
+                                                 WorkState.FAILED])))
     tasks_query = tasks_query.filter(
         or_(Task.agent == None,
-            Task.agent.has(Agent.state.in_(["offline", "disabled"]))))
+            Task.agent.has(Agent.state.in_([AgentState.OFFLINE,
+                                            AgentState.DISABLED]))))
     unassigned_tasks = tasks_query.count()
     logger.debug("Got %s unassigned tasks" % unassigned_tasks)
     if not unassigned_tasks:
         logger.info("No unassigned tasks, not assigning anything")
         return
 
-    idle_agents = Agent.query.filter(Agent.state == "online",
+    idle_agents = Agent.query.filter(Agent.state == AgentState.ONLINE,
                                      ~Agent.tasks.any()).count()
     if not idle_agents:
         logger.info("No idle agents, not assigning anything")
         return
 
     runnable_tasks = Task.query.filter(or_(
-        Task.state == None, ~Task.state.in_(["paused", "done", "failed"]))).all()
+        Task.state == None, ~Task.state.in_([WorkState.PAUSED,
+                                             WorkState.DONE,
+                                             WorkState.FAILED]))).all()
 
     num_tasks_by_prio = {}
     for task in runnable_tasks:
