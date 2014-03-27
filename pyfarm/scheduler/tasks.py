@@ -58,7 +58,7 @@ def agents_with_tasks_at_prio(prio):
 
 def satisfies_requirements(agent, job):
     logger.debug("Checking to see if agent %s satisfies the requirements for "
-                 "job %s" % (agent.hostname, job.title))
+                 "job %s", agent.hostname, job.title)
     requirements_to_satisfy = (list(job.software_requirements) +
                                list(job.jobtype_version.software_requirements))
 
@@ -70,12 +70,12 @@ def satisfies_requirements(agent, job):
                  requirement.min_version.rank <= software_version.rank) and
                 (requirement.max_version == None or
                  requirement.max_version.rank >= software_version.rank)):
-                logger.debug("Software version %r satisfies requirement %r" %
-                             (software_version, requirement))
+                logger.debug("Software version %r satisfies requirement %r",
+                             software_version, requirement)
                 satisfied_requirements.append(requirement)
             else:
                 logger.debug("Software version %r does not satisfy "
-                             "requirement %r" % (software_version, requirement))
+                             "requirement %r", software_version, requirement)
 
     return len(requirements_to_satisfy) <= len(satisfied_requirements)
 
@@ -95,7 +95,7 @@ def assign_batch_at_prio(prio, except_job_ids=None):
         A list of job ids we should not try to assign
     """
     # Try to get an already started job first
-    logger.info("Trying to assign one batch of tasks, except jobs %s" %
+    logger.info("Trying to assign one batch of tasks, except jobs %s",
                    except_job_ids)
     job_query = Job.query
     job_query = job_query.filter(or_(Job.state == None,
@@ -114,7 +114,7 @@ def assign_batch_at_prio(prio, except_job_ids=None):
         Task.priority == prio)))
     job = job_query.first()
     if job:
-        logger.info("Trying to assign agents to started job %s" % job.title)
+        logger.info("Trying to assign agents to started job %s", job.title)
     # Only if that didn't produce anything, try to start a queued one
     if not job:
         job_query = Job.query
@@ -136,7 +136,7 @@ def assign_batch_at_prio(prio, except_job_ids=None):
             logger.debug("Starting job \"%s\" (id %s) now", job.title, job.id)
         else:
             logger.debug("Did not find a job with unassigned tasks at "
-                         "priority %s" % prio)
+                         "priority %s", prio)
             return 0, 0
 
     tasks_query = Task.query.filter(Task.job == job,
@@ -156,8 +156,8 @@ def assign_batch_at_prio(prio, except_job_ids=None):
               batch[-1].frame + job.by == task.frame))):
                  batch.append(task)
 
-    logger.debug("Looking for an agent for a batch of %s tasks from job %s" %
-                 (len(batch), job.title))
+    logger.debug("Looking for an agent for a batch of %s tasks from job %s",
+                 len(batch), job.title)
 
     # First look for an agent that has already successfully worked on tasks from
     # the same job in the past
@@ -194,7 +194,7 @@ def assign_batch_at_prio(prio, except_job_ids=None):
         # We did not find any suitable agents for this job, see if we can find
         # some for some other job
         logger.debug("Did not find a suitable agent for job %s, trying to find "
-                     "another job" % job.title)
+                     "another job", job.title)
         assign_batch_at_prio(prio, except_job_ids + [job.id])
     else:
         for task in batch:
