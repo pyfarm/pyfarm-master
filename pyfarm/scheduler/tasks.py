@@ -50,11 +50,10 @@ def agents_with_tasks_at_prio(prio):
 
 
 def satisfies_requirements(agent, job):
-    print("Checking to see if agent %s satisfies the requirements for job %s" %
-          (agent.hostname, job.title))
-    requirements_to_satisfy = [x for x in job.software_requirements]
-    requirements_to_satisfy += [x for x in
-                                job.jobtype_version.software_requirements]
+    logger.debug("Checking to see if agent %s satisfies the requirements for "
+                 "job %s" % (agent.hostname, job.title))
+    requirements_to_satisfy = (list(job.software_requirements) +
+                               list(job.jobtype_version.software_requirements))
 
     satisfied_requirements = []
     for software_version in agent.software_versions:
