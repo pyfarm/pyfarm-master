@@ -20,8 +20,7 @@ from logging import DEBUG, INFO
 
 from sqlalchemy import or_, and_, func
 
-from celery.utils.log import get_task_logger
-
+from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import AgentState, WorkState
 from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
@@ -115,6 +114,7 @@ def assign_batch_at_prio(priority, except_job_ids=None):
     job = job_query.first()
     if job:
         logger.info("Trying to assign agents to started job %s", job.title)
+
     # Only if that didn't produce anything, try to start a queued one
     if not job:
         job_query = Job.query
