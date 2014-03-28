@@ -37,7 +37,7 @@ from pyfarm.models.agent import (
 from pyfarm.models.user import User, Role
 from pyfarm.master.application import db
 
-from pyfarm.scheduler.celery import celery_app
+from pyfarm.scheduler.celery_app import celery_app
 
 
 try:
