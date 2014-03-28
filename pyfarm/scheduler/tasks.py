@@ -97,8 +97,7 @@ def assign_batch_at_prio(priority, except_job_ids=None):
     # Try to get an already started job first
     logger.info("Trying to assign one batch of tasks, except jobs %s",
                    except_job_ids)
-    job_query = Job.query
-    job_query = job_query.filter(or_(Job.state == None,
+    job_query = Job.query.filter(or_(Job.state == None,
                                      ~Job.state.in_(
                                          [WorkState.PAUSED,
                                           WorkState.DONE,
@@ -118,8 +117,7 @@ def assign_batch_at_prio(priority, except_job_ids=None):
 
     # Only if that didn't produce anything, try to start a queued one
     if not job:
-        job_query = Job.query
-        job_query = job_query.filter(or_(Job.state == None,
+        job_query = Job.query.filter(or_(Job.state == None,
                                          ~Job.state.in_(
                                              [WorkState.PAUSED,
                                               WorkState.DONE,
