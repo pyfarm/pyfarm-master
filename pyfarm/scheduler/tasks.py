@@ -44,7 +44,8 @@ try:
 except NameError:
     range_ = range
 
-logger = getLogger("scheduler.tasks")
+logger = getLogger("pf.scheduler.tasks")
+# TODO Get logger configuration from pyfarm config
 logger.setLevel(DEBUG)
 
 
