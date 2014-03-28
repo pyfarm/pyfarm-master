@@ -37,6 +37,8 @@ except ImportError:  # pragma: no cover
 from flask.views import MethodView
 from flask import g, request, current_app
 
+from sqlalchemy.sql import func
+
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
@@ -359,6 +361,14 @@ class JobIndexAPI(MethodView):
         del job_data["jobtype_version_id"]
         job_data["jobtype"] = job.jobtype_version.jobtype.name
         job_data["jobtype_version"] = job.jobtype_version.version
+        if job.state is None:
+            num_assigned_tasks = Task.query.filter(Task.job == job,
+                                                   Task.agent != None).count()
+            if num_assigned_tasks > 0:
+                job_data["state"] = "running"
+            else:
+                job_data["state"] = "queued"
+
         logger.info("Created new job %r", job_data)
 
         return jsonify(job_data), CREATED
@@ -399,10 +409,23 @@ class JobIndexAPI(MethodView):
         :statuscode 200: no error
         """
         out = []
-        q = db.session.query(Job.id, Job.title, Job.state)
+        subq = db.session.query(
+            Task.job_id,
+            func.count(Task.id).label('assigned_tasks_count')).\
+                filter(Task.agent_id != None).group_by(Task.job_id).subquery()
+        q = db.session.query(Job.id, Job.title, Job.state,
+                             subq.c.assigned_tasks_count).\
+            outerjoin(subq, Job.id == subq.c.job_id)
 
-        for id, title, state in q:
-            out.append({"id": id, "title": title, "state": str(state)})
+        for id, title, state, assigned_tasks_count in q:
+            data = {"id": id, "title": title}
+            if state is None and not assigned_tasks_count:
+                data["state"] = "queued"
+            elif state is None:
+                data["state"] = "assigned"
+            else:
+                data["state"] = str(state)
+            out.append(data)
 
         return jsonify(out), OK
 
@@ -498,6 +521,13 @@ class SingleJobAPI(MethodView):
         job_data["end"] = last_task.frame
         job_data["jobtype"] = job.jobtype_version.jobtype.name
         job_data["jobtype_version"] = job.jobtype_version.version
+        if job.state is None:
+            num_assigned_tasks = Task.query.filter(Task.job == job,
+                                                   Task.agent != None).count()
+            if num_assigned_tasks > 0:
+                job_data["state"] = "running"
+            else:
+                job_data["state"] = "queued"
 
         del job_data["jobtype_version_id"]
 
@@ -681,6 +711,13 @@ class SingleJobAPI(MethodView):
         del job_data["jobtype_version_id"]
         job_data["jobtype"] = job.jobtype_version.jobtype.name
         job_data["jobtype_version"] = job.jobtype_version.version
+        if job.state is None:
+            num_assigned_tasks = Task.query.filter(Task.job == job,
+                                                   Task.agent != None).count()
+            if num_assigned_tasks > 0:
+                job_data["state"] = "running"
+            else:
+                job_data["state"] = "queued"
 
         logger.info("Job %s has been updated to: %r", job.id, job_data)
 
@@ -749,7 +786,14 @@ class JobTasksIndexAPI(MethodView):
             return jsonify(error="Job not found"), NOT_FOUND
 
         tasks_q = Task.query.filter_by(job=job).order_by("frame asc")
-        out = [x.to_dict(unpack_relationships=False) for x in tasks_q]
+        out = []
+        for task in tasks_q:
+            data = task.to_dict(unpack_relationships=False)
+            if task.state == None and task.agent == None:
+                data["state"] = "queued"
+            elif task.state == None:
+                data["state"] = "assigned"
+            out.append(data)
 
         return jsonify(out), OK
 
@@ -879,6 +923,10 @@ class JobSingleTaskAPI(MethodView):
         db.session.commit()
 
         task_data = task.to_dict()
+        if task.state is None and task.agent is None:
+            task_data["state"] = "queued"
+        elif task.state is None:
+            task_data["state"] = "assigned"
         logger.info("Task %s of job %s has been updated, new data: %r",
                     task_id, task.job.title, task_data)
         return jsonify(task_data), OK
@@ -938,4 +986,10 @@ class JobSingleTaskAPI(MethodView):
         if not task:
             return jsonify(error="Task not found"), NOT_FOUND
 
-        return jsonify(task.to_dict()), OK
+        task_data = task.to_dict()
+        if task.state is None and task.agent is None:
+            task_data["state"] = "queued"
+        elif task.state is None:
+            task_data["state"] = "assigned"
+
+        return jsonify(task_data), OK
