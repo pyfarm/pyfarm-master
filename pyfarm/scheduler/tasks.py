@@ -132,7 +132,7 @@ def assign_batch_at_prio(priority, except_job_ids=None):
                      Task.priority == priority)))
         job = job_query.order_by("time_submitted asc").first()
         if job:
-            logger.debug("Starting job \"%s\" (id %s) now", job.title, job.id)
+            logger.debug("Starting job %r (id %s) now", job.title, job.id)
         else:
             logger.debug("Did not find a job with unassigned tasks at "
                          "priority %s", priority)
