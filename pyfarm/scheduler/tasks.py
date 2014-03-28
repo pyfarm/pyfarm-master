@@ -122,6 +122,8 @@ def assign_batch_at_prio(priority, except_job_ids=None):
                                              [WorkState.PAUSED,
                                               WorkState.DONE,
                                               WorkState.FAILED])))
+        # Make sure we don't start jobs with unfulfilled dependencies
+        job_query.filter(~Job.parents.any(Job.state != WorkState.DONE))
         if except_job_ids:
             job_query = job_query.filter(~Job.id.in_(except_job_ids))
         job_query = job_query.filter(
@@ -146,7 +148,8 @@ def assign_batch_at_prio(priority, except_job_ids=None):
                                         Task.agent.has(Agent.state.in_(
                                             [AgentState.OFFLINE,
                                              AgentState.DISABLED]))),
-                                    Task.priority == priority).order_by("frame asc")
+                                    Task.priority == priority).order_by(
+                                        "frame asc")
     batch = []
     for task in tasks_query:
         if (len(batch) < job.batch and
