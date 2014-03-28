@@ -197,7 +197,10 @@ def assign_batch_at_prio(priority, except_job_ids=None):
         # some for some other job
         logger.debug("Did not find a suitable agent for job %s, trying to find "
                      "another job", job.title)
-        assign_batch_at_prio(priority, except_job_ids + [job.id])
+        if except_job_ids:
+            assign_batch_at_prio(priority, except_job_ids + [job.id])
+        else:
+            assign_batch_at_prio(priority, [job.id])
     else:
         for task in batch:
             task.agent = selected_agent
