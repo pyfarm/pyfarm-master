@@ -32,7 +32,8 @@ install_requires = [
     "flask-sqlalchemy", 
     "itsdangerous", 
     "blinker",
-    "voluptuous"]
+    "voluptuous",
+    "celery[redis]"]
 
 if sys.version_info[0:2] == (2, 6):
     install_requires += ["argparse"]
