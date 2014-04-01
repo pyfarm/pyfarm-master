@@ -41,6 +41,7 @@ from sqlalchemy.sql import func
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES
+from pyfarm.scheduler.tasks import assign_tasks
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
@@ -370,6 +371,7 @@ class JobIndexAPI(MethodView):
                 job_data["state"] = "queued"
 
         logger.info("Created new job %r", job_data)
+        assign_tasks.delay()
 
         return jsonify(job_data), CREATED
 
@@ -720,6 +722,7 @@ class SingleJobAPI(MethodView):
                 job_data["state"] = "queued"
 
         logger.info("Job %s has been updated to: %r", job.id, job_data)
+        assign_tasks.delay()
 
         return jsonify(job_data), OK
 
@@ -929,6 +932,7 @@ class JobSingleTaskAPI(MethodView):
             task_data["state"] = "assigned"
         logger.info("Task %s of job %s has been updated, new data: %r",
                     task_id, task.job.title, task_data)
+        assign_tasks.delay()
         return jsonify(task_data), OK
 
     def get(self, job_name, task_id):
