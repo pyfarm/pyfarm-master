@@ -33,6 +33,9 @@ matrix:
     - python: 3.3
       env: TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
 
+services:
+  - redis-server
+
 before_script:
   - if [[ $TDB_TYPE == "postgres" ]]; then psql -c "create database pyfarm;" -U postgres; fi
   - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
