@@ -33,7 +33,8 @@ install_requires = [
     "itsdangerous", 
     "blinker",
     "voluptuous",
-    "celery[redis]"]
+    "celery",
+    "redis"]
 
 if sys.version_info[0:2] == (2, 6):
     install_requires += ["argparse"]
