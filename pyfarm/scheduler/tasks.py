@@ -61,10 +61,13 @@ def send_tasks_to_agent(agent_id):
     if not agent:
         raise KeyError("agent not found")
 
+    logger.debug("Sending assigned batches to agent %s (id %s)", agent.hostname,
+                 agent_id)
     if agent.state in ["offline", "disabled"]:
         raise ValueError("agent not available")
 
     if agent.use_address == UseAgentAddress.PASSIVE:
+        logger.debug("Agent's use address mode is PASSIVE, not sending anything")
         return
 
     tasks_query = Task.query.filter(
@@ -79,6 +82,8 @@ def send_tasks_to_agent(agent_id):
         tasks_in_jobs[task.job_id].append(task)
 
     if not tasks_in_jobs:
+        logger.debug("No tasks for for agent %s (id %s)", agent.hostname,
+                     agent.id)
         return
 
     connection = None
