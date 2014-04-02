@@ -98,9 +98,9 @@ def send_tasks_to_agent(agent_id):
 
         if not connection:
             if agent.use_address == UseAgentAddress.LOCAL:
-                connection = HTTPConnection(agent.ip, agent.port)
+                connection = HTTPConnection(str(agent.ip), agent.port)
             elif agent.use_address == UseAgentAddress.REMOTE:
-                connection = HTTPConnection(agent.remote_ip, agent.port)
+                connection = HTTPConnection(str(agent.remote_ip), agent.port)
             elif agent.use_address == UseAgentAddress.HOSTNAME:
                 connection = HTTPConnection(agent.hostname, agent.port)
 
