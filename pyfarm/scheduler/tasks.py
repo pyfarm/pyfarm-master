@@ -123,7 +123,8 @@ def assign_batch_at_prio(priority, except_job_ids=None):
                                               WorkState.DONE,
                                               WorkState.FAILED])))
         # Make sure we don't start jobs with unfulfilled dependencies
-        job_query.filter(~Job.parents.any(Job.state != WorkState.DONE))
+        job_query.filter(~Job.parents.any(or_(Job.state == None,
+                                              Job.state != WorkState.DONE)))
         if except_job_ids:
             job_query = job_query.filter(~Job.id.in_(except_job_ids))
         job_query = job_query.filter(
