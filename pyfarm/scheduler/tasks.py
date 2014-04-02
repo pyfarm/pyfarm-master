@@ -284,7 +284,7 @@ def get_batch_agent_pair(priority, except_job_ids=None):
     return batch, selected_agent
 
 
-@celery_app.task
+@celery_app.task(ignore_result=True, rate_limit="1/s")
 def assign_tasks():
     """
     Assigns unassigned tasks to agents that can take them, with proportionally
