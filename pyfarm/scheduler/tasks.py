@@ -146,13 +146,14 @@ def satisfies_requirements(agent, job):
     return len(requirements_to_satisfy) <= len(satisfied_requirements)
 
 
-def assign_batch_at_prio(priority, except_job_ids=None):
+def get_batch_agent_pair(priority, except_job_ids=None):
     """
-    Assign one batch of tasks with priority :attr:`priority` to a suitable agent.
-    Does nothing if no waiting tasks with exactly priority :attr:`priority` can
+    Get a batch of tasks with priority :attr:`priority` and a suitable agent to
+    assign the to.
+    Returns None if no waiting tasks with exactly priority :attr:`priority` can
     be found or no suitable agents can be found for any waiting tasks at priority
     :attr:`priority`.
-    Will not give more than one agent any new tasks.
+    Will return a tuple of a list of tasks and an agent otherwise
 
     :param int priority:
         The priority the assigned tasks must have
@@ -205,7 +206,7 @@ def assign_batch_at_prio(priority, except_job_ids=None):
         else:
             logger.debug("Did not find a job with unassigned tasks at "
                          "priority %s", priority)
-            return 0, 0
+            return None
 
     tasks_query = Task.query.filter(Task.job == job,
                                     or_(Task.state == None,
@@ -265,20 +266,11 @@ def assign_batch_at_prio(priority, except_job_ids=None):
         logger.debug("Did not find a suitable agent for job %s, trying to find "
                      "another job", job.title)
         if except_job_ids:
-            assign_batch_at_prio(priority, except_job_ids + [job.id])
+            return get_batch_agent_pair(priority, except_job_ids + [job.id])
         else:
-            assign_batch_at_prio(priority, [job.id])
-    else:
-        for task in batch:
-            task.agent = selected_agent
-            logger.info("Assigning task %s (frame %s from job \"%s\", id %s) to "
-                "agent %s (id %s)", task.id, task.frame, job.title, job.id,
-                selected_agent.hostname, selected_agent.id)
-            db.session.add(task)
+            return get_batch_agent_pair(priority, [job.id])
 
-    db.session.flush()
-
-    return 1, len(batch)
+    return batch, selected_agent
 
 
 @celery_app.task
@@ -337,11 +329,20 @@ def assign_tasks():
                     agent_with_tasks_at_prio[current_prio] -= 1
                     assigned += 1
                 else:
-                    assigned_agents, assigned_tasks = assign_batch_at_prio(
-                        current_prio)
-                    assigned += assigned_agents
-                    idle_agents -= assigned_agents
-                    unassigned_tasks -= assigned_tasks
+                    batch_agent_tuple = get_batch_agent_pair(current_prio)
+                    if batch_agent_tuple:
+                        batch, agent = batch_agent_tuple
+                        for task in batch:
+                            task.agent = agent
+                            db.session.add(task)
+                            logger.info("Assigning task %s (frame %s from job"
+                                        " %s) to agent %s (id %s)",
+                                        task.id, task.frame, task.job.title,
+                                        agent.hostname, agent.id)
+                        assigned += 1
+                        idle_agents -= 1
+                        unassigned_tasks -= len(batch)
+                        db.session.flush()
             if floor == min_prio and assigned == 0:
                 logger.info("None of the unassigned tasks are compatible with "
                             "any of the idle agents")
