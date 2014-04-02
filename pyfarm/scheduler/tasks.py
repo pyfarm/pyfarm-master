@@ -105,8 +105,8 @@ def send_tasks_to_agent(agent_id):
             elif agent.use_address == UseAgentAddress.HOSTNAME:
                 connection = HTTPConnection(agent.hostname, agent.port)
 
-        logger.notice("Sending a batch of %s tasks for job %s (%s) to agent %s",
-                      len(tasks), job.title, job.id, agent.hostname)
+        logger.info("Sending a batch of %s tasks for job %s (%s) to agent %s",
+                    len(tasks), job.title, job.id, agent.hostname)
         connection.request("POST",
                            "/api/v1/assign",
                            dumps(message, default=default_json_encoder),
