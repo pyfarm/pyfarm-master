@@ -17,11 +17,16 @@
 from math import ceil
 from decimal import Decimal
 from logging import DEBUG, INFO
+try:
+    from http.client import HTTPConnection, OK, CREATED
+except ImportError: # pragma: no cover
+    from httplib import HTTPConnection, OK, CREATED
+from json import dumps
 
 from sqlalchemy import or_, and_, func
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import AgentState, WorkState
+from pyfarm.core.enums import AgentState, WorkState, UseAgentAddress
 from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
@@ -47,6 +52,67 @@ except NameError:
 logger = getLogger("pf.scheduler.tasks")
 # TODO Get logger configuration from pyfarm config
 logger.setLevel(DEBUG)
+
+
+@celery_app.task(ignore_result=True)
+def send_tasks_to_agent(agent_id):
+    agent = Agent.query.filter(Agent.id == agent_id).first()
+    if not agent:
+        raise KeyError("agent not found")
+
+    if agent.state in ["offline", "disabled"]:
+        raise ValueError("agent not available")
+
+    if agent.use_address == UseAgentAddress.PASSIVE:
+        return
+
+    tasks_query = Task.query.filter(Task.agent == agent,
+                                    ~Task.state.in_(
+                                        ["done", "failed"])).order_by(
+                                            "frame asc")
+
+    tasks_in_jobs = {}
+    for task in tasks_query:
+        tasks_in_jobs.setdefault(task.job_id, [])
+        tasks_in_jobs[task.job_id].append(task)
+
+    if not tasks_in_jobs:
+        return
+
+    connection = None
+    for job_id, tasks in tasks_in_jobs.items():
+        job = Job.query.filter_by(id=job_id).first()
+        message = {"job": {"id": job.id,
+                           "title": job.title,
+                           "data": job.data,
+                           "environ": job.environ,
+                           "by": job.by},
+                   "jobtype": {"name": job.jobtype_version.jobtype.name,
+                               "version": job.jobtype_version.version},
+                   "tasks": []}
+
+        for task in tasks:
+            message["tasks"].append({"id": task.id,
+                                     "frame": task.frame})
+
+        if not connection:
+            if agent.use_address == UseAgentAddress.LOCAL:
+                connection = HTTPConnection(agent.ip, agent.port)
+            elif agent.use_address == UseAgentAddress.REMOTE:
+                connection = HTTPConnection(agent.remote_ip, agent.port)
+            elif agent.use_address == UseAgentAddress.HOSTNAME:
+                connection = HTTPConnection(agent.hostname, agent.port)
+
+        logger.notice("Sending a batch of %s tasks for job %s (%s) to agent %s",
+                      len(tasks), job.title, job.id, agent.hostname)
+        connection.request("POST", "/api/v1/assign", dumps(message),
+                           headers={"Content-Type": "application/json"})
+        response = connection.getresponse()
+
+        if response.status not in [OK, CREATED]:
+            raise ValueError("Unexpected return code on sending batch to agent")
+
+        response.read()
 
 
 def agents_with_tasks_at_prio(priority):
