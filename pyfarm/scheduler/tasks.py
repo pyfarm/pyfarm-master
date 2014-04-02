@@ -40,6 +40,7 @@ from pyfarm.models.agent import (
     Agent, AgentTagAssociation)
 from pyfarm.models.user import User, Role
 from pyfarm.master.application import db
+from pyfarm.master.utility import default_json_encoder
 
 from pyfarm.scheduler.celery_app import celery_app
 
@@ -106,7 +107,9 @@ def send_tasks_to_agent(agent_id):
 
         logger.notice("Sending a batch of %s tasks for job %s (%s) to agent %s",
                       len(tasks), job.title, job.id, agent.hostname)
-        connection.request("POST", "/api/v1/assign", dumps(message),
+        connection.request("POST",
+                           "/api/v1/assign",
+                           dumps(message, default=default_json_encoder),
                            headers={"Content-Type": "application/json"})
         response = connection.getresponse()
 
