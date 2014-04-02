@@ -330,6 +330,7 @@ def assign_tasks():
     # This works like a weighted fair queue with every priority forming its own
     # input queue.
     matchables_left = True
+    agents_with_new_tasks = []
     while unassigned_tasks and idle_agents and matchables_left:
         for floor in range_(max_prio, min_prio-1, -1):
             assigned = 0
@@ -351,6 +352,7 @@ def assign_tasks():
                         assigned += 1
                         idle_agents -= 1
                         unassigned_tasks -= len(batch)
+                        agents_with_new_tasks.append(agent)
                         db.session.flush()
             if floor == min_prio and assigned == 0:
                 logger.info("None of the unassigned tasks are compatible with "
@@ -358,3 +360,8 @@ def assign_tasks():
                 matchables_left = False
 
     db.session.commit()
+
+    for agent in agents_with_new_tasks:
+        logger.debug("Registering asynchronous task pusher for agent %s",
+                     agent.id)
+        send_tasks_to_agent.delay(agent.id)
