@@ -66,10 +66,11 @@ def send_tasks_to_agent(agent_id):
     if agent.use_address == UseAgentAddress.PASSIVE:
         return
 
-    tasks_query = Task.query.filter(Task.agent == agent,
-                                    ~Task.state.in_(
-                                        ["done", "failed"])).order_by(
-                                            "frame asc")
+    tasks_query = Task.query.filter(
+        Task.agent == agent, or_(
+            Task.state == None,
+            ~Task.state.in_(
+                [WorkState.DONE, WorkState.FAILED]))).order_by("frame asc")
 
     tasks_in_jobs = {}
     for task in tasks_query:
