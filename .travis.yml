@@ -27,12 +27,6 @@ matrix:
     - python: 3.3
       env: TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
 
-    # TODO: remove these lines once sqlalchemy 0.9.3 is released (see: https://github.com/pyfarm/pyfarm-master/issues/86)
-    - python: 3.3
-      env: TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-    - python: 3.3
-      env: TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-
 before_script:
   - if [[ $TDB_TYPE == "postgres" ]]; then psql -c "create database pyfarm;" -U postgres; fi
   - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
