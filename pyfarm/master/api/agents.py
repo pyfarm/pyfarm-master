@@ -36,6 +36,7 @@ from flask.views import MethodView
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 
 from pyfarm.core.logger import getLogger
+from pyfarm.scheduler.tasks import assign_tasks
 from pyfarm.models.agent import Agent
 from pyfarm.models.task import Task
 from pyfarm.master.application import db
@@ -186,6 +187,7 @@ class AgentIndexAPI(MethodView):
 
         agent_data = new_agent.to_dict()
         logger.info("Created agent %r: %r", new_agent.id, agent_data)
+        assign_tasks.delay()
         return jsonify(agent_data), CREATED
 
     def get(self):
@@ -465,6 +467,7 @@ class SingleAgentAPI(MethodView):
                 "Updated agent %r: %r", model.id, modified)
             db.session.add(model)
             db.session.commit()
+        assign_tasks.delay()
 
         return jsonify(model.to_dict()), OK
 
@@ -511,6 +514,7 @@ class SingleAgentAPI(MethodView):
         else:
             db.session.delete(agent)
             db.session.commit()
+            assign_tasks.delay()
             return jsonify(None), NO_CONTENT
 
 
@@ -656,5 +660,6 @@ class TasksInAgentAPI(MethodView):
         logger.info("Assigned task %s (frame %s, job %s) to agent %s (%s)",
                     task.id, task.frame, task.job.title,
                     agent.id, agent.hostname)
+        assign_tasks.delay()
 
         return jsonify(task.to_dict()), OK
