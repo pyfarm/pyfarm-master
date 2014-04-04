@@ -407,6 +407,8 @@ def poll_agent(agent_id):
         json_data = response.read()
     except HTTPException:
         agent.state = AgentState.OFFLINE
+        db.session.add(agent)
+        db.session.commit()
         raise
 
     present_task_ids = [x["id"] for x in json_data.items()]
@@ -418,6 +420,10 @@ def poll_agent(agent_id):
     if present_task_ids - assigned_task_ids:
         # TODO Call send_tasks_to_agent for this agent, once that is merged
         pass
+
+    agent.last_heard_from = datetime.now()
+    db.session.add(agent)
+    db.session.commit()
 
 
 @celery_app.task(ignore_results=True)
