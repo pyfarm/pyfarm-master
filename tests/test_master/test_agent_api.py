@@ -59,6 +59,8 @@ class TestAgentAPI(BaseTestCase):
                 "state": "running"}))
         self.assert_created(response1)
         id = response1.json["id"]
+        self.assertIn("last_heard_from", response1.json)
+        last_heard_from = response1.json["last_heard_from"]
 
         response2 = self.client.get("/api/v1/agents/%d" % id)
         self.assert_ok(response2)
@@ -80,7 +82,8 @@ class TestAgentAPI(BaseTestCase):
                 "tags": [],
                 "tasks": [],
                 "projects": [],
-                "software_versions": []})
+                "software_versions": [],
+                "last_heard_from": last_heard_from})
 
     def test_create_agent(self):
         agents = [
@@ -120,6 +123,8 @@ class TestAgentAPI(BaseTestCase):
                 content_type="application/json",
                 data=dumps(agent))
             self.assert_created(response)
+            self.assertIn("last_heard_from", response.json)
+            del response.json["last_heard_from"]
             created_agents.append(response.json)
 
         self.assert_contents_equal(created_agents, expected_agents)
@@ -177,6 +182,8 @@ class TestAgentAPI(BaseTestCase):
                 "state": "running",
                 "free_ram": 4096}))
         self.assert_ok(response2)
+        self.assertIn("last_heard_from", response2.json)
+        last_heard_from = response2.json["last_heard_from"]
 
         # See if we get the updated data back
         response3 = self.client.get("/api/v1/agents/%d" % id)
@@ -198,7 +205,8 @@ class TestAgentAPI(BaseTestCase):
             "tags": [],
             "tasks": [],
             "projects": [],
-            "software_versions": []})
+            "software_versions": [],
+            "last_heard_from": last_heard_from})
 
     def test_agent_delete(self):
         response1 = self.client.post(
