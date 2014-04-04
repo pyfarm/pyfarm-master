@@ -54,8 +54,8 @@ logger = getLogger("pf.scheduler.tasks")
 # TODO Get logger configuration from pyfarm config
 logger.setLevel(DEBUG)
 
-POLL_BUSY_AGENTS_INTERVAL = read_env_int("POLL_BUSY_AGENTS_INTERVAL", 10)
-POLL_IDLE_AGENTS_INTERVAL = read_env_int("POLL_IDLE_AGENTS_INTERVAL", 60)
+POLL_BUSY_AGENTS_INTERVAL = read_env_int("POLL_BUSY_AGENTS_INTERVAL", 600)
+POLL_IDLE_AGENTS_INTERVAL = read_env_int("POLL_IDLE_AGENTS_INTERVAL", 3600)
 
 
 @celery_app.task(ignore_result=True)
@@ -384,11 +384,11 @@ def poll_agent(agent_id):
             Task.state == WorkState.RUNNING)).count()
 
     if (running_tasks_count > 0 and
-        agent.last_heard_from + timedelta(minutes=POLL_BUSY_AGENTS_INTERVAL) >
+        agent.last_heard_from + timedelta(seconds=POLL_BUSY_AGENTS_INTERVAL) >
             datetime.now()):
         return
     elif (running_tasks_count == 0 and
-          agent.last_heard_from + timedelta(minutes=POLL_IDLE_AGENTS_INTERVAL) >
+          agent.last_heard_from + timedelta(seconds=POLL_IDLE_AGENTS_INTERVAL) >
             datetime.now()):
         return
 
@@ -425,7 +425,7 @@ def poll_agents():
     idle_agents_to_poll_query = Agent.query.filter(
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
-                timedelta(minutes=POLL_IDLE_AGENTS_INTERVAL) < datetime.now()),
+                timedelta(seconds=POLL_IDLE_AGENTS_INTERVAL) < datetime.now()),
         ~Agent.tasks.any(or_(Task.state == None,
                              Task.state == WorkState.RUNNING)),
         Agent.use_address != UseAgentAddress.PASSIVE)
@@ -436,7 +436,7 @@ def poll_agents():
     busy_agents_to_poll_query = Agent.query.filter(
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
-                timedelta(minutes=POLL_BUSY_AGENTS_INTERVAL) < datetime.now()),
+                timedelta(seconds=POLL_BUSY_AGENTS_INTERVAL) < datetime.now()),
         Agent.tasks.any(or_(Task.state == None,
                             Task.state == WorkState.RUNNING)),
         Agent.use_address != UseAgentAddress.PASSIVE)
