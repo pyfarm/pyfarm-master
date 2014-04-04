@@ -26,7 +26,7 @@ import requests
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import AgentState, WorkState, UseAgentAddress
-from pyfarm.core.config import read_env
+from pyfarm.core.config import read_env, read_env_int
 from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
