@@ -298,7 +298,6 @@ def load_api(app_instance, api_instance):
 
 def load_admin(admin_instance):
     """serves the administrative interface endpoints"""
-    from flask.ext.admin.base import MenuLink
     from pyfarm.master.admin.projects import ProjectView
     from pyfarm.master.admin.users import UserView, RoleView
     from pyfarm.master.admin.software import SoftwareView
@@ -306,10 +305,6 @@ def load_admin(admin_instance):
     from pyfarm.master.admin.agents import AgentView
     from pyfarm.master.admin.work import (
         JobView, TaskView)
-
-    # admin links
-    admin_instance.add_link(MenuLink("Preferences", "/preferences"))
-    admin_instance.add_link(MenuLink("Log Out", "/logout"))
 
     # admin database views
     admin_instance.add_view(
