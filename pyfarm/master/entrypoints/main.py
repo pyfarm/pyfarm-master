@@ -22,7 +22,6 @@ Contains the functions necessary to run individual components
 of PyFarm's master.
 """
 
-import os
 from functools import partial
 
 try:
@@ -94,14 +93,6 @@ def load_setup(app_instance):
     from pyfarm.master.initial import setup_page
     app_instance.add_url_rule("/setup/",
                               "setup_page", setup_page, methods=("GET", "POST"))
-
-
-def load_authentication(app_instance):
-    """configures flask to serve the authentication endpoints"""
-    from pyfarm.master.login import login_page, logout_page
-    app_instance.add_url_rule("/logout/", "logout_page", logout_page)
-    app_instance.add_url_rule(
-        "/login/", "login_page", login_page, methods=("GET", "POST"))
 
 
 def load_index(app_instance):
@@ -343,7 +334,6 @@ def load_master(app, admin, api):
     """loads and attaches all endpoints needed to run the master"""
     load_error_handlers(app)
     load_index(app)
-    load_authentication(app)
     load_admin(admin)
     load_api(app, api)
 
