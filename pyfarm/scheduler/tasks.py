@@ -33,7 +33,6 @@ from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import (
     Agent, AgentTagAssociation)
-from pyfarm.models.user import User, Role
 from pyfarm.master.application import db
 
 from pyfarm.scheduler.celery_app import celery_app
