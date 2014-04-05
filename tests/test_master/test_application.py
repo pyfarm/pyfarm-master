@@ -32,10 +32,9 @@ from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
 from pyfarm.master.utility import jsonify
-from pyfarm.master.admin.baseview import AdminIndex
 from pyfarm.master.application import (
     get_application, get_api_blueprint, get_admin, get_sqlalchemy,
-    get_login_manager, get_login_serializer, before_request)
+    get_login_manager, get_login_serializer)
 
 
 class TestApplicationFunctions(BaseTestCase):
@@ -59,7 +58,7 @@ class TestApplicationFunctions(BaseTestCase):
     def test_get_admin(self):
         admin = get_admin()
         self.assertIsInstance(admin, Admin)
-        self.assertIsInstance(admin.index_view, AdminIndex)
+        self.assertIsInstance(admin.index_view, AdminIndexView)
 
         class NewAdminIndexView(AdminIndexView):
             pass

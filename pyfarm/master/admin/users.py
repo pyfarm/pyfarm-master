@@ -26,19 +26,15 @@ from pyfarm.master.application import SessionMixin
 from pyfarm.models.user import User, Role
 
 
-class UserRolesMixin(object):
-    access_roles = ("admin.db.user", )
-
-
 # TODO: post process password field for insertion (form_overrides)
 # TODO: don't display password, or other security related fields
-class UserView(SessionMixin, UserRolesMixin, SQLModelView):
+class UserView(SessionMixin, SQLModelView):
     model = User
     column_searchable_list = ("username", "email")
     column_filters = ("username", "email")
 
 
-class RoleView(SessionMixin, UserRolesMixin, SQLModelView):
+class RoleView(SessionMixin, SQLModelView):
     model = Role
     column_searchable_list = ("name",)
     column_filters = ("name", )
