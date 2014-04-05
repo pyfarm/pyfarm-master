@@ -47,7 +47,6 @@ from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import (
     Agent, AgentTagAssociation)
-from pyfarm.models.user import User, Role
 from pyfarm.master.application import db
 from pyfarm.master.utility import error_handler
 
@@ -299,7 +298,6 @@ def load_api(app_instance, api_instance):
 def load_admin(admin_instance):
     """serves the administrative interface endpoints"""
     from pyfarm.master.admin.projects import ProjectView
-    from pyfarm.master.admin.users import UserView, RoleView
     from pyfarm.master.admin.software import SoftwareView
     from pyfarm.master.admin.tag import TagView
     from pyfarm.master.admin.agents import AgentView
@@ -307,10 +305,6 @@ def load_admin(admin_instance):
         JobView, TaskView)
 
     # admin database views
-    admin_instance.add_view(
-        UserView(name="Users - User", endpoint="users/user"))
-    admin_instance.add_view(
-        RoleView(name="Users - Role", endpoint="users/role"))
     admin_instance.add_view(
         TagView(name="Tags", endpoint="tag"))
     admin_instance.add_view(
