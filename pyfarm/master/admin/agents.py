@@ -46,14 +46,6 @@ def repr_agent(model):
         return model.hostname
 
 
-class AgentRolesMixin(object):
-    """
-    Mixin which declares what role(s) are allowed access to
-    :class:`AgentView`
-    """
-    access_roles = ("admin.db.agent", )
-
-
 class FilterTagsContains(BaseFilter):
     """
     Filter for :class:`AgentView` which allows specific tags
@@ -87,7 +79,7 @@ class FilterState(BaseFilter):
         return query.filter(Agent.state == value)
 
 
-class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
+class AgentView(SessionMixin, SQLModelView):
     """
     Administrative view which allows users to view, create, or edit agents.
     """

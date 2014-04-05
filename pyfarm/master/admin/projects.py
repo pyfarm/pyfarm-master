@@ -27,11 +27,7 @@ from pyfarm.master.application import SessionMixin
 from pyfarm.models.project import Project
 
 
-class ProjectRolesMixin(object):
-    access_roles = ("admin.db.project", )
-
-
-class ProjectView(SessionMixin, ProjectRolesMixin, SQLModelView):
+class ProjectView(SessionMixin, SQLModelView):
     model = Project
     column_searchable_list = ("name", )
     column_filters = ("name", )

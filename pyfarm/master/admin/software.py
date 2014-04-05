@@ -29,4 +29,3 @@ from pyfarm.models.software import Software
 
 class SoftwareView(SessionMixin, SQLModelView):
     model = Software
-    access_roles = ("admin.db.work.software", )
