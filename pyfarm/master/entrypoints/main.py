@@ -36,7 +36,6 @@ except ImportError:
 from flask import request
 
 from pyfarm.core.config import read_env_bool
-from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
@@ -49,12 +48,6 @@ from pyfarm.models.agent import (
     Agent, AgentTagAssociation)
 from pyfarm.master.application import db
 from pyfarm.master.utility import error_handler
-
-
-def load_before_first(app_instance, database_instance):
-    if app_instance.debug:
-        app_instance.before_first_request_funcs.append(
-            database_instance.create_all)
 
 
 def load_error_handlers(app_instance):
@@ -85,13 +78,6 @@ def load_error_handlers(app_instance):
     app_instance.register_error_handler(METHOD_NOT_ALLOWED, method_not_allowed)
     app_instance.register_error_handler(
         INTERNAL_SERVER_ERROR, internal_server_error)
-
-
-def load_setup(app_instance):
-    """configures flask to serve the endpoint used for setting up the system"""
-    from pyfarm.master.initial import setup_page
-    app_instance.add_url_rule("/setup/",
-                              "setup_page", setup_page, methods=("GET", "POST"))
 
 
 def load_index(app_instance):
@@ -310,17 +296,24 @@ def load_admin(admin_instance):
     admin_instance.add_view(
         SoftwareView(name="Software", endpoint="software"))
     admin_instance.add_view(
-        AgentView(name="Agents - Host", endpoint="agents/agent"))
+        AgentView(name="Agents", endpoint="agents/agent"))
     admin_instance.add_view(
-        JobView(name="Jobs - Job", endpoint="jobs/job"))
+        JobView(name="Jobs", endpoint="jobs/job"))
     admin_instance.add_view(
-        TaskView(name="Jobs - Task", endpoint="jobs/task"))
+        TaskView(name="Tasks", endpoint="jobs/task"))
     admin_instance.add_view(
         ProjectView(name="Projects", endpoint="projects"))
 
 
 def load_master(app, admin, api):
     """loads and attaches all endpoints needed to run the master"""
+    # If we're working with sqlite in memory then there's not any other
+    # way to make sure the database gets created.
+    if db.engine.name == "sqlite" and db.engine.url.database == ":memory:":
+        @app.before_first_request
+        def create_db():
+            db.create_all()
+
     load_error_handlers(app)
     load_index(app)
     load_admin(admin)
@@ -347,7 +340,7 @@ def run_master():  # pragma: no cover
                              "loopback adapter.")
     parsed = parser.parse_args()
 
-    if app.debug and parsed.drop_all:
+    if parsed.drop_all:
         db.drop_all()
 
     if parsed.create_all:
@@ -356,7 +349,6 @@ def run_master():  # pragma: no cover
     if parsed.allow_any_agent_address:
         app.config["DEV_ALLOW_ANY_AGENT_ADDRESS"] = True
 
-    load_setup(app)
     load_master(app, admin, api)
     app.run()
 
@@ -374,7 +366,6 @@ def create_app():
     app.config["DEV_ALLOW_ANY_AGENT_ADDRESS"] = read_env_bool(
         "PYFARM_DEV_APP_ALLOW_ANY_AGENT_ADDRESS", False)
 
-    load_setup(app)
     load_master(app, admin, api)
     return app
 
