@@ -26,5 +26,5 @@ env = PYFARM_CONFIG=debug
 
 # virtual environment setup
 virtualenv = <absolute path to your virtualenv root>
-module = pyfarm.master.entrypoints.main
-callable = run_master_uwsgi
+module = pyfarm.master.entrypoints
+callable = app
