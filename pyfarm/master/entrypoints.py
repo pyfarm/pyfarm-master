@@ -185,7 +185,6 @@ def load_api(app_instance, api_instance):
         "/jobtypes/<string:jobtype_name>/versions/<int:version>",
         view_func=VersionedJobTypeAPI.as_view("versioned_jobtype_by_string_api"))
 
-
     # subitems
     api_instance.add_url_rule(
         "/tags/<string:tagname>/agents/",
@@ -353,7 +352,33 @@ def run_master():  # pragma: no cover
     app.run()
 
 
-def create_app():
+def create_tables():  # pragma: no cover
+    """
+    Calls sqlalchemy's create_all() function to construct the tables in the
+    database.  From the standpoint of sqlalchemy calling create_all() on
+    an existing database should be considered safe because it will check first
+    before executing CREATE.  That said, this function should typically only
+    be run once.
+    """
+    if db.engine.name == "sqlite" and db.engine.url.database == ":memory:":
+        print("Nothing to do, in memory sqlite database is being used")
+        return
+
+    # Turn on output from the engine so it's
+    # more obvious what was done
+    db.engine.echo = True
+
+    try:
+        db.create_all()
+    except Exception as e:
+        print("Failed to call create_all().  This may be an error or "
+              "it may be something that can be ignored: %r" % e)
+    else:
+        print()
+        print("Tables created or updated")
+
+
+def create_app():  # pragma: no cover
     """An entry point specifically for uWSGI or similar to use"""
     from pyfarm.master.application import app, admin, api
 
@@ -370,9 +395,7 @@ def create_app():
     return app
 
 
+# Create an 'app' attribute on the module that external application
+# such as uWSGI can use.
 if read_env_bool("PYFARM_APP_INSTANCE", False):
     app = create_app()
-
-
-if __name__ == "__main__":
-    run_master()
