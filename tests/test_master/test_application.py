@@ -24,8 +24,6 @@ except ImportError:
 from flask import Flask, Blueprint, g
 from flask.ext.admin import Admin, AdminIndexView
 from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.login import LoginManager
-from itsdangerous import URLSafeTimedSerializer
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
@@ -33,8 +31,7 @@ BaseTestCase.build_environment()
 
 from pyfarm.master.utility import jsonify
 from pyfarm.master.application import (
-    get_application, get_api_blueprint, get_admin, get_sqlalchemy,
-    get_login_manager, get_login_serializer)
+    get_application, get_api_blueprint, get_admin, get_sqlalchemy)
 
 
 class TestApplicationFunctions(BaseTestCase):
@@ -68,19 +65,6 @@ class TestApplicationFunctions(BaseTestCase):
 
     def test_get_sqlalchemy(self):
         self.assertIsInstance(get_sqlalchemy(app=self.app), SQLAlchemy)
-
-    def test_get_login_manager(self):
-        lm = get_login_manager()
-        self.assertIsInstance(lm, LoginManager)
-        self.assertEqual(lm.login_view, "/login/")
-        lm = get_login_manager(login_view="/new_login_view/")
-        self.assertEqual(lm.login_view, "/new_login_view/")
-
-    def test_get_login_serializer(self):
-        secret_key = os.urandom(32)
-        ls = get_login_serializer(secret_key)
-        self.assertIsInstance(ls, URLSafeTimedSerializer)
-        self.assertEqual(ls.secret_key, secret_key)
 
     def test_request_handler(self):
         @self.app.route("/", methods=("POST", ))
