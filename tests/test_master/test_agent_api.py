@@ -27,7 +27,7 @@ from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
 from pyfarm.master.application import get_api_blueprint
-from pyfarm.master.entrypoints.main import load_api
+from pyfarm.master.entrypoints import load_api
 from pyfarm.models.agent import Agent
 
 
