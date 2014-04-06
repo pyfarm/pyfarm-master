@@ -28,7 +28,6 @@ install_requires = [
     "sqlalchemy", 
     "flask",
     "flask-admin>=1.0.7",
-    "flask-login", 
     "flask-sqlalchemy", 
     "itsdangerous", 
     "blinker",
