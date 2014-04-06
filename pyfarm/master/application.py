@@ -33,9 +33,7 @@ except ImportError:
 
 from flask import Flask, Blueprint, request, g, abort
 from flask.ext.admin import Admin, AdminIndexView
-from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
-from itsdangerous import URLSafeTimedSerializer
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
 from werkzeug.exceptions import BadRequest
@@ -184,25 +182,6 @@ def get_admin(**kwargs):
     return Admin(**kwargs)
 
 
-def get_login_manager(**kwargs):
-    """
-    Constructs and returns an instance of :class:`.LoginManager`.  Any keyword
-    arguments provided will be passed to the constructor of
-    :class:`LoginManager`
-    """
-    login_view = kwargs.pop("login_view", "/login/")
-    manager = LoginManager(**kwargs)
-    manager.login_view = login_view
-    return manager
-
-
-def get_login_serializer(secret_key):
-    """
-    Constructs and returns and instance of :class:`.URLSafeTimedSerializer`
-    """
-    return URLSafeTimedSerializer(secret_key)
-
-
 def before_request():
     """
     Global before_request handler that will handle common problems when
@@ -232,8 +211,6 @@ app = get_application()
 api = get_api_blueprint()
 admin = get_admin(app=app)
 db = get_sqlalchemy(app=app)
-login_manager = get_login_manager(app=app, login_view="/login/")
-login_serializer = get_login_serializer(app.secret_key)
 
 # attach the remaining functions to the application object
 app.register_blueprint(api)
