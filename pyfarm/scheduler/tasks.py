@@ -17,13 +17,11 @@
 from math import ceil
 from decimal import Decimal
 from logging import DEBUG, INFO
-try:
-    from http.client import HTTPConnection, HTTPException, OK, CREATED
-except ImportError: # pragma: no cover
-    from httplib import HTTPConnection, HTTPException, OK, CREATED
 from json import dumps
 
 from sqlalchemy import or_, and_, func
+
+import requests
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import AgentState, WorkState, UseAgentAddress
@@ -86,13 +84,12 @@ def send_tasks_to_agent(agent_id):
                      agent.id)
         return
 
-    connection = None
     for job_id, tasks in tasks_in_jobs.items():
         job = Job.query.filter_by(id=job_id).first()
         message = {"job": {"id": job.id,
                            "title": job.title,
-                           "data": job.data,
-                           "environ": job.environ,
+                           "data": job.data if job.data else {},
+                           "environ": job.environ if job.environ else {},
                            "by": job.by},
                    "jobtype": {"name": job.jobtype_version.jobtype.name,
                                "version": job.jobtype_version.version},
@@ -102,29 +99,31 @@ def send_tasks_to_agent(agent_id):
             message["tasks"].append({"id": task.id,
                                      "frame": task.frame})
 
-        if not connection:
-            if agent.use_address == UseAgentAddress.LOCAL:
-                connection = HTTPConnection(str(agent.ip), agent.port)
-            elif agent.use_address == UseAgentAddress.REMOTE:
-                connection = HTTPConnection(str(agent.remote_ip), agent.port)
-            elif agent.use_address == UseAgentAddress.HOSTNAME:
-                connection = HTTPConnection(agent.hostname, agent.port)
+        print(dumps(message, default=default_json_encoder))
+
+        if agent.use_address == UseAgentAddress.LOCAL:
+            hostname = "%s:%s" % (str(agent.ip), agent.port)
+        elif agent.use_address == UseAgentAddress.REMOTE:
+            hostname = "%s:%s" % (str(agent.remote_ip), agent.port)
+        else:
+            hostname = "%s:%s" % (agent.hostname, agent.port)
 
         logger.info("Sending a batch of %s tasks for job %s (%s) to agent %s",
                     len(tasks), job.title, job.id, agent.hostname)
         try:
-            connection.request("POST",
-                            "/api/v1/assign",
-                            dumps(message, default=default_json_encoder),
-                            headers={"Content-Type": "application/json"})
-            response = connection.getresponse()
+            response = requests.post("http://%s/api/v1/assign" % hostname,
+                                     data=dumps(message,
+                                                default=default_json_encoder),
+                                     headers={"Content-Type":"application/json"})
 
-            if response.status not in [OK, CREATED]:
+            if response.status_code not in [requests.codes.accepted,
+                                            requests.codes.ok,
+                                            requests.codes.created]:
                 raise ValueError("Unexpected return code on sending batch to "
-                                 "agent")
+                                 "agent: %s", response.status_code)
 
             response.read()
-        except HTTPException:
+        except requests.exceptions.ConnectionError:
             agent.state = AgentState.OFFLINE
             db.session.add(agent)
             db.session.commit()
