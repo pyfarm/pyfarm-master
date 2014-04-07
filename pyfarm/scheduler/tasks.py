@@ -168,7 +168,8 @@ def get_batch_agent_pair(priority, except_job_ids=None):
     Returns None if no waiting tasks with exactly priority :attr:`priority` can
     be found or no suitable agents can be found for any waiting tasks at priority
     :attr:`priority`.
-    Will return a tuple of a list of tasks and an agent otherwise
+
+    :returns: A tuple of a list of tasks and an agent or None
 
     :param int priority:
         The priority the assigned tasks must have
