@@ -78,8 +78,8 @@ def send_tasks_to_agent(agent_id):
 
     tasks_in_jobs = {}
     for task in tasks_query:
-        tasks_in_jobs.setdefault(task.job_id, [])
-        tasks_in_jobs[task.job_id].append(task)
+        job_tasks = tasks_in_jobs.setdefault(task.job_id, [])
+        job_tasks.append(task)
 
     if not tasks_in_jobs:
         logger.debug("No tasks for for agent %s (id %s)", agent.hostname,
