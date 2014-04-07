@@ -249,6 +249,8 @@ def get_batch_agent_pair(priority, except_job_ids=None):
     # the same job in the past
     query = db.session.query(Agent, func.count(
         SoftwareVersion.id).label("num_versions"))
+    query = query.filter(Agent.state.in_([AgentState.ONLINE,
+                                          AgentState.RUNNING]))
     query = query.filter(Agent.free_ram >= job.ram)
     query = query.filter(~Agent.tasks.any(or_(Task.state == None,
                                       and_(Task.state != WorkState.DONE,
@@ -267,6 +269,8 @@ def get_batch_agent_pair(priority, except_job_ids=None):
     if not selected_agent:
         query = db.session.query(Agent, func.count(
             SoftwareVersion.id).label("num_versions"))
+        query = query.filter(Agent.state.in_([AgentState.ONLINE,
+                                              AgentState.RUNNING]))
         query = query.filter(Agent.free_ram >= job.ram)
         query = query.filter(~Agent.tasks.any(or_(Task.state == None,
                                           and_(Task.state != WorkState.DONE,
