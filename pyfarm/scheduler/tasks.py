@@ -415,8 +415,7 @@ def poll_agent(agent_id):
             Task.state == WorkState.RUNNING))
 
     if present_task_ids - assigned_task_ids:
-        # TODO Call send_tasks_to_agent for this agent, once that is merged
-        pass
+        send_tasks_to_agent.delay(agent_id)
 
     agent.last_heard_from = datetime.now()
     db.session.add(agent)
