@@ -28,8 +28,9 @@ from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
 from netaddr import AddrFormatError, IPAddress
 
-from pyfarm.core.enums import AgentState, STRING_TYPES, PY3
-from pyfarm.core.config import read_env_number, read_env_int, read_env_bool
+from pyfarm.core.enums import AgentState, STRING_TYPES, UseAgentAddress
+from pyfarm.core.config import (
+    read_env_number, read_env_int, read_env_bool, read_env)
 from pyfarm.master.application import db, app
 from pyfarm.models.core.functions import repr_ip
 from pyfarm.models.core.mixins import (
@@ -38,7 +39,7 @@ from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, UseAgentAddressEnum,
     AgentStateEnum)
 from pyfarm.models.core.cfg import (
-    TABLE_AGENT, TABLE_SOFTWARE, TABLE_SOFTWARE_VERSION, TABLE_TAG,
+    TABLE_AGENT, TABLE_SOFTWARE_VERSION, TABLE_TAG,
     TABLE_AGENT_TAG_ASSOC, MAX_HOSTNAME_LENGTH,
     TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_PROJECT_AGENTS, TABLE_PROJECT)
 
@@ -81,9 +82,9 @@ class AgentTaggingMixin(object):
     Mixin used which provides some common structures to
     :class:`.AgentTag` and :class:`.AgentSoftware`
     """
-    if not PY3:
+    try:
         NUMERIC_TYPES = (int, long)
-    else:
+    except NameError:  # Python 3.0
         NUMERIC_TYPES = int
 
     @validates("tag", "software")
@@ -159,7 +160,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                           doc="the remote address which came in with the "
                               "request")
     use_address = db.Column(UseAgentAddressEnum, nullable=False,
-                            default="remote",
+                            default=UseAgentAddress.REMOTE,
                             doc="The address we should use when communicating "
                                 "with the agent")
     ram = db.Column(db.Integer, nullable=False,
@@ -298,6 +299,33 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                 raise ValueError("%s is not a usable ip address" % value)
 
         return value
+
+    def api_url(self,
+            scheme=read_env("PYFARM_AGENT_API_SCHEME", "http"),
+            version=read_env_int("PYFARM_AGENT_API_VERSION", 1)):
+        """
+        Returns the base url which should be used to access the api
+        of this specific agent.
+
+        :except ValueError:
+            Raised if this function is called while the agent's
+            :attr:`use_address` column is set to ``PASSIVE``
+        """
+        assert scheme in ("http", "https")
+        assert isinstance(version, int)
+
+        if self.use_address == UseAgentAddress.REMOTE:
+            address = self.remote_ip
+        elif self.use_address == UseAgentAddress.HOSTNAME:
+            address = self.hostname
+        elif self.use_address == UseAgentAddress.LOCAL:
+            address = self.ip
+        else:
+            raise ValueError(
+                "Cannot provide a url, agent %s's state is %s" % (
+                    self.id, repr(self.use_address)))
+
+        return "%s://%s:%d/api/v%d/" % (scheme, address, self.port, version)
 
     @validates("ip")
     def validate_address_column(self, key, value):
