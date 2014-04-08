@@ -397,9 +397,10 @@ def poll_agent(agent_id):
     try:
         response = requests.get("%stasks" % agent.api_url())
 
-            raise ValueError("Unexpected return code on sending batch to "
-                                "agent: %s", response.status_code)
         if response.status_code != requests.codes.ok:
+            raise ValueError("Unexpected return code on checking tasks in agent "
+                             "%s (id %s): %s" %
+                             (agent.hostname, agent.id, response.status_code))
         json_data = response.json()
     except requests.exceptions.ConnectionError:
         agent.state = AgentState.OFFLINE
