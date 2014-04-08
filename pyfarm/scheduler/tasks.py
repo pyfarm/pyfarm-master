@@ -384,10 +384,12 @@ def poll_agent(agent_id):
             Task.state == WorkState.RUNNING)).count()
 
     if (running_tasks_count > 0 and
+        agent.last_heard_from is not None and
         agent.last_heard_from + timedelta(seconds=POLL_BUSY_AGENTS_INTERVAL) >
             datetime.now()):
         return
     elif (running_tasks_count == 0 and
+          agent.last_heard_from is not None and
           agent.last_heard_from + timedelta(seconds=POLL_IDLE_AGENTS_INTERVAL) >
             datetime.now()):
         return
