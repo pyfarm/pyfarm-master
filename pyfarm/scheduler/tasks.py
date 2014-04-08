@@ -99,8 +99,6 @@ def send_tasks_to_agent(agent_id):
             message["tasks"].append({"id": task.id,
                                      "frame": task.frame})
 
-        print(dumps(message, default=default_json_encoder))
-
         if agent.use_address == UseAgentAddress.LOCAL:
             hostname = "%s:%s" % (str(agent.ip), agent.port)
         elif agent.use_address == UseAgentAddress.REMOTE:
