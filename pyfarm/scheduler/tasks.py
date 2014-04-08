@@ -376,7 +376,7 @@ def assign_tasks():
 
 @celery_app.task(ignore_results=True)
 def poll_agent(agent_id):
-    agent = Agent.query.filter(Agent.id == agent_id)
+    agent = Agent.query.filter(Agent.id == agent_id).first()
 
     running_tasks_count = Task.query.filter(
         Task.agent == agent,
