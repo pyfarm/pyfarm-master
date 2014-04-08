@@ -99,17 +99,10 @@ def send_tasks_to_agent(agent_id):
             message["tasks"].append({"id": task.id,
                                      "frame": task.frame})
 
-        if agent.use_address == UseAgentAddress.LOCAL:
-            hostname = "%s:%s" % (str(agent.ip), agent.port)
-        elif agent.use_address == UseAgentAddress.REMOTE:
-            hostname = "%s:%s" % (str(agent.remote_ip), agent.port)
-        else:
-            hostname = "%s:%s" % (agent.hostname, agent.port)
-
         logger.info("Sending a batch of %s tasks for job %s (%s) to agent %s",
                     len(tasks), job.title, job.id, agent.hostname)
         try:
-            response = requests.post("http://%s/api/v1/assign" % hostname,
+            response = requests.post(agent.api_url(),
                                      data=dumps(message,
                                                 default=default_json_encoder),
                                      headers={"Content-Type":"application/json"})
