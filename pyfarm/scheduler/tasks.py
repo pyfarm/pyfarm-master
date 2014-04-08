@@ -102,7 +102,7 @@ def send_tasks_to_agent(agent_id):
         logger.info("Sending a batch of %s tasks for job %s (%s) to agent %s",
                     len(tasks), job.title, job.id, agent.hostname)
         try:
-            response = requests.post(agent.api_url(),
+            response = requests.post("%sassign" % agent.api_url(),
                                      data=dumps(message,
                                                 default=default_json_encoder),
                                      headers={"Content-Type":"application/json"})
@@ -113,7 +113,6 @@ def send_tasks_to_agent(agent_id):
                 raise ValueError("Unexpected return code on sending batch to "
                                  "agent: %s", response.status_code)
 
-            response.read()
         except requests.exceptions.ConnectionError:
             agent.state = AgentState.OFFLINE
             db.session.add(agent)
