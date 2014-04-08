@@ -392,20 +392,16 @@ def poll_agent(agent_id):
             datetime.now()):
         return
 
-    if agent.use_address == UseAgentAddress.LOCAL:
-        connection = HTTPConnection(str(agent.ip), agent.port)
-    elif agent.use_address == UseAgentAddress.REMOTE:
-        connection = HTTPConnection(str(agent.remote_ip), agent.port)
-    elif agent.use_address == UseAgentAddress.HOSTNAME:
-        connection = HTTPConnection(agent.hostname, agent.port)
-
     try:
-        connection.request("GET",
-                           "/api/v1/tasks",
-                           headers={"accept": "application/json"})
-        response = connection.getresponse()
-        json_data = response.read()
-    except HTTPException:
+        response = requests.get("%stasks" % agent.api_url())
+
+        if response.status_code not in [requests.codes.accepted,
+                                        requests.codes.ok,
+                                        requests.codes.created]:
+            raise ValueError("Unexpected return code on sending batch to "
+                                "agent: %s", response.status_code)
+        json_data = response.json()
+    except requests.exceptions.ConnectionError:
         agent.state = AgentState.OFFLINE
         db.session.add(agent)
         db.session.commit()
