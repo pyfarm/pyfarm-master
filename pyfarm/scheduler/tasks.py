@@ -286,7 +286,7 @@ def get_batch_agent_pair(priority, except_job_ids=None):
 
 
 @celery_app.task(ignore_result=True,
-                 rate_limit=read_env("SCHEDULER_RATE_LIMIT", "1/s"))
+                 rate_limit=read_env("PYFARM_SCHEDULER_RATE_LIMIT", "1/s"))
 def assign_tasks():
     """
     Assigns unassigned tasks to agents that can take them, with proportionally
