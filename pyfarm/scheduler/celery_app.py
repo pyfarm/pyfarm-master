@@ -15,9 +15,10 @@
 # limitations under the License.
 
 from datetime import timedelta
-from pyfarm.core.config import read_env_int
 
 from celery import Celery
+
+from pyfarm.core.config import read_env_int
 
 celery_app = Celery('pyfarm.tasks',
                     broker='redis://',
