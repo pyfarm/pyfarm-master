@@ -80,7 +80,7 @@ def send_tasks_to_agent(agent_id):
         job_tasks.append(task)
 
     if not tasks_in_jobs:
-        logger.debug("No tasks for for agent %s (id %s)", agent.hostname,
+        logger.debug("No tasks for agent %s (id %s)", agent.hostname,
                      agent.id)
         return
 
