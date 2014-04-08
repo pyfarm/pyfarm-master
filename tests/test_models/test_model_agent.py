@@ -23,7 +23,7 @@ from sqlalchemy.exc import DatabaseError
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.core.enums import AgentState
+from pyfarm.core.enums import AgentState, UseAgentAddress
 from pyfarm.master.application import db
 from pyfarm.models.software import Software, SoftwareVersion
 from pyfarm.models.tag import Tag
@@ -223,6 +223,54 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
                 db.session.commit()
 
             db.session.rollback()
+
+    def test_api_url(self):
+        model = Agent(
+            hostname="foo", ip="10.56.0.0", port=12345, remote_ip="10.56.0.1",
+            ram=1024, free_ram=128, cpus=4)
+
+        # Commit then retrieve the model so we get the
+        # custom types applied to the columns.  Otherwise
+        # we won't get a chance to test the string formatting
+        # under the right conditions.
+        db.session.add(model)
+        db.session.commit()
+        model_id = model.id
+        db.session.remove()
+        model = Agent.query.filter_by(id=model_id).first()
+
+        for scheme in ("http", "https"):
+            for version in (1, 2, 3):
+                args = (scheme, version)
+
+                # run the tests
+                model.use_address = UseAgentAddress.REMOTE
+                self.assertEqual(
+                    model.api_url(*args),
+                    "%s://10.56.0.1:12345/api/v%d/" % args)
+
+                model.use_address = UseAgentAddress.LOCAL
+                self.assertEqual(
+                    model.api_url(*args),
+                    "%s://10.56.0.0:12345/api/v%d/" % args)
+
+                model.use_address = UseAgentAddress.HOSTNAME
+                self.assertEqual(
+                    model.api_url(*args),
+                    "%s://foo:12345/api/v%d/" % args)
+
+    def test_api_url_errors(self):
+        model = Agent(
+            hostname="foo", ip="10.56.0.0", port=12345, remote_ip="10.56.0.1",
+            ram=1024, free_ram=128, cpus=4)
+
+        # Shouldn't have access to api_url if we're operating under PASSIVE
+        model.use_address = UseAgentAddress.PASSIVE
+        with self.assertRaises(ValueError):
+            model.api_url()
+
+        with self.assertRaises(AssertionError):
+            model.api_url(scheme="ftp")
 
 
 class TestModelValidation(AgentTestCase):
