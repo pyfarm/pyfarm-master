@@ -20,9 +20,9 @@ from celery import Celery
 
 from pyfarm.core.config import read_env_int
 
-celery_app = Celery('pyfarm.tasks',
-                    broker='redis://',
-                    include=['pyfarm.scheduler.tasks'])
+celery_app = Celery("pyfarm.tasks",
+                    broker="redis://",
+                    include=["pyfarm.scheduler.tasks"])
 
 celery_app.conf.CELERYBEAT_SCHEDULE = {
     "periodically_poll_agents": {
