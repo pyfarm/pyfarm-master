@@ -464,7 +464,7 @@ class SingleAgentAPI(MethodView):
 
                 modified[key] = value
 
-        model.last_heard_from = datetime.now()
+        model.last_heard_from = datetime.utcnow()
 
         logger.debug(
             "Updated agent %r: %r", model.id, modified)

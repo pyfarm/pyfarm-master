@@ -185,7 +185,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                       something with a task or from the host via REST api."""))
 
     last_heard_from = db.Column(db.DateTime,
-                                default=datetime.now,
+                                default=datetime.utcnow,
                                 doc="Time we last had contact with this agent")
 
     # Max allocation of the two primary resources which `1.0` is 100%

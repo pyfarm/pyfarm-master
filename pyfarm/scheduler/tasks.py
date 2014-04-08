@@ -387,12 +387,12 @@ def poll_agent(agent_id):
     if (running_tasks_count > 0 and
         agent.last_heard_from is not None and
         agent.last_heard_from + timedelta(seconds=POLL_BUSY_AGENTS_INTERVAL) >
-            datetime.now()):
+            datetime.utcnow()):
         return
     elif (running_tasks_count == 0 and
           agent.last_heard_from is not None and
           agent.last_heard_from + timedelta(seconds=POLL_IDLE_AGENTS_INTERVAL) >
-            datetime.now()):
+            datetime.utcnow()):
         return
 
     try:
@@ -418,7 +418,7 @@ def poll_agent(agent_id):
     if present_task_ids - assigned_task_ids:
         send_tasks_to_agent.delay(agent_id)
 
-    agent.last_heard_from = datetime.now()
+    agent.last_heard_from = datetime.utcnow()
     db.session.add(agent)
     db.session.commit()
 
