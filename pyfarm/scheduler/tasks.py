@@ -59,8 +59,8 @@ POLL_IDLE_AGENTS_INTERVAL = read_env_int("PYFARM_POLL_IDLE_AGENTS_INTERVAL",
                                          3600)
 
 
-@celery_app.task(ignore_result=True)
-def send_tasks_to_agent(agent_id):
+@celery_app.task(ignore_result=True, bind=True)
+def send_tasks_to_agent(self, agent_id):
     agent = Agent.query.filter(Agent.id == agent_id).first()
     if not agent:
         raise KeyError("agent not found")
@@ -119,7 +119,19 @@ def send_tasks_to_agent(agent_id):
                 raise ValueError("Unexpected return code on sending batch to "
                                  "agent: %s", response.status_code)
 
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as e:
+            if self.request.retries < self.max_retries:
+                logger.warning("Caught ConnectionError trying to contact agent "
+                               "%s (id %s), retry %s of %s: %s",
+                               agent.hostname,
+                               agent.id,
+                               self.request.retries,
+                               self.max_retries,
+                               e)
+                self.retry(exc=e)
+        else:
+            logger.error("Could not contact agent %s, (id %s), marking as "
+                         "offline", agent.hostname, agent.id)
             agent.state = AgentState.OFFLINE
             db.session.add(agent)
             db.session.commit()
@@ -375,8 +387,8 @@ def assign_tasks():
         send_tasks_to_agent.delay(agent.id)
 
 
-@celery_app.task(ignore_results=True)
-def poll_agent(agent_id):
+@celery_app.task(ignore_results=True, bind=True)
+def poll_agent(self, agent_id):
     agent = Agent.query.filter(Agent.id == agent_id).first()
 
     running_tasks_count = Task.query.filter(
@@ -403,11 +415,23 @@ def poll_agent(agent_id):
                              "%s (id %s): %s" %
                              (agent.hostname, agent.id, response.status_code))
         json_data = response.json()
-    except requests.exceptions.ConnectionError:
-        agent.state = AgentState.OFFLINE
-        db.session.add(agent)
-        db.session.commit()
-        raise
+    except requests.exceptions.ConnectionError as e:
+        if self.request.retries < self.max_retries:
+            logger.warning("Caught ConnectionError trying to contact agent "
+                           "%s (id %s), retry %s of %s: %s",
+                           agent.hostname,
+                           agent.id,
+                           self.request.retries,
+                           self.max_retries,
+                           e)
+            self.retry(exc=e)
+        else:
+            logger.error("Could not contact agent %s, (id %s), marking as "
+                         "offline", agent.hostname, agent.id)
+            agent.state = AgentState.OFFLINE
+            db.session.add(agent)
+            db.session.commit()
+            raise
 
     present_task_ids = [x["id"] for x in json_data.items()]
     assigned_task_ids = db.session.query(Task.id).filter(
