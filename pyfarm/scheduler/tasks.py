@@ -54,8 +54,9 @@ logger = getLogger("pf.scheduler.tasks")
 # TODO Get logger configuration from pyfarm config
 logger.setLevel(DEBUG)
 
-POLL_BUSY_AGENTS_INTERVAL = read_env_int("POLL_BUSY_AGENTS_INTERVAL", 600)
-POLL_IDLE_AGENTS_INTERVAL = read_env_int("POLL_IDLE_AGENTS_INTERVAL", 3600)
+POLL_BUSY_AGENTS_INTERVAL = read_env_int("PYFARM_POLL_BUSY_AGENTS_INTERVAL", 600)
+POLL_IDLE_AGENTS_INTERVAL = read_env_int("PYFARM_POLL_IDLE_AGENTS_INTERVAL",
+                                         3600)
 
 
 @celery_app.task(ignore_result=True)

@@ -27,10 +27,11 @@ celery_app.conf.CELERYBEAT_SCHEDULE = {
     "periodically_poll_agents": {
         "task": "pyfarm.scheduler.tasks.poll_agents",
         "schedule": timedelta(
-            seconds=read_env_int("AGENTS_POLL_INTERVAL", 30))},
+            seconds=read_env_int("PYFARM_AGENTS_POLL_INTERVAL", 30))},
     "periodical_scheduler": {
         "task": "pyfarm.scheduler.tasks.assign_tasks",
-        "schedule": timedelta(seconds=read_env_int("SCHEDULER_INTERVAL", 30))}}
+        "schedule": timedelta(seconds=read_env_int("PYFARM_SCHEDULER_INTERVAL",
+                                                   30))}}
 
 if __name__ == '__main__':
     celery_app.start()
