@@ -452,7 +452,8 @@ def poll_agents():
     idle_agents_to_poll_query = Agent.query.filter(
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
-                timedelta(seconds=POLL_IDLE_AGENTS_INTERVAL) < datetime.now()),
+                timedelta(
+                    seconds=POLL_IDLE_AGENTS_INTERVAL) < datetime.utcnow()),
         ~Agent.tasks.any(or_(Task.state == None,
                              Task.state == WorkState.RUNNING)),
         Agent.use_address != UseAgentAddress.PASSIVE)
@@ -463,7 +464,8 @@ def poll_agents():
     busy_agents_to_poll_query = Agent.query.filter(
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
-                timedelta(seconds=POLL_BUSY_AGENTS_INTERVAL) < datetime.now()),
+                timedelta(
+                    seconds=POLL_BUSY_AGENTS_INTERVAL) < datetime.utcnow()),
         Agent.tasks.any(or_(Task.state == None,
                             Task.state == WorkState.RUNNING)),
         Agent.use_address != UseAgentAddress.PASSIVE)
