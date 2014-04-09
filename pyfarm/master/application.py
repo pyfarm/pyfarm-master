@@ -32,17 +32,14 @@ except ImportError:
     from http.client import BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE
 
 from flask import Flask, Blueprint, request, g, abort
-from flask.ext.admin import Admin
-from flask.ext.login import LoginManager
+from flask.ext.admin import Admin, AdminIndexView
 from flask.ext.sqlalchemy import SQLAlchemy
-from itsdangerous import URLSafeTimedSerializer
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
 from werkzeug.exceptions import BadRequest
 
 from pyfarm.core.enums import NOTSET
 from pyfarm.core.config import read_env
-from pyfarm.master.admin.baseview import AdminIndex
 
 POST_METHODS = set(("POST", "PUT"))
 
@@ -181,27 +178,8 @@ def get_admin(**kwargs):
     Constructs and returns an instance of :class:`.Admin`.  Any keyword
     arguments provided will be passed to the constructor of :class:`.Admin`
     """
-    kwargs.setdefault("index_view", AdminIndex())
+    kwargs.setdefault("index_view", AdminIndexView())
     return Admin(**kwargs)
-
-
-def get_login_manager(**kwargs):
-    """
-    Constructs and returns an instance of :class:`.LoginManager`.  Any keyword
-    arguments provided will be passed to the constructor of
-    :class:`LoginManager`
-    """
-    login_view = kwargs.pop("login_view", "/login/")
-    manager = LoginManager(**kwargs)
-    manager.login_view = login_view
-    return manager
-
-
-def get_login_serializer(secret_key):
-    """
-    Constructs and returns and instance of :class:`.URLSafeTimedSerializer`
-    """
-    return URLSafeTimedSerializer(secret_key)
 
 
 def before_request():
@@ -233,8 +211,6 @@ app = get_application()
 api = get_api_blueprint()
 admin = get_admin(app=app)
 db = get_sqlalchemy(app=app)
-login_manager = get_login_manager(app=app, login_view="/login/")
-login_serializer = get_login_serializer(app.secret_key)
 
 # attach the remaining functions to the application object
 app.register_blueprint(api)

@@ -31,7 +31,7 @@ BaseTestCase.build_environment()
 
 from pyfarm.core.enums import PY3, NOTSET
 from pyfarm.models.core.mixins import UtilityMixins
-from pyfarm.master.entrypoints.main import load_error_handlers, load_admin
+from pyfarm.master.entrypoints import load_error_handlers, load_admin
 from pyfarm.master.application import db, get_admin
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.master.utility import (

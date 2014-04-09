@@ -25,9 +25,7 @@ Objects and classes for working with tags
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.application import SessionMixin
 from pyfarm.models.tag import Tag
-from pyfarm.models.task import Task
 
 
 class TagView(SessionMixin, SQLModelView):
     model = Tag
-    access_roles = ("admin.db.work.tag", )

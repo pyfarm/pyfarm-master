@@ -22,7 +22,6 @@ Contains the functions necessary to run individual components
 of PyFarm's master.
 """
 
-import os
 from functools import partial
 
 try:
@@ -37,7 +36,6 @@ except ImportError:
 from flask import request
 
 from pyfarm.core.config import read_env_bool
-from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
@@ -48,15 +46,8 @@ from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import (
     Agent, AgentTagAssociation)
-from pyfarm.models.user import User, Role
 from pyfarm.master.application import db
 from pyfarm.master.utility import error_handler
-
-
-def load_before_first(app_instance, database_instance):
-    if app_instance.debug:
-        app_instance.before_first_request_funcs.append(
-            database_instance.create_all)
 
 
 def load_error_handlers(app_instance):
@@ -87,21 +78,6 @@ def load_error_handlers(app_instance):
     app_instance.register_error_handler(METHOD_NOT_ALLOWED, method_not_allowed)
     app_instance.register_error_handler(
         INTERNAL_SERVER_ERROR, internal_server_error)
-
-
-def load_setup(app_instance):
-    """configures flask to serve the endpoint used for setting up the system"""
-    from pyfarm.master.initial import setup_page
-    app_instance.add_url_rule("/setup/",
-                              "setup_page", setup_page, methods=("GET", "POST"))
-
-
-def load_authentication(app_instance):
-    """configures flask to serve the authentication endpoints"""
-    from pyfarm.master.login import login_page, logout_page
-    app_instance.add_url_rule("/logout/", "logout_page", logout_page)
-    app_instance.add_url_rule(
-        "/login/", "login_page", login_page, methods=("GET", "POST"))
 
 
 def load_index(app_instance):
@@ -209,7 +185,6 @@ def load_api(app_instance, api_instance):
         "/jobtypes/<string:jobtype_name>/versions/<int:version>",
         view_func=VersionedJobTypeAPI.as_view("versioned_jobtype_by_string_api"))
 
-
     # subitems
     api_instance.add_url_rule(
         "/tags/<string:tagname>/agents/",
@@ -307,43 +282,39 @@ def load_api(app_instance, api_instance):
 
 def load_admin(admin_instance):
     """serves the administrative interface endpoints"""
-    from flask.ext.admin.base import MenuLink
     from pyfarm.master.admin.projects import ProjectView
-    from pyfarm.master.admin.users import UserView, RoleView
     from pyfarm.master.admin.software import SoftwareView
     from pyfarm.master.admin.tag import TagView
     from pyfarm.master.admin.agents import AgentView
     from pyfarm.master.admin.work import (
         JobView, TaskView)
 
-    # admin links
-    admin_instance.add_link(MenuLink("Preferences", "/preferences"))
-    admin_instance.add_link(MenuLink("Log Out", "/logout"))
-
     # admin database views
-    admin_instance.add_view(
-        UserView(name="Users - User", endpoint="users/user"))
-    admin_instance.add_view(
-        RoleView(name="Users - Role", endpoint="users/role"))
     admin_instance.add_view(
         TagView(name="Tags", endpoint="tag"))
     admin_instance.add_view(
         SoftwareView(name="Software", endpoint="software"))
     admin_instance.add_view(
-        AgentView(name="Agents - Host", endpoint="agents/agent"))
+        AgentView(name="Agents", endpoint="agents/agent"))
     admin_instance.add_view(
-        JobView(name="Jobs - Job", endpoint="jobs/job"))
+        JobView(name="Jobs", endpoint="jobs/job"))
     admin_instance.add_view(
-        TaskView(name="Jobs - Task", endpoint="jobs/task"))
+        TaskView(name="Tasks", endpoint="jobs/task"))
     admin_instance.add_view(
         ProjectView(name="Projects", endpoint="projects"))
 
 
 def load_master(app, admin, api):
     """loads and attaches all endpoints needed to run the master"""
+    # If we're working with sqlite in memory then there's not any other
+    # way to make sure the database gets created.
+    if db.engine.name == "sqlite" and db.engine.url.database == ":memory:":
+        @app.before_first_request
+        def create_db():
+            db.create_all()
+
     load_error_handlers(app)
     load_index(app)
-    load_authentication(app)
     load_admin(admin)
     load_api(app, api)
 
@@ -368,7 +339,7 @@ def run_master():  # pragma: no cover
                              "loopback adapter.")
     parsed = parser.parse_args()
 
-    if app.debug and parsed.drop_all:
+    if parsed.drop_all:
         db.drop_all()
 
     if parsed.create_all:
@@ -377,12 +348,37 @@ def run_master():  # pragma: no cover
     if parsed.allow_any_agent_address:
         app.config["DEV_ALLOW_ANY_AGENT_ADDRESS"] = True
 
-    load_setup(app)
     load_master(app, admin, api)
     app.run()
 
 
-def create_app():
+def create_tables():  # pragma: no cover
+    """
+    Calls sqlalchemy's create_all() function to construct the tables in the
+    database.  From the standpoint of sqlalchemy calling create_all() on
+    an existing database should be considered safe because it will check first
+    before executing CREATE.  That said, this function should typically only
+    be run once.
+    """
+    if db.engine.name == "sqlite" and db.engine.url.database == ":memory:":
+        print("Nothing to do, in memory sqlite database is being used")
+        return
+
+    # Turn on output from the engine so it's
+    # more obvious what was done
+    db.engine.echo = True
+
+    try:
+        db.create_all()
+    except Exception as e:
+        print("Failed to call create_all().  This may be an error or "
+              "it may be something that can be ignored: %r" % e)
+    else:
+        print()
+        print("Tables created or updated")
+
+
+def create_app():  # pragma: no cover
     """An entry point specifically for uWSGI or similar to use"""
     from pyfarm.master.application import app, admin, api
 
@@ -395,14 +391,11 @@ def create_app():
     app.config["DEV_ALLOW_ANY_AGENT_ADDRESS"] = read_env_bool(
         "PYFARM_DEV_APP_ALLOW_ANY_AGENT_ADDRESS", False)
 
-    load_setup(app)
     load_master(app, admin, api)
     return app
 
 
+# Create an 'app' attribute on the module that external application
+# such as uWSGI can use.
 if read_env_bool("PYFARM_APP_INSTANCE", False):
     app = create_app()
-
-
-if __name__ == "__main__":
-    run_master()
