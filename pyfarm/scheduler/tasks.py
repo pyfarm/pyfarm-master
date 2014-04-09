@@ -25,6 +25,7 @@ import requests
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import AgentState, WorkState, UseAgentAddress
+from pyfarm.core.config import read_env
 from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
@@ -283,7 +284,8 @@ def get_batch_agent_pair(priority, except_job_ids=None):
     return batch, selected_agent
 
 
-@celery_app.task
+@celery_app.task(ignore_result=True,
+                 rate_limit=read_env("PYFARM_SCHEDULER_RATE_LIMIT", "1/s"))
 def assign_tasks():
     """
     Assigns unassigned tasks to agents that can take them, with proportionally
