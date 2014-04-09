@@ -14,11 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from datetime import timedelta
+
 from celery import Celery
 
-celery_app = Celery('pyfarm.tasks',
-             broker='redis://',
-             include=['pyfarm.scheduler.tasks'])
+from pyfarm.core.config import read_env_int
+
+celery_app = Celery("pyfarm.tasks",
+                    broker="redis://",
+                    include=["pyfarm.scheduler.tasks"])
+
+celery_app.conf.CELERYBEAT_SCHEDULE = {
+    "periodically_poll_agents": {
+        "task": "pyfarm.scheduler.tasks.poll_agents",
+        "schedule": timedelta(
+            seconds=read_env_int("PYFARM_AGENTS_POLL_INTERVAL", 30))},
+    "periodical_scheduler": {
+        "task": "pyfarm.scheduler.tasks.assign_tasks",
+        "schedule": timedelta(seconds=read_env_int("PYFARM_SCHEDULER_INTERVAL",
+                                                   30))}}
 
 if __name__ == '__main__':
     celery_app.start()

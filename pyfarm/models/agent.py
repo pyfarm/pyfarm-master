@@ -23,6 +23,7 @@ Models and interface classes related to the agent.
 
 import re
 from textwrap import dedent
+from datetime import datetime
 
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
@@ -183,6 +184,10 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                       changed either by a master telling the host to do
                       something with a task or from the host via REST api."""))
 
+    last_heard_from = db.Column(db.DateTime,
+                                default=datetime.utcnow,
+                                doc="Time we last had contact with this agent")
+
     # Max allocation of the two primary resources which `1.0` is 100%
     # allocation.  For `cpu_allocation` 100% allocation typically means
     # one task per cpu.
@@ -207,7 +212,6 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                has 8 cpus, cpu_allocation is .5, and a task
                                requires 4 cpus then only that task will run
                                on the system."""))
-
     # relationships
     tasks = db.relationship("Task", backref="agent", lazy="dynamic",
                             doc=dedent("""

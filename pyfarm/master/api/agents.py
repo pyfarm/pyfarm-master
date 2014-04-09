@@ -31,6 +31,8 @@ except ImportError:  # pragma: no cover
         NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, CONFLICT,
         INTERNAL_SERVER_ERROR)
 
+from datetime import datetime
+
 from flask import request, g
 from flask.views import MethodView
 from sqlalchemy.exc import IntegrityError, ProgrammingError
@@ -462,11 +464,12 @@ class SingleAgentAPI(MethodView):
 
                 modified[key] = value
 
-        if modified:
-            logger.debug(
-                "Updated agent %r: %r", model.id, modified)
-            db.session.add(model)
-            db.session.commit()
+        model.last_heard_from = datetime.utcnow()
+
+        logger.debug(
+            "Updated agent %r: %r", model.id, modified)
+        db.session.add(model)
+        db.session.commit()
         assign_tasks.delay()
 
         return jsonify(model.to_dict()), OK

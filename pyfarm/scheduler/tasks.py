@@ -16,6 +16,7 @@
 
 from math import ceil
 from decimal import Decimal
+from datetime import timedelta, datetime
 from logging import DEBUG, INFO
 from json import dumps
 
@@ -25,7 +26,7 @@ import requests
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import AgentState, WorkState, UseAgentAddress
-from pyfarm.core.config import read_env
+from pyfarm.core.config import read_env, read_env_int
 from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
@@ -53,9 +54,13 @@ logger = getLogger("pf.scheduler.tasks")
 # TODO Get logger configuration from pyfarm config
 logger.setLevel(DEBUG)
 
+POLL_BUSY_AGENTS_INTERVAL = read_env_int("PYFARM_POLL_BUSY_AGENTS_INTERVAL", 600)
+POLL_IDLE_AGENTS_INTERVAL = read_env_int("PYFARM_POLL_IDLE_AGENTS_INTERVAL",
+                                         3600)
 
-@celery_app.task(ignore_result=True)
-def send_tasks_to_agent(agent_id):
+
+@celery_app.task(ignore_result=True, bind=True)
+def send_tasks_to_agent(self, agent_id):
     agent = Agent.query.filter(Agent.id == agent_id).first()
     if not agent:
         raise KeyError("agent not found")
@@ -114,7 +119,19 @@ def send_tasks_to_agent(agent_id):
                 raise ValueError("Unexpected return code on sending batch to "
                                  "agent: %s", response.status_code)
 
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as e:
+            if self.request.retries < self.max_retries:
+                logger.warning("Caught ConnectionError trying to contact agent "
+                               "%s (id %s), retry %s of %s: %s",
+                               agent.hostname,
+                               agent.id,
+                               self.request.retries,
+                               self.max_retries,
+                               e)
+                self.retry(exc=e)
+        else:
+            logger.error("Could not contact agent %s, (id %s), marking as "
+                         "offline", agent.hostname, agent.id)
             agent.state = AgentState.OFFLINE
             db.session.add(agent)
             db.session.commit()
@@ -368,3 +385,90 @@ def assign_tasks():
         logger.debug("Registering asynchronous task pusher for agent %s",
                      agent.id)
         send_tasks_to_agent.delay(agent.id)
+
+
+@celery_app.task(ignore_results=True, bind=True)
+def poll_agent(self, agent_id):
+    agent = Agent.query.filter(Agent.id == agent_id).first()
+
+    running_tasks_count = Task.query.filter(
+        Task.agent == agent,
+        or_(Task.state == None,
+            Task.state == WorkState.RUNNING)).count()
+
+    if (running_tasks_count > 0 and
+        agent.last_heard_from is not None and
+        agent.last_heard_from + timedelta(seconds=POLL_BUSY_AGENTS_INTERVAL) >
+            datetime.utcnow()):
+        return
+    elif (running_tasks_count == 0 and
+          agent.last_heard_from is not None and
+          agent.last_heard_from + timedelta(seconds=POLL_IDLE_AGENTS_INTERVAL) >
+            datetime.utcnow()):
+        return
+
+    try:
+        response = requests.get("%stasks" % agent.api_url())
+
+        if response.status_code != requests.codes.ok:
+            raise ValueError("Unexpected return code on checking tasks in agent "
+                             "%s (id %s): %s" %
+                             (agent.hostname, agent.id, response.status_code))
+        json_data = response.json()
+    except requests.exceptions.ConnectionError as e:
+        if self.request.retries < self.max_retries:
+            logger.warning("Caught ConnectionError trying to contact agent "
+                           "%s (id %s), retry %s of %s: %s",
+                           agent.hostname,
+                           agent.id,
+                           self.request.retries,
+                           self.max_retries,
+                           e)
+            self.retry(exc=e)
+        else:
+            logger.error("Could not contact agent %s, (id %s), marking as "
+                         "offline", agent.hostname, agent.id)
+            agent.state = AgentState.OFFLINE
+            db.session.add(agent)
+            db.session.commit()
+            raise
+
+    present_task_ids = [x["id"] for x in json_data.items()]
+    assigned_task_ids = db.session.query(Task.id).filter(
+        Task.agent == agent,
+        or_(Task.state == None,
+            Task.state == WorkState.RUNNING))
+
+    if present_task_ids - assigned_task_ids:
+        send_tasks_to_agent.delay(agent_id)
+
+    agent.last_heard_from = datetime.utcnow()
+    db.session.add(agent)
+    db.session.commit()
+
+
+@celery_app.task(ignore_results=True)
+def poll_agents():
+    idle_agents_to_poll_query = Agent.query.filter(
+        or_(Agent.last_heard_from == None,
+            Agent.last_heard_from +
+                timedelta(
+                    seconds=POLL_IDLE_AGENTS_INTERVAL) < datetime.utcnow()),
+        ~Agent.tasks.any(or_(Task.state == None,
+                             Task.state == WorkState.RUNNING)),
+        Agent.use_address != UseAgentAddress.PASSIVE)
+
+    for agent in idle_agents_to_poll_query:
+        poll_agent.delay(agent.id)
+
+    busy_agents_to_poll_query = Agent.query.filter(
+        or_(Agent.last_heard_from == None,
+            Agent.last_heard_from +
+                timedelta(
+                    seconds=POLL_BUSY_AGENTS_INTERVAL) < datetime.utcnow()),
+        Agent.tasks.any(or_(Task.state == None,
+                            Task.state == WorkState.RUNNING)),
+        Agent.use_address != UseAgentAddress.PASSIVE)
+
+    for agent in busy_agents_to_poll_query:
+        poll_agent.delay(agent.id)
