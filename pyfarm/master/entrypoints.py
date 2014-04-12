@@ -209,7 +209,6 @@ def load_api(app_instance, api_instance):
         "/jobtypes/<string:jobtype_name>/versions/<int:version>",
         view_func=VersionedJobTypeAPI.as_view("versioned_jobtype_by_string_api"))
 
-
     # subitems
     api_instance.add_url_rule(
         "/tags/<string:tagname>/agents/",

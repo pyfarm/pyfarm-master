@@ -24,7 +24,7 @@ BaseTestCase.build_environment()
 
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.master.application import get_api_blueprint
-from pyfarm.master.entrypoints.main import load_api
+from pyfarm.master.entrypoints import load_api
 from pyfarm.models.job import Job
 
 jobtype_code = """from pyfarm.jobtypes.core.jobtype import JobType
