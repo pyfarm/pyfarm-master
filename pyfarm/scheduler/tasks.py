@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2014 Ambient Entertainment GmbH & Co. KG
+# Copyright 2014 Oliver Palmer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,20 +15,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from math import ceil
-from decimal import Decimal
+"""
+Tasks
+-----
+
+This module is responsible for finding and allocating tasks on agents.
+"""
+
 from datetime import timedelta, datetime
-from logging import DEBUG, INFO
+from logging import DEBUG
 from json import dumps
 
 from sqlalchemy import or_, and_, func
 
 import requests
+from requests.exceptions import ConnectionError
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import AgentState, WorkState, UseAgentAddress
 from pyfarm.core.config import read_env, read_env_int
-from pyfarm.models.core.cfg import TABLES
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
@@ -36,8 +42,7 @@ from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task, TaskDependencies
 from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobtype import JobType
-from pyfarm.models.agent import (
-    Agent, AgentTagAssociation)
+from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
 from pyfarm.master.application import db
 from pyfarm.master.utility import default_json_encoder
@@ -47,16 +52,17 @@ from pyfarm.scheduler.celery_app import celery_app
 
 try:
     range_ = xrange
-except NameError:
+except NameError:  # pragma: no cover
     range_ = range
 
 logger = getLogger("pf.scheduler.tasks")
 # TODO Get logger configuration from pyfarm config
 logger.setLevel(DEBUG)
 
-POLL_BUSY_AGENTS_INTERVAL = read_env_int("PYFARM_POLL_BUSY_AGENTS_INTERVAL", 600)
-POLL_IDLE_AGENTS_INTERVAL = read_env_int("PYFARM_POLL_IDLE_AGENTS_INTERVAL",
-                                         3600)
+POLL_BUSY_AGENTS_INTERVAL = read_env_int(
+    "PYFARM_POLL_BUSY_AGENTS_INTERVAL", 600)
+POLL_IDLE_AGENTS_INTERVAL = read_env_int(
+    "PYFARM_POLL_IDLE_AGENTS_INTERVAL", 3600)
 
 
 @celery_app.task(ignore_result=True, bind=True)
@@ -71,7 +77,8 @@ def send_tasks_to_agent(self, agent_id):
         raise ValueError("agent not available")
 
     if agent.use_address == UseAgentAddress.PASSIVE:
-        logger.debug("Agent's use address mode is PASSIVE, not sending anything")
+        logger.debug(
+            "Agent's use address mode is PASSIVE, not sending anything")
         return
 
     tasks_query = Task.query.filter(
@@ -111,7 +118,8 @@ def send_tasks_to_agent(self, agent_id):
             response = requests.post("%sassign" % agent.api_url(),
                                      data=dumps(message,
                                                 default=default_json_encoder),
-                                     headers={"Content-Type":"application/json"})
+                                     headers={
+                                         "Content-Type": "application/json"})
 
             if response.status_code not in [requests.codes.accepted,
                                             requests.codes.ok,
@@ -119,7 +127,7 @@ def send_tasks_to_agent(self, agent_id):
                 raise ValueError("Unexpected return code on sending batch to "
                                  "agent: %s", response.status_code)
 
-        except requests.exceptions.ConnectionError as e:
+        except ConnectionError as e:
             if self.request.retries < self.max_retries:
                 logger.warning("Caught ConnectionError trying to contact agent "
                                "%s (id %s), retry %s of %s: %s",
@@ -129,14 +137,13 @@ def send_tasks_to_agent(self, agent_id):
                                self.max_retries,
                                e)
                 self.retry(exc=e)
-        else:
-            logger.error("Could not contact agent %s, (id %s), marking as "
-                         "offline", agent.hostname, agent.id)
-            agent.state = AgentState.OFFLINE
-            db.session.add(agent)
-            db.session.commit()
-            raise
-
+            else:
+                logger.error("Could not contact agent %s, (id %s), marking as "
+                             "offline", agent.hostname, agent.id)
+                agent.state = AgentState.OFFLINE
+                db.session.add(agent)
+                db.session.commit()
+                raise
 
 def agents_with_tasks_at_prio(priority):
     query = Agent.query.filter(~Agent.state.in_([AgentState.OFFLINE,
@@ -174,7 +181,7 @@ def get_batch_agent_pair(priority, except_job_ids=None):
     Get a batch of tasks with priority :attr:`priority` and a suitable agent to
     assign the to.
     Returns None if no waiting tasks with exactly priority :attr:`priority` can
-    be found or no suitable agents can be found for any waiting tasks at priority
+    be found or no suitable agents can be found for any waiting tasks at
     :attr:`priority`.
 
     :returns: A tuple of a list of tasks and an agent or None
@@ -281,8 +288,9 @@ def get_batch_agent_pair(priority, except_job_ids=None):
                                               AgentState.RUNNING]))
         query = query.filter(Agent.free_ram >= job.ram)
         query = query.filter(~Agent.tasks.any(or_(Task.state == None,
-                                          and_(Task.state != WorkState.DONE,
-                                               Task.state != WorkState.FAILED))))
+                                          and_(
+                                              Task.state != WorkState.DONE,
+                                              Task.state != WorkState.FAILED))))
         query = query.group_by(Agent).order_by("num_versions asc")
         for agent, num_versions in query:
             if not selected_agent and satisfies_requirements(agent, job):
@@ -411,11 +419,12 @@ def poll_agent(self, agent_id):
         response = requests.get("%stasks" % agent.api_url())
 
         if response.status_code != requests.codes.ok:
-            raise ValueError("Unexpected return code on checking tasks in agent "
-                             "%s (id %s): %s" %
-                             (agent.hostname, agent.id, response.status_code))
+            raise ValueError(
+                "Unexpected return code on checking tasks in agent "
+                "%s (id %s): %s" % (
+                    agent.hostname, agent.id, response.status_code))
         json_data = response.json()
-    except requests.exceptions.ConnectionError as e:
+    except ConnectionError as e:
         if self.request.retries < self.max_retries:
             logger.warning("Caught ConnectionError trying to contact agent "
                            "%s (id %s), retry %s of %s: %s",
@@ -433,18 +442,19 @@ def poll_agent(self, agent_id):
             db.session.commit()
             raise
 
-    present_task_ids = [x["id"] for x in json_data.items()]
-    assigned_task_ids = db.session.query(Task.id).filter(
-        Task.agent == agent,
-        or_(Task.state == None,
-            Task.state == WorkState.RUNNING))
+    else:
+        present_task_ids = [x["id"] for x in json_data.items()]
+        assigned_task_ids = db.session.query(Task.id).filter(
+            Task.agent == agent,
+            or_(Task.state == None,
+                Task.state == WorkState.RUNNING))
 
-    if present_task_ids - assigned_task_ids:
-        send_tasks_to_agent.delay(agent_id)
+        if set(present_task_ids) - set(assigned_task_ids):
+            send_tasks_to_agent.delay(agent_id)
 
-    agent.last_heard_from = datetime.utcnow()
-    db.session.add(agent)
-    db.session.commit()
+        agent.last_heard_from = datetime.utcnow()
+        db.session.add(agent)
+        db.session.commit()
 
 
 @celery_app.task(ignore_results=True)
