@@ -36,7 +36,12 @@ except ImportError:
 from flask import request
 
 from pyfarm.core.config import read_env_bool
-from pyfarm.models.core.cfg import TABLES
+from pyfarm.master.application import db
+from pyfarm.master.utility import error_handler
+
+# Any table that needs to be created by db.create_all() should
+# be imported here even if they're not used directly within this
+# module.
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
@@ -45,11 +50,8 @@ from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task, TaskDependencies
 from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobtype import JobType
-from pyfarm.models.agent import (
-    Agent, AgentTagAssociation)
+from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
-from pyfarm.master.application import db
-from pyfarm.master.utility import error_handler
 
 
 def load_before_first(app_instance, database_instance):
