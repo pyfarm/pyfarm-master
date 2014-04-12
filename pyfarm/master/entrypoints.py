@@ -427,7 +427,3 @@ def create_app():
 
 if read_env_bool("PYFARM_APP_INSTANCE", False):
     app = create_app()
-
-
-if __name__ == "__main__":
-    run_master()
