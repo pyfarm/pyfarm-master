@@ -346,6 +346,32 @@ def load_master(app, admin, api):
     load_api(app, api)
 
 
+def create_tables():  # pragma: no cover
+    """
+    Calls sqlalchemy's create_all() function to construct the tables in the
+    database.  From the standpoint of sqlalchemy calling create_all() on
+    an existing database should be considered safe because it will check first
+    before executing CREATE.  That said, this function should typically only
+    be run once.
+    """
+    if db.engine.name == "sqlite" and db.engine.url.database == ":memory:":
+        print("Nothing to do, in memory sqlite database is being used")
+        return
+
+    # Turn on output from the engine so it's
+    # more obvious what was done
+    db.engine.echo = True
+
+    try:
+        db.create_all()
+    except Exception as e:
+        print("Failed to call create_all().  This may be an error or "
+              "it may be something that can be ignored: %r" % e)
+    else:
+        print()
+        print("Tables created or updated")
+
+
 def run_master():  # pragma: no cover
     """Runs :func:`load_master` then runs the application"""
     from argparse import ArgumentParser
