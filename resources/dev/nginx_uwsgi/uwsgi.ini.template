@@ -17,14 +17,15 @@ chmod-socket = 666
 # this endpoint would not be provided in production but is useful for making
 # sure the DB is setup properly.  I would not suggest using SQLite for anything
 # beyond single user testing.
+
 env = PYFARM_APP_INSTANCE=true
 env = PYFARM_DEV_APP_DB_DROP_ALL=false
-env = PYFARM_DEV_APP_DB_CREATE_ALL=true
+env = PYFARM_DEV_APP_DB_CREATE_ALL=false
 env = PYFARM_DEV_APP_ALLOW_ANY_AGENT_ADDRESS=true
 env = PYFARM_DATABASE_URI=sqlite:///pyfarm.sqlite
 env = PYFARM_CONFIG=debug
 
 # virtual environment setup
 virtualenv = <absolute path to your virtualenv root>
-module = pyfarm.master.entrypoints.main
-callable = run_master_uwsgi
+module = pyfarm.master.entrypoints
+callable = app
