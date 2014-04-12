@@ -15,14 +15,14 @@
 # limitations under the License.
 
 """
-Master Script Entry Points
-==========================
+Entry Points
+============
 
-Contains the functions necessary to run individual components
-of PyFarm's master.
+Contains the code which operates the Python entry point scripts as well as
+serving as a central location for the construction of the web application.
 """
 
-import os
+from argparse import ArgumentParser
 from functools import partial
 
 try:
@@ -35,9 +35,15 @@ except ImportError:
         INTERNAL_SERVER_ERROR)
 
 from flask import request
+from flask.ext.admin.base import MenuLink
 
 from pyfarm.core.config import read_env_bool
-from pyfarm.models.core.cfg import TABLES
+from pyfarm.master.application import db
+from pyfarm.master.utility import error_handler
+
+# Any table that needs to be created by db.create_all() should
+# be imported here even if they're not used directly within this
+# module.
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
@@ -46,11 +52,8 @@ from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task, TaskDependencies
 from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobtype import JobType
-from pyfarm.models.agent import (
-    Agent, AgentTagAssociation)
+from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
-from pyfarm.master.application import db
-from pyfarm.master.utility import error_handler
 
 
 def load_before_first(app_instance, database_instance):
@@ -209,7 +212,6 @@ def load_api(app_instance, api_instance):
         "/jobtypes/<string:jobtype_name>/versions/<int:version>",
         view_func=VersionedJobTypeAPI.as_view("versioned_jobtype_by_string_api"))
 
-
     # subitems
     api_instance.add_url_rule(
         "/tags/<string:tagname>/agents/",
@@ -307,14 +309,12 @@ def load_api(app_instance, api_instance):
 
 def load_admin(admin_instance):
     """serves the administrative interface endpoints"""
-    from flask.ext.admin.base import MenuLink
     from pyfarm.master.admin.projects import ProjectView
     from pyfarm.master.admin.users import UserView, RoleView
     from pyfarm.master.admin.software import SoftwareView
     from pyfarm.master.admin.tag import TagView
     from pyfarm.master.admin.agents import AgentView
-    from pyfarm.master.admin.work import (
-        JobView, TaskView)
+    from pyfarm.master.admin.work import JobView, TaskView
 
     # admin links
     admin_instance.add_link(MenuLink("Preferences", "/preferences"))
@@ -348,9 +348,34 @@ def load_master(app, admin, api):
     load_api(app, api)
 
 
+def create_tables():  # pragma: no cover
+    """
+    Calls sqlalchemy's create_all() function to construct the tables in the
+    database.  From the standpoint of sqlalchemy calling create_all() on
+    an existing database should be considered safe because it will check first
+    before executing CREATE.  That said, this function should typically only
+    be run once.
+    """
+    if db.engine.name == "sqlite" and db.engine.url.database == ":memory:":
+        print("Nothing to do, in memory sqlite database is being used")
+        return
+
+    # Turn on output from the engine so it's
+    # more obvious what was done
+    db.engine.echo = True
+
+    try:
+        db.create_all()
+    except Exception as e:
+        print("Failed to call create_all().  This may be an error or "
+              "it may be something that can be ignored: %r" % e)
+    else:
+        print()
+        print("Tables created or updated")
+
+
 def run_master():  # pragma: no cover
     """Runs :func:`load_master` then runs the application"""
-    from argparse import ArgumentParser
     from pyfarm.master.application import app, admin, api
 
     parser = ArgumentParser()
@@ -402,7 +427,3 @@ def create_app():
 
 if read_env_bool("PYFARM_APP_INSTANCE", False):
     app = create_app()
-
-
-if __name__ == "__main__":
-    run_master()

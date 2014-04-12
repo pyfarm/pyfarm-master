@@ -70,7 +70,6 @@ setup(
         "pyfarm.master",
         "pyfarm.master.admin",
         "pyfarm.master.api",
-        "pyfarm.master.entrypoints",
         "pyfarm.models",
         "pyfarm.models.core",
         "pyfarm.scheduler"],
@@ -79,8 +78,8 @@ setup(
     package_data={"pyfarm.master": get_package_data()},
     entry_points={
         "console_scripts": [
-            "pyfarm-dev-dbdata = pyfarm.master.entrypoints.dev:dbdata",
-            "pyfarm-master = pyfarm.master.entrypoints.main:run_master"]},
+            "pyfarm-master = pyfarm.master.entrypoints:run_master",
+            "pyfarm-create-tables = pyfarm.master.entrypoints:create_tables"]},
     install_requires=install_requires,
     url="https://github.com/pyfarm/pyfarm-master",
     license="Apache v2.0",

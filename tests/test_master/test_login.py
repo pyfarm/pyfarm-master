@@ -23,7 +23,7 @@ from flask.ext.admin import BaseView, expose
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.master.entrypoints.main import load_authentication, load_index
+from pyfarm.master.entrypoints import load_authentication, load_index
 from pyfarm.master.admin.baseview import AuthMixins
 from pyfarm.master.login import load_token, load_user
 from pyfarm.master.application import (
