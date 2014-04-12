@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2014 Ambient Entertainment GmbH & Co. KG
+# Copyright 2014 Oliver Palmer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,14 +15,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Celery Application
+------------------
+
+Creates the base instance of :class:`.Celery` which is used by components of
+PyFarm's master that require interaction with a task queue.  This module also
+configures Celery's beat scheduler for other tasks such as agent polling
+and task assignment.
+"""
+
 from datetime import timedelta
 
 from celery import Celery
 
-from pyfarm.core.config import read_env_int
+from pyfarm.core.config import read_env_int, read_env
 
 celery_app = Celery("pyfarm.tasks",
-                    broker="redis://",
+                    broker=read_env("PYFARM_SCHEDULER_BROKER", "redis://"),
                     include=["pyfarm.scheduler.tasks"])
 
 celery_app.conf.CELERYBEAT_SCHEDULE = {
