@@ -145,6 +145,7 @@ def send_tasks_to_agent(self, agent_id):
                 db.session.commit()
                 raise
 
+
 def agents_with_tasks_at_prio(priority):
     query = Agent.query.filter(~Agent.state.in_([AgentState.OFFLINE,
                                                  AgentState.DISABLED]))
