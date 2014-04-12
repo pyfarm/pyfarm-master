@@ -22,7 +22,6 @@ Contains the functions necessary to run individual components
 of PyFarm's master.
 """
 
-import os
 from functools import partial
 
 try:
