@@ -38,10 +38,10 @@ from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 admin_log = logging.getLogger("flask-admin.sqla")
 
 
-class FixedLength(DataRequired):
+class LimitedLength(DataRequired):
     """Validates that a given field is the proper length"""
     def __init__(self, length):
-        super(FixedLength, self).__init__()
+        super(LimitedLength, self).__init__()
         self.length = length
 
     def __call__(self, form, field):
@@ -91,11 +91,11 @@ class CreateJobTypeForm(Form):
     """The form used to create new job types"""
     name = StringField(
         validators=[
-            required(), unique_name, FixedLength(MAX_JOBTYPE_LENGTH)],
+            required(), unique_name, LimitedLength(MAX_JOBTYPE_LENGTH)],
         description=JobType.name.__doc__)
     classname = StringField(
         label="Class Name",
-        validators=[FixedLength(MAX_JOBTYPE_LENGTH)],
+        validators=[LimitedLength(MAX_JOBTYPE_LENGTH)],
         description=JobTypeVersion.classname.__doc__)
     code = TextAreaField(
         label="Source Code",
