@@ -315,28 +315,36 @@ def load_admin(admin_instance):
     from pyfarm.master.admin.tag import TagView
     from pyfarm.master.admin.agents import AgentView
     from pyfarm.master.admin.work import JobView, TaskView
+    from pyfarm.master.admin.jobtypes import JobTypeView, JobTypeVersionView
 
     # admin links
     admin_instance.add_link(MenuLink("Preferences", "/preferences"))
     admin_instance.add_link(MenuLink("Log Out", "/logout"))
 
     # admin database views
+    # TODO: need a better way to style this menu, would probably be even
+    # better to have the database admin stuff under a different admin interface
     admin_instance.add_view(
-        UserView(name="Users - User", endpoint="users/user"))
+        UserView(name="Users: User", endpoint="users/user"))
     admin_instance.add_view(
-        RoleView(name="Users - Role", endpoint="users/role"))
+        RoleView(name="Users: Role", endpoint="users/role"))
     admin_instance.add_view(
         TagView(name="Tags", endpoint="tag"))
     admin_instance.add_view(
         SoftwareView(name="Software", endpoint="software"))
     admin_instance.add_view(
-        AgentView(name="Agents - Host", endpoint="agents/agent"))
+        AgentView(name="Agents", endpoint="agents"))
     admin_instance.add_view(
-        JobView(name="Jobs - Job", endpoint="jobs/job"))
+        JobView(name="Jobs: Job", endpoint="jobs/job"))
     admin_instance.add_view(
-        TaskView(name="Jobs - Task", endpoint="jobs/task"))
+        TaskView(name="Jobs: Task", endpoint="jobs/task"))
     admin_instance.add_view(
         ProjectView(name="Projects", endpoint="projects"))
+    admin_instance.add_view(
+        JobTypeView(name="Job Type", endpoint="jobtypes/jobtype"))
+    admin_instance.add_view(
+        JobTypeVersionView(
+            name="Job Type: Version", endpoint="jobtypes/version"))
 
 
 def load_master(app, admin, api):
