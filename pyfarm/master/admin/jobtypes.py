@@ -44,7 +44,7 @@ class LimitedLength(DataRequired):
         super(LimitedLength, self).__init__()
         self.length = length
 
-    def __call__(self, form, field):
+    def __call__(self, _, field):
         if len(field.data) > self.length:
             raise ValidationError(
                 "Max length for %s is %s" % (repr(field.name), self.length))
