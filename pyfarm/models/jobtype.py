@@ -103,12 +103,9 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
                           doc=dedent("""
                           The name of the job class contained within the file
                           being loaded.  This field may be null but when it's
-                          not provided :attr:`name` will be used instead."""))
+                          not provided job type name will be used instead."""))
     code = db.Column(db.UnicodeText, nullable=False,
-                     doc=dedent("""
-                     General field containing the 'code' to retrieve the job
-                     type.  See below for information on what this field will
-                     contain depending on how the job will be loaded."""))
+                     doc="The source code of the job type")
 
     jobtype = db.relationship("JobType",
                               backref=db.backref("versions", lazy="dynamic",
