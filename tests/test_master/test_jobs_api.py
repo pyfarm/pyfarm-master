@@ -863,7 +863,8 @@ class TestJobAPI(BaseTestCase):
                                 "job_id": id,
                                 "project_id": None,
                                 "state": "queued",
-                                "agent_id": None
+                                "agent_id": None,
+                                "last_error": None
                              },
                              {
                                 "hidden": False,
@@ -877,7 +878,8 @@ class TestJobAPI(BaseTestCase):
                                 "job_id": id,
                                 "project_id": None,
                                 "state": "queued",
-                                "agent_id": None
+                                "agent_id": None,
+                                "last_error": None
                              }
                          ])
 
@@ -931,7 +933,8 @@ class TestJobAPI(BaseTestCase):
                                 "job_id": id,
                                 "project_id": None,
                                 "state": "queued",
-                                "agent_id": None
+                                "agent_id": None,
+                                "last_error": None
                              },
                              {
                                 "hidden": False,
@@ -945,7 +948,8 @@ class TestJobAPI(BaseTestCase):
                                 "job_id": id,
                                 "project_id": None,
                                 "state": "queued",
-                                "agent_id": None
+                                "agent_id": None,
+                                "last_error": None
                              }
                          ])
 
@@ -1002,7 +1006,7 @@ class TestJobAPI(BaseTestCase):
                             "agent": None,
                             "hidden": False,
                             "id": task1_id,
-                            "attempts": 1,
+                            "attempts": 0,
                             "children": [],
                             "parents": [],
                             "priority": 1,
@@ -1015,7 +1019,8 @@ class TestJobAPI(BaseTestCase):
                             "project": None,
                             "project_id": None,
                             "state": "done",
-                            "agent_id": None
+                            "agent_id": None,
+                            "last_error": None
                          })
 
         response5 = self.client.post(
@@ -1156,7 +1161,8 @@ class TestJobAPI(BaseTestCase):
                             "project": None,
                             "project_id": None,
                             "state": "queued",
-                            "agent_id": None
+                            "agent_id": None,
+                            "last_error": None
                          })
 
         response5 = self.client.get("/api/v1/jobs/%s/tasks/%s" %
@@ -1180,7 +1186,8 @@ class TestJobAPI(BaseTestCase):
                             "project": None,
                             "project_id": None,
                             "state": "queued",
-                            "agent_id": None
+                            "agent_id": None,
+                            "last_error": None
                          })
 
     def test_job_get_unknown_single_task(self):
