@@ -288,4 +288,4 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
         return value
 
-event.listen(Job.state, "set", Job.stateChangedEvent)
+event.listen(Job.state, "set", Job.state_changed)
