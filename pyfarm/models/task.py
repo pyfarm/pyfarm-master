@@ -129,7 +129,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         """
         Sets ``last_error`` column to ``None`` if the task's state is 'done'
         """
-        if target.state == WorkState.DONE and target.last_error is not None:
+        if new_value == WorkState.DONE and target.last_error is not None:
             target.last_error = None
 
 event.listen(Task.state, "set", Task.clear_error_state)
