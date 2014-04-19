@@ -126,6 +126,6 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             target.last_error = None
 
 event.listen(Task.state, "set", Task.clear_error_state)
-event.listen(Task.state, "set", Task.stateChangedEvent)
-event.listen(Task.state, "set", Task.incrementAttempts)
-event.listen(Task.state, "set", Task.retryIfFailed)
+event.listen(Task.state, "set", Task.state_changed)
+event.listen(Task.state, "set", Task.increment_attempts)
+event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry)
