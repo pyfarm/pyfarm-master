@@ -25,7 +25,6 @@ from functools import partial
 from textwrap import dedent
 
 from sqlalchemy import event
-from sqlalchemy.orm import validates
 
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
