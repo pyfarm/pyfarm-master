@@ -25,7 +25,6 @@ from functools import partial
 from textwrap import dedent
 
 from sqlalchemy import event
-from sqlalchemy.orm import validates
 
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
@@ -79,6 +78,13 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                          running state."""))
     frame = db.Column(db.Numeric(10, 4), nullable=False,
                       doc="The frame this :class:`Task` will be executing.")
+    last_error = db.Column(db.UnicodeText, nullable=True,
+                           doc="This column may be set when an error is "
+                               "present.  The agent typically sets this "
+                               "column when the job type either can't or "
+                               "won't run a given task.  This column will "
+                               "be cleared whenever the task's state is "
+                               "returned to a non-error state.")
 
     # relationships
     parents = db.relationship("Task",
@@ -109,6 +115,15 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             target.state = None
             target.agent_id = None
 
+    @staticmethod
+    def clear_error_state(target, new_value, old_value, initiator):
+        """
+        Sets ``last_error`` column to ``None`` if the task's state is 'done'
+        """
+        if target.state == WorkState.DONE and target.last_error is not None:
+            target.last_error = None
+
+event.listen(Task.state, "set", Task.clear_error_state)
 event.listen(Task.state, "set", Task.stateChangedEvent)
 event.listen(Task.state, "set", Task.incrementAttempts)
 event.listen(Task.state, "set", Task.retryIfFailed)
