@@ -106,18 +106,21 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     @staticmethod
     def increment_attempts(target, new_value, old_value, initiator):
-        if old_value is NO_VALUE:
-            target.attempts = 1
-
-        elif old_value is not NO_VALUE and new_value is not NO_CHANGE:
+        if new_value == WorkState.RUNNING and new_value != old_value:
             target.attempts += 1
 
     @staticmethod
     def reset_agent_if_failed_and_retry(
             target, new_value, old_value, initiator):
+        # There's nothing else we should do here if
+        # we don't have a parent job.  This can happen if you're
+        # testing or a job is disconnected from a task.
+        if target.job is None:
+            return
+
         if (new_value == WorkState.FAILED and
             (target.attempts is None or
-             target.attempt <= target.job.requeue)):
+             target.attempts <= target.job.requeue)):
             target.state = None
             target.agent_id = None
 
