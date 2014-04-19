@@ -25,6 +25,7 @@ from functools import partial
 from textwrap import dedent
 
 from sqlalchemy import event
+from sqlalchemy.orm.attributes import NO_VALUE, NO_CHANGE
 
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
@@ -105,7 +106,11 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     @staticmethod
     def increment_attempts(target, new_value, old_value, initiator):
-        target.attempts = target.attempts + 1 if target.attempts else 1
+        if old_value is NO_VALUE:
+            target.attempts = 1
+
+        elif old_value is not NO_VALUE and new_value is not NO_CHANGE:
+            target.attempts += 1
 
     @staticmethod
     def reset_agent_if_failed_and_retry(
