@@ -45,7 +45,6 @@ class TestTask(BaseTestCase):
         self.assertEqual(searched.time_started, now)
         self.assertEqual(searched.attempts, 0)
         self.assertEqual(searched.frame, 1)
-        self.assertEqual(searched.last_error, "foobar")
 
     def test_increment_attempts(self):
         task = Task(frame=1)
