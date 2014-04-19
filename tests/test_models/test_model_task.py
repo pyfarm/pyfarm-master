@@ -27,11 +27,9 @@ from pyfarm.models.task import Task
 
 class TestTask(BaseTestCase):
     def test_insert(self):
-        now = datetime.utcnow()
         task = Task(
             state=WorkState.DONE,
             priority=404,
-            time_started=now,
             frame=1,
             last_error="foobar")
         db.session.add(task)
@@ -42,7 +40,6 @@ class TestTask(BaseTestCase):
         self.assertIsNotNone(searched)
         self.assertEqual(searched.state, WorkState.DONE)
         self.assertEqual(searched.priority, 404)
-        self.assertEqual(searched.time_started, now)
         self.assertEqual(searched.attempts, 0)
         self.assertEqual(searched.frame, 1)
 
