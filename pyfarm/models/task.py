@@ -98,17 +98,18 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                           associated job for this task"""))
 
     @staticmethod
-    def incrementAttempts(target, new_value, old_value, initiator):
+    def increment_attempts(target, new_value, old_value, initiator):
         target.attempts = target.attempts + 1 if target.attempts else 1
 
     @staticmethod
-    def retryIfFailed(target, new_value, old_value, initiator):
+    def reset_agent_if_failed_and_retry(
+            target, new_value, old_value, initiator):
         if (new_value == WorkState.FAILED and
             (target.attempts is None or
              target.attempt <= target.job.requeue)):
             target.state = None
             target.agent_id = None
 
-event.listen(Task.state, "set", Task.stateChangedEvent)
-event.listen(Task.state, "set", Task.incrementAttempts)
-event.listen(Task.state, "set", Task.retryIfFailed)
+event.listen(Task.state, "set", Task.state_changed)
+event.listen(Task.state, "set", Task.increment_attempts)
+event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry)

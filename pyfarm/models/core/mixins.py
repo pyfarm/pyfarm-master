@@ -100,7 +100,7 @@ class WorkStateChangedMixin(object):
     state changes
     """
     @staticmethod
-    def stateChangedEvent(target, new_value, old_value, initiator):
+    def state_changed(target, new_value, old_value, initiator):
         """update the datetime objects depending on the new value"""
         if new_value == _WorkState.RUNNING:
             target.time_started = datetime.utcnow()

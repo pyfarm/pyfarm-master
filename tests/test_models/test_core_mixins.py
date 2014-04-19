@@ -54,7 +54,7 @@ class WorkStateChangedModel(db.Model, WorkStateChangedMixin):
     time_finished = db.Column(DateTime)
 
 event.listen(
-    WorkStateChangedModel.state, "set", WorkStateChangedModel.stateChangedEvent)
+    WorkStateChangedModel.state, "set", WorkStateChangedModel.state_changed)
 
 
 MixinModelRelation1 = db.Table(
