@@ -37,7 +37,7 @@ install_requires = [
     "redis"]
 
 if sys.version_info[0:2] == (2, 6):
-    install_requires += ["argparse"]
+    install_requires += ["argparse", "unittest2"]
 
 if isfile("README.rst"):
     with open("README.rst", "r") as readme:
