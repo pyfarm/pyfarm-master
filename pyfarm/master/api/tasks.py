@@ -62,7 +62,8 @@ def schema():
                 "state": "INTEGER",
                 "time_finished": "DATETIME",
                 "time_started": "DATETIME",
-                "time_submitted": "DATETIME"
+                "time_submitted": "DATETIME",
+                "last_error": "TEXT"
             }
 
     :statuscode 200: no error

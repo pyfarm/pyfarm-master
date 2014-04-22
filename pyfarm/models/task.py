@@ -25,7 +25,7 @@ from functools import partial
 from textwrap import dedent
 
 from sqlalchemy import event
-from sqlalchemy.orm import validates
+from sqlalchemy.orm.attributes import NO_VALUE, NO_CHANGE
 
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
@@ -79,6 +79,13 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                          running state."""))
     frame = db.Column(db.Numeric(10, 4), nullable=False,
                       doc="The frame this :class:`Task` will be executing.")
+    last_error = db.Column(db.UnicodeText, nullable=True,
+                           doc="This column may be set when an error is "
+                               "present.  The agent typically sets this "
+                               "column when the job type either can't or "
+                               "won't run a given task.  This column will "
+                               "be cleared whenever the task's state is "
+                               "returned to a non-error state.")
 
     # relationships
     parents = db.relationship("Task",
@@ -99,17 +106,33 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     @staticmethod
     def increment_attempts(target, new_value, old_value, initiator):
-        target.attempts = target.attempts + 1 if target.attempts else 1
+        if new_value == WorkState.RUNNING and new_value != old_value:
+            target.attempts += 1
 
     @staticmethod
     def reset_agent_if_failed_and_retry(
             target, new_value, old_value, initiator):
+        # There's nothing else we should do here if
+        # we don't have a parent job.  This can happen if you're
+        # testing or a job is disconnected from a task.
+        if target.job is None:
+            return
+
         if (new_value == WorkState.FAILED and
             (target.attempts is None or
-             target.attempt <= target.job.requeue)):
+             target.attempts <= target.job.requeue)):
             target.state = None
             target.agent_id = None
 
+    @staticmethod
+    def clear_error_state(target, new_value, old_value, initiator):
+        """
+        Sets ``last_error`` column to ``None`` if the task's state is 'done'
+        """
+        if new_value == WorkState.DONE and target.last_error is not None:
+            target.last_error = None
+
+event.listen(Task.state, "set", Task.clear_error_state)
 event.listen(Task.state, "set", Task.state_changed)
 event.listen(Task.state, "set", Task.increment_attempts)
 event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry)
