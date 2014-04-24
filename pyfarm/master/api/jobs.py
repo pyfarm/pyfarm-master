@@ -37,7 +37,7 @@ except ImportError:  # pragma: no cover
 from flask.views import MethodView
 from flask import g, request, current_app
 
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, or_, and_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES
@@ -892,9 +892,9 @@ class JobSingleTaskAPI(MethodView):
             db.session.flush()
             job = task.job
             num_active_tasks = db.session.query(Task).\
-                filter(Task.job == job,
+                filter(Task.job == job, or_(Task.state == None, and_(
                              Task.state != "done",
-                             Task.state != "failed").count()
+                             Task.state != "failed"))).count()
             if num_active_tasks == 0:
                 num_failed_tasks = db.session.query(
                     Task).filter(Task.job == job,
