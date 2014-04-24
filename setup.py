@@ -34,7 +34,8 @@ install_requires = [
     "blinker",
     "voluptuous",
     "celery",
-    "redis"]
+    "redis",
+    "requests"]
 
 if sys.version_info[0:2] == (2, 6):
     install_requires += ["argparse", "unittest2"]
