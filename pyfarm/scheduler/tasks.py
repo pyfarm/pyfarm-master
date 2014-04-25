@@ -332,7 +332,10 @@ def assign_tasks():
         return
 
     idle_agents = Agent.query.filter(Agent.state == AgentState.ONLINE,
-                                     ~Agent.tasks.any()).count()
+                                     ~Agent.tasks.any(
+                                         ~Task.state.in_([WorkState.DONE,
+                                                          WorkState.FAILED]))).\
+                                                              count()
     if not idle_agents:
         logger.info("No idle agents, not assigning anything")
         return
