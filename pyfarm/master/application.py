@@ -45,6 +45,8 @@ from pyfarm.core.config import read_env
 from pyfarm.master.admin.baseview import AdminIndex
 
 POST_METHODS = set(("POST", "PUT"))
+IGNORED_MIMETYPES = set((
+    "application/x-www-form-urlencoded", "multipart/form-data"))
 
 
 def get_application(**configuration_keywords):
@@ -213,8 +215,7 @@ def before_request():
     g.error = None
 
     if request.method not in POST_METHODS or \
-            request.mimetype == "application/x-www-form-urlencoded" or \
-            request.mimetype == "multipart/form-data":
+            request.mimetype in IGNORED_MIMETYPES:
         pass
 
     elif request.mimetype == "application/json":
