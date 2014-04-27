@@ -240,11 +240,12 @@ class TestValidateWithModel(UtilityTestCase):
             return ""
 
         self.add_route(test)
-        response = self.post("/", headers={"Content-Type": "foo"})
+        response = self.post(
+            "/", headers={"Content-Type": "foo"})
         self.assert_unsupported_media_type(response)
         self.assertIn(
-            "415 Unsupported Media Type",
-            response.data.decode("utf-8"))
+            "Unsupported Media Type",
+            response.data.decode())
 
     def test_disallowed_in_request(self):
         @validate_with_model(ValidationTestModel, disallow=("a", ))
@@ -296,12 +297,12 @@ class TestErrorHandler(BaseTestCase):
     def test_callable_default(self):
         response, code = error_handler(
             None, code=BAD_REQUEST, default=lambda: "foobar", title="")
-        self.assertIn("foobar", response)
+        self.assertIn("foobar", response.json["error"])
 
     def test_defaults_to_http_message(self):
         response, code = error_handler(
             None, code=BAD_REQUEST, default=lambda: "foobar")
-        self.assertIn("Bad Request", response)
+        self.assertIn("foobar", response.json["error"])
 
     def test_response_code(self):
         response, code = error_handler(
@@ -318,7 +319,7 @@ class TestErrorHandler(BaseTestCase):
         g.error = "custom error"
         response, code = error_handler(
             None, code=BAD_REQUEST, default=lambda: "foobar", title="")
-        self.assertIn("custom error", response)
+        self.assertIn("custom error", response.json["error"])
 
 
 class TestRequestFunctions(UtilityTestCase):
