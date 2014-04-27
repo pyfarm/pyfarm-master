@@ -54,7 +54,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     rows which contain the individual work unit(s) for a job.
     """
     __tablename__ = TABLE_TASK
-    STATE_ENUM = WorkState
+    STATE_ENUM = list(WorkState) + [None]
     STATE_DEFAULT = None
     REPR_COLUMNS = ("id", "state", "frame", "project")
     REPR_CONVERT_COLUMN = {"state": partial(repr_enum, enum=STATE_ENUM)}
