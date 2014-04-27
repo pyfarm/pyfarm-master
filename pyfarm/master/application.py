@@ -213,7 +213,8 @@ def before_request():
     g.error = None
 
     if request.method not in POST_METHODS or \
-            request.mimetype == "application/x-www-form-urlencoded":
+            request.mimetype == "application/x-www-form-urlencoded" or \
+            request.mimetype == "multipart/form-data":
         pass
 
     elif request.mimetype == "application/json":
