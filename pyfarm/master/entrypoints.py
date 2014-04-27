@@ -28,11 +28,11 @@ from functools import partial
 try:
     from httplib import (
         responses, BAD_REQUEST, UNAUTHORIZED, NOT_FOUND, METHOD_NOT_ALLOWED,
-        INTERNAL_SERVER_ERROR)
+        INTERNAL_SERVER_ERROR, UNSUPPORTED_MEDIA_TYPE)
 except ImportError:
     from http.client import (
         responses, BAD_REQUEST, UNAUTHORIZED, NOT_FOUND, METHOD_NOT_ALLOWED,
-        INTERNAL_SERVER_ERROR)
+        INTERNAL_SERVER_ERROR, UNSUPPORTED_MEDIA_TYPE)
 
 from flask import request
 from flask.ext.admin.base import MenuLink
@@ -82,12 +82,18 @@ def load_error_handlers(app_instance):
         error_handler, code=INTERNAL_SERVER_ERROR,
         default=lambda:
         "unhandled error while accessing %s" % request.url)
+    unsupported_media_type = partial(
+        error_handler, code=UNSUPPORTED_MEDIA_TYPE,
+        default=lambda:
+        "%r is not a supported media type" % request.mimetype)
 
     # apply the handlers to the application instance
     app_instance.register_error_handler(BAD_REQUEST, bad_request)
     app_instance.register_error_handler(UNAUTHORIZED, unauthorized)
     app_instance.register_error_handler(NOT_FOUND, not_found)
     app_instance.register_error_handler(METHOD_NOT_ALLOWED, method_not_allowed)
+    app_instance.register_error_handler(
+        UNSUPPORTED_MEDIA_TYPE, unsupported_media_type)
     app_instance.register_error_handler(
         INTERNAL_SERVER_ERROR, internal_server_error)
 
