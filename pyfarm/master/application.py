@@ -212,8 +212,11 @@ def before_request():
     g.json = NOTSET
     g.error = None
 
-    if request.method in POST_METHODS and \
-            request.headers["Content-Type"] == "application/json":
+    if request.method not in POST_METHODS or \
+            request.mimetype == "application/x-www-form-urlencoded":
+        pass
+
+    elif request.mimetype == "application/json":
         # manually handle decoding errors from get_json()
         # so we can produce a better error message
         try:
@@ -226,6 +229,10 @@ def before_request():
                 g.error = "no data to decode"
 
             abort(BAD_REQUEST)
+
+    elif request.get_data():
+        g.error = "Unsupported media type %r" % request.mimetype
+        abort(UNSUPPORTED_MEDIA_TYPE)
 
 
 # main object setup (app, api, etc)
