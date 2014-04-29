@@ -17,15 +17,13 @@
 
 """
 Jobs
---------
+----
 
 This module defines an API for managing and querying jobs
 """
 
-from copy import copy
 from decimal import Decimal
-from datetime import datetime
-from json import loads, dumps
+from json import loads
 
 try:
     from httplib import (
@@ -35,7 +33,7 @@ except ImportError:  # pragma: no cover
         OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CREATED)
 
 from flask.views import MethodView
-from flask import g, request, current_app
+from flask import g, request
 
 from sqlalchemy.sql import func, or_, and_
 
@@ -54,6 +52,9 @@ from pyfarm.master.utility import jsonify, validate_with_model
 RANGE_TYPES = NUMERIC_TYPES[:-1] + (Decimal, )
 
 logger = getLogger("api.jobs")
+
+# Load model mappings once per process
+TASK_MODEL_MAPPINGS = Task.types().mappings
 
 
 class ObjectNotFound(Exception):
@@ -909,14 +910,21 @@ class JobSingleTaskAPI(MethodView):
                     job.state = "failed"
                 db.session.add(job)
 
-        for name in Task.types().columns:
-            if name in g.json:
-                type = Job.types().mappings[name]
-                value = g.json.pop(name)
-                if not isinstance(value, type):
-                    return jsonify(error="Column `%s` is of type %r, but we "
-                                   "expected %r" % (name, type(value), type))
-                setattr(task, name, value)
+        # Iterate over all keys in the request
+        for key in list(g.json):
+            if key in TASK_MODEL_MAPPINGS:
+                value = g.json.pop(key)
+                expected_types = TASK_MODEL_MAPPINGS[key]
+
+                # incorrect type for `value`
+                if not isinstance(value, expected_types):
+                    return (jsonify(
+                        error="Column %r is of type %r but we expected "
+                              "type(s) %r" % (key, type(value),
+                                              expected_types)), BAD_REQUEST)
+
+                # correct type for `value`
+                setattr(task, key, value)
 
         if g.json:
             return (jsonify(error="Unknown columns in request: %r" % g.json),
