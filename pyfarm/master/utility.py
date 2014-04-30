@@ -429,7 +429,7 @@ def error_handler(e, code=None, default=None, title=None, template=None):
     assert isinstance(error, STRING_TYPES)
     assert isinstance(title, STRING_TYPES)
 
-    if request.mimetype == "application/json":
+    if not request.mimetype or request.mimetype == "application/json":
         response = jsonify(error=error)
     else:
         response = render_template(
