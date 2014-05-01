@@ -106,7 +106,7 @@ class WorkStateChangedMixin(object):
             target.time_started = datetime.utcnow()
             target.time_finished = None
 
-        elif new_value == _WorkState.DONE or new_value == _WorkState.FAILED:
+        elif new_value in (_WorkState.DONE, _WorkState.FAILED):
             target.time_finished = datetime.utcnow()
 
 
