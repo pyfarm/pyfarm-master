@@ -107,11 +107,6 @@ class WorkStateChangedMixin(object):
             target.time_finished = None
 
         elif new_value == _WorkState.DONE or new_value == _WorkState.FAILED:
-            if target.time_started is None:  # pragma: no cover
-                msg = "job %s has not been started yet, state is " % target.id
-                msg += "being set to %s" % DBWorkState._map[new_value]
-                logger.warning(msg)
-
             target.time_finished = datetime.utcnow()
 
 
