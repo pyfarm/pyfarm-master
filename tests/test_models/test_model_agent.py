@@ -247,17 +247,17 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
                 model.use_address = UseAgentAddress.REMOTE
                 self.assertEqual(
                     model.api_url(*args),
-                    "%s://10.56.0.1:12345/api/v%d/" % args)
+                    "%s://10.56.0.1:12345/api/v%d" % args)
 
                 model.use_address = UseAgentAddress.LOCAL
                 self.assertEqual(
                     model.api_url(*args),
-                    "%s://10.56.0.0:12345/api/v%d/" % args)
+                    "%s://10.56.0.0:12345/api/v%d" % args)
 
                 model.use_address = UseAgentAddress.HOSTNAME
                 self.assertEqual(
                     model.api_url(*args),
-                    "%s://foo:12345/api/v%d/" % args)
+                    "%s://foo:12345/api/v%d" % args)
 
     def test_api_url_errors(self):
         model = Agent(
