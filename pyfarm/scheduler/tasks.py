@@ -59,7 +59,7 @@ logger = getLogger("pf.scheduler.tasks")
 # TODO Get logger configuration from pyfarm config
 logger.setLevel(DEBUG)
 
-USERAGENT = "PyFarm (master) 1.0"
+USERAGENT = "PyFarm/1.0 (master)"
 POLL_BUSY_AGENTS_INTERVAL = read_env_int(
     "PYFARM_POLL_BUSY_AGENTS_INTERVAL", 600)
 POLL_IDLE_AGENTS_INTERVAL = read_env_int(
@@ -120,7 +120,8 @@ def send_tasks_to_agent(self, agent_id):
                                      data=dumps(message,
                                                 default=default_json_encoder),
                                      headers={
-                                         "Content-Type": "application/json"})
+                                         "Content-Type": "application/json",
+                                         "User-Agent": USERAGENT})
 
             if response.status_code not in [requests.codes.accepted,
                                             requests.codes.ok,
@@ -421,7 +422,9 @@ def poll_agent(self, agent_id):
         return
 
     try:
-        response = requests.get(agent.api_url() + "/tasks")
+        response = requests.get(
+            agent.api_url() + "/tasks",
+            headers={"User-Agent": USERAGENT})
 
         if response.status_code != requests.codes.ok:
             raise ValueError(
