@@ -329,7 +329,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                 "Cannot provide a url, agent %s's state is %s" % (
                     self.id, repr(self.use_address)))
 
-        return "%s://%s:%d/api/v%d/" % (scheme, address, self.port, version)
+        return "%s://%s:%d/api/v%d" % (scheme, address, self.port, version)
 
     @validates("ip")
     def validate_address_column(self, key, value):
