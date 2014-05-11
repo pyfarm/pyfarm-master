@@ -35,7 +35,8 @@ install_requires = [
     "voluptuous",
     "celery",
     "redis",
-    "requests"]
+    "requests",
+    "netaddr"]
 
 if sys.version_info[0:2] == (2, 6):
     install_requires += ["argparse", "unittest2"]
