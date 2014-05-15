@@ -470,6 +470,9 @@ class TestJobAPI(BaseTestCase):
         self.assert_created(response1)
         jobtype_id = response1.json['id']
 
+        self.assert_created(response2)
+        id = response2.json["id"]
+        time_submitted = response2.json["time_submitted"]
         response2 = self.client.post(
             "/api/v1/jobs/",
             content_type="application/json",
