@@ -423,7 +423,7 @@ def poll_agent(self, agent_id):
 
     try:
         response = requests.get(
-            agent.api_url() + "/tasks",
+            agent.api_url() + "/tasks/",
             headers={"User-Agent": USERAGENT})
 
         if response.status_code != requests.codes.ok:
@@ -451,7 +451,7 @@ def poll_agent(self, agent_id):
             raise
 
     else:
-        present_task_ids = [x["id"] for x in json_data.items()]
+        present_task_ids = [x["id"] for x in json_data]
         assigned_task_ids = db.session.query(Task.id).filter(
             Task.agent == agent,
             or_(Task.state == None,
