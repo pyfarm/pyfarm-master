@@ -54,6 +54,7 @@ from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
+from pyfarm.models.jobqueue import JobQueue
 
 
 def load_before_first(app_instance, database_instance):
