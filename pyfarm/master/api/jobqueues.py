@@ -21,12 +21,21 @@ Job Queues
 This module defines an API for managing and querying job queues
 """
 try:
-    from httplib import OK
+    from httplib import OK, CREATED, CONFLICT
 except ImportError:  # pragma: no cover
-    from http.client import OK
+    from http.client import OK, CREATED, CONFLICT
 
+from flask import g
+from flask.views import MethodView
+
+from pyfarm.core.logger import getLogger
 from pyfarm.models.jobqueue import JobQueue
-from pyfarm.master.utility import jsonify
+from pyfarm.master.application import db
+from pyfarm.master.utility import jsonify, validate_with_model
+
+
+logger = getLogger("api.jobqueues")
+
 
 def schema():
     """
@@ -61,3 +70,21 @@ def schema():
     :statuscode 200: no error
     """
     return jsonify(JobQueue.to_schema()), OK
+
+
+class JobQueueIndexAPI(MethodView):
+    @validate_with_model(JobQueue)
+    def post(self):
+        jobqueue = JobQueue.query.filter_by(name=g.json["name"]).first()
+        if jobqueue:
+            return (jsonify(error="Job queue %s already exixts" %
+                            g.json["name"]), CONFLICT)
+
+        jobqueue = JobQueue(**g.json)
+        db.session.add(jobqueue)
+        db.session.commit()
+
+        jobqueue_data = jobqueue.to_dict()
+        logger.info("created job queue %s: %r", jobqueue.id, jobqueue_data)
+
+        return jsonify(jobqueue_data), CREATED
