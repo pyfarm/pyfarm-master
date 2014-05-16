@@ -75,6 +75,47 @@ def schema():
 class JobQueueIndexAPI(MethodView):
     @validate_with_model(JobQueue)
     def post(self):
+        """
+        A ``POST`` to this endpoint will create a new job queue.
+
+        .. http:post:: /api/v1/jobqueues/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/jobqueues/ HTTP/1.1
+                Accept: application/json
+
+                {
+                    "name": "Test Queue"
+                }
+
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "weight": 10,
+                    "jobs": [],
+                    "minimum_agents": null,
+                    "priority": 5,
+                    "name": "Test Queue",
+                    "maximum_agents": null,
+                    "id": 1,
+                    "parent": [],
+                    "parent_jobqueue_id": null
+                }
+
+        :statuscode 201: a new job queue was created
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        :statuscode 409: a job queue with that name already exists
+        """
         jobqueue = JobQueue.query.filter_by(name=g.json["name"]).first()
         if jobqueue:
             return (jsonify(error="Job queue %s already exixts" %
