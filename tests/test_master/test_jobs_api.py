@@ -108,6 +108,7 @@ class TestJobAPI(BaseTestCase):
         self.assertEqual(response3.json,
                         {
                             "id": id,
+                            "job_queue_id": None,
                             "time_finished": None,
                             "time_started": None,
                             "end": 2.0,
@@ -377,6 +378,7 @@ class TestJobAPI(BaseTestCase):
         self.assertEqual(response3.json,
                         {
                             "id": id,
+                            "job_queue_id": None,
                             "time_finished": None,
                             "time_started": None,
                             "end": 2.0,
@@ -470,9 +472,6 @@ class TestJobAPI(BaseTestCase):
         self.assert_created(response1)
         jobtype_id = response1.json['id']
 
-        self.assert_created(response2)
-        id = response2.json["id"]
-        time_submitted = response2.json["time_submitted"]
         response2 = self.client.post(
             "/api/v1/jobs/",
             content_type="application/json",
@@ -492,6 +491,7 @@ class TestJobAPI(BaseTestCase):
         self.assert_ok(response3)
         self.assertEqual(response3.json,
                          {
+                            "job_queue_id": None,
                             "ram_warning": None,
                             "title": "Test Job",
                             "state": "queued",
@@ -526,6 +526,7 @@ class TestJobAPI(BaseTestCase):
         self.assert_ok(response4)
         self.assertEqual(response4.json,
                          {
+                            "job_queue_id": None,
                             "ram_warning": None,
                             "title": "Test Job",
                             "state": "queued",
@@ -599,6 +600,7 @@ class TestJobAPI(BaseTestCase):
         self.assert_ok(response3)
         self.assertEqual(response3.json,
                          {
+                            "job_queue_id": None,
                             "ram_warning": None,
                             "title": "Test Job",
                             "state": "queued",
