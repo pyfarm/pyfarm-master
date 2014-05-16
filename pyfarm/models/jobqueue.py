@@ -23,6 +23,8 @@ Model for job queues
 
 from textwrap import dedent
 
+from pyfarm.core.config import read_env_int
+
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_JOB_QUEUE, MAX_JOBQUEUE_NAME_LENGTH
 from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
@@ -55,7 +57,9 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                           doc=dedent("""
                           The scheduler will never assign more than this number
                           of agents to jobs in or below this queue."""))
-    priority = db.Column(db.Integer, nullable=False, default=5,
+    priority = db.Column(db.Integer, nullable=False,
+                         default=read_env_int(
+                                   "PYFARM_JOBQUEUE_DEFAULT_PRIO", 5),
                          doc=dedent("""
                              The priority of this job queue.
                              The scheduler will not assign any nodes to other
@@ -63,7 +67,9 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                              priority as long as this one can still use nodes.
                              Minimum_agents takes precedence over this.
                              """))
-    weight = db.Column(db.Integer, nullable=False, default=10,
+    weight = db.Column(db.Integer, nullable=False,
+                       default=read_env_int(
+                                   "PYFARM_JOBQUEUE_DEFAULT_WEIGHT", 10),
                        doc=dedent("""
                             The weight of this job queue.
                             The scheduler will distribute available agents
