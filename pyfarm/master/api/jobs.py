@@ -550,7 +550,7 @@ class SingleJobAPI(MethodView):
 
             .. sourcecode:: http
 
-                PUT /api/v1/jobs/Test%20Type HTTP/1.1
+                PUT /api/v1/jobs/Test%20Job HTTP/1.1
                 Accept: application/json
 
                 {
@@ -561,7 +561,7 @@ class SingleJobAPI(MethodView):
 
             .. sourcecode:: http
 
-                HTTP/1.1 201 CREATED
+                HTTP/1.1 201 OK
                 Content-Type: application/json
 
                 {

@@ -224,6 +224,80 @@ class SingleJobQueueAPI(MethodView):
             jobqueue = JobQueue.query.filter_by(id=queue_rq).first()
 
         if not jobqueue:
-            return jsonify(error="Requested software not found"), NOT_FOUND
+            return jsonify(error="Requested job queue not found"), NOT_FOUND
 
-        return jsonify(jobqueue.to_dict())
+        return jsonify(jobqueue.to_dict()), OK
+
+    def post(self, queue_rq):
+        """
+        A ``POST`` to this endpoint will update the specified queue with the data
+        in the request.  Columns not specified in the request will be left as
+        they are.
+
+        .. http:post:: /api/v1/jobqueues/[<str:name>|<int:id>] HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                PUT /api/v1/jobs/Test%20Queue HTTP/1.1
+                Accept: application/json
+
+                {
+                    "priority": 6
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 OK
+                Content-Type: application/json
+
+                {
+                    "id": 1,
+                    "parent": [],
+                    "jobs": [],
+                    "weight": 10,
+                    "parent_jobqueue_id": null,
+                    "priority": 6,
+                    "minimum_agents": null,
+                    "name": "Test Queue",
+                    "maximum_agents": null
+                }
+
+        :statuscode 200: the job queue was updated
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        """
+        if isinstance(queue_rq, STRING_TYPES):
+            jobqueue = JobQueue.query.filter_by(name=queue_rq).first()
+        else:
+            jobqueue = JobQueue.query.filter_by(id=queue_rq).first()
+
+        if not jobqueue:
+            return jsonify(error="Requested job queue not found"), NOT_FOUND
+
+        # This would allow users to create circles in the job queue tree
+        if "parent_jobqueue_id" in g.json:
+            return (jsonify(error="The parent queue cannot be changed"),
+                    BAD_REQUEST)
+
+        for name in JobQueue.types().columns:
+            if name in g.json:
+                type = JobQueue.types().mappings[name]
+                value = g.json.pop(name)
+                if not isinstance(value, type):
+                    return jsonify(error="Column `%s` is of type %r, but we "
+                                   "expected %r" % (name,
+                                                    type(value),
+                                                    type))
+                setattr(jobqueue, name, value)
+
+        db.session.add(jobqueue)
+        db.session.commit()
+
+        jobqueue_data = jobqueue.to_dict()
+        logger.info("updated job queue %s: %r", jobqueue.id, jobqueue_data)
+
+        return jsonify(jobqueue_data), OK
