@@ -133,7 +133,7 @@ def schema():
     """
     Returns the basic schema of :class:`.Job`
 
-    .. http:get:: /api/v1/jobtypes/schema HTTP/1.1
+    .. http:get:: /api/v1/jobs/schema HTTP/1.1
 
         **Request**
 

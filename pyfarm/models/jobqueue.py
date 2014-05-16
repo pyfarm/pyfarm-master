@@ -45,7 +45,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                                    db.ForeignKey("%s.id" % TABLE_JOB_QUEUE),
                                    nullable=True,
                                    doc="The parent queue of this queue. If "
-                                       "NULL, this is a top level queue")
+                                       "NULL, this is a top level queue.")
     name = db.Column(db.String(MAX_JOBQUEUE_NAME_LENGTH), nullable=False,
                      unique=True)
     minimum_agents = db.Column(db.Integer, nullable=True,
