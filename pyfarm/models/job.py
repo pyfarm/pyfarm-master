@@ -109,7 +109,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                     :class:`JobTypeVersion.id`"""))
     job_queue_id = db.Column(IDTypeWork,
                              db.ForeignKey("%s.id" % TABLE_JOB_QUEUE),
-                             nullable=False,
+                             nullable=True,
                              doc=dedent("""
                                 The foreign key which stores
                                 :class:`JobQueue.id`"""))
