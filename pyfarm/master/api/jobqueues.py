@@ -31,6 +31,7 @@ from flask.views import MethodView
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES
 
+from pyfarm.models.job import Job
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.master.application import db
 from pyfarm.master.utility import jsonify, validate_with_model
@@ -301,3 +302,28 @@ class SingleJobQueueAPI(MethodView):
         logger.info("updated job queue %s: %r", jobqueue.name, jobqueue_data)
 
         return jsonify(jobqueue_data), OK
+
+    def delete(self, queue_rq):
+        if isinstance(queue_rq, STRING_TYPES):
+            jobqueue = JobQueue.query.filter_by(name=queue_rq).first()
+        else:
+            jobqueue = JobQueue.query.filter_by(id=queue_rq).first()
+
+        if not jobqueue:
+            return jsonify(), OK
+
+        num_sub_queues = JobQueue.query.filter_by(parent=jobqueue).count()
+        if num_sub_queues > 0:
+            return (jsonify(error="Cannot delete: job queue has child queues"),
+                    CONFLICT)
+
+        num_jobs = Job.query.filter_by(queue=jobqueue).count()
+        if num_jobs > 0:
+            return (jsonify(error="Cannot delete: job queue has jobs assigned"),
+                    CONFLICT)
+
+        db.session.delete(jobqueue)
+        db.session.commit()
+        logger.info("deleted job queue %s", jobqueue.name)
+
+        return jsonify(), OK
