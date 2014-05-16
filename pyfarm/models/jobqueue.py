@@ -30,6 +30,10 @@ from pyfarm.models.core.types import id_column, IDTypeWork
 
 
 class JobQueue(db.Model, UtilityMixins, ReprMixin):
+    """
+    Stores information about a job queue. Used for flexible, configurable
+    distribution of computing capacity to jobs.
+    """
     __tablename__ = TABLE_JOB_QUEUE
 
     REPR_COLUMNS = ("id", "name")
