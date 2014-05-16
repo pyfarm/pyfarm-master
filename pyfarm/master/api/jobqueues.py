@@ -21,14 +21,16 @@ Job Queues
 This module defines an API for managing and querying job queues
 """
 try:
-    from httplib import OK, CREATED, CONFLICT
+    from httplib import OK, CREATED, CONFLICT, NOT_FOUND
 except ImportError:  # pragma: no cover
-    from http.client import OK, CREATED, CONFLICT
+    from http.client import OK, CREATED, CONFLICT, NOT_FOUND
 
 from flask import g
 from flask.views import MethodView
 
 from pyfarm.core.logger import getLogger
+from pyfarm.core.enums import STRING_TYPES
+
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.master.application import db
 from pyfarm.master.utility import jsonify, validate_with_model
@@ -178,3 +180,50 @@ class JobQueueIndexAPI(MethodView):
             out.append(jobqueue.to_dict(unpack_relationships=False))
 
         return jsonify(out), OK
+
+
+class SingleJobQueueAPI(MethodView):
+    def get(self, queue_rq):
+        """
+        A ``GET`` to this endpoint will return the requested job queue
+
+        .. http:get:: /api/v1/jobqueues/[<str:name>|<int:id>] HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/software/Test%20Queue HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "id": 1,
+                    "parent": [],
+                    "jobs": [],
+                    "weight": 10,
+                    "parent_jobqueue_id": null,
+                    "priority": 5,
+                    "minimum_agents": null,
+                    "name": "Test Queue",
+                    "maximum_agents": null
+                }
+
+        :statuscode 200: no error
+        :statuscode 404: the requested job queue was not found
+        """
+        if isinstance(queue_rq, STRING_TYPES):
+            jobqueue = JobQueue.query.filter_by(name=queue_rq).first()
+        else:
+            jobqueue = JobQueue.query.filter_by(id=queue_rq).first()
+
+        if not jobqueue:
+            return jsonify(error="Requested software not found"), NOT_FOUND
+
+        return jsonify(jobqueue.to_dict())

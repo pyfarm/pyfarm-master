@@ -138,7 +138,7 @@ def load_api(app_instance, api_instance):
         schema as job_schema, JobIndexAPI, SingleJobAPI, JobTasksIndexAPI,
         JobSingleTaskAPI)
     from pyfarm.master.api.jobqueues import (
-        schema as jobqueues_schema, JobQueueIndexAPI)
+        schema as jobqueues_schema, JobQueueIndexAPI, SingleJobQueueAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -210,6 +210,13 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobs/<string:job_name>",
         view_func=SingleJobAPI.as_view("single_job_by_string_api"))
+
+    api_instance.add_url_rule(
+        "/jobqueues/<int:queue_rq>",
+        view_func=SingleJobQueueAPI.as_view("single_jobqueue_by_id_api"))
+    api_instance.add_url_rule(
+        "/jobqueues/<string:queue_rq>",
+        view_func=SingleJobQueueAPI.as_view("single_jobqueue_by_string_api"))
 
     # special case for jobype/code
     api_instance.add_url_rule(
