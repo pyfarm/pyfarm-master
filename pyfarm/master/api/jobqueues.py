@@ -129,3 +129,52 @@ class JobQueueIndexAPI(MethodView):
         logger.info("created job queue %s: %r", jobqueue.id, jobqueue_data)
 
         return jsonify(jobqueue_data), CREATED
+
+    def get(self):
+        """
+        A ``GET`` to this endpoint will return a list of known job queues.
+
+        .. http:get:: /api/v1/jobqueues/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobqueues/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "priority": 5,
+                        "weight": 10,
+                        "parent_jobqueue_id": null,
+                        "name": "Test Queue",
+                        "minimum_agents": null,
+                        "id": 1,
+                        "maximum_agents": null
+                    },
+                    {
+                        "priority": 5,
+                        "weight": 10,
+                        "parent_jobqueue_id": null,
+                        "name": "Test Queue 2",
+                        "minimum_agents": null,
+                        "id": 2,
+                        "maximum_agents": null
+                    }
+                ]
+
+        :statuscode 200: no error
+        """
+        out = []
+        for jobqueue in JobQueue.query:
+            out.append(jobqueue.to_dict(unpack_relationships=False))
+
+        return jsonify(out), OK
