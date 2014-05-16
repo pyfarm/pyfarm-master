@@ -77,4 +77,6 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                             in proportion to their weights.
                             """))
     parent = db.relationship("JobQueue",
-                              doc="Relationship between this queue its parent")
+                             remote_side=[id],
+                             backref=db.backref("children", lazy="dynamic"),
+                             doc="Relationship between this queue its parent")
