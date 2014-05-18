@@ -98,6 +98,13 @@ class AgentIndexAPI(MethodView):
         ``GET`` on ``/api/v1/agents/`` to find the agent you're looking for
          before performing an update or replacement of an agent's data.
 
+        .. note::
+            The ``remote_ip`` field is not required and should typically
+            not be included in a request.  When not provided ``remote_ip``
+            is be populated by the server based off of the ip of the
+            incoming request.  Providing ``remote_ip`` in your request
+            however will override this behavior.
+
         .. http:post:: /api/v1/agents/ HTTP/1.1
 
             **Request**
@@ -112,7 +119,7 @@ class AgentIndexAPI(MethodView):
                     "cpus": 14,
                     "free_ram": 133,
                     "hostname": "agent1",
-                    "ip": "10.196.200.115",
+                    "remote_ip": "10.196.200.115",
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
@@ -134,7 +141,6 @@ class AgentIndexAPI(MethodView):
                     "time_offset": 0,
                     "hostname": "agent1",
                     "id": 1,
-                    "ip": "10.196.200.115",
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
@@ -146,7 +152,8 @@ class AgentIndexAPI(MethodView):
         :statuscode 400: there was something wrong with the request (such as
                          invalid columns being included)
         """
-        g.json["remote_ip"] = request.remote_addr
+        # Set remote_ip if it did not come in with the request
+        g.json.setdefault("remote_ip", request.remote_addr)
 
         try:
             new_agent = Agent(**g.json)
@@ -244,7 +251,7 @@ class AgentIndexAPI(MethodView):
                   {
                     "hostname": "foobar",
                     "port": 50000,
-                    "ip": "127.0.0.1",
+                    "remote_ip": "127.0.0.1",
                     "id": 1
                   }
                 ]
@@ -281,7 +288,7 @@ class AgentIndexAPI(MethodView):
         min_cpus = get_integer_argument("min_cpus")
         max_cpus = get_integer_argument("max_cpus")
         hostname = get_hostname_argument("hostname")
-        ip = get_ipaddr_argument("ip")
+        remote_ip = get_ipaddr_argument("remote_ip")
         port = get_port_argument("port")
 
         # construct query
@@ -300,8 +307,8 @@ class AgentIndexAPI(MethodView):
         if hostname is not None:
             query = query.filter(Agent.hostname == hostname)
 
-        if ip is not None:
-            query = query.filter(Agent.ip == ip)
+        if remote_ip is not None:
+            query = query.filter(Agent.remote_ip == remote_ip)
 
         if port is not None:
             query = query.filter(Agent.port == port)
