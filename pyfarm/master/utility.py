@@ -514,4 +514,4 @@ get_hostname_argument = partial(
     types=lambda value: Agent.validate_hostname("hostname", value))
 get_ipaddr_argument = partial(
     get_request_argument,
-    types=lambda value: Agent.validate_ip_address("ip",  value))
+    types=lambda value: Agent.validate_ip_address("remote_addr",  value))
