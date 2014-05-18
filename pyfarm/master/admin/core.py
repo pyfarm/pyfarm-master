@@ -22,10 +22,8 @@ Functions, class, and objects form the base datatypes and
 logic necessary for the admin forms.
 """
 
-import socket
 from functools import partial
 
-from flask import flash
 from flask.ext.admin.babel import gettext
 from flask.ext.admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from flask.ext.admin.contrib.sqla.filters import BaseSQLAFilter
@@ -51,29 +49,10 @@ def validate_model_field(form, field, function=None):
         raise StopValidation(str(e))
 
 # resource validation wrappers
-validate_address = partial(
-    validate_model_field, function=Agent.validate_ip_address)
 validate_hostname = partial(
     validate_model_field, function=Agent.validate_hostname)
 validate_resource = partial(
     validate_model_field, function=Agent.validate_resource)
-
-
-def check_dns_mapping(form, field):
-    """
-    When a form is submitted check to see if the ip address provided matches
-    the hostname.  If not, flash a warning message.
-    """
-    hostname = form.hostname.data
-    try:
-        ipaddress = socket.gethostbyname(hostname)
-    except socket.error:
-        ipaddress = None
-
-    if ipaddress and ipaddress != field.data:
-        args = (hostname, field.data)
-        msg = "`%s` resolved to %s which does not match address provided" % args
-        flash(msg, category="warning")
 
 
 def validate_network_fields_provided(form, field):
