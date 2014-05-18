@@ -27,12 +27,12 @@ from datetime import datetime
 
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
-from netaddr import AddrFormatError, IPAddress
 
-from pyfarm.core.enums import AgentState, STRING_TYPES, UseAgentAddress
+from pyfarm.core.enums import (
+    AgentState, STRING_TYPES, UseAgentAddress, INTEGER_TYPES)
 from pyfarm.core.config import (
     read_env_number, read_env_int, read_env_bool, read_env)
-from pyfarm.master.application import db, app
+from pyfarm.master.application import db
 from pyfarm.models.core.functions import repr_ip
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, UtilityMixins, ReprMixin, ValidateWorkStateMixin)
@@ -83,18 +83,13 @@ class AgentTaggingMixin(object):
     Mixin used which provides some common structures to
     :class:`.AgentTag` and :class:`.AgentSoftware`
     """
-    try:
-        NUMERIC_TYPES = (int, long)
-    except NameError:  # Python 3.0
-        NUMERIC_TYPES = int
-
     @validates("tag", "software")
     def validate_string_column(self, key, value):
         """
         Ensures `value` is a string or something that can be converted
         to a string.
         """
-        if isinstance(value, self.NUMERIC_TYPES):
+        if isinstance(value, INTEGER_TYPES):
             value = str(value)
         elif not isinstance(value, STRING_TYPES):
             raise ValueError("expected a string for `%s`" % key)
@@ -119,14 +114,13 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     """
     __tablename__ = TABLE_AGENT
-    __table_args__ = (UniqueConstraint("hostname", "ip", "port"), )
+    __table_args__ = (UniqueConstraint("hostname", "port"), )
     STATE_ENUM = AgentState
     STATE_DEFAULT = "online"
     REPR_COLUMNS = (
-        "id", "hostname", "state", "ip", "remote_ip", "port", "cpus",
+        "id", "hostname", "state", "remote_ip", "port", "cpus",
         "ram", "free_ram")
     REPR_CONVERT_COLUMN = {
-        "ip": repr_ip,
         "remote_ip": repr_ip,
         "state": repr}
     MIN_PORT = read_env_int("PYFARM_AGENT_MIN_PORT", 1024)
@@ -155,8 +149,6 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                          The hostname we should use to talk to this host.
                          Preferably this value will be the fully qualified
                          name instead of the base hostname alone."""))
-    ip = db.Column(IPv4Address, nullable=True,
-                   doc="The IPv4 network address this host resides on")
     remote_ip = db.Column(IPv4Address, nullable=True,
                           doc="the remote address which came in with the "
                               "request")
@@ -267,43 +259,6 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
         return value
 
-    @classmethod
-    def validate_ip_address(cls, key, value):
-        """
-        Ensures the :attr:`ip` address is valid.  This checks to ensure
-        that the value provided is:
-
-            * not a hostmask
-            * not link local (:rfc:`3927`)
-            * not used for multicast (:rfc:`1112`)
-            * not a netmask (:rfc:`4632`)
-            * not reserved (:rfc:`6052`)
-            * a private address (:rfc:`1918`)
-        """
-        if not value:
-            return
-
-        try:
-            ip = IPAddress(value)
-
-        except (AddrFormatError, ValueError) as e:
-            raise ValueError(
-                "%s is not a valid address format: %s" % (value, e))
-
-        if not app.config.get("DEV_ALLOW_ANY_AGENT_ADDRESS", False):
-            if PYFARM_REQUIRE_PRIVATE_IP and not ip.is_private():
-                raise ValueError("%s is not a private ip address" % value)
-
-            if not app.config.get("DEV_ALLOW_ANY_AGENT_ADDRESS", False) and \
-                not all([
-                    not ip.is_hostmask(), not ip.is_link_local(),
-                    not ip.is_loopback(), not ip.is_multicast(),
-                    not ip.is_netmask(), not ip.is_reserved()
-                ]):
-                raise ValueError("%s is not a usable ip address" % value)
-
-        return value
-
     def api_url(self,
             scheme=read_env("PYFARM_AGENT_API_SCHEME", "http"),
             version=read_env_int("PYFARM_AGENT_API_VERSION", 1)):
@@ -322,19 +277,12 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             address = self.remote_ip
         elif self.use_address == UseAgentAddress.HOSTNAME:
             address = self.hostname
-        elif self.use_address == UseAgentAddress.LOCAL:
-            address = self.ip
         else:
             raise ValueError(
                 "Cannot provide a url, agent %s's state is %s" % (
                     self.id, repr(self.use_address)))
 
         return "%s://%s:%d/api/v%d" % (scheme, address, self.port, version)
-
-    @validates("ip")
-    def validate_address_column(self, key, value):
-        """validates the ip column"""
-        return self.validate_ip_address(key, value)
 
     @validates("hostname")
     def validate_hostname_column(self, key, value):
