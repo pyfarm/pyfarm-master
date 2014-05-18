@@ -106,12 +106,11 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     # columns the form should display
     form_columns = (
         "state", "hostname", "port", "cpus", "ram", "free_ram",
-        "tags", "software_versions", "ip", "use_address", "ram_allocation",
+        "tags", "software_versions", "use_address", "ram_allocation",
         "cpu_allocation")
 
     # custom type columns need overrides
     form_overrides = {
-        "ip": TextField,
         "state": SelectField,
         "use_address": SelectField}
 
