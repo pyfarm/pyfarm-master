@@ -27,6 +27,7 @@ from datetime import datetime
 
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
+from netaddr import AddrFormatError, IPAddress
 
 from pyfarm.core.enums import (
     AgentState, STRING_TYPES, UseAgentAddress, INTEGER_TYPES)
@@ -256,6 +257,31 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             msg = "value for `%s` must be between " % key
             msg += "%s and %s" % (min_value, max_value)
             raise ValueError(msg)
+
+        return value
+
+    @classmethod
+    def validate_ip_address(cls, _, value):
+        """
+        Ensures the :attr:`ip` address is valid.  This checks to ensure
+        that the value provided is:
+
+            * not a hostmask
+            * not link local (:rfc:`3927`)
+            * not used for multicast (:rfc:`1112`)
+            * not a netmask (:rfc:`4632`)
+            * not reserved (:rfc:`6052`)
+            * a private address (:rfc:`1918`)
+        """
+        if value is None:
+            return value
+
+        try:
+            IPAddress(value)
+
+        except (AddrFormatError, ValueError) as e:
+            raise ValueError(
+                "%s is not a valid address format: %s" % (value, e))
 
         return value
 
