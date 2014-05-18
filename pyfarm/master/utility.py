@@ -41,6 +41,7 @@ except ImportError:
 from flask import current_app, request, g, abort, render_template
 from voluptuous import Schema, Invalid
 
+from pyfarm.models.core.types import IPv4Address
 from pyfarm.models.agent import Agent
 from pyfarm.core.enums import STRING_TYPES, NOTSET
 
@@ -53,6 +54,8 @@ def default_json_encoder(obj):
         return float(obj)
     elif isinstance(obj, datetime):
         return obj.isoformat()
+    elif isinstance(obj, IPv4Address):
+        return str(obj)
 
 
 def jsonify(*args, **kwargs):
