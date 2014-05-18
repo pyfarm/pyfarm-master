@@ -74,7 +74,6 @@ def schema():
                 "free_ram": "INTEGER",
                 "time_offset": "INTEGER",
                 "use_address": "INTEGER",
-                "ip": "IPv4Address",
                 "hostname": "VARCHAR(255)",
                 "cpus": "INTEGER",
                 "port": "INTEGER",
@@ -265,8 +264,8 @@ class AgentIndexAPI(MethodView):
         :qparam hostname:
             If set, list only agents matching ``hostname``
 
-        :qparam ip:
-            If set, list only agents matching ``ip``
+        :qparam remote_ip:
+            If set, list only agents matching ``remote_ip``
 
         :qparam port:
             If set, list only agents matching ``port``.
@@ -274,7 +273,7 @@ class AgentIndexAPI(MethodView):
         :statuscode 200: no error, host may or may not have been found
         """
         query = db.session.query(
-            Agent.id, Agent.hostname, Agent.port, Agent.ip)
+            Agent.id, Agent.hostname, Agent.port, Agent.remote_ip)
 
         # parse url arguments
         min_ram = get_integer_argument("min_ram")
@@ -313,8 +312,8 @@ class AgentIndexAPI(MethodView):
             host = dict(zip(host.keys(), host))
 
             # convert the IPAddress object, if set
-            if host["ip"] is not None:
-                host["ip"] = str(host["ip"])
+            if host["remote_ip"] is not None:
+                host["remote_ip"] = str(host["remote_ip"])
 
             output.append(host)
 
