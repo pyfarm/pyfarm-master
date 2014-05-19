@@ -259,7 +259,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         return value
 
     @classmethod
-    def validate_ip_address(cls, _, value):
+    def validate_ipv4_address(cls, _, value):
         """
         Ensures the :attr:`ip` address is valid.  This checks to ensure
         that the value provided is:
@@ -317,3 +317,8 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     def validate_resource_column(self, key, value):
         """validates the ram, cpus, and port columns"""
         return self.validate_resource(key, value)
+
+    @validates("remote_ip")
+    def validate_remote_ip(self, key, value):
+        """validates the remote_ip column"""
+        return self.validate_ipv4_address(key, value)
