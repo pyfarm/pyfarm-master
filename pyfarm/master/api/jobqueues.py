@@ -286,13 +286,14 @@ class SingleJobQueueAPI(MethodView):
 
         for name in JobQueue.types().columns:
             if name in g.json:
-                type = JobQueue.types().mappings[name]
+                expected_type = JobQueue.types().mappings[name]
                 value = g.json.pop(name)
-                if not isinstance(value, type):
+                if not isinstance(value, expected_type):
                     return (jsonify(error="Column `%s` is of type %r, but we "
                                     "expected %r" % (name,
                                                      type(value),
-                                                     type)), BAD_REQUEST)
+                                                     expected_type)),
+                                    BAD_REQUEST)
                 setattr(jobqueue, name, value)
 
         db.session.add(jobqueue)
