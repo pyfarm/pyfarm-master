@@ -48,8 +48,6 @@ from pyfarm.models.core.cfg import (
 
 __all__ = ("Agent", )
 
-
-PYFARM_REQUIRE_PRIVATE_IP = read_env_bool("PYFARM_REQUIRE_PRIVATE_IP", False)
 REGEX_HOSTNAME = re.compile("^(?!-)[A-Z\d-]{1,63}(?<!-)"
                             "(\.(?!-)[A-Z\d-]{1,63}(?<!-))*\.?$",
                             re.IGNORECASE)
