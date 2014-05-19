@@ -330,18 +330,20 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                 "Cannot construct an agent API url using mode %r "
                 "`use_address`" % self.use_address)
 
-
     @validates("hostname")
     def validate_hostname_column(self, key, value):
-        """validates the hostname column"""
+        """Validates the hostname column"""
         return self.validate_hostname(key, value)
 
     @validates("ram", "cpus", "port", "systemid")
-    def validate_resource_column(self, key, value):
-        """validates the ram, systemid, cpus and port columns"""
+    def validate_numeric_column(self, key, value):
+        """
+        Validates several numerical columns.  Columns such as ram, cpus,
+        port and systemid are validated with this method.
+        """
         return self.validate_resource(key, value)
 
     @validates("remote_ip")
     def validate_remote_ip(self, key, value):
-        """validates the remote_ip column"""
+        """Validates the remote_ip column"""
         return self.validate_ipv4_address(key, value)
