@@ -78,7 +78,6 @@ class TestAgentAPI(BaseTestCase):
                 "state": "running",
                 "free_ram": 133,
                 "id": id,
-                "remote_ip": None,
                 "tags": [],
                 "tasks": [],
                 "projects": [],
@@ -88,33 +87,33 @@ class TestAgentAPI(BaseTestCase):
     def test_create_agent(self):
         agents = [
             {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
-             "hostname": "testagent2", "port": 64994,
+             "hostname": "testagent2", "remote_ip": "10.0.200.2", "port": 64994,
              "ram": 2048, "ram_allocation": 0.8, "state": "running"},
             {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
-             "hostname": "testagent2", "port": 64995,
+             "hostname": "testagent2", "remote_ip": "10.0.200.2", "port": 64995,
              "ram": 2048, "ram_allocation": 0.8, "state": "running"},
             {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
-             "hostname": "testagent2", "port": 64996,
+             "hostname": "testagent2", "remote_ip": "10.0.200.2", "port": 64996,
              "ram": 2048, "ram_allocation": 0.8, "state": "running"}]
         expected_agents = [
             {"free_ram": 133, "tags": [], "ram_allocation": 0.8, "id": 1,
              "projects": [], "ram": 2048, "time_offset": 0,
              "cpu_allocation": 1.0, "state": "running", "tasks": [],
              "port": 64994, "cpus": 16, "hostname": "testagent2",
-             "use_address": "remote", "remote_ip": None,
-             "software_versions": [],},
+             "use_address": "remote", "remote_ip": "10.0.200.2",
+             "software_versions": []},
             {"free_ram": 133, "tags": [], "ram_allocation": 0.8, "id": 2,
              "projects": [], "ram": 2048, "time_offset": 0,
              "cpu_allocation": 1.0, "state": "running", "tasks": [],
              "port": 64995, "cpus": 16, "hostname": "testagent2",
-             "use_address": "remote", "remote_ip": None,
-             "software_versions": [],},
+             "use_address": "remote", "remote_ip": "10.0.200.2",
+             "software_versions": []},
             {"free_ram": 133, "tags": [], "ram_allocation": 0.8, "id": 3,
              "projects": [], "ram": 2048, "time_offset": 0,
              "cpu_allocation": 1.0, "state": "running", "tasks": [],
              "port": 64996, "cpus": 16, "hostname": "testagent2",
-             "use_address": "remote", "remote_ip": None,
-             "software_versions": [],}]
+             "use_address": "remote", "remote_ip": "10.0.200.2",
+             "software_versions": []}]
 
         created_agents = []
         for agent in agents:
@@ -132,7 +131,7 @@ class TestAgentAPI(BaseTestCase):
     def test_create_agent_not_unique_enough(self):
         agent = {
             "cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
-             "hostname": "testagent2", "port": 64996,
+             "hostname": "testagent2", "remote_ip": "10.0.200.2", "port": 64996,
              "ram": 2048, "ram_allocation": 0.8, "state": "running"}
         response = self.client.post(
             "/api/v1/agents/",
@@ -192,6 +191,7 @@ class TestAgentAPI(BaseTestCase):
             "ram": 8192,
             "cpu_allocation": 1.2,
             "use_address": "hostname",
+            "remote_ip": "10.0.200.4",
             "hostname": "testagent3-1",
             "cpus": 64,
             "ram_allocation": 0.2,
@@ -200,7 +200,6 @@ class TestAgentAPI(BaseTestCase):
             "state": "running",
             "free_ram": 4096,
             "id": id,
-            "remote_ip": "10.0.200.4",
             "tags": [],
             "tasks": [],
             "projects": [],
@@ -263,7 +262,7 @@ class TestAgentAPIFilter(BaseTestCase):
                 "cpus": 8,
                 "free_ram": 133,
                 "hostname": "lowcpu-highram",
-                "remote_ip": None,
+                "remote_ip": "10.0.200.7",
                 "port": 64994,
                 "ram": 4096,
                 "ram_allocation": 0.8,
@@ -277,6 +276,7 @@ class TestAgentAPIFilter(BaseTestCase):
                 "cpus": 16,
                 "free_ram": 133,
                 "hostname": "highcpu-lowram",
+                "remote_ip": "10.0.200.8",
                 "port": 64994,
                 "ram": 1024,
                 "ram_allocation": 0.8,
@@ -290,7 +290,7 @@ class TestAgentAPIFilter(BaseTestCase):
                 "cpus": 16,
                 "free_ram": 133,
                 "hostname": "highcpu-highram",
-                "remote_ip": None,
+                "remote_ip": "10.0.200.9",
                 "port": 64994,
                 "ram": 4096,
                 "ram_allocation": 0.8,
@@ -304,7 +304,7 @@ class TestAgentAPIFilter(BaseTestCase):
                 "cpus": 12,
                 "free_ram": 133,
                 "hostname": "middlecpu-middleram",
-                "remote_ip": None,
+                "remote_ip": "10.0.200.10",
                 "port": 64994,
                 "ram": 2048,
                 "ram_allocation": 0.8,
@@ -321,7 +321,7 @@ class TestAgentAPIFilter(BaseTestCase):
         self.assert_bad_request(response)
         response = self.client.get("/api/v1/agents/?hostname=!")
         self.assert_bad_request(response)
-        response = self.client.get("/api/v1/agents/?ip=!")
+        response = self.client.get("/api/v1/agents/?remote_ip=!")
         self.assert_bad_request(response)
         response = self.client.get("/api/v1/agents/?port=!")
         self.assert_bad_request(response)
@@ -339,7 +339,7 @@ class TestAgentAPIFilter(BaseTestCase):
              "id": 3, "port": 64994}])
 
     def test_ip(self):
-        response = self.client.get("/api/v1/agents/?ip=10.0.200.8")
+        response = self.client.get("/api/v1/agents/?remote_ip=10.0.200.8")
         self.assert_ok(response)
         self.assert_contents_equal(response.json, [
             {"hostname": "highcpu-lowram", "id": 3,
