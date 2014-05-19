@@ -48,6 +48,7 @@ class TestAgentAPI(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
+                "systemid": 42,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
@@ -66,6 +67,7 @@ class TestAgentAPI(BaseTestCase):
         self.assert_ok(response2)
         self.assertEqual(
             response2.json, {
+                "systemid": 42,
                 "ram": 2048,
                 "cpu_allocation": 1.0,
                 "use_address": "remote",
@@ -86,30 +88,30 @@ class TestAgentAPI(BaseTestCase):
 
     def test_create_agent(self):
         agents = [
-            {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
+            {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133, "systemid": 3,
              "hostname": "testagent2", "remote_ip": "10.0.200.2", "port": 64994,
              "ram": 2048, "ram_allocation": 0.8, "state": "running"},
-            {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
+            {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133, "systemid": 5,
              "hostname": "testagent2", "remote_ip": "10.0.200.2", "port": 64995,
              "ram": 2048, "ram_allocation": 0.8, "state": "running"},
-            {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
+            {"cpu_allocation": 1.0, "cpus": 16, "free_ram": 133, "systemid": 7,
              "hostname": "testagent2", "remote_ip": "10.0.200.2", "port": 64996,
              "ram": 2048, "ram_allocation": 0.8, "state": "running"}]
         expected_agents = [
             {"free_ram": 133, "tags": [], "ram_allocation": 0.8, "id": 1,
-             "projects": [], "ram": 2048, "time_offset": 0,
+             "projects": [], "ram": 2048, "time_offset": 0, "systemid": 3,
              "cpu_allocation": 1.0, "state": "running", "tasks": [],
              "port": 64994, "cpus": 16, "hostname": "testagent2",
              "use_address": "remote", "remote_ip": "10.0.200.2",
              "software_versions": []},
             {"free_ram": 133, "tags": [], "ram_allocation": 0.8, "id": 2,
-             "projects": [], "ram": 2048, "time_offset": 0,
+             "projects": [], "ram": 2048, "time_offset": 0, "systemid": 5,
              "cpu_allocation": 1.0, "state": "running", "tasks": [],
              "port": 64995, "cpus": 16, "hostname": "testagent2",
              "use_address": "remote", "remote_ip": "10.0.200.2",
              "software_versions": []},
             {"free_ram": 133, "tags": [], "ram_allocation": 0.8, "id": 3,
-             "projects": [], "ram": 2048, "time_offset": 0,
+             "projects": [], "ram": 2048, "time_offset": 0, "systemid": 7,
              "cpu_allocation": 1.0, "state": "running", "tasks": [],
              "port": 64996, "cpus": 16, "hostname": "testagent2",
              "use_address": "remote", "remote_ip": "10.0.200.2",
@@ -130,7 +132,7 @@ class TestAgentAPI(BaseTestCase):
 
     def test_create_agent_not_unique_enough(self):
         agent = {
-            "cpu_allocation": 1.0, "cpus": 16, "free_ram": 133,
+            "cpu_allocation": 1.0, "cpus": 16, "free_ram": 133, "systemid": 3,
              "hostname": "testagent2", "remote_ip": "10.0.200.2", "port": 64996,
              "ram": 2048, "ram_allocation": 0.8, "state": "running"}
         response = self.client.post(
@@ -151,6 +153,7 @@ class TestAgentAPI(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
+                "systemid": 3,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
@@ -169,6 +172,7 @@ class TestAgentAPI(BaseTestCase):
             "/api/v1/agents/%d" % id,
             content_type="application/json",
             data=dumps({
+                "systemid": 3,
                 "cpu_allocation": 1.2,
                 "ram": 8192,
                 "use_address": "hostname",
@@ -188,6 +192,7 @@ class TestAgentAPI(BaseTestCase):
         response3 = self.client.get("/api/v1/agents/%d" % id)
         self.assert_ok(response3)
         self.assertEqual(response3.json, {
+            "systemid": 3,
             "ram": 8192,
             "cpu_allocation": 1.2,
             "use_address": "hostname",
@@ -211,6 +216,7 @@ class TestAgentAPI(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
+                "systemid": 42,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
@@ -244,6 +250,7 @@ class TestAgentAPIFilter(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
+                "systemid": 1,
                 "cpu_allocation": 1.0,
                 "cpus": 8,
                 "free_ram": 133,
@@ -258,6 +265,7 @@ class TestAgentAPIFilter(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
+                "systemid": 3,
                 "cpu_allocation": 1.0,
                 "cpus": 8,
                 "free_ram": 133,
@@ -272,6 +280,7 @@ class TestAgentAPIFilter(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
+                "systemid": 5,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
@@ -286,6 +295,7 @@ class TestAgentAPIFilter(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
+                "systemid": 7,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
@@ -300,6 +310,7 @@ class TestAgentAPIFilter(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
+                "systemid": 9,
                 "cpu_allocation": 1.0,
                 "cpus": 12,
                 "free_ram": 133,
