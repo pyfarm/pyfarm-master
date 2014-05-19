@@ -31,8 +31,7 @@ from netaddr import AddrFormatError, IPAddress
 
 from pyfarm.core.enums import (
     AgentState, STRING_TYPES, UseAgentAddress, INTEGER_TYPES)
-from pyfarm.core.config import (
-    read_env_number, read_env_int, read_env_bool, read_env)
+from pyfarm.core.config import read_env_number, read_env_int, read_env
 from pyfarm.master.application import db
 from pyfarm.models.core.functions import repr_ip
 from pyfarm.models.core.mixins import (
@@ -108,20 +107,19 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         unique to limit the frequency of duplicate data:
 
             * :attr:`hostname`
-            * :attr:`ip`
             * :attr:`port`
+            * :attr:`systemid`
 
     """
     __tablename__ = TABLE_AGENT
-    __table_args__ = (UniqueConstraint("hostname", "port"), )
+    __table_args__ = (UniqueConstraint("hostname", "port", "systemid"), )
     STATE_ENUM = AgentState
     STATE_DEFAULT = "online"
     REPR_COLUMNS = (
-        "id", "hostname", "state", "remote_ip", "port", "cpus",
-        "ram", "free_ram")
+        "id", "systemid", "hostname", "port", "state", "remote_ip",
+        "cpus", "ram", "free_ram")
     REPR_CONVERT_COLUMN = {
-        "remote_ip": repr_ip,
-        "state": repr}
+        "remote_ip": repr_ip}
     MIN_PORT = read_env_int("PYFARM_AGENT_MIN_PORT", 1024)
     MAX_PORT = read_env_int("PYFARM_AGENT_MAX_PORT", 65535)
     MIN_CPUS = read_env_int("PYFARM_AGENT_MIN_CPUS", 1)
@@ -164,8 +162,13 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     port = db.Column(db.Integer, nullable=False,
                      doc="The port the agent is currently running on")
     time_offset = db.Column(db.Integer, nullable=False, default=0,
-                            doc="the offset in seconds the agent is from "
+                            doc="The offset in seconds the agent is from "
                                 "an official time server")
+    systemid = db.Column(
+        db.BigInteger, nullable=False,
+        doc="An integer provided by the agent which identifies the system "
+            "itself.  Unlike the id column this field helps to keep track of "
+            "an agent's uniqueness based on some hardware information.")
 
     # host state
     state = db.Column(AgentStateEnum, default=AgentState.ONLINE,
