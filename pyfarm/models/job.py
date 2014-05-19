@@ -113,6 +113,24 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                              doc=dedent("""
                                 The foreign key which stores
                                 :class:`JobQueue.id`"""))
+    minimum_agents = db.Column(db.Integer, nullable=True,
+                          doc=dedent("""
+                          The scheduler will try to assign at least this number
+                          of agents to this job as long as it can use them,
+                          before any other considerations."""))
+    maximum_agents = db.Column(db.Integer, nullable=True,
+                          doc=dedent("""
+                          The scheduler will never assign more than this number
+                          of agents to this job."""))
+    weight = db.Column(db.Integer, nullable=False,
+                       default=read_env_int(
+                                   "PYFARM_QUEUE_DEFAULT_WEIGHT", 10),
+                       doc=dedent("""
+                            The weight of this job.
+                            The scheduler will distribute available agents
+                            between jobs and job queues in the same queue
+                            in proportion to their weights.
+                            """))
     title = db.Column(db.String(MAX_JOBTITLE_LENGTH), nullable=False,
                       doc="The title of this job")
     user = db.Column(db.String(MAX_USERNAME_LENGTH),
