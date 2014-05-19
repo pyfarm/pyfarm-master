@@ -128,6 +128,7 @@ class TestTagAPI(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
+                "systemid": 1,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
@@ -154,6 +155,7 @@ class TestTagAPI(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
+                "systemid": 1,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
@@ -201,6 +203,7 @@ class TestTagAPI(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
+                "systemid": 1,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
