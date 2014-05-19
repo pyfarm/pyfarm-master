@@ -51,7 +51,7 @@ class TestTagAPI(BaseTestCase):
             data=dumps({
                 "tag": "foo"}))
         self.assert_created(response1)
-        id = response1.json['id']
+        id = response1.json["id"]
 
         response2 = self.client.get("/api/v1/tags/%d" % id)
         self.assert_ok(response2)
@@ -93,7 +93,7 @@ class TestTagAPI(BaseTestCase):
             data=dumps({
                 "tag": "foo"}))
         self.assert_created(response2)
-        id = response2.json['id']
+        id = response2.json["id"]
 
         response3 = self.client.get("/api/v1/tags/foo")
         self.assert_ok(response3)
@@ -132,13 +132,13 @@ class TestTagAPI(BaseTestCase):
                 "cpus": 16,
                 "free_ram": 133,
                 "hostname": "testagent1",
-                "ip": "10.0.200.1",
+                "remote_ip": "10.0.200.1",
                 "port": 64994,
                 "ram": 2048,
                 "ram_allocation": 0.8,
                 "state": "running"}))
         self.assert_created(response1)
-        agent_id = response1.json['id']
+        agent_id = response1.json["id"]
 
         response2 = self.client.put(
             "/api/v1/tags/foo",
@@ -158,13 +158,13 @@ class TestTagAPI(BaseTestCase):
                 "cpus": 16,
                 "free_ram": 133,
                 "hostname": "testagent1",
-                "ip": "10.0.200.1",
+                "remote_ip": "10.0.200.1",
                 "port": 64994,
                 "ram": 2048,
                 "ram_allocation": 0.8,
                 "state": "running"}))
         self.assert_created(response1)
-        agent_id = response1.json['id']
+        agent_id = response1.json["id"]
 
         response2 = self.client.put(
             "/api/v1/tags/foo",
@@ -205,13 +205,13 @@ class TestTagAPI(BaseTestCase):
                 "cpus": 16,
                 "free_ram": 133,
                 "hostname": "testagent1",
-                "ip": "10.0.200.1",
+                "remote_ip": "10.0.200.1",
                 "port": 64994,
                 "ram": 2048,
                 "ram_allocation": 0.8,
                 "state": "running"}))
         self.assert_created(response1)
-        agent_id = response1.json['id']
+        agent_id = response1.json["id"]
 
         response2 = self.client.put(
             "/api/v1/tags/foo",
