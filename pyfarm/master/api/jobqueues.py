@@ -21,9 +21,9 @@ Job Queues
 This module defines an API for managing and querying job queues
 """
 try:
-    from httplib import OK, CREATED, CONFLICT, NOT_FOUND
+    from httplib import OK, CREATED, CONFLICT, NOT_FOUND, NO_CONTENT
 except ImportError:  # pragma: no cover
-    from http.client import OK, CREATED, CONFLICT, NOT_FOUND
+    from http.client import OK, CREATED, CONFLICT, NOT_FOUND, NO_CONTENT
 
 from flask import g
 from flask.views import MethodView
@@ -315,7 +315,7 @@ class SingleJobQueueAPI(MethodView):
             jobqueue = JobQueue.query.filter_by(id=queue_rq).first()
 
         if not jobqueue:
-            return jsonify(), OK
+            return jsonify(), NO_CONTENT
 
         num_sub_queues = JobQueue.query.filter_by(parent=jobqueue).count()
         if num_sub_queues > 0:
@@ -331,4 +331,4 @@ class SingleJobQueueAPI(MethodView):
         db.session.commit()
         logger.info("Deleted job queue %s", jobqueue.name)
 
-        return jsonify(), OK
+        return jsonify(), NO_CONTENT
