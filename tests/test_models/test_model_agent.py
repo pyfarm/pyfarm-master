@@ -81,7 +81,6 @@ class AgentTestCase(BaseTestCase):
              ram_allocation, cpu_allocation) in generator:
             agent = Agent()
             agent.hostname = hostname
-            agent.ip = ip
             agent.remote_ip = ip
             agent.port = port
             agent.cpus = cpus
@@ -197,7 +196,6 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
 
         for result, agent, in agents.items():
             self.assertEqual(result.hostname, agent.hostname)
-            self.assertEqual(result.ip, agent.ip)
             self.assertEqual(result.port, agent.port)
             self.assertEqual(result.cpus, agent.cpus)
             self.assertEqual(result.ram, agent.ram)
@@ -210,11 +208,9 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
              ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
             modelA = Agent()
             modelA.hostname = hostname
-            modelA.ip = ip
             modelA.port = port
             modelB = Agent()
             modelB.hostname = hostname
-            modelB.ip = ip
             modelB.port = port
             db.session.add(modelA)
             db.session.add(modelB)
@@ -226,7 +222,7 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
 
     def test_api_url(self):
         model = Agent(
-            hostname="foo", ip="10.56.0.0", port=12345, remote_ip="10.56.0.1",
+            hostname="foo", port=12345, remote_ip="10.56.0.1",
             ram=1024, free_ram=128, cpus=4)
 
         # Commit then retrieve the model so we get the
@@ -249,11 +245,6 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
                     model.api_url(*args),
                     "%s://10.56.0.1:12345/api/v%d" % args)
 
-                model.use_address = UseAgentAddress.LOCAL
-                self.assertEqual(
-                    model.api_url(*args),
-                    "%s://10.56.0.0:12345/api/v%d" % args)
-
                 model.use_address = UseAgentAddress.HOSTNAME
                 self.assertEqual(
                     model.api_url(*args),
@@ -261,7 +252,7 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
 
     def test_api_url_errors(self):
         model = Agent(
-            hostname="foo", ip="10.56.0.0", port=12345, remote_ip="10.56.0.1",
+            hostname="foo", port=12345, remote_ip="10.56.0.1",
             ram=1024, free_ram=128, cpus=4)
 
         # Shouldn't have access to api_url if we're operating under PASSIVE
@@ -297,7 +288,7 @@ class TestModelValidation(AgentTestCase):
 
         for address in fail_addresses:
             with self.assertRaises(ValueError):
-                agent.ip = address
+                agent.remote_ip = address
 
     def test_port_validation(self):
         for model in self.models(limit=1):
