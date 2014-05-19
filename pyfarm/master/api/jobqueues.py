@@ -288,7 +288,7 @@ class SingleJobQueueAPI(MethodView):
             return (jsonify(error="The parent queue cannot be changed"),
                     BAD_REQUEST)
 
-        for name in JobQueue.types().columns:
+        for name in JOBQUEUE_MODEL_MAPPINGS:
             if name in g.json:
                 expected_type = JOBQUEUE_MODEL_MAPPINGS[name]
                 value = g.json.pop(name)
