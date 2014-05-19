@@ -133,7 +133,7 @@ class JobQueueIndexAPI(MethodView):
         db.session.commit()
 
         jobqueue_data = jobqueue.to_dict()
-        logger.info("created job queue %s: %r", jobqueue.name, jobqueue_data)
+        logger.info("Created job queue %s: %r", jobqueue.name, jobqueue_data)
 
         return jsonify(jobqueue_data), CREATED
 
@@ -304,7 +304,7 @@ class SingleJobQueueAPI(MethodView):
         db.session.commit()
 
         jobqueue_data = jobqueue.to_dict()
-        logger.info("updated job queue %s: %r", jobqueue.name, jobqueue_data)
+        logger.info("Updated job queue %s: %r", jobqueue.name, jobqueue_data)
 
         return jsonify(jobqueue_data), OK
 
@@ -329,6 +329,6 @@ class SingleJobQueueAPI(MethodView):
 
         db.session.delete(jobqueue)
         db.session.commit()
-        logger.info("deleted job queue %s", jobqueue.name)
+        logger.info("Deleted job queue %s", jobqueue.name)
 
         return jsonify(), OK
