@@ -265,7 +265,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         max_value = getattr(cls, "MAX_%s" % key.upper())
 
         # check the provided input
-        if min_value <= value <= max_value:
+        if not min_value <= value <= max_value:
             msg = "value for `%s` must be between " % key
             msg += "%s and %s" % (min_value, max_value)
             raise ValueError(msg)
