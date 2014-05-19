@@ -147,7 +147,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                       Number of tasks to run on a single agent at once.
                       Depending on the capabilities of the software being run
                       this will either cause a single process to execute on
-                      the agent or multiple processes on after the other.
+                      the agent or multiple processes one after the other.
 
                       **configured by**: `job.batch`"""))
     requeue = db.Column(db.Integer,
