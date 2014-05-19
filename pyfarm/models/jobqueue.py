@@ -69,7 +69,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                              """))
     weight = db.Column(db.Integer, nullable=False,
                        default=read_env_int(
-                                   "PYFARM_JOBQUEUE_DEFAULT_WEIGHT", 10),
+                                   "PYFARM_QUEUE_DEFAULT_WEIGHT", 10),
                        doc=dedent("""
                             The weight of this job queue.
                             The scheduler will distribute available agents
