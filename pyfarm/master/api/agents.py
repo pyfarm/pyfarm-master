@@ -152,6 +152,26 @@ class AgentIndexAPI(MethodView):
         :statuscode 400: there was something wrong with the request (such as
                          invalid columns being included)
         """
+        # TODO: create/update agent based on incoming request (notes below)
+        # These are rudimentary notes and they probably have some holes
+        #   * create agent and return CREATED if not agents match:
+        #       * g.json["port"]
+        #       * g.json["systemid"]
+        #
+        #   * update agent and return OK if an agent maches:
+        #       * g.json["port"]
+        #       * g.json["systemid"]
+        #
+        # The above should ensure, or should be updated to ensure, that
+        #   * If we see a new agent, meaning a new systemid, we create one
+        #   * If we see an agent with a systemid we've seen before and it's
+        #     on the same port we update it.  This also ensures that fields
+        #     like hostname and state are updated too.
+        #   * If we see an agent with a systemid we've seen before but on a
+        #     new port we create a new agent.  This allows multiple agents
+        #     to run on the same host for testing purposes while at the same
+        #     time the systemid allows us to see the entries as a single host.
+
         # Set remote_ip if it did not come in with the request
         g.json.setdefault("remote_ip", request.remote_addr)
 
