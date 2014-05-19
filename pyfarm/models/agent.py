@@ -127,6 +127,13 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     MIN_RAM = read_env_int("PYFARM_AGENT_MIN_RAM", 16)
     MAX_RAM = read_env_int("PYFARM_AGENT_MAX_RAM", 262144)
 
+    # Static values for the systemid column.  These should not
+    # be changed unless the agent is updated too because this
+    # is the range the agent should be producing for this
+    # column.
+    MIN_SYSTEMID = 0
+    MAX_SYSTEMID = 281474976710655
+
     # quick check of the configured data
     assert MIN_PORT >= 1, "$PYFARM_AGENT_MIN_PORT must be > 0"
     assert MAX_PORT >= 1, "$PYFARM_AGENT_MAX_PORT must be > 0"
@@ -329,9 +336,9 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         """validates the hostname column"""
         return self.validate_hostname(key, value)
 
-    @validates("ram", "cpus", "port")
+    @validates("ram", "cpus", "port", "systemid")
     def validate_resource_column(self, key, value):
-        """validates the ram, cpus, and port columns"""
+        """validates the ram, systemid, cpus and port columns"""
         return self.validate_resource(key, value)
 
     @validates("remote_ip")
