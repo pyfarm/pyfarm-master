@@ -32,7 +32,7 @@ from pyfarm.master.application import db
 from pyfarm.models.core.types import (
     id_column, IDTypeWork, IPAddress, WorkStateEnum)
 
-DEFAULT_PRIORITY = read_env_int("PYFARM_QUEUE_DEFAULT_PRIORITY", 0)
+DEFAULT_PRIORITY = read_env_int("PYFARM_QUEUE_DEFAULT_PRIORITY", 5)
 
 
 def modelfor(model, table):
@@ -49,7 +49,7 @@ def modelfor(model, table):
         return model.__tablename__ == table
     except AttributeError:
         return False
-    
+
 
 def getuuid(value, table, table_attrib, error_tail):
     """
