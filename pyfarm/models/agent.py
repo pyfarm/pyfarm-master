@@ -275,11 +275,17 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             return value
 
         try:
-            IPAddress(value)
+            address = IPAddress(value)
 
         except (AddrFormatError, ValueError) as e:
             raise ValueError(
                 "%s is not a valid address format: %s" % (value, e))
+
+        if not all([
+                not address.is_hostmask(), not address.is_link_local(),
+                not address.is_loopback(), not address.is_multicast(),
+                not address.is_netmask(), not address.is_reserved()]):
+            raise ValueError("%s is not a valid address" % value)
 
         return value
 
@@ -298,15 +304,18 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         assert isinstance(version, int)
 
         if self.use_address == UseAgentAddress.REMOTE:
-            address = self.remote_ip
+            return "%s://%s:%d/api/v%d" % (
+                scheme, self.remote_ip, self.port, version)
+
         elif self.use_address == UseAgentAddress.HOSTNAME:
-            address = self.hostname
+            return "%s://%s:%d/api/v%d" % (
+                scheme, self.hostname, self.port, version)
+
         else:
             raise ValueError(
-                "Cannot provide a url, agent %s's state is %s" % (
-                    self.id, repr(self.use_address)))
+                "Cannot construct an agent API url using mode %r "
+                "`use_address`" % self.use_address)
 
-        return "%s://%s:%d/api/v%d" % (scheme, address, self.port, version)
 
     @validates("hostname")
     def validate_hostname_column(self, key, value):
