@@ -32,7 +32,7 @@ from netaddr import AddrFormatError, IPAddress
 from pyfarm.core.enums import (
     AgentState, STRING_TYPES, UseAgentAddress, INTEGER_TYPES)
 from pyfarm.core.config import read_env_number, read_env_int, read_env
-from pyfarm.master.application import db
+from pyfarm.master.application import db, app
 from pyfarm.models.core.functions import repr_ip
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, UtilityMixins, ReprMixin, ValidateWorkStateMixin)
@@ -295,11 +295,15 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             raise ValueError(
                 "%s is not a valid address format: %s" % (value, e))
 
-        if not all([
-                not address.is_hostmask(), not address.is_link_local(),
-                not address.is_loopback(), not address.is_multicast(),
-                not address.is_netmask(), not address.is_reserved()]):
-            raise ValueError("%s is not a valid address" % value)
+        if app.config.get("PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES"):
+            loopback = lambda: False
+        else:
+            loopback = address.is_loopback
+
+        if any([address.is_hostmask(), address.is_link_local(),
+                loopback(), address.is_multicast(),
+                address.is_netmask(), address.is_reserved()]):
+            raise ValueError("%s is not a valid address type" % value)
 
         return value
 
