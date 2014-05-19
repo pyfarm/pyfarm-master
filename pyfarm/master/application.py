@@ -41,7 +41,7 @@ from sqlalchemy import event
 from werkzeug.exceptions import BadRequest
 
 from pyfarm.core.enums import NOTSET
-from pyfarm.core.config import read_env
+from pyfarm.core.config import read_env, read_env_bool
 from pyfarm.master.admin.baseview import AdminIndex
 
 POST_METHODS = set(("POST", "PUT"))
@@ -111,6 +111,9 @@ def get_application(**configuration_keywords):
     app_config.setdefault(
         "JSONIFY_PRETTYPRINT_REGULAR",
         app_config.get("PYFARM_JSON_PRETTY", True))
+    app_config.setdefault(
+        "ALLOW_AGENT_LOOPBACK_ADDRESSES",
+        read_env_bool("PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES", False))
 
     static_folder = configuration_keywords.pop("static_folder", None)
     if static_folder is None:  # static folder not provided
