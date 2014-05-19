@@ -23,9 +23,12 @@ from os import walk
 from os.path import isfile, join
 from setuptools import setup
 
+# Version requirements explanations:
+#   sqlalchemy: Bugfix for pymysql in Python 3
+#   flask-admin: New form helps that support async JavaScript requests
 install_requires = [
     "pyfarm.core", 
-    "sqlalchemy", 
+    "sqlalchemy>=0.9.3",
     "flask",
     "flask-admin>=1.0.7",
     "flask-login", 
