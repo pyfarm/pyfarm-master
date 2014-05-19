@@ -40,6 +40,10 @@ from pyfarm.master.utility import jsonify, validate_with_model
 logger = getLogger("api.jobqueues")
 
 
+# Load model mappings once per process
+JOBQUEUE_MODEL_MAPPINGS = JobQueue.types().mappings
+
+
 def schema():
     """
     Returns the basic schema of :class:`.JobQueue`
@@ -286,7 +290,7 @@ class SingleJobQueueAPI(MethodView):
 
         for name in JobQueue.types().columns:
             if name in g.json:
-                expected_type = JobQueue.types().mappings[name]
+                expected_type = JOBQUEUE_MODEL_MAPPINGS[name]
                 value = g.json.pop(name)
                 if not isinstance(value, expected_type):
                     return (jsonify(error="Column `%s` is of type %r, but we "
