@@ -247,14 +247,18 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     @classmethod
     def validate_resource(cls, key, value):
         """
-        Ensure the `value` provided for `key` is within an expected range as
-        specified in `agent.yml`
+        Ensure the ``value`` provided for ``key`` is within an expected
+        range.  This classmethod retrieves the min and max values from
+        the :class:`Agent` class directory using:
+
+            >>> min_value = getattr(Agent, "MIN_%s" % key.upper())
+            >>> max_value = getattr(Agent, "MAX_%s" % key.upper())
         """
         min_value = getattr(cls, "MIN_%s" % key.upper())
         max_value = getattr(cls, "MAX_%s" % key.upper())
 
         # check the provided input
-        if min_value > value or value > max_value:
+        if min_value <= value <= max_value:
             msg = "value for `%s` must be between " % key
             msg += "%s and %s" % (min_value, max_value)
             raise ValueError(msg)
