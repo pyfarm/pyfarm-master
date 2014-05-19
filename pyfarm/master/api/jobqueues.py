@@ -309,6 +309,28 @@ class SingleJobQueueAPI(MethodView):
         return jsonify(jobqueue_data), OK
 
     def delete(self, queue_rq):
+        """
+        A ``DELETE`` to this endpoint will delete the specified job queue
+
+        .. http:delete:: /api/v1/jobqueue/HTTP/[<str:name>|<int:id>] 1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/jobs/Test%20Queue HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 204 NO_CONTENT
+
+        :statuscode 204: the job queue was deleted or didn't exist
+        :statuscode 409: the job queue cannot be deleted because it still
+                            contains jobs or child queues
+        """
         if isinstance(queue_rq, STRING_TYPES):
             jobqueue = JobQueue.query.filter_by(name=queue_rq).first()
         else:
