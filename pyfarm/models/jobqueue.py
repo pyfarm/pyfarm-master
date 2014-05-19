@@ -59,7 +59,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                           of agents to jobs in or below this queue."""))
     priority = db.Column(db.Integer, nullable=False,
                          default=read_env_int(
-                                   "PYFARM_JOBQUEUE_DEFAULT_PRIO", 5),
+                                   "PYFARM_QUEUE_DEFAULT_PRIORITY", 5),
                          doc=dedent("""
                              The priority of this job queue.
                              The scheduler will not assign any nodes to other
