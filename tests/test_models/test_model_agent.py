@@ -16,6 +16,7 @@
 
 from __future__ import with_statement
 import uuid
+from random import randint
 
 from sqlalchemy.exc import DatabaseError
 
@@ -86,6 +87,7 @@ class AgentTestCase(BaseTestCase):
             agent.cpus = cpus
             agent.free_ram = agent.ram = ram
             agent.state = state
+            agent.systemid = randint(Agent.MIN_SYSTEMID, Agent.MAX_SYSTEMID)
             agent.ram_allocation = ram_allocation
             agent.cpu_allocation = cpu_allocation
             yield agent
@@ -223,7 +225,7 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
     def test_api_url(self):
         model = Agent(
             hostname="foo", port=12345, remote_ip="10.56.0.1",
-            ram=1024, free_ram=128, cpus=4)
+            ram=1024, free_ram=128, cpus=4, systemid=42)
 
         # Commit then retrieve the model so we get the
         # custom types applied to the columns.  Otherwise
@@ -253,7 +255,7 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
     def test_api_url_errors(self):
         model = Agent(
             hostname="foo", port=12345, remote_ip="10.56.0.1",
-            ram=1024, free_ram=128, cpus=4)
+            ram=1024, free_ram=128, cpus=4, systemid=42)
 
         # Shouldn't have access to api_url if we're operating under PASSIVE
         model.use_address = UseAgentAddress.PASSIVE
