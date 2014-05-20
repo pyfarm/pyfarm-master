@@ -41,6 +41,7 @@ from pyfarm.models.software import (
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task, TaskDependencies
 from pyfarm.models.job import Job, JobDependencies
+from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
@@ -312,12 +313,164 @@ def get_batch_agent_pair(priority, except_job_ids=None):
     return batch, selected_agent
 
 
+def read_queue_tree(queue):
+    # Agents already assigned to this queue before the weight scheduler runs
+    queue.preassigned_agents = 0
+    queue.can_use_more_agents = True
+    queue.total_assigned_agents = 0
+
+    child_queues_query = JobQueue.query.filter_by(parent_jobqueue_id=queue.id)
+
+    queue.branches = []
+    for child_queue in child_queues_query:
+        child_queue = read_queue_tree(child_queue)
+        queue.total_assigned_agents += child_queue.total_assigned_agents
+        queue.branches.append(child_queue)
+
+    child_jobs_query = Job.query.filter(Job.job_queue_id == queue.id,
+                                        or_(Job.state == WorkState.RUNNING,
+                                            Job.state == NULL))
+    for job in child_jobs_query:
+        # TODO Get this number as part of the above query, so we don't do one
+        # query per job
+        num_assigned_agents = Agent.query.filter(
+            Agent.tasks.any(and_(
+                or_(Task.state == WorkState.RUNNING, Task.state == None),
+                Task.job == job))).count()
+        job.total_assigned_agents = num_assigned_agents
+        job.can_use_more_agents = True
+        queue.total_assigned_agents += num_assigned_agents
+        queue.branches.append(job)
+
+    return queue
+
+
+def assign_agents_by_weight(objects, max_agents):
+    max_weight = 1
+    min_weight = 1
+    objects_at_weights = {}
+    for i in objects:
+        i.preassigned_agents = i.total_assigned_agents
+        max_weight = max(max_weight, i.weight)
+        min_weight = min(min_weight, i.weight)
+        objects_at_weights[i.weight] = i
+
+    assigned_agents = []
+    agents_needed = True
+    while max_agents > 0 and agents_needed:
+        assigned_this_round = 0
+        for floor in range_(max_weight, min_weight-1, -1):
+            for current_weight in range_(max_weight, floor-1, -1):
+                if current_weight in objects_at_weights:
+                    for i in objects_at_weights[current_weight]:
+                        if max_agents > 0 and i.can_use_more_agents:
+                            assigned = []
+                            if i.preassigned_agents > 0:
+                                i.preassigned_agents -= 1
+                                assigned_this_round += 1
+                            elif (isinstance(i, Job) and
+                                  (not i.maximum_agents or
+                                       i.maximum_agents >
+                                           i.total_assigned_agents)):
+                                assigned = assign_agents_to_job(i, 1)
+                                if len(assigned) > 0:
+                                    i.state = WorkState.RUNNING
+                            elif (not i.maximum_agents or
+                                      i.maximum_agents >
+                                          i.total_assigned_agents):
+                                assigned = assign_agents_to_queue(i, 1)
+                            assigned_this_round += len(assigned)
+                            max_agents -= len(assigned)
+                            assigned_agents += assigned
+                            i.total_assigned_agents += len(assigned)
+        if assigned_this_round == 0:
+            agents_needed = False
+
+    return assigned_agents
+
+
+# TODO Make this a method of JobQueue and Job called assign_agents
+def assign_agents_to_queue(queue, max_agents):
+    """
+    Distribute up to max_agents among the jobs and subqueues of queue.
+    Returns the list of agents that have been assigned new tasks.
+    """
+    assigned_agents = []
+
+    # Before anything else, make sure minima are satisfied
+    minima_satisfied = False
+    while max_agents > 0 and not minima_satisfied:
+        unsatisfied_minima = 0
+        for branch in queue.branches:
+            if (branch.minimum_agents and
+                branch.minimum_agents > branch.total_assigned_agents and
+                branch.can_use_more_agents):
+                if isinstance(branch, Job):
+                    assigned = assign_agents_to_job(branch, 1)
+                    if len(assigned) > 0:
+                        branch.state = WorkState.RUNNING
+                else:
+                    assigned = assign_agents_to_queue(branch, 1)
+                max_agents -= len(assigned)
+                assigned_agents += assigned
+                queue.total_assigned_agents += len(assigned)
+                if (branch.minimum_agents > branch.total_assigned_agents and
+                    branch.can_use_more_agents):
+                    unsatisfied_minima += 1
+        minima_satisfied = unsatisfied_minima == 0
+
+    # Early return if we have used up the available agents at this point
+    if max_agents <= 0:
+        return assigned_agents
+
+    objects_by_priority = {}
+    for branch in queue.branches:
+        if branch.priority not in objects_by_priority:
+            objects_by_priority[branch.priority] = [branch]
+        else:
+            objects_by_priority[branch.priority] += [branch]
+    available_priorities = sorted(objects_by_priority.keys(), reverse=True)
+
+    for priority in available_priorities:
+        objects = objects_by_priority[priority]
+        agents_needed = True
+        while max_agents > 0 and agents_needed:
+            # Not started jobs don't get anything as long running ones or
+            # subqueues still need agents
+            running_jobs = [x for x in objects if isinstance(x, Job) and
+                            x.state == WorkState.RUNNING]
+            subqueues = [x for x in objects if isinstance(x, JobQueue) and
+                         x.can_use_more_agents]
+            assigned = assign_agents_by_weight(running_jobs + subqueues,
+                                               max_agents)
+            max_agents -= len(assigned)
+            assigned_agents += assigned
+            assigned_this_round = assigned
+            queue.total_assigned_agents += len(assigned)
+
+            if max_agents > 0:
+                # TODO When starting jobs, start the oldest one first
+                assigned = assign_agents_by_weight(objects, max_agents)
+                max_agents -= len(assigned)
+                assigned_agents += assigned
+                assigned_this_round += assigned
+                queue.total_assigned_agents += len(assigned)
+
+            if assigned_this_round == 0:
+                agents_needed = False
+
+    if len(assigned_agents) == 0:
+        queue.can_use_more_agents = False
+
+    return assigned_agents
+
+
 @celery_app.task(ignore_result=True,
                  rate_limit=read_env("PYFARM_SCHEDULER_RATE_LIMIT", "1/s"))
 def assign_tasks():
     """
-    Assigns unassigned tasks to agents that can take them, with proportionally
-    more agents going to tasks with higher priorities.
+    Descends the tree of job queues recursively to assign agents to the jobs
+    registered with those queues
     """
     logger.info("Assigning tasks to agents")
     tasks_query = Task.query.filter(
@@ -342,57 +495,11 @@ def assign_tasks():
         logger.info("No idle agents, not assigning anything")
         return
 
-    runnable_tasks = Task.query.filter(or_(
-        Task.state == None, ~Task.state.in_([WorkState.PAUSED,
-                                             WorkState.DONE,
-                                             WorkState.FAILED]))).all()
+    tree_root = read_queue_tree(JobQueue())
+    agents_with_new_tasks = assign_agents_to_queue(tree_root, idle_agents)
 
-    num_tasks_by_prio = {}
-    for task in runnable_tasks:
-        num_tasks_by_prio.setdefault(task.priority, 0)
-        num_tasks_by_prio[task.priority] += 1
-
-    max_prio = max(num_tasks_by_prio.keys())
-    min_prio = min(num_tasks_by_prio.keys())
-
-    # Preexisting assignments
-    agent_with_tasks_at_prio = {}
-    for priority in range_(min_prio, max_prio + 1):
-        agent_with_tasks_at_prio[priority] = agents_with_tasks_at_prio(priority)
-
-    # main scheduler loop
-    # This works like a weighted fair queue with every priority forming its own
-    # input queue.
-    matchables_left = True
-    agents_with_new_tasks = []
-    while unassigned_tasks and idle_agents and matchables_left:
-        for floor in range_(max_prio, min_prio-1, -1):
-            assigned = 0
-            for current_prio in range_(max_prio, floor-1, -1):
-                if agent_with_tasks_at_prio[current_prio] > 0:
-                    agent_with_tasks_at_prio[current_prio] -= 1
-                    assigned += 1
-                else:
-                    batch_agent_tuple = get_batch_agent_pair(current_prio)
-                    if batch_agent_tuple:
-                        batch, agent = batch_agent_tuple
-                        for task in batch:
-                            task.agent = agent
-                            db.session.add(task)
-                            logger.info("Assigning task %s (frame %s from job"
-                                        " %s) to agent %s (id %s)",
-                                        task.id, task.frame, task.job.title,
-                                        agent.hostname, agent.id)
-                        assigned += 1
-                        idle_agents -= 1
-                        unassigned_tasks -= len(batch)
-                        agents_with_new_tasks.append(agent)
-                        db.session.flush()
-            if floor == min_prio and assigned == 0:
-                logger.info("None of the unassigned tasks are compatible with "
-                            "any of the idle agents")
-                matchables_left = False
-
+    for agent in agents_with_new_tasks:
+        db.session.add(agent)
     db.session.commit()
 
     for agent in agents_with_new_tasks:
