@@ -361,8 +361,6 @@ def assign_agents_to_queue(queue, max_agents):
                 branch.can_use_more_agents):
                 if isinstance(branch, Job):
                     assigned = assign_agents_to_job(branch, 1)
-                    if len(assigned) > 0:
-                        branch.state = WorkState.RUNNING
                 else:
                     assigned = assign_agents_to_queue(branch, 1)
                 max_agents -= len(assigned)
