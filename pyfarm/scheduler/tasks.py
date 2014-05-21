@@ -157,7 +157,7 @@ def agents_with_tasks_at_prio(priority):
 
 
 def satisfies_requirements(agent, job):
-    logger.debug("Checking to see if agent %s satisfies the requirements for "
+    logger.debug("Checking whether agent %s satisfies the requirements for "
                  "job %s", agent.hostname, job.title)
     requirements_to_satisfy = (list(job.software_requirements) +
                                list(job.jobtype_version.software_requirements))
