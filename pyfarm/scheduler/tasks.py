@@ -304,7 +304,10 @@ def assign_agents_by_weight(objects, max_agents):
         i.preassigned_agents = i.total_assigned_agents
         max_weight = max(max_weight, i.weight)
         min_weight = min(min_weight, i.weight)
-        objects_at_weights[i.weight] = i
+        if i.weight in objects_at_weights:
+            objects_at_weights[i.weight] += [i]
+        else:
+            objects_at_weights[i.weight] = [i]
 
     assigned_agents = []
     agents_needed = True
