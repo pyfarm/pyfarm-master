@@ -329,7 +329,7 @@ def read_queue_tree(queue):
 
     child_jobs_query = Job.query.filter(Job.job_queue_id == queue.id,
                                         or_(Job.state == WorkState.RUNNING,
-                                            Job.state == NULL))
+                                            Job.state == None))
     for job in child_jobs_query:
         # TODO Get this number as part of the above query, so we don't do one
         # query per job
