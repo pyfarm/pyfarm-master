@@ -408,7 +408,7 @@ def assign_agents_to_queue(queue, max_agents):
                 assigned_this_round += assigned
                 queue.total_assigned_agents += len(assigned)
 
-            if assigned_this_round == 0:
+            if len(assigned_this_round) == 0:
                 agents_needed = False
 
     if len(assigned_agents) == 0:
