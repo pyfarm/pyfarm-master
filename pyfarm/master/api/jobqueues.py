@@ -21,9 +21,10 @@ Job Queues
 This module defines an API for managing and querying job queues
 """
 try:
-    from httplib import OK, CREATED, CONFLICT, NOT_FOUND, NO_CONTENT
+    from httplib import OK, CREATED, CONFLICT, NOT_FOUND, NO_CONTENT, BAD_REQUEST
 except ImportError:  # pragma: no cover
-    from http.client import OK, CREATED, CONFLICT, NOT_FOUND, NO_CONTENT
+    from http.client import (
+        OK, CREATED, CONFLICT, NOT_FOUND, NO_CONTENT, BAD_REQUEST)
 
 from flask import g
 from flask.views import MethodView
@@ -299,6 +300,9 @@ class SingleJobQueueAPI(MethodView):
                                                      expected_type)),
                                     BAD_REQUEST)
                 setattr(jobqueue, name, value)
+
+        if g.json:
+            return jsonify(error="Unkown columns: %s" % g.json), BAD_REQUEST
 
         db.session.add(jobqueue)
         db.session.commit()
