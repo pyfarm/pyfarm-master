@@ -149,13 +149,6 @@ def send_tasks_to_agent(self, agent_id):
                 raise
 
 
-def agents_with_tasks_at_prio(priority):
-    query = Agent.query.filter(~Agent.state.in_([AgentState.OFFLINE,
-                                                 AgentState.DISABLED]))
-    query = query.filter(Agent.tasks.any(Task.priority == priority))
-    return query.count()
-
-
 def satisfies_requirements(agent, job):
     logger.debug("Checking whether agent %s satisfies the requirements for "
                  "job %s", agent.hostname, job.title)
