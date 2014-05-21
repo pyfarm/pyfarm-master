@@ -32,7 +32,7 @@ from pyfarm.master.application import db
 from pyfarm.models.core.types import (
     id_column, IDTypeWork, IPAddress, WorkStateEnum)
 
-DEFAULT_PRIORITY = read_env_int("PYFARM_QUEUE_DEFAULT_PRIORITY", 5)
+DEFAULT_PRIORITY = read_env_int("PYFARM_QUEUE_DEFAULT_PRIORITY", 0)
 
 
 def modelfor(model, table):
