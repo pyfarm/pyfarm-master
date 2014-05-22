@@ -419,7 +419,8 @@ class SingleAgentAPI(MethodView):
 
     @validate_with_model(
         Agent, disallow=("id", ),
-        ignore_missing=("ram", "cpus", "port", "free_ram", "hostname"))
+        ignore_missing=(
+                "ram", "cpus", "port", "free_ram", "hostname", "systemid"))
     def post(self, agent_id):
         """
         Update an agent's columns with new information by merging the provided
