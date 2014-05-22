@@ -194,7 +194,8 @@ class AgentIndexAPI(MethodView):
             if isinstance(e, (ProgrammingError, IntegrityError)) \
                     and "unique" in db_error or "duplicate" in db_error:
                 error = "Cannot create agent because the provided data for " \
-                        "`ip`, `hostname` and/or `port` was not unique enough."
+                        "`systemid`, `hostname` and/or `port` was not unique" \
+                        " enough."
                 return jsonify(error=error), CONFLICT
 
             # Output varies by db and api so we're not going to be explicit
