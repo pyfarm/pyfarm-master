@@ -295,7 +295,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             raise ValueError(
                 "%s is not a valid address format: %s" % (value, e))
 
-        if app.config.get("PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES"):
+        if app.config.get("ALLOW_AGENT_LOOPBACK_ADDRESSES"):
             loopback = lambda: False
         else:
             loopback = address.is_loopback
