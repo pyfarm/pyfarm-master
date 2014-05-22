@@ -152,57 +152,28 @@ class AgentIndexAPI(MethodView):
         :statuscode 400: there was something wrong with the request (such as
                          invalid columns being included)
         """
-        # TODO: create/update agent based on incoming request (notes below)
-        # These are rudimentary notes and they probably have some holes
-        #   * create agent and return CREATED if not agents match:
-        #       * g.json["port"]
-        #       * g.json["systemid"]
-        #
-        #   * update agent and return OK if an agent maches:
-        #       * g.json["port"]
-        #       * g.json["systemid"]
-        #
-        # The above should ensure, or should be updated to ensure, that
-        #   * If we see a new agent, meaning a new systemid, we create one
-        #   * If we see an agent with a systemid we've seen before and it's
-        #     on the same port we update it.  This also ensures that fields
-        #     like hostname and state are updated too.
-        #   * If we see an agent with a systemid we've seen before but on a
-        #     new port we create a new agent.  This allows multiple agents
-        #     to run on the same host for testing purposes while at the same
-        #     time the systemid allows us to see the entries as a single host.
-
         # Set remote_ip if it did not come in with the request
         g.json.setdefault("remote_ip", request.remote_addr)
 
-        try:
-            new_agent = Agent(**g.json)
+        agent = Agent.query.filter_by(
+            port=g.json["port"], systemid=g.json["systemid"]).first()
 
-        # There may be something wrong with one of the fields
-        # that's causing our sqlalchemy model raise a ValueError.
-        except ValueError as e:
-            return jsonify(error=str(e)), BAD_REQUEST
-        db.session.add(new_agent)
+        if agent is None:
+            try:
+                agent = Agent(**g.json)
 
-        try:
-            db.session.commit()
+            # There may be something wrong with one of the fields
+            # that's causing our sqlalchemy model raise a ValueError.
+            except ValueError as e:
+                return jsonify(error=str(e)), BAD_REQUEST
 
-        except Exception as e:
-            db_error = e.args[0].lower()
+            db.session.add(agent)
 
-            # known cases for CONFLICT
-            if isinstance(e, (ProgrammingError, IntegrityError)) \
-                    and "unique" in db_error or "duplicate" in db_error:
-                error = "Cannot create agent because the provided data for " \
-                        "`systemid`, `hostname` and/or `port` was not unique" \
-                        " enough."
-                return jsonify(error=error), CONFLICT
+            try:
+                db.session.commit()
 
-            # Output varies by db and api so we're not going to be explicit
-            # here in terms of what we're checking.  Between the exception
-            # type we're catching and this check it should be rare
-            # that we hit this case.
-            else:  # pragma: no cover
+            except Exception as e:
+                e = e.args[0].lower()
                 error = "Unhandled error: %s.  This is often an issue " \
                         "with the agent's data for `ip`, `hostname` and/or " \
                         "`port` not being unique enough.  In other cases " \
@@ -214,10 +185,49 @@ class AgentIndexAPI(MethodView):
 
                 return jsonify(error=error), INTERNAL_SERVER_ERROR
 
-        agent_data = new_agent.to_dict()
-        logger.info("Created agent %r: %r", new_agent.id, agent_data)
-        assign_tasks.delay()
-        return jsonify(agent_data), CREATED
+            else:
+                agent_data = agent.to_dict()
+                logger.info("Created agent %r: %r", agent.id, agent_data)
+                assign_tasks.delay()
+                return jsonify(agent_data), CREATED
+
+        else:
+            updated = False
+
+            for key in g.json.copy():
+                value = g.json.pop(key)
+
+                if not hasattr(agent, key):
+                    return jsonify(
+                        error="Agent has no such column `%s`" % key), \
+                           BAD_REQUEST
+
+                if getattr(agent, key) != value:
+                    try:
+                        setattr(agent, key, value)
+
+                    except Exception as e:
+                        return jsonify(
+                            error="Error while setting `%s`: %s" % (key, e)), \
+                               BAD_REQUEST
+                    else:
+                        updated = True
+
+            if updated:
+                db.session.add(agent)
+
+                try:
+                    db.session.commit()
+
+                except Exception as e:
+                    return jsonify(error="Unhandled error: %s" % e), \
+                           INTERNAL_SERVER_ERROR
+
+                else:
+                    agent_data = agent.to_dict()
+                    logger.info("Updated agent %r: %r", agent.id, agent_data)
+                    assign_tasks.delay()
+                    return jsonify(agent_data), OK
 
     def get(self):
         """
