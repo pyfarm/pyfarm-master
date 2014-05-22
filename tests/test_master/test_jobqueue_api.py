@@ -212,3 +212,74 @@ class TestJobQueueAPI(BaseTestCase):
                 }))
         self.assert_bad_request(response2)
 
+    def test_jobqueue_delete(self):
+        response1 = self.client.post(
+            "/api/v1/jobqueues/",
+            content_type="application/json",
+            data=dumps({"name": "Test JobQueue"}))
+        self.assert_created(response1)
+
+        response2 = self.client.delete("/api/v1/jobqueues/Test%20JobQueue")
+        self.assert_no_content(response2)
+
+        response3 = self.client.get("/api/v1/jobqueues/Test%20JobQueue")
+        self.assert_not_found(response3)
+
+    def test_jobqueue_delete_unknown(self):
+        response1 = self.client.delete("/api/v1/jobqueues/Unknown%20JobQueue")
+        self.assert_no_content(response1)
+
+    def test_jobqueue_delete_with_child_queues(self):
+        response1 = self.client.post(
+            "/api/v1/jobqueues/",
+            content_type="application/json",
+            data=dumps({"name": "Test JobQueue"}))
+        self.assert_created(response1)
+        parent_id = response1.json["id"]
+
+        response2 = self.client.post(
+            "/api/v1/jobqueues/",
+            content_type="application/json",
+            data=dumps({
+                "name": "Child Queue",
+                "parent_jobqueue_id": parent_id}))
+        self.assert_created(response2)
+
+        response3 = self.client.delete("/api/v1/jobqueues/%s" % parent_id)
+        self.assert_conflict(response3)
+
+    def test_jobqueue_delete_with_jobs(self):
+        response1 = self.client.post(
+            "/api/v1/jobqueues/",
+            content_type="application/json",
+            data=dumps({"name": "Test JobQueue"}))
+        self.assert_created(response1)
+        parent_id = response1.json["id"]
+
+        response2 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": "ignored"
+                    }))
+        self.assert_created(response2)
+        jobtype_id = response2.json['id']
+
+        response3 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "job_queue_id": parent_id
+                    }))
+        self.assert_created(response3)
+
+        response4 = self.client.delete("/api/v1/jobqueues/Test%20JobQueue")
+        self.assert_conflict(response4)
