@@ -57,19 +57,24 @@ class AgentTestCase(BaseTestCase):
         "192.168.255.255")
 
     def modelArguments(self, limit=None):
+        if db.engine.name != "sqlite3":
+            system_ids = (Agent.MIN_SYSTEMID, Agent.MAX_SYSTEMID)
+        else:
+            system_ids = (Agent.MIN_SYSTEMID, 1)
+
         generator = product(
             self.addresses, self.ports, self.cpus, self.ram, self.states,
-            self.ram_allocation, self.cpu_allocation)
+            self.ram_allocation, self.cpu_allocation, system_ids)
 
         count = 0
         for (ip, port, cpus, ram, state,
-             ram_allocation, cpu_allocation) in generator:
+             ram_allocation, cpu_allocation, system_id) in generator:
             if limit is not None and count >= limit:
                 break
 
             yield (
                 "%s%02d" % (self.hostnamebase, count), ip, port,
-                cpus, ram, state, ram_allocation, cpu_allocation)
+                cpus, ram, state, ram_allocation, cpu_allocation, system_id)
             count += 1
 
     def models(self, limit=None):
@@ -79,7 +84,7 @@ class AgentTestCase(BaseTestCase):
         """
         generator = self.modelArguments(limit=limit)
         for (hostname, ip, port, cpus, ram, state,
-             ram_allocation, cpu_allocation) in generator:
+             ram_allocation, cpu_allocation, systemid) in generator:
             agent = Agent()
             agent.hostname = hostname
             agent.remote_ip = ip
@@ -87,7 +92,7 @@ class AgentTestCase(BaseTestCase):
             agent.cpus = cpus
             agent.free_ram = agent.ram = ram
             agent.state = state
-            agent.systemid = randint(Agent.MIN_SYSTEMID, Agent.MAX_SYSTEMID)
+            agent.systemid = systemid
             agent.ram_allocation = ram_allocation
             agent.cpu_allocation = cpu_allocation
             yield agent
@@ -191,7 +196,12 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
     def test_basic_insert(self):
         agents = list(self.models())
         db.session.add_all(agents)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except OverflowError:
+            if db.engine.name == "sqlite":
+                self.skipTest("Cannot test with sqlite, integer Overflow")
+
         agents = dict(
             (Agent.query.filter_by(id=agent.id).first(), agent)
             for agent in agents)
@@ -207,13 +217,16 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
 
     def test_basic_insert_nonunique(self):
         for (hostname, ip, port, cpus, ram, state,
-             ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
+             ram_allocation, cpu_allocation, systemid) in \
+                self.modelArguments(limit=1):
             modelA = Agent()
             modelA.hostname = hostname
             modelA.port = port
+            modelA.systemid = systemid
             modelB = Agent()
             modelB.hostname = hostname
             modelB.port = port
+            modelB.systemid = systemid
             db.session.add(modelA)
             db.session.add(modelB)
 

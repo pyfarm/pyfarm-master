@@ -130,24 +130,6 @@ class TestAgentAPI(BaseTestCase):
 
         self.assert_contents_equal(created_agents, expected_agents)
 
-    def test_create_agent_not_unique_enough(self):
-        agent = {
-            "cpu_allocation": 1.0, "cpus": 16, "free_ram": 133, "systemid": 3,
-             "hostname": "testagent2", "remote_ip": "10.0.200.2", "port": 64996,
-             "ram": 2048, "ram_allocation": 0.8, "state": "running"}
-        response = self.client.post(
-            "/api/v1/agents/",
-            content_type="application/json",
-            data=dumps(agent))
-        self.assert_created(response)
-        response = self.client.post(
-            "/api/v1/agents/",
-            content_type="application/json",
-            data=dumps(agent))
-        self.assert_conflict(response)
-        self.assertIn("Cannot create agent", response.json["error"])
-        self.assertIn("was not unique enough", response.json["error"])
-
     def test_post_agents(self):
         response1 = self.client.post(
             "/api/v1/agents/",
