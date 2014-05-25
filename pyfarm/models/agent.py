@@ -132,7 +132,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     # is the range the agent should be producing for this
     # column.
     MIN_SYSTEMID = 0
-    MAX_SYSTEMID = 18446744073709551615
+    MAX_SYSTEMID = 281474976710655
 
     # quick check of the configured data
     assert MIN_PORT >= 1, "$PYFARM_AGENT_MIN_PORT must be > 0"
