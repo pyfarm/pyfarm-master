@@ -93,10 +93,17 @@ class AgentIndexAPI(MethodView):
     @validate_with_model(Agent, disallow=("id", ))
     def post(self):
         """
-        A ``POST`` to this endpoint will always create a new agent. If you're
-        looking to update an existing agent you should use url parameters and
-        ``GET`` on ``/api/v1/agents/`` to find the agent you're looking for
-         before performing an update or replacement of an agent's data.
+        A ``POST`` to this endpoint will either create or update an existing
+        agent.  The ``port`` and ``systemid`` columns will determine if an
+        agent already exists.
+
+            * If an agent is found matching the ``port`` and ``systemid``
+              columns from the request the existing model will be updated and
+              the resulting data and the ``OK`` code will be returned.
+
+            * If we don't find an agent matching the ``port`` and ``systemid``
+              however a new agent will be created and the resulting data and the
+              ``CREATED`` code will be returned.
 
         .. note::
             The ``remote_ip`` field is not required and should typically
@@ -126,7 +133,7 @@ class AgentIndexAPI(MethodView):
                     "state": 8
                  }
 
-            **Response**
+            **Response (agent created)**
 
             .. sourcecode:: http
 
@@ -148,7 +155,29 @@ class AgentIndexAPI(MethodView):
                     "remote_ip": "10.196.200.115"
                  }
 
+            **Response (existing agent updated)**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "cpu_allocation": 1.0,
+                    "cpus": 14,
+                    "use_address": "remote",
+                    "free_ram": 133,
+                    "time_offset": 0,
+                    "hostname": "agent1",
+                    "id": 1,
+                    "port": 64994,
+                    "ram": 2157,
+                    "ram_allocation": 0.8,
+                    "state": "online",
+                    "remote_ip": "10.196.200.115"
+                 }
         :statuscode 201: a new agent was created
+        :statuscode 200: an existing agent is updated with data from the request
         :statuscode 400: there was something wrong with the request (such as
                          invalid columns being included)
         """
