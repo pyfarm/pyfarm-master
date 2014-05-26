@@ -294,6 +294,11 @@ def assign_agents_to_job(job, max_agents):
         else:
             agents_needed = False
 
+    if not assigned_agents:
+        job.can_use_more_agents = False
+        logger.info("Could not find any agent for job %s (id %s)", job.title,
+                    job.id)
+
     return assigned_agents
 
 def assign_agents_by_weight(objects, max_agents):
