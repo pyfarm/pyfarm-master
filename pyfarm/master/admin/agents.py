@@ -21,7 +21,7 @@ Agent
 Objects and classes for working with the agent models.
 """
 
-from wtforms import TextField, SelectField
+from wtforms import SelectField
 from sqlalchemy import not_
 
 from pyfarm.core.enums import AgentState, UseAgentAddress
@@ -31,8 +31,7 @@ from pyfarm.models.tag import Tag
 from pyfarm.master.application import SessionMixin
 from pyfarm.master.admin.baseview import SQLModelView
 from pyfarm.master.admin.core import (
-    validate_resource, validate_address, validate_hostname,
-    check_dns_mapping, AjaxLoader, BaseFilter)
+    validate_resource, validate_hostname, AjaxLoader, BaseFilter)
 
 
 def repr_agent(model):
@@ -40,10 +39,7 @@ def repr_agent(model):
     Returns a string which translates the class into a human readable
     form
     """
-    if model.ip:
-        return "%s (%s)" % (model.hostname, model.ip)
-    else:
-        return model.hostname
+    return repr(model)
 
 
 class AgentRolesMixin(object):
@@ -110,18 +106,16 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
     # columns the form should display
     form_columns = (
         "state", "hostname", "port", "cpus", "ram", "free_ram",
-        "tags", "software_versions", "ip", "use_address", "ram_allocation",
+        "tags", "software_versions", "use_address", "ram_allocation",
         "cpu_allocation")
 
     # custom type columns need overrides
     form_overrides = {
-        "ip": TextField,
         "state": SelectField,
         "use_address": SelectField}
 
     # more human readable labels
     column_labels = {
-        "ip": "IPv4 Address",
         "ram": "RAM",
         "free_ram": "RAM (free)",
         "cpus": "CPUs",
@@ -151,9 +145,6 @@ class AgentView(SessionMixin, AgentRolesMixin, SQLModelView):
             "description": Agent.ram.__doc__},
         "free_ram": {
             "description": Agent.free_ram.__doc__},
-        "ip": {
-            "validators": [validate_address, check_dns_mapping],
-            "description": Agent.ip.__doc__},
         "use_address": {
             "description": Agent.use_address.__doc__,
             "default": "remote",

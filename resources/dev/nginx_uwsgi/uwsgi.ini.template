@@ -19,9 +19,7 @@ chmod-socket = 666
 # beyond single user testing.
 
 env = PYFARM_APP_INSTANCE=true
-env = PYFARM_DEV_APP_DB_DROP_ALL=false
-env = PYFARM_DEV_APP_DB_CREATE_ALL=false
-env = PYFARM_DEV_APP_ALLOW_ANY_AGENT_ADDRESS=true
+env = PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES=true
 env = PYFARM_DATABASE_URI=sqlite:///pyfarm.sqlite
 env = PYFARM_CONFIG=debug
 

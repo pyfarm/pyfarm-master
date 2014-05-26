@@ -74,7 +74,6 @@ def schema():
                 "free_ram": "INTEGER",
                 "time_offset": "INTEGER",
                 "use_address": "INTEGER",
-                "ip": "IPv4Address",
                 "hostname": "VARCHAR(255)",
                 "cpus": "INTEGER",
                 "port": "INTEGER",
@@ -94,10 +93,24 @@ class AgentIndexAPI(MethodView):
     @validate_with_model(Agent, disallow=("id", ))
     def post(self):
         """
-        A ``POST`` to this endpoint will always create a new agent. If you're
-        looking to update an existing agent you should use url parameters and
-        ``GET`` on ``/api/v1/agents/`` to find the agent you're looking for
-         before performing an update or replacement of an agent's data.
+        A ``POST`` to this endpoint will either create or update an existing
+        agent.  The ``port`` and ``systemid`` columns will determine if an
+        agent already exists.
+
+            * If an agent is found matching the ``port`` and ``systemid``
+              columns from the request the existing model will be updated and
+              the resulting data and the ``OK`` code will be returned.
+
+            * If we don't find an agent matching the ``port`` and ``systemid``
+              however a new agent will be created and the resulting data and the
+              ``CREATED`` code will be returned.
+
+        .. note::
+            The ``remote_ip`` field is not required and should typically
+            not be included in a request.  When not provided ``remote_ip``
+            is be populated by the server based off of the ip of the
+            incoming request.  Providing ``remote_ip`` in your request
+            however will override this behavior.
 
         .. http:post:: /api/v1/agents/ HTTP/1.1
 
@@ -113,14 +126,14 @@ class AgentIndexAPI(MethodView):
                     "cpus": 14,
                     "free_ram": 133,
                     "hostname": "agent1",
-                    "ip": "10.196.200.115",
+                    "remote_ip": "10.196.200.115",
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
                     "state": 8
                  }
 
-            **Response**
+            **Response (agent created)**
 
             .. sourcecode:: http
 
@@ -135,7 +148,6 @@ class AgentIndexAPI(MethodView):
                     "time_offset": 0,
                     "hostname": "agent1",
                     "id": 1,
-                    "ip": "10.196.200.115",
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
@@ -143,39 +155,54 @@ class AgentIndexAPI(MethodView):
                     "remote_ip": "10.196.200.115"
                  }
 
+            **Response (existing agent updated)**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "cpu_allocation": 1.0,
+                    "cpus": 14,
+                    "use_address": "remote",
+                    "free_ram": 133,
+                    "time_offset": 0,
+                    "hostname": "agent1",
+                    "id": 1,
+                    "port": 64994,
+                    "ram": 2157,
+                    "ram_allocation": 0.8,
+                    "state": "online",
+                    "remote_ip": "10.196.200.115"
+                 }
         :statuscode 201: a new agent was created
+        :statuscode 200: an existing agent is updated with data from the request
         :statuscode 400: there was something wrong with the request (such as
                          invalid columns being included)
         """
-        g.json["remote_ip"] = request.remote_addr
+        # Set remote_ip if it did not come in with the request
+        g.json.setdefault("remote_ip", request.remote_addr)
 
-        try:
-            new_agent = Agent(**g.json)
+        agent = Agent.query.filter_by(
+            port=g.json["port"], systemid=g.json["systemid"]).first()
 
-        # There may be something wrong with one of the fields
-        # that's causing our sqlalchemy model raise a ValueError.
-        except ValueError as e:
-            return jsonify(error=str(e)), BAD_REQUEST
-        db.session.add(new_agent)
+        if agent is None:
+            try:
+                agent = Agent(**g.json)
 
-        try:
-            db.session.commit()
+            # There may be something wrong with one of the fields
+            # that's causing our sqlalchemy model raise a ValueError.
+            except ValueError as e:
+                return jsonify(error=str(e)), BAD_REQUEST
 
-        except Exception as e:
-            db_error = e.args[0].lower()
+            db.session.add(agent)
 
-            # known cases for CONFLICT
-            if isinstance(e, (ProgrammingError, IntegrityError)) \
-                    and "unique" in db_error or "duplicate" in db_error:
-                error = "Cannot create agent because the provided data for " \
-                        "`ip`, `hostname` and/or `port` was not unique enough."
-                return jsonify(error=error), CONFLICT
+            try:
+                db.session.commit()
 
-            # Output varies by db and api so we're not going to be explicit
-            # here in terms of what we're checking.  Between the exception
-            # type we're catching and this check it should be rare
-            # that we hit this case.
-            else:  # pragma: no cover
+            except Exception as e:
+                e = e.args[0].lower()
                 error = "Unhandled error: %s.  This is often an issue " \
                         "with the agent's data for `ip`, `hostname` and/or " \
                         "`port` not being unique enough.  In other cases " \
@@ -187,10 +214,49 @@ class AgentIndexAPI(MethodView):
 
                 return jsonify(error=error), INTERNAL_SERVER_ERROR
 
-        agent_data = new_agent.to_dict()
-        logger.info("Created agent %r: %r", new_agent.id, agent_data)
-        assign_tasks.delay()
-        return jsonify(agent_data), CREATED
+            else:
+                agent_data = agent.to_dict()
+                logger.info("Created agent %r: %r", agent.id, agent_data)
+                assign_tasks.delay()
+                return jsonify(agent_data), CREATED
+
+        else:
+            updated = False
+
+            for key in g.json.copy():
+                value = g.json.pop(key)
+
+                if not hasattr(agent, key):
+                    return jsonify(
+                        error="Agent has no such column `%s`" % key), \
+                           BAD_REQUEST
+
+                if getattr(agent, key) != value:
+                    try:
+                        setattr(agent, key, value)
+
+                    except Exception as e:
+                        return jsonify(
+                            error="Error while setting `%s`: %s" % (key, e)), \
+                               BAD_REQUEST
+                    else:
+                        updated = True
+
+            if updated:
+                db.session.add(agent)
+
+                try:
+                    db.session.commit()
+
+                except Exception as e:
+                    return jsonify(error="Unhandled error: %s" % e), \
+                           INTERNAL_SERVER_ERROR
+
+                else:
+                    agent_data = agent.to_dict()
+                    logger.info("Updated agent %r: %r", agent.id, agent_data)
+                    assign_tasks.delay()
+                    return jsonify(agent_data), OK
 
     def get(self):
         """
@@ -245,7 +311,7 @@ class AgentIndexAPI(MethodView):
                   {
                     "hostname": "foobar",
                     "port": 50000,
-                    "ip": "127.0.0.1",
+                    "remote_ip": "127.0.0.1",
                     "id": 1
                   }
                 ]
@@ -265,8 +331,8 @@ class AgentIndexAPI(MethodView):
         :qparam hostname:
             If set, list only agents matching ``hostname``
 
-        :qparam ip:
-            If set, list only agents matching ``ip``
+        :qparam remote_ip:
+            If set, list only agents matching ``remote_ip``
 
         :qparam port:
             If set, list only agents matching ``port``.
@@ -274,7 +340,7 @@ class AgentIndexAPI(MethodView):
         :statuscode 200: no error, host may or may not have been found
         """
         query = db.session.query(
-            Agent.id, Agent.hostname, Agent.port, Agent.ip)
+            Agent.id, Agent.hostname, Agent.port, Agent.remote_ip)
 
         # parse url arguments
         min_ram = get_integer_argument("min_ram")
@@ -282,7 +348,7 @@ class AgentIndexAPI(MethodView):
         min_cpus = get_integer_argument("min_cpus")
         max_cpus = get_integer_argument("max_cpus")
         hostname = get_hostname_argument("hostname")
-        ip = get_ipaddr_argument("ip")
+        remote_ip = get_ipaddr_argument("remote_ip")
         port = get_port_argument("port")
 
         # construct query
@@ -301,8 +367,8 @@ class AgentIndexAPI(MethodView):
         if hostname is not None:
             query = query.filter(Agent.hostname == hostname)
 
-        if ip is not None:
-            query = query.filter(Agent.ip == ip)
+        if remote_ip is not None:
+            query = query.filter(Agent.remote_ip == remote_ip)
 
         if port is not None:
             query = query.filter(Agent.port == port)
@@ -313,8 +379,8 @@ class AgentIndexAPI(MethodView):
             host = dict(zip(host.keys(), host))
 
             # convert the IPAddress object, if set
-            if host["ip"] is not None:
-                host["ip"] = str(host["ip"])
+            if host["remote_ip"] is not None:
+                host["remote_ip"] = str(host["remote_ip"])
 
             output.append(host)
 
@@ -393,7 +459,8 @@ class SingleAgentAPI(MethodView):
 
     @validate_with_model(
         Agent, disallow=("id", ),
-        ignore_missing=("ram", "cpus", "port", "free_ram", "hostname"))
+        ignore_missing=(
+                "ram", "cpus", "port", "free_ram", "hostname", "systemid"))
     def post(self, agent_id):
         """
         Update an agent's columns with new information by merging the provided

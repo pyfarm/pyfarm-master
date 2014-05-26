@@ -157,6 +157,7 @@ def make_test_response(response_class=None):
 class BaseTestCase(TestCase):
     ENVIRONMENT_SETUP = False
     ORIGINAL_ENVIRONMENT = os.environ.copy()
+    maxDiff = None
 
     @classmethod
     def build_environment(cls):

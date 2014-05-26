@@ -16,6 +16,7 @@
 
 from __future__ import with_statement
 import uuid
+from random import randint
 
 from sqlalchemy.exc import DatabaseError
 
@@ -56,19 +57,24 @@ class AgentTestCase(BaseTestCase):
         "192.168.255.255")
 
     def modelArguments(self, limit=None):
+        if db.engine.name != "sqlite3":
+            system_ids = (Agent.MIN_SYSTEMID, Agent.MAX_SYSTEMID)
+        else:
+            system_ids = (Agent.MIN_SYSTEMID, 1)
+
         generator = product(
             self.addresses, self.ports, self.cpus, self.ram, self.states,
-            self.ram_allocation, self.cpu_allocation)
+            self.ram_allocation, self.cpu_allocation, system_ids)
 
         count = 0
         for (ip, port, cpus, ram, state,
-             ram_allocation, cpu_allocation) in generator:
+             ram_allocation, cpu_allocation, system_id) in generator:
             if limit is not None and count >= limit:
                 break
 
             yield (
                 "%s%02d" % (self.hostnamebase, count), ip, port,
-                cpus, ram, state, ram_allocation, cpu_allocation)
+                cpus, ram, state, ram_allocation, cpu_allocation, system_id)
             count += 1
 
     def models(self, limit=None):
@@ -78,15 +84,15 @@ class AgentTestCase(BaseTestCase):
         """
         generator = self.modelArguments(limit=limit)
         for (hostname, ip, port, cpus, ram, state,
-             ram_allocation, cpu_allocation) in generator:
+             ram_allocation, cpu_allocation, systemid) in generator:
             agent = Agent()
             agent.hostname = hostname
-            agent.ip = ip
             agent.remote_ip = ip
             agent.port = port
             agent.cpus = cpus
             agent.free_ram = agent.ram = ram
             agent.state = state
+            agent.systemid = systemid
             agent.ram_allocation = ram_allocation
             agent.cpu_allocation = cpu_allocation
             yield agent
@@ -190,14 +196,18 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
     def test_basic_insert(self):
         agents = list(self.models())
         db.session.add_all(agents)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except OverflowError:
+            if db.engine.name == "sqlite":
+                self.skipTest("Cannot test with sqlite, integer Overflow")
+
         agents = dict(
             (Agent.query.filter_by(id=agent.id).first(), agent)
             for agent in agents)
 
         for result, agent, in agents.items():
             self.assertEqual(result.hostname, agent.hostname)
-            self.assertEqual(result.ip, agent.ip)
             self.assertEqual(result.port, agent.port)
             self.assertEqual(result.cpus, agent.cpus)
             self.assertEqual(result.ram, agent.ram)
@@ -207,15 +217,16 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
 
     def test_basic_insert_nonunique(self):
         for (hostname, ip, port, cpus, ram, state,
-             ram_allocation, cpu_allocation) in self.modelArguments(limit=1):
+             ram_allocation, cpu_allocation, systemid) in \
+                self.modelArguments(limit=1):
             modelA = Agent()
             modelA.hostname = hostname
-            modelA.ip = ip
             modelA.port = port
+            modelA.systemid = systemid
             modelB = Agent()
             modelB.hostname = hostname
-            modelB.ip = ip
             modelB.port = port
+            modelB.systemid = systemid
             db.session.add(modelA)
             db.session.add(modelB)
 
@@ -226,8 +237,8 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
 
     def test_api_url(self):
         model = Agent(
-            hostname="foo", ip="10.56.0.0", port=12345, remote_ip="10.56.0.1",
-            ram=1024, free_ram=128, cpus=4)
+            hostname="foo", port=12345, remote_ip="10.56.0.1",
+            ram=1024, free_ram=128, cpus=4, systemid=42)
 
         # Commit then retrieve the model so we get the
         # custom types applied to the columns.  Otherwise
@@ -249,11 +260,6 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
                     model.api_url(*args),
                     "%s://10.56.0.1:12345/api/v%d" % args)
 
-                model.use_address = UseAgentAddress.LOCAL
-                self.assertEqual(
-                    model.api_url(*args),
-                    "%s://10.56.0.0:12345/api/v%d" % args)
-
                 model.use_address = UseAgentAddress.HOSTNAME
                 self.assertEqual(
                     model.api_url(*args),
@@ -261,8 +267,8 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
 
     def test_api_url_errors(self):
         model = Agent(
-            hostname="foo", ip="10.56.0.0", port=12345, remote_ip="10.56.0.1",
-            ram=1024, free_ram=128, cpus=4)
+            hostname="foo", port=12345, remote_ip="10.56.0.1",
+            ram=1024, free_ram=128, cpus=4, systemid=42)
 
         # Shouldn't have access to api_url if we're operating under PASSIVE
         model.use_address = UseAgentAddress.PASSIVE
@@ -297,7 +303,7 @@ class TestModelValidation(AgentTestCase):
 
         for address in fail_addresses:
             with self.assertRaises(ValueError):
-                agent.ip = address
+                agent.remote_ip = address
 
     def test_port_validation(self):
         for model in self.models(limit=1):
