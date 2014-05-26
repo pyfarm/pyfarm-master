@@ -332,8 +332,6 @@ def assign_agents_by_weight(objects, max_agents):
                                        i.maximum_agents >
                                            i.total_assigned_agents)):
                                 assigned = assign_agents_to_job(i, 1)
-                                if len(assigned) > 0:
-                                    i.state = WorkState.RUNNING
                             elif (not i.maximum_agents or
                                       i.maximum_agents >
                                           i.total_assigned_agents):
