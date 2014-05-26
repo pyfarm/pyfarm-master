@@ -237,6 +237,7 @@ def assign_agents_to_job(job, max_agents):
         # from the same job in the past
         query = db.session.query(Agent, func.count(
             SoftwareVersion.id).label("num_versions"))
+        query = query.outerjoin(SoftwareVersion, Agent.software_versions)
         query = query.filter(Agent.state.in_([AgentState.ONLINE,
                                             AgentState.RUNNING]))
         query = query.filter(Agent.free_ram >= job.ram)
@@ -257,6 +258,7 @@ def assign_agents_to_job(job, max_agents):
         if not selected_agent:
             query = db.session.query(Agent, func.count(
                 SoftwareVersion.id).label("num_versions"))
+            query = query.outerjoin(SoftwareVersion, Agent.software_versions)
             query = query.filter(Agent.state.in_([AgentState.ONLINE,
                                                 AgentState.RUNNING]))
             query = query.filter(Agent.free_ram >= job.ram)
