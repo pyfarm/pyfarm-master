@@ -204,7 +204,7 @@ class UtilityMixins(object):
             elif name == "agent":
                 out = {"id": relation_object.id,
                        "hostname": relation_object.hostname,
-                       "ip": relation_object.ip,
+                       "remote_ip": str(relation_object.remote_ip),
                        "port": relation_object.port}
             else:
                 raise NotImplementedError(
