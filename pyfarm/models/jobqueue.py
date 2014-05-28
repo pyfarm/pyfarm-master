@@ -65,8 +65,8 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                              The scheduler will not assign any nodes to other
                              job queues or jobs with the same parent and a lower
                              priority as long as this one can still use nodes.
-                             Minimum_agents takes precedence over this.
-                             """))
+                             The minimum_agents column takes precedence over
+                             this."""))
     weight = db.Column(db.Integer, nullable=False,
                        default=read_env_int(
                                    "PYFARM_QUEUE_DEFAULT_WEIGHT", 10),
