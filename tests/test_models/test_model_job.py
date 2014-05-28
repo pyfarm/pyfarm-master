@@ -35,6 +35,7 @@ from pyfarm.models.software import Software, JobSoftwareRequirement
 from pyfarm.models.agent import Agent
 from pyfarm.models.job import Job
 from pyfarm.models.jobtype import JobType, JobTypeVersion
+from pyfarm.models.jobqueue import JobQueue
 
 
 class TestTags(BaseTestCase):
@@ -52,9 +53,13 @@ class TestTags(BaseTestCase):
                 pass""").encode("utf-8")
         db.session.add(jobtype_version)
 
+        queue = JobQueue()
+        queue.name = "FooQueue"
+
         job = Job()
         job.title = "Test Job"
         job.jobtype_version = jobtype_version
+        job.queue = queue
 
         tag = Tag()
         tag.jobs = [job]
@@ -111,9 +116,13 @@ class TestSoftwareRequirement(BaseTestCase):
                 pass""").encode("utf-8")
         db.session.add(jobtype_version)
 
+        queue = JobQueue()
+        queue.name = "FooQueue"
+
         job = Job()
         job.title = "Test Job"
         job.jobtype_version = jobtype_version
+        job.queue = queue
 
         # Software requirement needs a software first
         software = Software()

@@ -54,6 +54,7 @@ from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
+from pyfarm.models.jobqueue import JobQueue
 
 
 def load_before_first(app_instance, database_instance):
@@ -136,6 +137,8 @@ def load_api(app_instance, api_instance):
     from pyfarm.master.api.jobs import (
         schema as job_schema, JobIndexAPI, SingleJobAPI, JobTasksIndexAPI,
         JobSingleTaskAPI)
+    from pyfarm.master.api.jobqueues import (
+        schema as jobqueues_schema, JobQueueIndexAPI, SingleJobQueueAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -153,6 +156,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobs/",
         view_func=JobIndexAPI.as_view("job_index_api"))
+    api_instance.add_url_rule(
+        "/jobqueues/",
+        view_func=JobQueueIndexAPI.as_view("jobqueue_index_api"))
 
     # schemas
     api_instance.add_url_rule(
@@ -170,6 +176,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobs/schema",
         "jobs_schema", view_func=job_schema, methods=("GET", ))
+    api_instance.add_url_rule(
+        "/jobqueues/schema",
+        "jobqueues_schema", view_func=jobqueues_schema, methods=("GET", ))
 
     # specific item access
     api_instance.add_url_rule(
@@ -201,6 +210,13 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobs/<string:job_name>",
         view_func=SingleJobAPI.as_view("single_job_by_string_api"))
+
+    api_instance.add_url_rule(
+        "/jobqueues/<int:queue_rq>",
+        view_func=SingleJobQueueAPI.as_view("single_jobqueue_by_id_api"))
+    api_instance.add_url_rule(
+        "/jobqueues/<string:queue_rq>",
+        view_func=SingleJobQueueAPI.as_view("single_jobqueue_by_string_api"))
 
     # special case for jobype/code
     api_instance.add_url_rule(

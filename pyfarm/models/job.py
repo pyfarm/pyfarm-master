@@ -42,7 +42,7 @@ from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
-    MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT)
+    MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT, TABLE_JOB_QUEUE)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin, UtilityMixins)
@@ -107,6 +107,30 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                     doc=dedent("""
                                     The foreign key which stores
                                     :class:`JobTypeVersion.id`"""))
+    job_queue_id = db.Column(IDTypeWork,
+                             db.ForeignKey("%s.id" % TABLE_JOB_QUEUE),
+                             nullable=True,
+                             doc=dedent("""
+                                The foreign key which stores
+                                :class:`JobQueue.id`"""))
+    minimum_agents = db.Column(db.Integer, nullable=True,
+                          doc=dedent("""
+                          The scheduler will try to assign at least this number
+                          of agents to this job as long as it can use them,
+                          before any other considerations."""))
+    maximum_agents = db.Column(db.Integer, nullable=True,
+                          doc=dedent("""
+                          The scheduler will never assign more than this number
+                          of agents to this job."""))
+    weight = db.Column(db.Integer, nullable=False,
+                       default=read_env_int(
+                                   "PYFARM_QUEUE_DEFAULT_WEIGHT", 10),
+                       doc=dedent("""
+                            The weight of this job.
+                            The scheduler will distribute available agents
+                            between jobs and job queues in the same queue
+                            in proportion to their weights.
+                            """))
     title = db.Column(db.String(MAX_JOBTITLE_LENGTH), nullable=False,
                       doc="The title of this job")
     user = db.Column(db.String(MAX_USERNAME_LENGTH),
@@ -141,7 +165,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                       Number of tasks to run on a single agent at once.
                       Depending on the capabilities of the software being run
                       this will either cause a single process to execute on
-                      the agent or multiple processes on after the other.
+                      the agent or multiple processes one after the other.
 
                       **configured by**: `job.batch`"""))
     requeue = db.Column(db.Integer,
@@ -230,6 +254,10 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                               doc=dedent("""
                               relationship attribute which retrieves the
                               associated project for the job"""))
+
+    queue = db.relationship("JobQueue",
+                            backref=db.backref("jobs", lazy="dynamic"),
+                            doc="The queue for this job")
 
     # self-referential many-to-many relationship
     parents = db.relationship("Job",

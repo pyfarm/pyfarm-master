@@ -41,6 +41,7 @@ from pyfarm.models.software import (
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task, TaskDependencies
 from pyfarm.models.job import Job, JobDependencies
+from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
@@ -148,15 +149,8 @@ def send_tasks_to_agent(self, agent_id):
                 raise
 
 
-def agents_with_tasks_at_prio(priority):
-    query = Agent.query.filter(~Agent.state.in_([AgentState.OFFLINE,
-                                                 AgentState.DISABLED]))
-    query = query.filter(Agent.tasks.any(Task.priority == priority))
-    return query.count()
-
-
 def satisfies_requirements(agent, job):
-    logger.debug("Checking to see if agent %s satisfies the requirements for "
+    logger.debug("Checking whether agent %s satisfies the requirements for "
                  "job %s", agent.hostname, job.title)
     requirements_to_satisfy = (list(job.software_requirements) +
                                list(job.jobtype_version.software_requirements))
@@ -179,145 +173,261 @@ def satisfies_requirements(agent, job):
     return len(requirements_to_satisfy) <= len(satisfied_requirements)
 
 
-def get_batch_agent_pair(priority, except_job_ids=None):
-    """
-    Get a batch of tasks with priority :attr:`priority` and a suitable agent to
-    assign the to.
-    Returns None if no waiting tasks with exactly priority :attr:`priority` can
-    be found or no suitable agents can be found for any waiting tasks at
-    :attr:`priority`.
+def read_queue_tree(queue):
+    # Agents already assigned to this queue before the weight scheduler runs
+    queue.preassigned_agents = 0
+    queue.can_use_more_agents = True
+    queue.total_assigned_agents = 0
 
-    :returns: A tuple of a list of tasks and an agent or None
+    child_queues_query = JobQueue.query.filter_by(parent_jobqueue_id=queue.id)
 
-    :param int priority:
-        The priority the assigned tasks must have
+    queue.branches = []
+    for child_queue in child_queues_query:
+        child_queue = read_queue_tree(child_queue)
+        queue.total_assigned_agents += child_queue.total_assigned_agents
+        queue.branches.append(child_queue)
 
-    :param list except_job_ids:
-        A list of job ids we should not try to assign
-    """
-    # Try to get an already started job first
-    logger.info("Trying to assign one batch of tasks, except jobs %s",
-                   except_job_ids)
-    job_query = Job.query.filter(or_(Job.state == None,
-                                     ~Job.state.in_(
-                                         [WorkState.PAUSED,
-                                          WorkState.DONE,
-                                          WorkState.FAILED])))
-    if except_job_ids:
-        job_query = job_query.filter(~Job.id.in_(except_job_ids))
-    job_query = job_query.filter(Job.tasks.any(Task.state.in_(
-        [WorkState.RUNNING, WorkState.DONE, WorkState.FAILED])))
-    job_query = job_query.filter(Job.tasks.any(and_(
-        or_(Task.state == None,
-            ~Task.state.in_([WorkState.DONE, WorkState.FAILED])),
-        Task.agent == None,
-        Task.priority == priority)))
-    job = job_query.first()
-    if job:
-        logger.info("Trying to assign agents to started job %s", job.title)
+    child_jobs_query = Job.query.filter(Job.job_queue_id == queue.id,
+                                        or_(Job.state == WorkState.RUNNING,
+                                            Job.state == None))
+    for job in child_jobs_query:
+        # TODO Get this number as part of the above query, so we don't do one
+        # query per job
+        num_assigned_agents = Agent.query.filter(
+            Agent.tasks.any(and_(
+                or_(Task.state == WorkState.RUNNING, Task.state == None),
+                Task.job == job))).count()
+        job.total_assigned_agents = num_assigned_agents
+        job.can_use_more_agents = True
+        queue.total_assigned_agents += num_assigned_agents
+        queue.branches.append(job)
 
-    # Only if that didn't produce anything, try to start a queued one
-    if not job:
-        job_query = Job.query.filter(or_(Job.state == None,
-                                         ~Job.state.in_(
-                                             [WorkState.PAUSED,
-                                              WorkState.DONE,
-                                              WorkState.FAILED])))
-        # Make sure we don't start jobs with unfulfilled dependencies
-        job_query.filter(~Job.parents.any(or_(Job.state == None,
-                                              Job.state != WorkState.DONE)))
-        if except_job_ids:
-            job_query = job_query.filter(~Job.id.in_(except_job_ids))
-        job_query = job_query.filter(
-            Job.tasks.any(
-                and_(or_(Task.state == None,
-                         ~Task.state.in_([WorkState.DONE, WorkState.FAILED])),
-                     Task.agent == None,
-                     Task.priority == priority)))
-        job = job_query.order_by("time_submitted asc").first()
-        if job:
-            logger.debug("Starting job %r (id %s) now", job.title, job.id)
-        else:
-            logger.debug("Did not find a job with unassigned tasks at "
-                         "priority %s", priority)
-            return None
+    return queue
 
-    tasks_query = Task.query.filter(Task.job == job,
-                                    or_(Task.state == None,
-                                        ~Task.state.in_([WorkState.DONE,
-                                                         WorkState.FAILED])),
-                                    or_(Task.agent == None,
-                                        Task.agent.has(Agent.state.in_(
-                                            [AgentState.OFFLINE,
-                                             AgentState.DISABLED]))),
-                                    Task.priority == priority).order_by(
-                                        "frame asc")
-    batch = []
-    for task in tasks_query:
-        if (len(batch) < job.batch and
-            (not job.jobtype_version.batch_contiguous or
-             (len(batch) == 0 or
-              batch[-1].frame + job.by == task.frame))):
-                 batch.append(task)
 
-    logger.debug("Looking for an agent for a batch of %s tasks from job %s",
-                 len(batch), job.title)
+def assign_agents_to_job(job, max_agents):
+    assigned_agents = []
+    agents_needed = True
+    while max_agents > 0 and agents_needed:
+        tasks_query = Task.query.filter(Task.job == job,
+                                        or_(Task.state == None,
+                                            ~Task.state.in_([WorkState.DONE,
+                                                            WorkState.FAILED])),
+                                        or_(Task.agent == None,
+                                            Task.agent.has(Agent.state.in_(
+                                                [AgentState.OFFLINE,
+                                                AgentState.DISABLED])))).\
+                                                    order_by("frame asc")
+        batch = []
+        for task in tasks_query:
+            if (len(batch) < job.batch and
+                (not job.jobtype_version.batch_contiguous or
+                 (len(batch) == 0 or
+                  batch[-1].frame + job.by == task.frame))):
+                    batch.append(task)
 
-    # First look for an agent that has already successfully worked on tasks from
-    # the same job in the past
-    query = db.session.query(Agent, func.count(
-        SoftwareVersion.id).label("num_versions"))
-    query = query.filter(Agent.state.in_([AgentState.ONLINE,
-                                          AgentState.RUNNING]))
-    query = query.filter(Agent.free_ram >= job.ram)
-    query = query.filter(~Agent.tasks.any(or_(Task.state == None,
-                                      and_(Task.state != WorkState.DONE,
-                                           Task.state != WorkState.FAILED))))
-    query = query.filter(Agent.tasks.any(and_(Task.state == WorkState.DONE,
-                                      Task.job == job)))
-    # Order by num_versions so we select agents with the fewest supported
-    # software versions first
-    query = query.group_by(Agent).order_by("num_versions asc")
+        if not batch:
+            agents_needed = False
+            break
 
-    selected_agent = None
-    for agent, num_versions in query:
-        if not selected_agent and satisfies_requirements(agent, job):
-            selected_agent = agent
+        logger.debug("Looking for an agent for a batch of %s tasks from job %s",
+                    len(batch), job.title)
 
-    if not selected_agent:
+        # First look for an agent that has already successfully worked on tasks
+        # from the same job in the past
         query = db.session.query(Agent, func.count(
             SoftwareVersion.id).label("num_versions"))
+        query = query.outerjoin(SoftwareVersion, Agent.software_versions)
         query = query.filter(Agent.state.in_([AgentState.ONLINE,
-                                              AgentState.RUNNING]))
+                                            AgentState.RUNNING]))
         query = query.filter(Agent.free_ram >= job.ram)
         query = query.filter(~Agent.tasks.any(or_(Task.state == None,
-                                          and_(
-                                              Task.state != WorkState.DONE,
-                                              Task.state != WorkState.FAILED))))
+                                        and_(Task.state != WorkState.DONE,
+                                             Task.state != WorkState.FAILED))))
+        query = query.filter(Agent.tasks.any(and_(Task.state == WorkState.DONE,
+                                        Task.job == job)))
+        # Order by num_versions so we select agents with the fewest supported
+        # software versions first
         query = query.group_by(Agent).order_by("num_versions asc")
+
+        selected_agent = None
         for agent, num_versions in query:
             if not selected_agent and satisfies_requirements(agent, job):
                 selected_agent = agent
 
-    if not selected_agent:
-        # We did not find any suitable agents for this job, see if we can find
-        # some for some other job
-        logger.debug("Did not find a suitable agent for job %s, trying to find "
-                     "another job", job.title)
-        if except_job_ids:
-            return get_batch_agent_pair(priority, except_job_ids + [job.id])
-        else:
-            return get_batch_agent_pair(priority, [job.id])
+        if not selected_agent:
+            query = db.session.query(Agent, func.count(
+                SoftwareVersion.id).label("num_versions"))
+            query = query.outerjoin(SoftwareVersion, Agent.software_versions)
+            query = query.filter(Agent.state.in_([AgentState.ONLINE,
+                                                AgentState.RUNNING]))
+            query = query.filter(Agent.free_ram >= job.ram)
+            query = query.filter(~Agent.tasks.any(or_(Task.state == None,
+                                            and_(
+                                               Task.state != WorkState.DONE,
+                                               Task.state != WorkState.FAILED))))
+            query = query.group_by(Agent).order_by("num_versions asc")
+            for agent, num_versions in query:
+                if not selected_agent and satisfies_requirements(agent, job):
+                    selected_agent = agent
 
-    return batch, selected_agent
+        if selected_agent:
+            for task in batch:
+                task.agent = selected_agent
+                db.session.add(task)
+                logger.info("Assigned agent %s (id %s) to task %s (frame %s) "
+                    "from job %s (id %s)",
+                    selected_agent.hostname,
+                    selected_agent.id,
+                    task.id,
+                    task.frame,
+                    job.title,
+                    job.id)
+            assigned_agents.append(selected_agent)
+            db.session.add(selected_agent)
+            if job.state != WorkState.RUNNING:
+                job.state = WorkState.RUNNING
+                db.session.add(job)
+            # This is necessary because otherwise, the next query will still see
+            # this agent as idle and the tasks as unassigned.
+            db.session.flush()
+            max_agents -= 1
+            job.total_assigned_agents += 1
+        else:
+            agents_needed = False
+
+    if not assigned_agents:
+        job.can_use_more_agents = False
+        logger.info("Could not find any agent for job %s (id %s)", job.title,
+                    job.id)
+
+    return assigned_agents
+
+def assign_agents_by_weight(objects, max_agents):
+    max_weight = 1
+    min_weight = 1
+    objects_at_weights = {}
+    for i in objects:
+        i.preassigned_agents = i.total_assigned_agents
+        max_weight = max(max_weight, i.weight)
+        min_weight = min(min_weight, i.weight)
+        if i.weight in objects_at_weights:
+            objects_at_weights[i.weight] += [i]
+        else:
+            objects_at_weights[i.weight] = [i]
+
+    assigned_agents = []
+    agents_needed = True
+    while max_agents > 0 and agents_needed:
+        assigned_this_round = 0
+        for floor in range_(max_weight, min_weight-1, -1):
+            for current_weight in range_(max_weight, floor-1, -1):
+                if current_weight in objects_at_weights:
+                    for i in objects_at_weights[current_weight]:
+                        if max_agents > 0 and i.can_use_more_agents:
+                            assigned = []
+                            if i.preassigned_agents > 0:
+                                i.preassigned_agents -= 1
+                                assigned_this_round += 1
+                            elif (isinstance(i, Job) and
+                                  (not i.maximum_agents or
+                                       i.maximum_agents >
+                                           i.total_assigned_agents)):
+                                assigned = assign_agents_to_job(i, 1)
+                            elif (not i.maximum_agents or
+                                      i.maximum_agents >
+                                          i.total_assigned_agents):
+                                assigned = assign_agents_to_queue(i, 1)
+                            assigned_this_round += len(assigned)
+                            max_agents -= len(assigned)
+                            assigned_agents += assigned
+                            i.total_assigned_agents += len(assigned)
+        if assigned_this_round == 0:
+            agents_needed = False
+
+    return assigned_agents
+
+
+# TODO Make this a method of JobQueue and Job called assign_agents
+def assign_agents_to_queue(queue, max_agents):
+    """
+    Distribute up to max_agents among the jobs and subqueues of queue.
+    Returns the list of agents that have been assigned new tasks.
+    """
+    assigned_agents = []
+
+    # Before anything else, make sure minima are satisfied
+    minima_satisfied = False
+    while max_agents > 0 and not minima_satisfied:
+        unsatisfied_minima = 0
+        for branch in queue.branches:
+            if (branch.minimum_agents and
+                branch.minimum_agents > branch.total_assigned_agents and
+                branch.can_use_more_agents):
+                if isinstance(branch, Job):
+                    assigned = assign_agents_to_job(branch, 1)
+                else:
+                    assigned = assign_agents_to_queue(branch, 1)
+                max_agents -= len(assigned)
+                assigned_agents += assigned
+                queue.total_assigned_agents += len(assigned)
+                if (branch.minimum_agents > branch.total_assigned_agents and
+                    branch.can_use_more_agents):
+                    unsatisfied_minima += 1
+        minima_satisfied = unsatisfied_minima == 0
+
+    # Early return if we have used up the available agents at this point
+    if max_agents <= 0:
+        return assigned_agents
+
+    objects_by_priority = {}
+    for branch in queue.branches:
+        if branch.priority not in objects_by_priority:
+            objects_by_priority[branch.priority] = [branch]
+        else:
+            objects_by_priority[branch.priority] += [branch]
+    available_priorities = sorted(objects_by_priority.keys(), reverse=True)
+
+    for priority in available_priorities:
+        objects = objects_by_priority[priority]
+        agents_needed = True
+        while max_agents > 0 and agents_needed:
+            # Not started jobs don't get anything as long running ones or
+            # subqueues still need agents
+            running_jobs = [x for x in objects if isinstance(x, Job) and
+                            x.state == WorkState.RUNNING]
+            subqueues = [x for x in objects if isinstance(x, JobQueue) and
+                         x.can_use_more_agents]
+            assigned = assign_agents_by_weight(running_jobs + subqueues,
+                                               max_agents)
+            max_agents -= len(assigned)
+            assigned_agents += assigned
+            assigned_this_round = assigned
+            queue.total_assigned_agents += len(assigned)
+
+            if max_agents > 0:
+                # TODO When starting jobs, start the oldest one first
+                assigned = assign_agents_by_weight(objects, max_agents)
+                max_agents -= len(assigned)
+                assigned_agents += assigned
+                assigned_this_round += assigned
+                queue.total_assigned_agents += len(assigned)
+
+            if not assigned_this_round:
+                agents_needed = False
+
+    if not assigned_agents:
+        queue.can_use_more_agents = False
+
+    return assigned_agents
 
 
 @celery_app.task(ignore_result=True,
                  rate_limit=read_env("PYFARM_SCHEDULER_RATE_LIMIT", "1/s"))
 def assign_tasks():
     """
-    Assigns unassigned tasks to agents that can take them, with proportionally
-    more agents going to tasks with higher priorities.
+    Descends the tree of job queues recursively to assign agents to the jobs
+    registered with those queues
     """
     logger.info("Assigning tasks to agents")
     tasks_query = Task.query.filter(
@@ -342,57 +452,11 @@ def assign_tasks():
         logger.info("No idle agents, not assigning anything")
         return
 
-    runnable_tasks = Task.query.filter(or_(
-        Task.state == None, ~Task.state.in_([WorkState.PAUSED,
-                                             WorkState.DONE,
-                                             WorkState.FAILED]))).all()
+    tree_root = read_queue_tree(JobQueue())
+    agents_with_new_tasks = assign_agents_to_queue(tree_root, idle_agents)
 
-    num_tasks_by_prio = {}
-    for task in runnable_tasks:
-        num_tasks_by_prio.setdefault(task.priority, 0)
-        num_tasks_by_prio[task.priority] += 1
-
-    max_prio = max(num_tasks_by_prio.keys())
-    min_prio = min(num_tasks_by_prio.keys())
-
-    # Preexisting assignments
-    agent_with_tasks_at_prio = {}
-    for priority in range_(min_prio, max_prio + 1):
-        agent_with_tasks_at_prio[priority] = agents_with_tasks_at_prio(priority)
-
-    # main scheduler loop
-    # This works like a weighted fair queue with every priority forming its own
-    # input queue.
-    matchables_left = True
-    agents_with_new_tasks = []
-    while unassigned_tasks and idle_agents and matchables_left:
-        for floor in range_(max_prio, min_prio-1, -1):
-            assigned = 0
-            for current_prio in range_(max_prio, floor-1, -1):
-                if agent_with_tasks_at_prio[current_prio] > 0:
-                    agent_with_tasks_at_prio[current_prio] -= 1
-                    assigned += 1
-                else:
-                    batch_agent_tuple = get_batch_agent_pair(current_prio)
-                    if batch_agent_tuple:
-                        batch, agent = batch_agent_tuple
-                        for task in batch:
-                            task.agent = agent
-                            db.session.add(task)
-                            logger.info("Assigning task %s (frame %s from job"
-                                        " %s) to agent %s (id %s)",
-                                        task.id, task.frame, task.job.title,
-                                        agent.hostname, agent.id)
-                        assigned += 1
-                        idle_agents -= 1
-                        unassigned_tasks -= len(batch)
-                        agents_with_new_tasks.append(agent)
-                        db.session.flush()
-            if floor == min_prio and assigned == 0:
-                logger.info("None of the unassigned tasks are compatible with "
-                            "any of the idle agents")
-                matchables_left = False
-
+    for agent in agents_with_new_tasks:
+        db.session.add(agent)
     db.session.commit()
 
     for agent in agents_with_new_tasks:

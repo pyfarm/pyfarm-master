@@ -206,6 +206,13 @@ class UtilityMixins(object):
                        "hostname": relation_object.hostname,
                        "remote_ip": str(relation_object.remote_ip),
                        "port": relation_object.port}
+            elif name == "parent":
+                out = {"id": relation_object.id,
+                       "name": relation_object.name,
+                       "priority": relation_object.priority,
+                       "weight": relation_object.weight,
+                       "maximum_agents": relation_object.maximum_agents,
+                       "minimum_agents": relation_object.minimum_agents}
             else:
                 raise NotImplementedError(
                     "don't know how to unpack relationships for `%s`" % name)

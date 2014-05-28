@@ -49,7 +49,7 @@ def modelfor(model, table):
         return model.__tablename__ == table
     except AttributeError:
         return False
-    
+
 
 def getuuid(value, table, table_attrib, error_tail):
     """
