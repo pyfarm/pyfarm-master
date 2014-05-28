@@ -230,7 +230,8 @@ class SingleJobQueueAPI(MethodView):
             jobqueue = JobQueue.query.filter_by(id=queue_rq).first()
 
         if not jobqueue:
-            return jsonify(error="Requested job queue not found"), NOT_FOUND
+            return (jsonify(error="Requested job queue %r not found" % queue_rq),
+                    NOT_FOUND)
 
         return jsonify(jobqueue.to_dict()), OK
 
@@ -282,7 +283,8 @@ class SingleJobQueueAPI(MethodView):
             jobqueue = JobQueue.query.filter_by(id=queue_rq).first()
 
         if not jobqueue:
-            return jsonify(error="Requested job queue not found"), NOT_FOUND
+            return (jsonify(error="Requested job queue %r not found" % queue_rq),
+                    NOT_FOUND)
 
         # This would allow users to create circles in the job queue tree
         if "parent_jobqueue_id" in g.json:
