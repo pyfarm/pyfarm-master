@@ -226,7 +226,7 @@ def assign_agents_to_job(job, max_agents):
                   batch[-1].frame + job.by == task.frame))):
                     batch.append(task)
 
-        if len(batch) == 0:
+        if not batch:
             agents_needed = False
             break
 
@@ -413,10 +413,10 @@ def assign_agents_to_queue(queue, max_agents):
                 assigned_this_round += assigned
                 queue.total_assigned_agents += len(assigned)
 
-            if len(assigned_this_round) == 0:
+            if not assigned_this_round:
                 agents_needed = False
 
-    if len(assigned_agents) == 0:
+    if not assigned_agents:
         queue.can_use_more_agents = False
 
     return assigned_agents

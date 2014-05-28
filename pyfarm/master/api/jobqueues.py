@@ -121,7 +121,7 @@ class JobQueueIndexAPI(MethodView):
 
         :statuscode 201: a new job queue was created
         :statuscode 400: there was something wrong with the request (such as
-                            invalid columns being included)
+                         invalid columns being included)
         :statuscode 409: a job queue with that name already exists
         """
         jobqueue = JobQueue.query.filter_by(name=g.json["name"]).first()
@@ -275,7 +275,7 @@ class SingleJobQueueAPI(MethodView):
 
         :statuscode 200: the job queue was updated
         :statuscode 400: there was something wrong with the request (such as
-                            invalid columns being included)
+                         invalid columns being included)
         """
         if isinstance(queue_rq, STRING_TYPES):
             jobqueue = JobQueue.query.filter_by(name=queue_rq).first()
@@ -335,7 +335,7 @@ class SingleJobQueueAPI(MethodView):
 
         :statuscode 204: the job queue was deleted or didn't exist
         :statuscode 409: the job queue cannot be deleted because it still
-                            contains jobs or child queues
+                         contains jobs or child queues
         """
         if isinstance(queue_rq, STRING_TYPES):
             jobqueue = JobQueue.query.filter_by(name=queue_rq).first()
