@@ -405,13 +405,22 @@ def assign_agents_to_queue(queue, max_agents):
             assigned_this_round = assigned
             queue.total_assigned_agents += len(assigned)
 
+            # Running jobs and subqueues at this priority did not use up all
+            # available agents, start a queued job
             if max_agents > 0:
-                # TODO When starting jobs, start the oldest one first
-                assigned = assign_agents_by_weight(objects, max_agents)
-                max_agents -= len(assigned)
-                assigned_agents += assigned
-                assigned_this_round += assigned
-                queue.total_assigned_agents += len(assigned)
+                queued_jobs = [x for x in objects if isinstance(x, Job) and
+                               x.state == None]
+                queued_jobs.sort(key=lambda job: job.time_submitted)
+                jobs_started = 0
+                while jobs_started == 0:
+                    job = queued_jobs.pop()
+                    assigned = assign_agents_to_job(objects, 1)
+                    max_agents -= len(assigned)
+                    assigned_agents += assigned
+                    assigned_this_round += assigned
+                    queue.total_assigned_agents += len(assigned)
+                    if assigned:
+                        jobs_started += 1
 
             if not assigned_this_round:
                 agents_needed = False
