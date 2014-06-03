@@ -358,7 +358,8 @@ class JobIndexAPI(MethodView):
                                                      "data",
                                                      "software_requirements",
                                                      "parents",
-                                                     "children"])
+                                                     "children",
+                                                     "notified_users"])
         job_data["start"] = start
         job_data["end"] = min(current_frame, end)
         del job_data["jobtype_version_id"]
@@ -468,6 +469,7 @@ class SingleJobAPI(MethodView):
                     "start": 2.0,
                     "id": 1,
                     "notes": "",
+                    "notified_users": []
                     "ram": 32,
                     "tags": [],
                     "hidden": false,
@@ -512,7 +514,8 @@ class SingleJobAPI(MethodView):
                                                      "data",
                                                      "software_requirements",
                                                      "parents",
-                                                     "children"])
+                                                     "children",
+                                                     "notified_users"])
 
         first_task = Task.query.filter_by(job=job).order_by("frame asc").first()
         last_task = Task.query.filter_by(job=job).order_by("frame desc").first()

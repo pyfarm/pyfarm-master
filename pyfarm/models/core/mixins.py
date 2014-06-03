@@ -185,6 +185,10 @@ class UtilityMixins(object):
                     out.append({"id": relationship.id,
                                 "frame": relationship.frame,
                                 "state": str(relationship.state)})
+                elif name == "notified_users":
+                    out.append({"id": relationship.id,
+                                "username": relationship.username,
+                                "email": relationship.email})
                 else:
                     raise NotImplementedError(
                         "don't know how to unpack relationships for `%s`" % name)
