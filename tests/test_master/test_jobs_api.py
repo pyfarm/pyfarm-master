@@ -1357,3 +1357,52 @@ class TestJobAPI(BaseTestCase):
                                 "email": None
                             }
                          ])
+
+    def test_job_notified_user_list_unknown_job(self):
+        response1 = self.client.get(
+            "/api/v1/jobs/Unknown%20Job/notified_users/")
+        self.assert_not_found(response1)
+
+    def test_job_notified_user_delete(self):
+        jobtype_name, jobtype_id = self.create_a_jobtype()
+        job_name, job_id = self.create_a_job(jobtype_name)
+
+        # Cannot create users via REST-API yet
+        user1_id = User.create("testuser1", "password").id
+        user2_id = User.create("testuser2", "password").id
+        db.session.flush()
+
+        response1 = self.client.post(
+            "/api/v1/jobs/%s/notified_users/" % job_name,
+            content_type="application/json",
+            data=dumps({"username": "testuser1"}))
+        self.assert_created(response1)
+
+        response2 = self.client.post(
+            "/api/v1/jobs/%s/notified_users/" % job_id,
+            content_type="application/json",
+            data=dumps({"username": "testuser2"}))
+        self.assert_created(response2)
+
+        response3 = self.client.delete(
+             "/api/v1/jobs/%s/notified_users/testuser1" % job_name)
+        self.assert_no_content(response3)
+
+        response4 = self.client.get("/api/v1/jobs/%s/notified_users/" % job_name)
+        self.assert_ok(response4)
+        self.assertEqual(response4.json,
+                         [
+                            {
+                                "id": user2_id,
+                                "username": "testuser2",
+                                "email": None
+                            }
+                         ])
+
+        response5 = self.client.delete(
+             "/api/v1/jobs/%s/notified_users/testuser2" % job_id)
+        self.assert_no_content(response5)
+
+        response6 = self.client.get("/api/v1/jobs/%s/notified_users/" % job_name)
+        self.assert_ok(response6)
+        self.assertEqual(response6.json, [])

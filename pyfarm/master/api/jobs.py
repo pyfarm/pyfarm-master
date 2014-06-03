@@ -27,10 +27,10 @@ from json import loads
 
 try:
     from httplib import (
-        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CREATED)
+        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CREATED, NO_CONTENT)
 except ImportError:  # pragma: no cover
     from http.client import (
-        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CREATED)
+        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CREATED, NO_CONTENT)
 
 from flask.views import MethodView
 from flask import g, request
@@ -1128,3 +1128,58 @@ class JobNotifiedUsersIndexAPI(MethodView):
             "username": user.username,
             "email": user.email}
         return jsonify(out), CREATED
+
+
+class JobSingleNotifiedUserAPI(MethodView):
+    def delete(self, job_name, username):
+        """
+        A ``DELETE`` to this endpoint will remove the specified user from the
+        list of notified users for this job.
+
+        .. http:delete:: /api/v1/jobs/[<str:name>|<int:id>]/notified_users/<str:username> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/jobs/Test%20Job/notified_users/testuser HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": 1
+                    "username": "testuser"
+                    "email": "testuser@example.com"
+                }
+
+        :statuscode 201: a new notified user entry was created
+        :statuscode 400: there was something wrong with the request (such as
+                         invalid columns being included)
+        :statuscode 404: the job or the specified user does not exist
+        """
+        if isinstance(job_name, STRING_TYPES):
+            job = Job.query.filter_by(title=job_name).first()
+        else:
+            job = Job.query.filter_by(id=job_name).first()
+
+        if not job:
+            return jsonify(error="Job not found"), NOT_FOUND
+
+        user = User.query.filter(User.username == username).first()
+        if not user:
+            return jsonify(error="User %s not found" % username), NOT_FOUND
+
+        job.notified_users.remove(user)
+        db.session.add(job)
+        db.session.commit()
+
+        logger.info("Removed user %s (id %s) from notified users for "
+                    "job %s (%s)", user.username, user.id, job.title, job.id)
+
+        return jsonify(), NO_CONTENT

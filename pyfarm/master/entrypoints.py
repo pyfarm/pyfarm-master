@@ -136,7 +136,7 @@ def load_api(app_instance, api_instance):
         JobTypeSoftwareRequirementAPI, JobTypeVersionsIndexAPI)
     from pyfarm.master.api.jobs import (
         schema as job_schema, JobIndexAPI, SingleJobAPI, JobTasksIndexAPI,
-        JobSingleTaskAPI, JobNotifiedUsersIndexAPI)
+        JobSingleTaskAPI, JobNotifiedUsersIndexAPI, JobSingleNotifiedUserAPI)
     from pyfarm.master.api.jobqueues import (
         schema as jobqueues_schema, JobQueueIndexAPI, SingleJobQueueAPI)
 
@@ -334,6 +334,14 @@ def load_api(app_instance, api_instance):
         "/jobs/<string:job_name>/notified_users/",
         view_func=JobNotifiedUsersIndexAPI.as_view(
             "job_by_string_notified_index_api"))
+    api_instance.add_url_rule(
+        "/jobs/<int:job_name>/notified_users/<string:username>",
+        view_func=JobSingleNotifiedUserAPI.as_view(
+            "job_by_id_single_notified_api"))
+    api_instance.add_url_rule(
+        "/jobs/<string:job_name>/notified_users/<string:username>",
+        view_func=JobSingleNotifiedUserAPI.as_view(
+            "job_by_string_single_notified_api"))
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)
