@@ -43,6 +43,7 @@ from pyfarm.scheduler.tasks import assign_tasks
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
+from pyfarm.models.user import User
 from pyfarm.models.job import Job
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement)
@@ -1005,3 +1006,125 @@ class JobSingleTaskAPI(MethodView):
             task_data["state"] = "assigned"
 
         return jsonify(task_data), OK
+
+
+class JobNotifiedUsersIndexAPI(MethodView):
+    def get(self, job_name):
+        """
+        A ``GET`` to this endpoint will return a list of all users to be notified
+        on events in this job.
+
+        .. http:get:: /api/v1/jobs/[<str:name>|<int:id>]/notified_users/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobs/Test%20Job%202/notified_users/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "id": 1,
+                        "username": "testuser",
+                        "email": "testuser@localhost"
+                    }
+                ]
+
+        :statuscode 200: no error
+        :statuscode 404: job not found
+        """
+        if isinstance(job_name, STRING_TYPES):
+            job = Job.query.filter_by(title=job_name).first()
+        else:
+            job = Job.query.filter_by(id=job_name).first()
+
+        if not job:
+            return jsonify(error="Job not found"), NOT_FOUND
+
+        out = []
+        for user in job.notified_users:
+            out.append({
+                "id": user.id,
+                "username": user.username,
+                "email": user.email})
+
+        return jsonify(out), OK
+
+    def post(self, job_name):
+        """
+        A ``POST`` to this endpoint will add the specified user to the list of
+        notified users for this job.
+
+        .. http:post:: /api/v1/jobs/[<str:name>|<int:id>]/notified_users/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/jobs/Test%20Job/notified_users/ HTTP/1.1
+                Accept: application/json
+
+                {
+                    "username": "testuser"
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": 1
+                    "username": "testuser"
+                    "email": "testuser@example.com"
+                }
+
+        :statuscode 201: a new notified user entry was created
+        :statuscode 400: there was something wrong with the request (such as
+                         invalid columns being included)
+        :statuscode 404: the job or the specified user does not exist
+        """
+        if isinstance(job_name, STRING_TYPES):
+            job = Job.query.filter_by(title=job_name).first()
+        else:
+            job = Job.query.filter_by(id=job_name).first()
+
+        if not job:
+            return jsonify(error="Job not found"), NOT_FOUND
+
+        if "username" not in g.json:
+            return jsonify(error="No username specified"), BAD_REQUEST
+
+        username = g.json.pop("username")
+        if g.json:
+            return jsonify(error="Unknown fields in request"), BAD_REQUEST
+
+        user = User.query.filter(User.username == username).first()
+        if not user:
+            return jsonify("User %s not found" % username), NOT_FOUND
+
+        job.notified_users.append(user)
+        db.session.add(job)
+        db.session.commit()
+
+        logger.info("Added user %s (id %s) to notified users for job %s (%s)",
+                    user.username,
+                    user.id,
+                    job.title,
+                    job.id)
+
+        out = {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email}
+        return jsonify(out), CREATED
