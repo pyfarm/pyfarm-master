@@ -185,6 +185,74 @@ class TestJobAPI(BaseTestCase):
                             "children": []
                          })
 
+    def test_job_post_with_notified_users(self):
+        jobtype_name, jobtype_id = self.create_a_jobtype()
+
+         # Cannot create users via REST-API yet
+        user1_id = User.create("testuser1", "password").id
+        db.session.flush()
+
+        response1 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": jobtype_name,
+                    "data": {"foo": "bar"},
+                    "notified_users": [
+                            {"username": "testuser1"}
+                        ]
+                    }))
+
+        self.assert_created(response1)
+        self.assertIn("time_submitted", response1.json)
+        time_submitted = response1.json["time_submitted"]
+        id = response1.json["id"]
+        self.assertEqual(response1.json,
+                        {
+                            "id": id,
+                            "job_queue_id": None,
+                            "time_finished": None,
+                            "time_started": None,
+                            "end": 2.0,
+                            "time_submitted": time_submitted,
+                            "jobtype_version": 1,
+                            "jobtype": "TestJobType",
+                            "start": 1.0,
+                            "maximum_agents": None,
+                            "minimum_agents": None,
+                            "priority": 0,
+                            "weight": 10,
+                            "state": "queued",
+                            "parents": [],
+                            "hidden": False,
+                            "project_id": None,
+                            "ram_warning": None,
+                            "title": "Test Job",
+                            "tags": [],
+                            "user": None,
+                            "by": 1.0,
+                            "data": {"foo": "bar"},
+                            "ram_max": None,
+                            "notes": "",
+                            "notified_users": [
+                                    {
+                                    "id": user1_id,
+                                    "username": "testuser1",
+                                    "email": None
+                                    }
+                                ],
+                            "batch": 1,
+                            "environ": None,
+                            "requeue": 3,
+                            "software_requirements": [],
+                            "ram": 32,
+                            "cpus": 1,
+                            "children": []
+                         })
+
     def test_job_post_bad_requirements(self):
         response1 = self.client.post(
             "/api/v1/jobtypes/",

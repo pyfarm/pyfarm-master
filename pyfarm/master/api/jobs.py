@@ -316,11 +316,24 @@ class JobIndexAPI(MethodView):
                 return jsonify(error=e.args), NOT_FOUND
             del g.json["software_requirements"]
 
+        notified_usernames = g.json.pop("notified_users", None)
+        notified_users = []
+        if notified_usernames:
+            for entry in notified_usernames:
+                user = User.query.filter(
+                    User.username == entry["username"]).first()
+                if not user:
+                    return (jsonify(
+                                error="User %s not found" % entry["username"]),
+                            NOT_FOUND)
+                notified_users.append(user)
+
         g.json.pop("start", None)
         g.json.pop("end", None)
         job = Job(**g.json)
         job.jobtype_version = jobtype_version
         job.software_requirements = software_requirements
+        job.notified_users = notified_users
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
         if "start" not in custom_json or "end" not in custom_json:
