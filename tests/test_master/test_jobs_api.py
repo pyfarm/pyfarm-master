@@ -25,6 +25,8 @@ BaseTestCase.build_environment()
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.master.application import get_api_blueprint
 from pyfarm.master.entrypoints import load_api
+from pyfarm.master.application import db
+from pyfarm.models.user import User
 from pyfarm.models.job import Job
 
 jobtype_code = """from pyfarm.jobtypes.core.jobtype import JobType
@@ -45,6 +47,38 @@ class TestJobAPI(BaseTestCase):
         self.api = get_api_blueprint()
         self.app.register_blueprint(self.api)
         load_api(self.app, self.api)
+
+    def create_a_jobtype(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": 1,
+                    "code": jobtype_code
+                    }))
+        self.assert_created(response1)
+        jobtype_id = response1.json['id']
+
+        return "TestJobType", jobtype_id
+
+    def create_a_job(self, jobtypename):
+        response1 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 2.0,
+                    "title": "Test Job",
+                    "jobtype": jobtypename,
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response1)
+        job_id = response1.json["id"]
+
+        return "Test Job", job_id
 
     def test_job_schema(self):
         response = self.client.get("/api/v1/jobs/schema")
@@ -1213,3 +1247,113 @@ class TestJobAPI(BaseTestCase):
     def test_job_get_unknown_single_task(self):
         response1 = self.client.get("/api/v1/jobs/Unknown%20Job/tasks/1")
         self.assert_not_found(response1)
+
+    def test_job_notified_user_add(self):
+        jobtype_name, jobtype_id = self.create_a_jobtype()
+        job_name, job_id = self.create_a_job(jobtype_name)
+
+        # Cannot create users via REST-API yet
+        user1_id = User.create("testuser1", "password").id
+        user2_id = User.create("testuser2", "password").id
+        db.session.flush()
+
+        response1 = self.client.post(
+            "/api/v1/jobs/%s/notified_users/" % job_name,
+            content_type="application/json",
+            data=dumps({"username": "testuser1"}))
+        self.assert_created(response1)
+
+        response2 = self.client.post(
+            "/api/v1/jobs/%s/notified_users/" % job_id,
+            content_type="application/json",
+            data=dumps({"username": "testuser2"}))
+        self.assert_created(response2)
+
+        response3 = self.client.get("/api/v1/jobs/%s/notified_users/" % job_name)
+        self.assert_ok(response3)
+        self.assertEqual(response3.json,
+                         [
+                            {
+                                "id": user1_id,
+                                "username": "testuser1",
+                                "email": None
+                            },
+                            {
+                                "id": user2_id,
+                                "username": "testuser2",
+                                "email": None
+                            }
+                         ])
+
+    def test_job_notified_user_add_unknown_user(self):
+        jobtype_name, jobtype_id = self.create_a_jobtype()
+        job_name, job_id = self.create_a_job(jobtype_name)
+
+        response1 = self.client.post(
+            "/api/v1/jobs/%s/notified_users/" % job_name,
+            content_type="application/json",
+            data=dumps({"username": "unknownuser"}))
+        self.assert_not_found(response1)
+
+    def test_job_notified_user_add_unknown_columns(self):
+        jobtype_name, jobtype_id = self.create_a_jobtype()
+        job_name, job_id = self.create_a_job(jobtype_name)
+
+        # Cannot create users via REST-API yet
+        user1_id = User.create("testuser1", "password").id
+        db.session.flush()
+
+        response1 = self.client.post(
+            "/api/v1/jobs/%s/notified_users/" % job_name,
+            content_type="application/json",
+            data=dumps({
+                "username": "testuser1",
+                "bla": "blubb"}))
+        self.assert_bad_request(response1)
+
+    def test_job_notified_user_add_no_username(self):
+        jobtype_name, jobtype_id = self.create_a_jobtype()
+        job_name, job_id = self.create_a_job(jobtype_name)
+
+        response1 = self.client.post(
+            "/api/v1/jobs/%s/notified_users/" % job_name,
+            content_type="application/json",
+            data=dumps({}))
+        self.assert_bad_request(response1)
+
+    def test_job_notified_user_add_unknown_job(self):
+        response1 = self.client.post(
+            "/api/v1/jobs/Unknown%20Job/notified_users/",
+            content_type="application/json",
+            data=dumps({"username": "unknownuser"}))
+        self.assert_not_found(response1)
+
+    def test_job_notified_user_list_unknown_job(self):
+        response1 = self.client.get(
+            "/api/v1/jobs/Unknown%20Job/notified_users/")
+        self.assert_not_found(response1)
+
+    def test_job_notified_user_list_by_id(self):
+        jobtype_name, jobtype_id = self.create_a_jobtype()
+        job_name, job_id = self.create_a_job(jobtype_name)
+        # Cannot create users via REST-API yet
+        user1_id = User.create("testuser1", "password").id
+        db.session.flush()
+
+        response1 = self.client.post(
+            "/api/v1/jobs/%s/notified_users/" % job_name,
+            content_type="application/json",
+            data=dumps({"username": "testuser1"}))
+        self.assert_created(response1)
+
+        response2 = self.client.get(
+            "/api/v1/jobs/%s/notified_users/" % job_id)
+        self.assert_ok(response2)
+        self.assertEqual(response2.json,
+                         [
+                            {
+                                "id": user1_id,
+                                "username": "testuser1",
+                                "email": None
+                            }
+                         ])
