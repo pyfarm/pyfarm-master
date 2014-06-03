@@ -39,7 +39,7 @@ from sqlalchemy.sql import func, or_, and_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES
-from pyfarm.scheduler.tasks import assign_tasks
+from pyfarm.scheduler.tasks import assign_tasks, send_job_completion_mail
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
@@ -921,10 +921,12 @@ class JobSingleTaskAPI(MethodView):
                     logger.info("Job %s: state transition \"%s\" -> \"done\"",
                                 job.title, job.state)
                     job.state = "done"
+                    send_job_completion_mail.delay(job.id, True)
                 else:
                     logger.info("Job %s: state transition \"%s\" -> \"failed\"",
                                 job.title, job.state)
                     job.state = "failed"
+                    send_job_completion_mail.delay(job.id, True)
                 db.session.add(job)
 
         # Iterate over all keys in the request
