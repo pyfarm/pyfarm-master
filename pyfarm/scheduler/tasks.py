@@ -580,10 +580,7 @@ def send_job_completion_mail(job_id, successful=True):
                             (job.title, "" if successful else "un"))
     message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
 
-    to = []
-    for recipient in job.notified_users:
-        if recipient.email:
-            to.append(recipient.email)
+    to = [x.email for x in job.notified_users if x.email]
 
     if to:
         smtp = SMTP(read_env("PYFARM_MAIL_SERVER", "localhost"))
