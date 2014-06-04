@@ -215,7 +215,7 @@ class AgentIndexAPI(MethodView):
                 return jsonify(error=error), INTERNAL_SERVER_ERROR
 
             else:
-                agent_data = agent.to_dict()
+                agent_data = agent.to_dict(unpack_relationships=False)
                 logger.info("Created agent %r: %r", agent.id, agent_data)
                 assign_tasks.delay()
                 return jsonify(agent_data), CREATED
@@ -253,7 +253,7 @@ class AgentIndexAPI(MethodView):
                            INTERNAL_SERVER_ERROR
 
                 else:
-                    agent_data = agent.to_dict()
+                    agent_data = agent.to_dict(unpack_relationships=False)
                     logger.info("Updated agent %r: %r", agent.id, agent_data)
                     assign_tasks.delay()
                     return jsonify(agent_data), OK
@@ -453,7 +453,7 @@ class SingleAgentAPI(MethodView):
 
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is not None:
-            return jsonify(agent.to_dict())
+            return jsonify(agent.to_dict(unpack_relationships=False))
         else:
             return jsonify(error="Agent %s not found" % agent_id), NOT_FOUND
 
