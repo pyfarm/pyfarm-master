@@ -124,6 +124,8 @@ def send_tasks_to_agent(self, agent_id):
                                          "Content-Type": "application/json",
                                          "User-Agent": USERAGENT})
 
+            logger.debug("Return code after sending batch to agent: %s",
+                         response.status_code)
             if response.status_code not in [requests.codes.accepted,
                                             requests.codes.ok,
                                             requests.codes.created]:
@@ -206,7 +208,7 @@ def read_queue_tree(queue):
 
 
 def assign_agents_to_job(job, max_agents):
-    assigned_agents = []
+    assigned_agents = set()
     agents_needed = True
     while max_agents > 0 and agents_needed:
         tasks_query = Task.query.filter(Task.job == job,
@@ -283,7 +285,7 @@ def assign_agents_to_job(job, max_agents):
                     task.frame,
                     job.title,
                     job.id)
-            assigned_agents.append(selected_agent)
+            assigned_agents.add(selected_agent)
             db.session.add(selected_agent)
             if job.state != WorkState.RUNNING:
                 job.state = WorkState.RUNNING
@@ -316,7 +318,7 @@ def assign_agents_by_weight(objects, max_agents):
         else:
             objects_at_weights[i.weight] = [i]
 
-    assigned_agents = []
+    assigned_agents = set()
     agents_needed = True
     while max_agents > 0 and agents_needed:
         assigned_this_round = 0
@@ -325,7 +327,7 @@ def assign_agents_by_weight(objects, max_agents):
                 if current_weight in objects_at_weights:
                     for i in objects_at_weights[current_weight]:
                         if max_agents > 0 and i.can_use_more_agents:
-                            assigned = []
+                            assigned = set()
                             if i.preassigned_agents > 0:
                                 i.preassigned_agents -= 1
                                 assigned_this_round += 1
@@ -340,7 +342,7 @@ def assign_agents_by_weight(objects, max_agents):
                                 assigned = assign_agents_to_queue(i, 1)
                             assigned_this_round += len(assigned)
                             max_agents -= len(assigned)
-                            assigned_agents += assigned
+                            assigned_agents.update(assigned)
                             i.total_assigned_agents += len(assigned)
         if assigned_this_round == 0:
             agents_needed = False
@@ -354,7 +356,7 @@ def assign_agents_to_queue(queue, max_agents):
     Distribute up to max_agents among the jobs and subqueues of queue.
     Returns the list of agents that have been assigned new tasks.
     """
-    assigned_agents = []
+    assigned_agents = set()
 
     # Before anything else, make sure minima are satisfied
     minima_satisfied = False
@@ -369,7 +371,7 @@ def assign_agents_to_queue(queue, max_agents):
                 else:
                     assigned = assign_agents_to_queue(branch, 1)
                 max_agents -= len(assigned)
-                assigned_agents += assigned
+                assigned_agents.update(assigned)
                 queue.total_assigned_agents += len(assigned)
                 if (branch.minimum_agents > branch.total_assigned_agents and
                     branch.can_use_more_agents):
@@ -401,7 +403,7 @@ def assign_agents_to_queue(queue, max_agents):
             assigned = assign_agents_by_weight(running_jobs + subqueues,
                                                max_agents)
             max_agents -= len(assigned)
-            assigned_agents += assigned
+            assigned_agents.update(assigned)
             assigned_this_round = assigned
             queue.total_assigned_agents += len(assigned)
 
@@ -416,8 +418,8 @@ def assign_agents_to_queue(queue, max_agents):
                     job = queued_jobs.pop()
                     assigned = assign_agents_to_job(objects, 1)
                     max_agents -= len(assigned)
-                    assigned_agents += assigned
-                    assigned_this_round += assigned
+                    assigned_agents.update(assigned)
+                    assigned_this_round.update(assigned)
                     queue.total_assigned_agents += len(assigned)
                     if assigned:
                         jobs_started += 1
