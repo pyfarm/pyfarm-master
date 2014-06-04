@@ -320,8 +320,7 @@ class JobIndexAPI(MethodView):
         notified_users = []
         if notified_usernames:
             for entry in notified_usernames:
-                user = User.query.filter(
-                    User.username == entry["username"]).first()
+                user = User.query.filter_by(username=entry["username"]).first()
                 if not user:
                     return (jsonify(
                                 error="User %s not found" % entry["username"]),
@@ -1127,7 +1126,7 @@ class JobNotifiedUsersIndexAPI(MethodView):
         if g.json:
             return jsonify(error="Unknown fields in request"), BAD_REQUEST
 
-        user = User.query.filter(User.username == username).first()
+        user = User.query.filter_by(username=username).first()
         if not user:
             return jsonify("User %s not found" % username), NOT_FOUND
 
@@ -1189,7 +1188,7 @@ class JobSingleNotifiedUserAPI(MethodView):
         if not job:
             return jsonify(error="Job not found"), NOT_FOUND
 
-        user = User.query.filter(User.username == username).first()
+        user = User.query.filter_by(username=username).first()
         if not user:
             return jsonify(error="User %s not found" % username), NOT_FOUND
 
