@@ -568,7 +568,6 @@ def poll_agents():
 
 @celery_app.task(ignore_results=True)
 def send_job_completion_mail(job_id, successful=True):
-    logger.debug("In send_job_completion_mail, job_id: %r" % job_id)
     job = Job.query.filter_by(id=job_id).one()
     message = MIMEText("Job %s (id %s) has completed %s on %s.\n\n"
                        "Sincerely,\n\tThe PyFarm render manager" %
@@ -591,3 +590,6 @@ def send_job_completion_mail(job_id, successful=True):
         smtp.sendmail(read_env("PYFARM_FROM_ADDRESS",
                                "pyfarm@localhost"), to, message.as_string())
         smtp.quit()
+
+        logger.info("Job completion mail for job %s (id %s) sent to %s",
+                    job.title, job.id, to)
