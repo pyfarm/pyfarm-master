@@ -578,7 +578,7 @@ def send_job_completion_mail(job_id, successful=True):
 
     message["Subject"] = ("Job %s completed %ssuccessfully" %
                             (job.title, "" if successful else "un"))
-    message["From"] = "pyfarm@localhost" # TODO configurable
+    message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
 
     to = []
     for recipient in job.notified_users:
