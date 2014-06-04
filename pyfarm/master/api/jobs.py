@@ -1141,11 +1141,11 @@ class JobNotifiedUsersIndexAPI(MethodView):
                     job.title,
                     job.id)
 
-        out = {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email}
-        return jsonify(out), CREATED
+        return (jsonify({
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email}),
+                CREATED)
 
 
 class JobSingleNotifiedUserAPI(MethodView):
