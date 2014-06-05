@@ -25,6 +25,8 @@ This module is responsible for finding and allocating tasks on agents.
 from datetime import timedelta, datetime
 from logging import DEBUG
 from json import dumps
+from smtplib import SMTP
+from email.mime.text import MIMEText
 
 from sqlalchemy import or_, and_, func
 
@@ -414,9 +416,9 @@ def assign_agents_to_queue(queue, max_agents):
                                x.state == None]
                 queued_jobs.sort(key=lambda job: job.time_submitted)
                 jobs_started = 0
-                while jobs_started == 0:
+                while jobs_started == 0 and queued_jobs:
                     job = queued_jobs.pop()
-                    assigned = assign_agents_to_job(objects, 1)
+                    assigned = assign_agents_to_job(job, 1)
                     max_agents -= len(assigned)
                     assigned_agents.update(assigned)
                     assigned_this_round.update(assigned)
@@ -565,3 +567,28 @@ def poll_agents():
 
     for agent in busy_agents_to_poll_query:
         poll_agent.delay(agent.id)
+
+@celery_app.task(ignore_results=True)
+def send_job_completion_mail(job_id, successful=True):
+    job = Job.query.filter_by(id=job_id).one()
+    message = MIMEText("Job %s (id %s) has completed %s on %s.\n\n"
+                       "Sincerely,\n\tThe PyFarm render manager" %
+                            (job.title,
+                             job_id,
+                             "successfully" if successful else "unsuccessfully",
+                             job.time_finished))
+
+    message["Subject"] = ("Job %s completed %ssuccessfully" %
+                            (job.title, "" if successful else "un"))
+    message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
+
+    to = [x.email for x in job.notified_users if x.email]
+
+    if to:
+        smtp = SMTP(read_env("PYFARM_MAIL_SERVER", "localhost"))
+        smtp.sendmail(read_env("PYFARM_FROM_ADDRESS",
+                               "pyfarm@localhost"), to, message.as_string())
+        smtp.quit()
+
+        logger.info("Job completion mail for job %s (id %s) sent to %s",
+                    job.title, job.id, to)

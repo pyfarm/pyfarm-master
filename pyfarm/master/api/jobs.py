@@ -27,10 +27,10 @@ from json import loads
 
 try:
     from httplib import (
-        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CREATED)
+        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CREATED, NO_CONTENT)
 except ImportError:  # pragma: no cover
     from http.client import (
-        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CREATED)
+        OK, BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CREATED, NO_CONTENT)
 
 from flask.views import MethodView
 from flask import g, request
@@ -39,10 +39,11 @@ from sqlalchemy.sql import func, or_, and_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES
-from pyfarm.scheduler.tasks import assign_tasks
+from pyfarm.scheduler.tasks import assign_tasks, send_job_completion_mail
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
+from pyfarm.models.user import User
 from pyfarm.models.job import Job
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement)
@@ -315,11 +316,23 @@ class JobIndexAPI(MethodView):
                 return jsonify(error=e.args), NOT_FOUND
             del g.json["software_requirements"]
 
+        notified_usernames = g.json.pop("notified_users", None)
+        notified_users = []
+        if notified_usernames:
+            for entry in notified_usernames:
+                user = User.query.filter_by(username=entry["username"]).first()
+                if not user:
+                    return (jsonify(
+                                error="User %s not found" % entry["username"]),
+                            NOT_FOUND)
+                notified_users.append(user)
+
         g.json.pop("start", None)
         g.json.pop("end", None)
         job = Job(**g.json)
         job.jobtype_version = jobtype_version
         job.software_requirements = software_requirements
+        job.notified_users = notified_users
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
         if "start" not in custom_json or "end" not in custom_json:
@@ -357,7 +370,8 @@ class JobIndexAPI(MethodView):
                                                      "data",
                                                      "software_requirements",
                                                      "parents",
-                                                     "children"])
+                                                     "children",
+                                                     "notified_users"])
         job_data["start"] = start
         job_data["end"] = min(current_frame, end)
         del job_data["jobtype_version_id"]
@@ -467,6 +481,7 @@ class SingleJobAPI(MethodView):
                     "start": 2.0,
                     "id": 1,
                     "notes": "",
+                    "notified_users": []
                     "ram": 32,
                     "tags": [],
                     "hidden": false,
@@ -511,7 +526,8 @@ class SingleJobAPI(MethodView):
                                                      "data",
                                                      "software_requirements",
                                                      "parents",
-                                                     "children"])
+                                                     "children",
+                                                     "notified_users"])
 
         first_task = Task.query.filter_by(job=job).order_by("frame asc").first()
         last_task = Task.query.filter_by(job=job).order_by("frame desc").first()
@@ -904,10 +920,12 @@ class JobSingleTaskAPI(MethodView):
                     logger.info("Job %s: state transition \"%s\" -> \"done\"",
                                 job.title, job.state)
                     job.state = "done"
+                    send_job_completion_mail.delay(job.id, True)
                 else:
                     logger.info("Job %s: state transition \"%s\" -> \"failed\"",
                                 job.title, job.state)
                     job.state = "failed"
+                    send_job_completion_mail.delay(job.id, True)
                 db.session.add(job)
 
         # Iterate over all keys in the request
@@ -1005,3 +1023,180 @@ class JobSingleTaskAPI(MethodView):
             task_data["state"] = "assigned"
 
         return jsonify(task_data), OK
+
+
+class JobNotifiedUsersIndexAPI(MethodView):
+    def get(self, job_name):
+        """
+        A ``GET`` to this endpoint will return a list of all users to be notified
+        on events in this job.
+
+        .. http:get:: /api/v1/jobs/[<str:name>|<int:id>]/notified_users/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobs/Test%20Job%202/notified_users/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "id": 1,
+                        "username": "testuser",
+                        "email": "testuser@localhost"
+                    }
+                ]
+
+        :statuscode 200: no error
+        :statuscode 404: job not found
+        """
+        if isinstance(job_name, STRING_TYPES):
+            job = Job.query.filter_by(title=job_name).first()
+        else:
+            job = Job.query.filter_by(id=job_name).first()
+
+        if not job:
+            return jsonify(error="Job not found"), NOT_FOUND
+
+        out = []
+        for user in job.notified_users:
+            out.append({
+                "id": user.id,
+                "username": user.username,
+                "email": user.email})
+
+        return jsonify(out), OK
+
+    def post(self, job_name):
+        """
+        A ``POST`` to this endpoint will add the specified user to the list of
+        notified users for this job.
+
+        .. http:post:: /api/v1/jobs/[<str:name>|<int:id>]/notified_users/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/jobs/Test%20Job/notified_users/ HTTP/1.1
+                Accept: application/json
+
+                {
+                    "username": "testuser"
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": 1
+                    "username": "testuser"
+                    "email": "testuser@example.com"
+                }
+
+        :statuscode 201: a new notified user entry was created
+        :statuscode 400: there was something wrong with the request (such as
+                         invalid columns being included)
+        :statuscode 404: the job or the specified user does not exist
+        """
+        if isinstance(job_name, STRING_TYPES):
+            job = Job.query.filter_by(title=job_name).first()
+        else:
+            job = Job.query.filter_by(id=job_name).first()
+
+        if not job:
+            return jsonify(error="Job not found"), NOT_FOUND
+
+        if "username" not in g.json:
+            return jsonify(error="No username specified"), BAD_REQUEST
+
+        username = g.json.pop("username")
+        if g.json:
+            return jsonify(error="Unknown fields in request"), BAD_REQUEST
+
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify("User %s not found" % username), NOT_FOUND
+
+        job.notified_users.append(user)
+        db.session.add(job)
+        db.session.commit()
+
+        logger.info("Added user %s (id %s) to notified users for job %s (%s)",
+                    user.username,
+                    user.id,
+                    job.title,
+                    job.id)
+
+        return (jsonify({
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email}),
+                CREATED)
+
+
+class JobSingleNotifiedUserAPI(MethodView):
+    def delete(self, job_name, username):
+        """
+        A ``DELETE`` to this endpoint will remove the specified user from the
+        list of notified users for this job.
+
+        .. http:delete:: /api/v1/jobs/[<str:name>|<int:id>]/notified_users/<str:username> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/jobs/Test%20Job/notified_users/testuser HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": 1
+                    "username": "testuser"
+                    "email": "testuser@example.com"
+                }
+
+        :statuscode 201: a new notified user entry was created
+        :statuscode 400: there was something wrong with the request (such as
+                         invalid columns being included)
+        :statuscode 404: the job or the specified user does not exist
+        """
+        if isinstance(job_name, STRING_TYPES):
+            job = Job.query.filter_by(title=job_name).first()
+        else:
+            job = Job.query.filter_by(id=job_name).first()
+
+        if not job:
+            return jsonify(error="Job not found"), NOT_FOUND
+
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify(error="User %s not found" % username), NOT_FOUND
+
+        job.notified_users.remove(user)
+        db.session.add(job)
+        db.session.commit()
+
+        logger.info("Removed user %s (id %s) from notified users for "
+                    "job %s (%s)", user.username, user.id, job.title, job.id)
+
+        return jsonify(), NO_CONTENT
