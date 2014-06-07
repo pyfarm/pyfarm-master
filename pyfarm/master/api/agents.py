@@ -35,7 +35,6 @@ from datetime import datetime
 
 from flask import request, g
 from flask.views import MethodView
-from sqlalchemy.exc import IntegrityError, ProgrammingError
 
 from pyfarm.core.logger import getLogger
 from pyfarm.scheduler.tasks import assign_tasks
@@ -90,7 +89,8 @@ def schema():
 
 
 class AgentIndexAPI(MethodView):
-    @validate_with_model(Agent, disallow=("id", ))
+    @validate_with_model(
+        Agent, disallow=("id", ), ignore=("current_assignments", ))
     def post(self):
         """
         A ``POST`` to this endpoint will either create or update an existing
@@ -184,6 +184,7 @@ class AgentIndexAPI(MethodView):
         # Set remote_ip if it did not come in with the request
         g.json.setdefault("remote_ip", request.remote_addr)
 
+        current_assignments = g.json.pop("current_assignments", None)
         agent = Agent.query.filter_by(
             port=g.json["port"], systemid=g.json["systemid"]).first()
 
@@ -459,6 +460,7 @@ class SingleAgentAPI(MethodView):
 
     @validate_with_model(
         Agent, disallow=("id", ),
+        ignore=("current_assignments", ),
         ignore_missing=(
                 "ram", "cpus", "port", "free_ram", "hostname", "systemid"))
     def post(self, agent_id):
@@ -511,6 +513,8 @@ class SingleAgentAPI(MethodView):
 
         if "remote_ip" not in g.json:
             g.json["remote_ip"] = request.remote_addr
+
+        current_assignments = g.json.pop("current_assignments", None)
 
         try:
             items = g.json.iteritems
