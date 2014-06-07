@@ -34,12 +34,16 @@ before_script:
   - if [[ $TDB_TYPE == "postgres" ]]; then psql -c "create database pyfarm;" -U postgres; fi
   - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
 
+before_install:
+  - curl https://raw.githubusercontent.com/pyfarm/pyfarm/master/misc/retry.sh -o retry.sh
+
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install unittest2; fi
+  - source retry.sh
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then retry pip install unittest2; fi
   - if [[ $TDB_DRIVER != "" ]]; then pip install $TDB_DRIVER; fi
-  - pip install coverage python-coveralls
-  - pip install git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg # TODO: remove dev install
-  - pip install -e . --egg
+  - retry pip install coverage python-coveralls
+  - retry pip install git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg # TODO: remove dev install
+  - retry pip install -e . --egg
 
 script:
   - pip freeze
