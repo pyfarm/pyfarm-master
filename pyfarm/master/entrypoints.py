@@ -434,10 +434,14 @@ def run_master():  # pragma: no cover
     parser.add_argument("--create-all", "-C", action="store_true",
                         help="create all tables before starting")
     parser.add_argument("--confirm-drop")
+    parser.add_argument("--allow-agent-loopback-addresses", action="store_true")
     parsed = parser.parse_args()
 
     if app.debug and parsed.drop_all:
         db.drop_all()
+
+    if parsed.allow_agent_loopback_addresses:
+        app.config.update(ALLOW_AGENT_LOOPBACK_ADDRESSES=True)
 
     if parsed.create_all:
         db.create_all()
