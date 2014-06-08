@@ -184,7 +184,9 @@ class AgentIndexAPI(MethodView):
         # Set remote_ip if it did not come in with the request
         g.json.setdefault("remote_ip", request.remote_addr)
 
-        current_assignments = g.json.pop("current_assignments", None)
+        g.json.pop("current_assignments", None)
+        logger.warning("NOT IMPLEMENTED: current_assignments")
+
         agent = Agent.query.filter_by(
             port=g.json["port"], systemid=g.json["systemid"]).first()
 
@@ -514,7 +516,8 @@ class SingleAgentAPI(MethodView):
         if "remote_ip" not in g.json:
             g.json["remote_ip"] = request.remote_addr
 
-        current_assignments = g.json.pop("current_assignments", None)
+        g.json.pop("current_assignments", None)
+        logger.warning("NOT IMPLEMENTED: current_assignments")
 
         try:
             items = g.json.iteritems
