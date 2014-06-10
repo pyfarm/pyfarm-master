@@ -539,7 +539,7 @@ class SingleAgentAPI(MethodView):
         db.session.commit()
         assign_tasks.delay()
 
-        return jsonify(model.to_dict()), OK
+        return jsonify(model.to_dict(unpack_relationships=False)), OK
 
     def delete(self, agent_id):
         """
