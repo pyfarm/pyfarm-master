@@ -18,27 +18,27 @@ matrix:
 services:
   - redis-server
 
+before_install:
+  - curl https://raw.githubusercontent.com/pyfarm/pyfarm/master/misc/retry.sh -o retry.sh
+  - source retry.sh
+  - if [[ $TDB_DRIVER != "" ]]; then retry pip install $TDB_DRIVER --quiet; fi
+
+install:
+  - retry pip install coverage python-coveralls --quiet
+  - retry pip install git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg --quiet
+  - retry pip install -e . --egg --quiet
+
 before_script:
   - if [[ $TDB_TYPE == "postgres" ]]; then psql -c "create database pyfarm;" -U postgres; fi
   - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
 
-before_install:
-  - curl https://raw.githubusercontent.com/pyfarm/pyfarm/master/misc/retry.sh -o retry.sh
-
-install:
-  - source retry.sh
-  - if [[ $TDB_DRIVER != "" ]]; then pip install $TDB_DRIVER; fi
-  - retry pip install coverage python-coveralls
-  - retry pip install git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg # TODO: remove dev install
-  - retry pip install -e . --egg
-
 script:
   - pip freeze
-
-  # run nosetests for the two individual modules (otherwise coverage won't work)
-  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.models tests/test_models && mv -v .coverage .coverage.1
-  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.master tests/test_master && mv -v .coverage .coverage.2
+  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.models tests/test_models
+  - mv -v .coverage .coverage.1
+  - nosetests -s --verbose --with-coverage --cover-package=pyfarm.master tests/test_master
+  - mv -v .coverage .coverage.2
+  - coverage combine
 
 after_success:
- - coverage combine
  - coveralls
