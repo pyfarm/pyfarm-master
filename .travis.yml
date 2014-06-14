@@ -1,31 +1,19 @@
 language: python
 python:
-  - 2.6
   - 2.7
   - 3.3
+  - 3.4
 
 env:
   - TDB_TYPE=sqlite PYFARM_DATABASE_URI="sqlite:///:memory:" PYFARM_CONFIG="debug"
   - TDB_TYPE=sqlite PYFARM_DATABASE_URI="sqlite:///:memory:" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
   - TDB_TYPE=postgres TDB_DRIVER=psycopg2 PYFARM_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
   - TDB_TYPE=postgres TDB_DRIVER=psycopg2 PYFARM_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-  - TDB_TYPE=postgres TDB_DRIVER=pg8000 PYFARM_DATABASE_URI="postgresql+pg8000://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-  - TDB_TYPE=postgres TDB_DRIVER=pg8000 PYFARM_DATABASE_URI="postgresql+pg8000://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-  - TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-  - TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-  - TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-  - TDB_TYPE=mysql TDB_DRIVER=pymysql PYFARM_DATABASE_URI="mysql+pymysql://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
   - TDB_TYPE=mysql TDB_DRIVER="mysql-connector-python --allow-external mysql-connector-python" PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
   - TDB_TYPE=mysql TDB_DRIVER="mysql-connector-python --allow-external mysql-connector-python" PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
 
 matrix:
   fast_finish: true
-  allow_failures:
-    # TODO: remove these lines when and if mysql-python ever starts working with Python 3.x
-    - python: 3.3
-      env: TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-    - python: 3.3
-      env: TDB_TYPE=mysql TDB_DRIVER=mysql-python PYFARM_DATABASE_URI="mysql+mysqldb://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
 
 services:
   - redis-server
@@ -39,7 +27,6 @@ before_install:
 
 install:
   - source retry.sh
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then retry pip install unittest2; fi
   - if [[ $TDB_DRIVER != "" ]]; then pip install $TDB_DRIVER; fi
   - retry pip install coverage python-coveralls
   - retry pip install git+git://github.com/pyfarm/pyfarm-core.git#egg=pyfarm.core --egg # TODO: remove dev install
