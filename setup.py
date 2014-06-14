@@ -17,7 +17,7 @@
 from __future__ import with_statement
 
 import sys
-assert sys.version_info[0:2] >= (2, 6), "Python 2.6 or higher is required"
+assert sys.version_info[0:2] >= (2, 7), "Python 2.7 or higher is required"
 
 from os import walk
 from os.path import isfile, join
@@ -40,9 +40,6 @@ install_requires = [
     "redis",
     "requests",
     "netaddr"]
-
-if sys.version_info[0:2] == (2, 6):
-    install_requires += ["argparse", "unittest2"]
 
 if isfile("README.rst"):
     with open("README.rst", "r") as readme:
@@ -100,7 +97,8 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.4",
         "Topic :: System :: Distributed Computing"])
