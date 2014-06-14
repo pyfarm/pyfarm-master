@@ -26,6 +26,7 @@ import os
 import time
 import warnings
 import uuid
+from unittest import TestCase
 
 try:
     from httplib import (
@@ -42,14 +43,6 @@ try:
     from UserDict import UserDict
 except ImportError:
     from collections import UserDict
-
-from pyfarm.core.enums import PY26
-
-if not PY26:
-    from unittest import TestCase
-else:
-    from unittest2 import TestCase
-
 
 try:
     import blinker
