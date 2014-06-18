@@ -36,7 +36,10 @@ from datetime import datetime
 from flask import request, g
 from flask.views import MethodView
 
+from sqlalchemy import or_
+
 from pyfarm.core.logger import getLogger
+from pyfarm.core.enums import WorkState
 from pyfarm.scheduler.tasks import assign_tasks
 from pyfarm.models.agent import Agent
 from pyfarm.models.task import Task
@@ -47,6 +50,30 @@ from pyfarm.master.utility import (
 
 logger = getLogger("api.agents")
 
+
+def fail_missing_assignments(agent, current_assignments):
+    # FIXME Possible race condition:
+    # If an agent decides to reannounce itself just after we assigned a
+    # task to it but before we could send it to the agent, this will
+    # needlessly mark that task as failed.
+    known_task_ids = []
+    for assignment in current_assignments.values():
+        for task in assignment["tasks"]:
+            known_task_ids.append(task["id"])
+    tasks_query = Task.query.filter(Task.agent == agent,
+                                    or_(Task.state is None,
+                                        Task.state not in
+                                            [WorkState.FAILED, WorkState.DONE]),
+                                    Task.id not in known_task_ids)
+    for task in tasks_query:
+        task.state = WorkState.FAILED
+        db.session.add(task)
+        updated = True
+        logger.warning("Task %s (frame %s from job %r (%s)) was not in the "
+                       "current assignments of agent %r (id %s) when to should "
+                       "be.  Marking it as failed.",
+                       task.id, task.frame, task.job.title,
+                       task.job_id, agent.hostname, agent.id)
 
 def schema():
     """
@@ -184,8 +211,7 @@ class AgentIndexAPI(MethodView):
         # Set remote_ip if it did not come in with the request
         g.json.setdefault("remote_ip", request.remote_addr)
 
-        g.json.pop("current_assignments", None)
-        logger.warning("NOT IMPLEMENTED: current_assignments")
+        current_assignments = g.json.pop("current_assignments", None)
 
         agent = Agent.query.filter_by(
             port=g.json["port"], systemid=g.json["systemid"]).first()
@@ -244,6 +270,11 @@ class AgentIndexAPI(MethodView):
                                BAD_REQUEST
                     else:
                         updated = True
+
+
+            # TODO Only do that if this is really the agent speaking to us.
+            if current_assignments is not None:
+                fail_missing_assignments(agent, current_assignments)
 
             if updated:
                 db.session.add(agent)
@@ -516,8 +547,7 @@ class SingleAgentAPI(MethodView):
         if "remote_ip" not in g.json:
             g.json["remote_ip"] = request.remote_addr
 
-        g.json.pop("current_assignments", None)
-        logger.warning("NOT IMPLEMENTED: current_assignments")
+        current_assignments = g.json.pop("current_assignments", None)
 
         try:
             items = g.json.iteritems
@@ -539,6 +569,10 @@ class SingleAgentAPI(MethodView):
                 modified[key] = value
 
         model.last_heard_from = datetime.utcnow()
+
+        # TODO Only do that if this is really the agent speaking to us.
+        if current_assignments is not None:
+            fail_missing_assignments(model, current_assignments)
 
         logger.debug(
             "Updated agent %r: %r", model.id, modified)
