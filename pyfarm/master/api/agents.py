@@ -51,6 +51,30 @@ from pyfarm.master.utility import (
 logger = getLogger("api.agents")
 
 
+def fail_missing_assignments(agent, current_assignments):
+    # FIXME Possible race condition:
+    # If an agent decides to reannounce itself just after we assigned a
+    # task to it but before we could send it to the agent, this will
+    # needlessly mark that task as failed.
+    known_task_ids = []
+    for assignment in current_assignments.values():
+        for task in assignment["tasks"]:
+            known_task_ids.append(task["id"])
+    tasks_query = Task.query.filter(Task.agent == agent,
+                                    or_(Task.state is None,
+                                        Task.state not in
+                                            [WorkState.FAILED, WorkState.DONE]),
+                                    Task.id not in known_task_ids)
+    for task in tasks_query:
+        task.state = WorkState.FAILED
+        db.session.add(task)
+        updated = True
+        logger.warning("Task %s (frame %s from job %r (%s)) was not in the "
+                       "current assignments of agent %r (id %s) when to should "
+                       "be.  Marking it as failed.",
+                       task.id, task.frame, task.job.title,
+                       task.job_id, agent.hostname, agent.id)
+
 def schema():
     """
     Returns the basic schema of :class:`.Agent`
@@ -247,32 +271,10 @@ class AgentIndexAPI(MethodView):
                     else:
                         updated = True
 
-            # FIXME Possible race condition:
-            # If an agent decides to reannounce itself just after we assigned
-            # task to it but before we could send it to the agent, this will
-            # needlessly mark that task as failed.
+
             # TODO Only do that if this is really the agent speaking to us.
             if current_assignments is not None:
-                known_task_ids = []
-                for assignment in current_assignments.values():
-                    for task in assignment["tasks"]:
-                        known_task_ids.append(task["id"])
-                tasks_query = Task.query.filter(Task.agent == agent,
-                                                or_(Task.state is None,
-                                                    Task.state not in
-                                                        [WorkState.FAILED,
-                                                         WorkState.DONE]),
-                                                Task.id not in known_task_ids)
-                for task in tasks_query:
-                    task.state = WorkState.FAILED
-                    db.session.add(task)
-                    updated = True
-                    logger.warning("Task %s (frame %s from job %s (%s)) was not "
-                                   "in the current assignments of agent %s "
-                                   "(id %s) when to should be.  "
-                                   "Marking it as failed.",
-                                   task.id, task.frame, task.job.title,
-                                   task.job_id, agent.hostname, agent.id)
+                fail_missing_assignments(agent, current_assignments)
 
             if updated:
                 db.session.add(agent)
@@ -568,31 +570,9 @@ class SingleAgentAPI(MethodView):
 
         model.last_heard_from = datetime.utcnow()
 
-        # FIXME Possible race condition:
-        # If an agent decides to reannounce itself just after we assigned
-        # task to it but before we could send it to the agent, this will
-        # needlessly mark that task as failed.
         # TODO Only do that if this is really the agent speaking to us.
         if current_assignments is not None:
-            known_task_ids = []
-            for assignment in current_assignments.values():
-                for task in assignment["tasks"]:
-                    known_task_ids.append(task["id"])
-            tasks_query = Task.query.filter(Task.agent == model,
-                                            or_(Task.state is None,
-                                                Task.state not in
-                                                    [WorkState.FAILED,
-                                                     WorkState.DONE]),
-                                            Task.id not in known_task_ids)
-            for task in tasks_query:
-                task.state = WorkState.FAILED
-                db.session.add(task)
-                logger.warning("Task %s (frame %s from job %s (%s)) was not "
-                               "in the current assignments of agent %s "
-                               "(id %s) when to should be.  "
-                               "Marking it as failed.",
-                               task.id, task.frame, task.job.title,
-                               task.job_id, model.hostname, model.id)
+            fail_missing_assignments(model, current_assignments)
 
         logger.debug(
             "Updated agent %r: %r", model.id, modified)
