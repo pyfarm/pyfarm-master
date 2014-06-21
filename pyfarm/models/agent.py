@@ -177,6 +177,9 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             "itself.  Unlike the id column this field helps to keep track of "
             "an agent's uniqueness based on some hardware information.")
 
+    version = db.Column(db.String(16), nullable=True,
+                        doc="The pyfarm version number this agent is running.")
+
     # host state
     state = db.Column(AgentStateEnum, default=AgentState.ONLINE,
                       nullable=False,
