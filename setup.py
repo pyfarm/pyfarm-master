@@ -19,6 +19,7 @@ from __future__ import with_statement
 import sys
 assert sys.version_info[0:2] >= (2, 7), "Python 2.7 or higher is required"
 
+import os
 from os import walk
 from os.path import isfile, join
 from setuptools import setup
@@ -27,7 +28,7 @@ from setuptools import setup
 #   sqlalchemy: Bugfix for pymysql in Python 3
 #   flask-admin: New form helps that support async JavaScript requests
 install_requires = [
-    "pyfarm.core", 
+    "pyfarm.core",
     "sqlalchemy>=0.9.3",
     "flask",
     "flask-admin>=1.0.7",
@@ -40,6 +41,9 @@ install_requires = [
     "redis",
     "requests",
     "netaddr"]
+
+if "READTHEDOCS" in os.environ:
+    install_requires += ["sphinxcontrib-httpdomain"]
 
 if isfile("README.rst"):
     with open("README.rst", "r") as readme:
