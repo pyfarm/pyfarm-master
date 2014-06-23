@@ -19,6 +19,7 @@ except ImportError:
 
 # -- General configuration ------------------------------------------------
 
+linkcheck_timeout = 60
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
