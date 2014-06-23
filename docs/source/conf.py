@@ -277,4 +277,8 @@ intersphinx_mapping = {
     "pyfarm.core": (
         "http://pyfarm.readthedocs.org/projects/pyfarm-core/en/latest/", None),
     "pyfarm.agent": (
-        "http://pyfarm.readthedocs.org/projects/pyfarm-agent/en/latest/", None)}
+        "http://pyfarm.readthedocs.org/projects/pyfarm-agent/en/latest/", None),
+    "sqlalchemy": ("http://www.sqlalchemy.org/docs/", None),
+    "flask": ("https://flask.readthedocs.org/en/latest/", None),
+    "login": ("https://flask-login.readthedocs.org/en/latest/", None),
+    "wtforms": ("https://wtforms.readthedocs.org/en/latest/", None)}
