@@ -253,7 +253,7 @@ man_pages = [
 texinfo_documents = [
     ("index", "pyfarm_master", "pyfarm.master Documentation",
      "Oliver Palmer, Guido Winkelmann", "pyfarm_master",
-     "One line description of project.",
+     "The models, master, and scheduler for PyFarm's jobs.",
      "Miscellaneous")]
 
 # Documents to append as an appendix to all manuals.
