@@ -43,8 +43,7 @@ install_requires = [
     "netaddr"]
 
 if "READTHEDOCS" in os.environ:
-    install_requires += ["sphinxcontrib-httpdomain",
-                         "sphinxcontrib-programoutput"]
+    install_requires += ["sphinxcontrib-httpdomain"]
 
 if isfile("README.rst"):
     with open("README.rst", "r") as readme:
