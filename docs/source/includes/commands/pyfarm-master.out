@@ -1,0 +1,10 @@
+usage: pyfarm-master [-h] [--drop-all] [--create-all]
+                     [--confirm-drop CONFIRM_DROP]
+                     [--allow-agent-loopback-addresses]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --drop-all, -D        drop the existing tables before starting
+  --create-all, -C      create all tables before starting
+  --confirm-drop CONFIRM_DROP
+  --allow-agent-loopback-addresses

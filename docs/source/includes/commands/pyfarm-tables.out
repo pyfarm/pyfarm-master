@@ -1,0 +1,10 @@
+usage: pyfarm-tables [-h] [--echo] [--drop-all] [--no-create-tables]
+
+Creates PyFarm's tables
+
+optional arguments:
+  -h, --help          show this help message and exit
+  --echo              If provided then echo the SQL queries being made
+  --drop-all          If provided all tables will be dropped from the database
+                      before they are created.
+  --no-create-tables  If provided then no tables will be created.
