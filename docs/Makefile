@@ -46,10 +46,17 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
+commands:
+ifndef NO_COMMANDS
+	rm -f source/includes/commands/*.out
+	pyfarm-tables -h | grep -v pf. > source/includes/commands/pyfarm-tables.out
+	pyfarm-master -h | grep -v pf. > source/includes/commands/pyfarm-master.out
+endif
+
 clean:
 	rm -rf $(BUILDDIR)/*
 
-html:
+html: commands
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
