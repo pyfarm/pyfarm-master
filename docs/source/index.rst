@@ -11,6 +11,7 @@ PyFarm.
     :maxdepth: 2
 
     environment.rst
+    commands
     modules/pyfarm.master
     modules/pyfarm.models
     modules/pyfarm.scheduler
