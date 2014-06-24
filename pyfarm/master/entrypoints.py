@@ -38,7 +38,7 @@ from flask import request
 from flask.ext.admin.base import MenuLink
 
 from pyfarm.core.config import read_env_bool
-from pyfarm.master.application import db
+from pyfarm.master.application import db, app
 from pyfarm.master.utility import error_handler
 
 # Any table that needs to be created by db.create_all() should
@@ -396,30 +396,43 @@ def load_master(app, admin, api):
     load_api(app, api)
 
 
-def create_tables():  # pragma: no cover
+def tables():  # pragma: no cover
     """
-    Calls sqlalchemy's create_all() function to construct the tables in the
-    database.  From the standpoint of sqlalchemy calling create_all() on
-    an existing database should be considered safe because it will check first
-    before executing CREATE.  That said, this function should typically only
-    be run once.
+    Small script for basic table management and, eventually, some
+    introspection as well.
     """
+    parser = ArgumentParser(
+        description="Creates PyFarm's tables")
+    parser.add_argument(
+        "--echo", action="store_true",
+        help="If provided then echo the SQL queries being made")
+    parser.add_argument(
+        "--drop-all", action="store_true",
+        help="If provided all tables will be dropped from the database "
+             "before they are created.")
+    parser.add_argument(
+        "--no-create-tables", action="store_true",
+        help="If provided then no tables will be created.")
+    args = parser.parse_args()
+
+    db.engine.echo = args.echo
+
     if db.engine.name == "sqlite" and db.engine.url.database == ":memory:":
         print("Nothing to do, in memory sqlite database is being used")
         return
 
-    # Turn on output from the engine so it's
-    # more obvious what was done
-    db.engine.echo = True
+    if args.drop_all:
+        db.drop_all()
 
-    try:
-        db.create_all()
-    except Exception as e:
-        print("Failed to call create_all().  This may be an error or "
-              "it may be something that can be ignored: %r" % e)
-    else:
-        print()
-        print("Tables created or updated")
+    if not args.no_create_tables:
+        try:
+            db.create_all()
+        except Exception as e:
+            print("Failed to call create_all().  This may be an error or "
+                  "it may be something that can be ignored: %r" % e)
+        else:
+            print()
+            print("Tables created or updated")
 
 
 def run_master():  # pragma: no cover
