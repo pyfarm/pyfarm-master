@@ -4,11 +4,10 @@ Commands
 Standard Commands
 +++++++++++++++++
 
-pyfarm-create-tables (output will vary)
----------------------------------------
+pyfarm-create-tables
+--------------------
 
-.. program-output:: pyfarm-create-tables -h | grep -v "INFO sqlalchemy" | grep -v pf. | grep -v "()"
-    :shell:
+.. literalinclude:: includes/commands/pyfarm-tables.out
 
 Development Commands
 ++++++++++++++++++++
@@ -16,5 +15,4 @@ Development Commands
 pyfarm-master
 -------------
 
-.. program-output:: pyfarm-master -h | grep -v pf.
-    :shell:
+.. literalinclude:: includes/commands/pyfarm-master.out
