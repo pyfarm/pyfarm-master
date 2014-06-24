@@ -85,7 +85,7 @@ setup(
     entry_points={
         "console_scripts": [
             "pyfarm-master = pyfarm.master.entrypoints:run_master",
-            "pyfarm-create-tables = pyfarm.master.entrypoints:create_tables"]},
+            "pyfarm-tables = pyfarm.master.entrypoints:tables"]},
     install_requires=install_requires,
     url="https://github.com/pyfarm/pyfarm-master",
     license="Apache v2.0",
