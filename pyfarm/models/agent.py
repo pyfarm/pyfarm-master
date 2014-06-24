@@ -180,6 +180,9 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     version = db.Column(db.String(16), nullable=True,
                         doc="The pyfarm version number this agent is running.")
 
+    upgrade_to = db.Column(db.String(16), nullable=True,
+                           doc="The version this agent should upgrade to.")
+
     # host state
     state = db.Column(AgentStateEnum, default=AgentState.ONLINE,
                       nullable=False,
