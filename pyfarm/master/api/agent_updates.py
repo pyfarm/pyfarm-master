@@ -23,16 +23,16 @@ The API allows access to agent update packages, possibly through redirects
 import re
 import tempfile
 from os import makedirs
-from os.path import join, isdir
+from os.path import join, isdir, isfile
 
 try:
-    from httplib import BAD_REQUEST, CREATED
+    from httplib import BAD_REQUEST, CREATED, NOT_FOUND
 except ImportError:  # pragma: no cover
-    from http.client import BAD_REQUEST, CREATED
+    from http.client import BAD_REQUEST, CREATED, NOT_FOUND
 
 from werkzeug.utils import secure_filename
 from flask.views import MethodView
-from flask import request, g
+from flask import request, g, redirect, send_file
 
 from pyfarm.core.config import read_env
 from pyfarm.core.logger import getLogger
@@ -90,3 +90,50 @@ class AgentUpdatesAPI(MethodView):
             zip_file.write(request.data)
 
         return "", CREATED
+
+    def get(self, version):
+        """
+        A ``GET`` to this endpoint will return the update package as a zip file
+        the specified version
+
+        .. http:get:: /api/v1/agents/updates/<string:version> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                PUT /api/v1/agents/updates/1.2.3 HTTP/1.1
+                Accept: application/zip
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/zip
+
+
+                <binary data>
+
+        :statuscode 200: The update file was found and is returned
+        :statuscode 301: The update can be found under a different URL
+        :statuscode 400: there was something wrong with the request (such as an
+                         invalid version number specified or the  mime type not
+                         being application/zip)
+        """
+        if not version_regex.match(version):
+            return (jsonify(error="Version is not an acceptable version number"),
+                    BAD_REQUEST)
+        filename = "pyfarm-agent-%s.zip" % version
+
+        updates_webdir = read_env("PYFARM_AGENT_UPDATES_WEBDIR", None)
+        if updates_webdir:
+            return redirect(join(updates_webdir, filename))
+
+        updates_dir = read_env("PYFARM_AGENT_UPDATES_DIR",
+                               join(tempfile.gettempdir(), "pyfarm-updates"))
+        update_file = join(updates_dir, filename)
+        if not isfile(update_file):
+            return (jsonify(error="Specified update not found"), NOT_FOUND)
+
+        return send_file(update_file)
