@@ -86,7 +86,7 @@ class AgentUpdatesAPI(MethodView):
             makedirs(updates_dir)
 
         path = join(updates_dir, "pyfarm-agent-%s.zip" % version)
-        with open(path, "wb+") as file:
-            file.write(request.data)
+        with open(path, "wb+") as zip_file:
+            zip_file.write(request.data)
 
         return "", CREATED
