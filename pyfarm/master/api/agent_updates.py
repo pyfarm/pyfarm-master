@@ -72,7 +72,7 @@ class AgentUpdatesAPI(MethodView):
         """
         if request.mimetype != "application/zip":
             return (jsonify(error="Data for agent updates must be "
-                                 "application/zip"), BAD_REQUEST)
+                                  "application/zip"), BAD_REQUEST)
         if not re.match("\d+(\.\d+(\.\d+)?)?((-pre\d?)|(-dev\d?)|(-rc?\d?)|"
                         "(-alpha\d?)|(-beta\d?))?$", version):
             return (jsonify(error="Version is not an acceptable version number"),
