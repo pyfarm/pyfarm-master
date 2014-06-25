@@ -40,6 +40,9 @@ from pyfarm.master.utility import jsonify
 
 logger = getLogger("api.agents")
 
+version_regex = re.compile("\d+(\.\d+(\.\d+)?)?((-pre\d?)|(-dev\d?)|(-rc?\d?)|"
+                           "(-alpha\d?)|(-beta\d?))?$")
+
 
 class AgentUpdatesAPI(MethodView):
     def put(self, version):
@@ -73,8 +76,7 @@ class AgentUpdatesAPI(MethodView):
         if request.mimetype != "application/zip":
             return (jsonify(error="Data for agent updates must be "
                                   "application/zip"), BAD_REQUEST)
-        if not re.match("\d+(\.\d+(\.\d+)?)?((-pre\d?)|(-dev\d?)|(-rc?\d?)|"
-                        "(-alpha\d?)|(-beta\d?))?$", version):
+        if not version_regex.match(version):
             return (jsonify(error="Version is not an acceptable version number"),
                     BAD_REQUEST)
 
