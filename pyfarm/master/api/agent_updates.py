@@ -21,6 +21,7 @@ Agent Updates
 The API allows access to agent update packages, possibly through redirects
 """
 import re
+import tempfile
 from os import makedirs
 from os.path import join, exists
 
@@ -77,7 +78,8 @@ class AgentUpdatesAPI(MethodView):
             return (jsonify(error="Version is not an acceptable version number"),
                     BAD_REQUEST)
 
-        updates_dir = read_env("PYFARM_AGENT_UPDATES_DIR", "/tmp/pyfarm-updates")
+        updates_dir = read_env("PYFARM_AGENT_UPDATES_DIR",
+                               join(tempfile.gettempdir(), "pyfarm-updates"))
         if not exists(updates_dir):
             makedirs(updates_dir)
 
