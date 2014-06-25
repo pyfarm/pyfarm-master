@@ -568,6 +568,7 @@ def poll_agents():
     for agent in busy_agents_to_poll_query:
         poll_agent.delay(agent.id)
 
+
 @celery_app.task(ignore_results=True)
 def send_job_completion_mail(job_id, successful=True):
     job = Job.query.filter_by(id=job_id).one()
@@ -592,3 +593,39 @@ def send_job_completion_mail(job_id, successful=True):
 
         logger.info("Job completion mail for job %s (id %s) sent to %s",
                     job.title, job.id, to)
+
+@celery_app.task(ignore_results=True, bind=True)
+def update_agent(self, agent_id):
+    agent = Agent.query.filter_by(id=agent_id).one()
+    if agent.version == agent.upgrade_to:
+        return True
+
+    update_file = {"file": open(file_path, 'rb')}
+    try:
+        response = requests.post(agent.api_url() + "/update",
+                                 dumps({"version": agent.upgrade_to}),
+                                 headers={"User-Agent": USERAGENT})
+
+        logger.debug("Return code after sending update to agent: %s",
+                     response.status_code)
+        if response.status_code not in [requests.codes.accepted,
+                                        requests.codes.ok]:
+            raise ValueError("Unexpected return code on sending update to "
+                             "agent: %s", response.status_code)
+    except ConnectionError as e:
+        if self.request.retries < self.max_retries:
+            logger.warning("Caught ConnectionError trying to contact agent "
+                            "%s (id %s), retry %s of %s: %s",
+                            agent.hostname,
+                            agent.id,
+                            self.request.retries,
+                            self.max_retries,
+                            e)
+            self.retry(exc=e)
+        else:
+            logger.error("Could not contact agent %s, (id %s), marking as "
+                         "offline", agent.hostname, agent.id)
+            agent.state = AgentState.OFFLINE
+            db.session.add(agent)
+            db.session.commit()
+            raise

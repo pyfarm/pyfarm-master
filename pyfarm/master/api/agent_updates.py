@@ -112,7 +112,6 @@ class AgentUpdatesAPI(MethodView):
                 HTTP/1.1 200 OK
                 Content-Type: application/zip
 
-
                 <binary data>
 
         :statuscode 200: The update file was found and is returned
