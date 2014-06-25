@@ -68,7 +68,7 @@ class AgentUpdatesAPI(MethodView):
                 HTTP/1.1 200 OK
                 Content-Type: application/json
 
-        :statuscode 200: The update was put in place
+        :statuscode 201: The update was put in place
         :statuscode 400: there was something wrong with the request (such as an
                          invalid version number specified or the  mime type not
                          being application/zip)
