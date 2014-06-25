@@ -18,6 +18,7 @@ PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
+DOCS_ROOT      := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext
 
@@ -46,6 +47,12 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
+apidoc:
+ifndef NO_APIDOCS
+	rm -f source/modules/*.rst
+	@sphinx-apidoc $(DOCS_ROOT)/../pyfarm --output-dir source/modules --separate --force
+endif
+
 commands:
 ifndef NO_COMMANDS
 	rm -f source/includes/commands/*.out
@@ -56,7 +63,7 @@ endif
 clean:
 	rm -rf $(BUILDDIR)/*
 
-html: commands
+html: commands apidoc
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
