@@ -23,7 +23,7 @@ The API allows access to agent update packages, possibly through redirects
 import re
 import tempfile
 from os import makedirs
-from os.path import join, exists
+from os.path import join, isdir
 
 try:
     from httplib import BAD_REQUEST, CREATED
@@ -82,7 +82,7 @@ class AgentUpdatesAPI(MethodView):
 
         updates_dir = read_env("PYFARM_AGENT_UPDATES_DIR",
                                join(tempfile.gettempdir(), "pyfarm-updates"))
-        if not exists(updates_dir):
+        if not isdir(updates_dir):
             makedirs(updates_dir)
 
         path = join(updates_dir, "pyfarm-agent-%s.zip" % version)
