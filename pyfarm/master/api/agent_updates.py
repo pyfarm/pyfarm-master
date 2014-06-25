@@ -42,6 +42,33 @@ logger = getLogger("api.agents")
 
 class AgentUpdatesAPI(MethodView):
     def put(self, version):
+        """
+        A ``PUT`` to this endpoint will upload a new version of pyfarm-agent to
+        be used for agent auto-updates.  The update must be a zip file.
+
+        .. http:put:: /api/v1/agents/updates/<string:version> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                PUT /api/v1/agents/updates/1.2.3 HTTP/1.1
+                Content-Type: application/zip
+
+                <binary data>
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+        :statuscode 200: The update was put in place
+        :statuscode 400: there was something wrong with the request (such as an
+                         invalid version number specified or the  mime type not
+                         being application/zip)
+        """
         if request.mimetype != "application/zip":
             return (jsonify(error="Data for agent updates must be "
                                  "application/zip"), BAD_REQUEST)
