@@ -605,12 +605,13 @@ def update_agent(self, agent_id):
                                  dumps({"version": agent.upgrade_to}),
                                  headers={"User-Agent": USERAGENT})
 
-        logger.debug("Return code after sending update to agent: %s",
-                     response.status_code)
+        logger.debug("Return code after sending update request for %s "
+                     "to agent: %s", agent.upgrade_to, response.status_code)
         if response.status_code not in [requests.codes.accepted,
                                         requests.codes.ok]:
-            raise ValueError("Unexpected return code on sending update to "
-                             "agent: %s", response.status_code)
+            raise ValueError("Unexpected return code on sending update request "
+                             "for %s to agent %s: %s", agent.upgrade_to,
+                             agent.hostname, response.status_code)
     except ConnectionError as e:
         if self.request.retries < self.max_retries:
             logger.warning("Caught ConnectionError trying to contact agent "
