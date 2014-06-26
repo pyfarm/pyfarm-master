@@ -24,6 +24,7 @@ import re
 import tempfile
 from os import makedirs
 from os.path import join, isdir, isfile
+from errno import EEXIST
 
 try:
     from httplib import BAD_REQUEST, CREATED, NOT_FOUND
@@ -42,6 +43,15 @@ logger = getLogger("api.agents")
 
 VERSION_REGEX = re.compile("\d+(\.\d+(\.\d+)?)?((-pre\d?)|(-dev\d?)|(-rc?\d?)|"
                            "(-alpha\d?)|(-beta\d?))?$")
+
+UPDATES_DIR = read_env(
+    "PYFARM_AGENT_UPDATES_DIR", join(tempfile.gettempdir(), "pyfarm-updates"))
+
+try:
+    makedirs(UPDATES_DIR)
+except OSError as e:  # pragma: no cover
+    if e.errno != EEXIST:
+        raise
 
 
 class AgentUpdatesAPI(MethodView):
@@ -80,12 +90,7 @@ class AgentUpdatesAPI(MethodView):
             return (jsonify(error="Version is not an acceptable version number"),
                     BAD_REQUEST)
 
-        updates_dir = read_env("PYFARM_AGENT_UPDATES_DIR",
-                               join(tempfile.gettempdir(), "pyfarm-updates"))
-        if not isdir(updates_dir):
-            makedirs(updates_dir)
-
-        path = join(updates_dir, "pyfarm-agent-%s.zip" % version)
+        path = join(UPDATES_DIR, "pyfarm-agent-%s.zip" % version)
         with open(path, "wb+") as zip_file:
             zip_file.write(request.data)
 
@@ -129,9 +134,7 @@ class AgentUpdatesAPI(MethodView):
         if updates_webdir:
             return redirect(join(updates_webdir, filename))
 
-        updates_dir = read_env("PYFARM_AGENT_UPDATES_DIR",
-                               join(tempfile.gettempdir(), "pyfarm-updates"))
-        update_file = join(updates_dir, filename)
+        update_file = join(UPDATES_DIR, filename)
         if not isfile(update_file):
             return (jsonify(error="Specified update not found"), NOT_FOUND)
 
