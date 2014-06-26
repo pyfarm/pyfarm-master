@@ -600,7 +600,6 @@ def update_agent(self, agent_id):
     if agent.version == agent.upgrade_to:
         return True
 
-    update_file = {"file": open(file_path, 'rb')}
     try:
         response = requests.post(agent.api_url() + "/update",
                                  dumps({"version": agent.upgrade_to}),
