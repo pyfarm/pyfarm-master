@@ -46,6 +46,7 @@ VERSION_REGEX = re.compile("\d+(\.\d+(\.\d+)?)?((-pre\d?)|(-dev\d?)|(-rc?\d?)|"
 
 UPDATES_DIR = read_env(
     "PYFARM_AGENT_UPDATES_DIR", join(tempfile.gettempdir(), "pyfarm-updates"))
+UPDATES_WEBDIR = read_env("PYFARM_AGENT_UPDATES_WEBDIR", None)
 
 try:
     makedirs(UPDATES_DIR)
@@ -130,9 +131,8 @@ class AgentUpdatesAPI(MethodView):
                     BAD_REQUEST)
         filename = "pyfarm-agent-%s.zip" % version
 
-        updates_webdir = read_env("PYFARM_AGENT_UPDATES_WEBDIR", None)
-        if updates_webdir:
-            return redirect(join(updates_webdir, filename))
+        if UPDATES_WEBDIR:
+            return redirect(join(UPDATES_WEBDIR, filename))
 
         update_file = join(UPDATES_DIR, filename)
         if not isfile(update_file):
