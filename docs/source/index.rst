@@ -10,8 +10,8 @@ PyFarm.
 .. toctree::
     :maxdepth: 3
 
-    environment.rst
     commands
+    environment
     modules/pyfarm.master
     modules/pyfarm.models
     modules/pyfarm.scheduler
