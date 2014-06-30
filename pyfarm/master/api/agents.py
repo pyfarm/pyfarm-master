@@ -40,7 +40,7 @@ from sqlalchemy import or_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
-from pyfarm.scheduler.tasks import assign_tasks
+from pyfarm.scheduler.tasks import assign_tasks, update_agent
 from pyfarm.models.agent import Agent
 from pyfarm.models.task import Task
 from pyfarm.master.application import db
@@ -569,6 +569,9 @@ class SingleAgentAPI(MethodView):
                 modified[key] = value
 
         model.last_heard_from = datetime.utcnow()
+
+        if "upgrade_to" in modified:
+            update_agent.delay(model.id)
 
         # TODO Only do that if this is really the agent speaking to us.
         if current_assignments is not None:

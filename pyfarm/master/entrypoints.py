@@ -139,6 +139,7 @@ def load_api(app_instance, api_instance):
         JobSingleTaskAPI, JobNotifiedUsersIndexAPI, JobSingleNotifiedUserAPI)
     from pyfarm.master.api.jobqueues import (
         schema as jobqueues_schema, JobQueueIndexAPI, SingleJobQueueAPI)
+    from pyfarm.master.api.agent_updates import AgentUpdatesAPI
 
     # top level types
     api_instance.add_url_rule(
@@ -324,6 +325,11 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/agents/<int:agent_id>/tasks/",
         view_func=TasksInAgentAPI.as_view("tasks_in_agent_api"))
+
+    # Agent updates
+    api_instance.add_url_rule(
+        "/agents/updates/<string:version>",
+        view_func=AgentUpdatesAPI.as_view("agent_updates_api"))
 
     # Notified users in jobs
     api_instance.add_url_rule(
