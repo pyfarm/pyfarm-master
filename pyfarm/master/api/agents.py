@@ -36,7 +36,7 @@ from datetime import datetime
 from flask import request, g
 from flask.views import MethodView
 
-from sqlalchemy import or_
+from sqlalchemy import or_, not_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
@@ -62,9 +62,9 @@ def fail_missing_assignments(agent, current_assignments):
             known_task_ids.append(task["id"])
     tasks_query = Task.query.filter(Task.agent == agent,
                                     or_(Task.state is None,
-                                        Task.state not in
-                                            [WorkState.FAILED, WorkState.DONE]),
-                                    Task.id not in known_task_ids)
+                                        ~Task.state.in_(
+                                            [WorkState.FAILED, WorkState.DONE])),
+                                    not_(Task.id.in_(known_task_ids)))
     for task in tasks_query:
         task.state = WorkState.FAILED
         db.session.add(task)
