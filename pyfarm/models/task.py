@@ -27,6 +27,7 @@ from textwrap import dedent
 from sqlalchemy import event
 from sqlalchemy.orm.attributes import NO_VALUE, NO_CHANGE
 
+from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
@@ -38,6 +39,9 @@ from pyfarm.models.core.mixins import (
     ValidateWorkStateMixin)
 
 __all__ = ("Task", )
+
+logger = getLogger("models.task")
+
 
 TaskDependencies = db.Table(
     TABLE_TASK_DEPENDENCIES, db.metadata,
@@ -121,6 +125,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         if (new_value == WorkState.FAILED and
             (target.attempts is None or
              target.attempts <= target.job.requeue)):
+            logger.info("Failed task %s will be retried", target.id)
             target.agent_id = None
             return None
         else:
