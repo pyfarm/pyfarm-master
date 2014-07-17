@@ -61,16 +61,15 @@ def fail_missing_assignments(agent, current_assignments):
         for task in assignment["tasks"]:
             known_task_ids.append(task["id"])
     tasks_query = Task.query.filter(Task.agent == agent,
-                                    or_(Task.state is None,
+                                    or_(Task.state == None,
                                         ~Task.state.in_(
                                             [WorkState.FAILED, WorkState.DONE])),
                                     not_(Task.id.in_(known_task_ids)))
     for task in tasks_query:
         task.state = WorkState.FAILED
         db.session.add(task)
-        updated = True
         logger.warning("Task %s (frame %s from job %r (%s)) was not in the "
-                       "current assignments of agent %r (id %s) when to should "
+                       "current assignments of agent %r (id %s) when it should "
                        "be.  Marking it as failed.",
                        task.id, task.frame, task.job.title,
                        task.job_id, agent.hostname, agent.id)

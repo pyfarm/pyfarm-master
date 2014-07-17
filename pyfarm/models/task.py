@@ -27,6 +27,7 @@ from textwrap import dedent
 from sqlalchemy import event
 from sqlalchemy.orm.attributes import NO_VALUE, NO_CHANGE
 
+from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
@@ -38,6 +39,9 @@ from pyfarm.models.core.mixins import (
     ValidateWorkStateMixin)
 
 __all__ = ("Task", )
+
+logger = getLogger("models.task")
+
 
 TaskDependencies = db.Table(
     TABLE_TASK_DEPENDENCIES, db.metadata,
@@ -116,13 +120,16 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         # we don't have a parent job.  This can happen if you're
         # testing or a job is disconnected from a task.
         if target.job is None:
-            return
+            return new_value
 
         if (new_value == WorkState.FAILED and
             (target.attempts is None or
              target.attempts <= target.job.requeue)):
-            target.state = None
+            logger.info("Failed task %s will be retried", target.id)
             target.agent_id = None
+            return None
+        else:
+            return new_value
 
     @staticmethod
     def clear_error_state(target, new_value, old_value, initiator):
@@ -135,4 +142,5 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 event.listen(Task.state, "set", Task.clear_error_state)
 event.listen(Task.state, "set", Task.state_changed)
 event.listen(Task.state, "set", Task.increment_attempts)
-event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry)
+event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry,
+             retval=True)
