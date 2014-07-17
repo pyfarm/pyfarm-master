@@ -116,13 +116,15 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         # we don't have a parent job.  This can happen if you're
         # testing or a job is disconnected from a task.
         if target.job is None:
-            return
+            return new_value
 
         if (new_value == WorkState.FAILED and
             (target.attempts is None or
              target.attempts <= target.job.requeue)):
-            target.state = None
             target.agent_id = None
+            return None
+        else:
+            return new_value
 
     @staticmethod
     def clear_error_state(target, new_value, old_value, initiator):
@@ -135,4 +137,5 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 event.listen(Task.state, "set", Task.clear_error_state)
 event.listen(Task.state, "set", Task.state_changed)
 event.listen(Task.state, "set", Task.increment_attempts)
-event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry)
+event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry,
+             retval=True)
