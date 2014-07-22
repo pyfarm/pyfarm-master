@@ -6,6 +6,7 @@ Submodules
 
 .. toctree::
 
+   pyfarm.master.api.agent_updates
    pyfarm.master.api.agents
    pyfarm.master.api.jobqueues
    pyfarm.master.api.jobs
