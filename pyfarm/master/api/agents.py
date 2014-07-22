@@ -63,8 +63,10 @@ def fail_missing_assignments(agent, current_assignments):
     tasks_query = Task.query.filter(Task.agent == agent,
                                     or_(Task.state == None,
                                         ~Task.state.in_(
-                                            [WorkState.FAILED, WorkState.DONE])),
-                                    not_(Task.id.in_(known_task_ids)))
+                                            [WorkState.FAILED, WorkState.DONE])))
+    if known_task_ids:
+        tasks_query = tasks_query.filter(not_(Task.id.in_(known_task_ids)))
+
     for task in tasks_query:
         task.state = WorkState.FAILED
         db.session.add(task)
