@@ -43,25 +43,6 @@ class TestTask(BaseTestCase):
         self.assertEqual(searched.attempts, 0)
         self.assertEqual(searched.frame, 1)
 
-    def test_increment_attempts(self):
-        task = Task(frame=1)
-        db.session.add(task)
-        db.session.commit()
-        self.assertEqual(task.attempts, 0)
-        task.state = WorkState.RUNNING
-        task.state = WorkState.DONE
-        self.assertEqual(task.attempts, 1)
-        task.state = WorkState.RUNNING
-        task.state = WorkState.FAILED
-        self.assertEqual(task.attempts, 2)
-        task.state = WorkState.RUNNING
-        task.state = WorkState.FAILED
-        task.state = WorkState.RUNNING
-        self.assertEqual(task.attempts, 4)
-        task.state = WorkState.RUNNING
-        task.state = WorkState.RUNNING
-        self.assertEqual(task.attempts, 4)
-
     def test_clear_last_error(self):
         task = Task(frame=1, last_error="foobar")
         db.session.add(task)
