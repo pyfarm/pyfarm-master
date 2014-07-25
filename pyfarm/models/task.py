@@ -110,7 +110,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     @staticmethod
     def increment_attempts(target, new_value, old_value, initiator):
-        if new_value == WorkState.RUNNING and new_value != old_value:
+        if new_value is not None and new_value != old_value:
             target.attempts += 1
 
     @staticmethod
@@ -141,6 +141,6 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
 event.listen(Task.state, "set", Task.clear_error_state)
 event.listen(Task.state, "set", Task.state_changed)
-event.listen(Task.state, "set", Task.increment_attempts)
+event.listen(Task.agent_id, "set", Task.increment_attempts)
 event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry,
              retval=True)
