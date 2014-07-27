@@ -83,7 +83,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     are kept track of by :class:`Task`
     """
     __tablename__ = TABLE_JOB
-    __table_args__ = (UniqueConstraint("title"), )
     REPR_COLUMNS = ("id", "state", "project")
     REPR_CONVERT_COLUMN = {
         "state": repr}
