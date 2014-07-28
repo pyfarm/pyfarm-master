@@ -129,10 +129,10 @@ def work_columns(state_default, priority_default):
 
         # time_submitted
         db.Column(db.DateTime,
-                  default=datetime.now,
+                  default=datetime.utcnow,
                   doc=dedent("""
                   The time the job was submitted.  By default this
-                  defaults to using :meth:`datetime.datetime.now`
+                  defaults to using :meth:`datetime.datetime.utcnow`
                   as the source of submission time.  This value
                   will not be set more than once and will not
                   change even after a job is requeued.""")),

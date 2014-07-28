@@ -166,7 +166,7 @@ class User(db.Model, UserMixin, ReprMixin):
 
     def is_active(self):
         """returns true if the user and the roles it belongs to are active"""
-        now = datetime.now()
+        now = datetime.utcnow()
 
         # user is not active
         if not self.active:
@@ -254,4 +254,4 @@ class Role(db.Model):
     def is_active(self):
         if self.expiration is None:
             return self.active
-        return self.active and datetime.now() < self.expiration
+        return self.active and datetime.utcnow() < self.expiration
