@@ -371,6 +371,7 @@ def load_admin(admin_instance):
     from pyfarm.master.admin.agents import AgentView
     from pyfarm.master.admin.work import JobView, TaskView
     from pyfarm.master.admin.jobtypes import JobTypeView, JobTypeVersionView
+    from pyfarm.master.admin.pathmaps import PathMapView
 
     # admin links
     admin_instance.add_link(MenuLink("Preferences", "/preferences"))
@@ -400,6 +401,8 @@ def load_admin(admin_instance):
     admin_instance.add_view(
         JobTypeVersionView(
             name="Job Type: Version", endpoint="jobtypes/version"))
+    admin_instance.add_view(
+        PathMapView(name="Path Maps", endpoint="pathmaps"))
 
 
 def load_master(app, admin, api):
