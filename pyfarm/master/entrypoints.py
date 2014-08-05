@@ -141,6 +141,8 @@ def load_api(app_instance, api_instance):
     from pyfarm.master.api.jobqueues import (
         schema as jobqueues_schema, JobQueueIndexAPI, SingleJobQueueAPI)
     from pyfarm.master.api.agent_updates import AgentUpdatesAPI
+    from pyfarm.master.api.pathmaps import (
+        schema as pathmap_schema, PathMapIndexAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -161,6 +163,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobqueues/",
         view_func=JobQueueIndexAPI.as_view("jobqueue_index_api"))
+    api_instance.add_url_rule(
+        "/pathmaps/",
+        view_func=PathMapIndexAPI.as_view("pathmap_index_api"))
 
     # schemas
     api_instance.add_url_rule(
@@ -181,6 +186,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobqueues/schema",
         "jobqueues_schema", view_func=jobqueues_schema, methods=("GET", ))
+    api_instance.add_url_rule(
+        "/pathmaps/schema",
+        "pathmap_schema", view_func=pathmap_schema, methods=("GET", ))
 
     # specific item access
     api_instance.add_url_rule(
