@@ -183,6 +183,7 @@ class JobTypeIndexAPI(MethodView):
                             "self.assignment_data[\"job\"][\"data\"][\"path\"], "
                             "\"%04d\" % self.assignment_data[\"tasks\"]"
                             "[0][\"frame\"])]\n"
+                    "class": "TestJobType"
                 }
 
             **Response**
@@ -199,7 +200,7 @@ class JobTypeIndexAPI(MethodView):
                     "version": 1,
                     "max_batch": 1,
                     "name": "TestJobType",
-                    "classname": null,
+                    "classname": "TestJobType",
                     "description": "Jobtype for testing inserts and queries",
                     "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
                             "JobType\n\nclass TestJobType(JobType):\n"

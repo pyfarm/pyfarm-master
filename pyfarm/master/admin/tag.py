@@ -16,8 +16,8 @@
 # limitations under the License.
 
 """
-Software
-===
+Tags
+====
 
 Objects and classes for working with tags
 """
