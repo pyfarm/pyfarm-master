@@ -1159,25 +1159,17 @@ class JobSingleNotifiedUserAPI(MethodView):
 
             .. sourcecode:: http
 
-                POST /api/v1/jobs/Test%20Job/notified_users/testuser HTTP/1.1
+                DELETE /api/v1/jobs/Test%20Job/notified_users/testuser HTTP/1.1
                 Accept: application/json
 
             **Response**
 
             .. sourcecode:: http
 
-                HTTP/1.1 201 CREATED
-                Content-Type: application/json
+                HTTP/1.1 204 NO_CONTENT
 
-                {
-                    "id": 1
-                    "username": "testuser"
-                    "email": "testuser@example.com"
-                }
-
-        :statuscode 201: a new notified user entry was created
-        :statuscode 400: there was something wrong with the request (such as
-                         invalid columns being included)
+        :statuscode 204: the notified user was removed from this job or wasn't
+                         in the list in the first place
         :statuscode 404: the job or the specified user does not exist
         """
         if isinstance(job_name, STRING_TYPES):
