@@ -17,7 +17,7 @@
 
 """
 Path Maps
-------
+---------
 
 API endpoints for viewing and managing path maps
 """
@@ -181,7 +181,7 @@ class PathMapIndexAPI(MethodView):
                         "path_osx": "/mnt/nfs",
                         "path_windows": "\\\\domains\\cifs_server",
                         "path_linux": "/mnt/nfs"
-                    }, 
+                    },
                     {
                         "id": 7,
                         "path_osx": "/renderout",
@@ -198,8 +198,8 @@ class PathMapIndexAPI(MethodView):
         for_agent = get_integer_argument("for_agent")
 
         if for_agent:
-            query =query.filter(or_(PathMap.tag == None,
-                                    PathMap.tag.has(Tag.agents.any(
+            query = query.filter(or_(PathMap.tag == None,
+                                     PathMap.tag.has(Tag.agents.any(
                                         Agent.id == for_agent))))
 
         logger.debug("Query: %s", str(query))
