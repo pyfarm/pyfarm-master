@@ -150,6 +150,8 @@ class PathMapIndexAPI(MethodView):
         if pathmap.tag:
             out["tag"] = pathmap.tag.tag
 
+        logger.info("New pathmap created with values: %r", pathmap)
+
         return jsonify(out), CREATED
 
     def get(self):
