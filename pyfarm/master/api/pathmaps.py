@@ -23,9 +23,9 @@ API endpoints for viewing and managing path maps
 """
 
 try:
-    from httplib import OK, CREATED, BAD_REQUEST
+    from httplib import OK, CREATED, BAD_REQUEST, NOT_FOUND
 except ImportError:  # pragma: no cover
-    from http.client import OK, CREATED, BAD_REQUEST
+    from http.client import OK, CREATED, BAD_REQUEST, NOT_FOUND
 
 
 from flask import g
@@ -215,3 +215,128 @@ class PathMapIndexAPI(MethodView):
             output.append(map_dict)
 
         return jsonify(output), OK
+
+
+class SinglePathMapAPI(MethodView):
+    def get(self, pathmap_id):
+        """
+        A ``GET`` to this endpoint will return a single path map specified by
+        pathmap_id
+
+        .. http:get:: /api/v1/pathmaps/<int:pathmap_id> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/pathmaps/1 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "id": 1,
+                    "path_osx": "/mnt/nfs",
+                    "path_windows": "\\\\domains\\cifs_server",
+                    "path_linux": "/mnt/nfs"
+                }
+
+        :statuscode 200: no error
+        """
+        pathmap = PathMap.query.filter_by(id=pathmap_id).first()
+
+        if not pathmap:
+            return jsonify(error="No pathmap with that id"), NOT_FOUND
+
+        return jsonify(pathmap.to_dict()), OK
+
+    def post(self, pathmap_id):
+        """
+        A ``POST`` to this endpoint will update an existing path map with new
+        values.
+
+        Only the values included in the request will be updated. The rest will be
+        left unchanged.
+        The id column cannot be changed.  Including it in the request will lead
+        to an error.
+
+        .. http:post:: /api/v1/pathmaps/<int:pathmap_id> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/pathmaps/1 HTTP/1.1
+                Accept: application/json
+
+                {
+                    "path_linux": "/mnt/smb"
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "id": 1,
+                    "path_linux": "/mnt/smb",
+                    "path_windows": "\\domain\cifs_server",
+                    "path_osx": "/mnt/nfs",
+                    "tag": "production"
+                }
+
+        :statuscode 200: the specified pathmap was updated
+        :statuscode 404: the specified pathmap does not exist
+        :statuscode 400: there was something wrong with the request (such as
+                            invalid columns being included)
+        """
+        pathmap = PathMap.query.filter_by(id=pathmap_id).first()
+        if not pathmap:
+            return jsonify(error="No pathmap with that id"), NOT_FOUND
+
+        if "id" in g.json:
+            return (jsonify(error="ID column cannot be included in the request"),
+                    BAD_REQUEST)
+
+        tagname = g.json.pop("tag", None)
+        if tagname:
+            tag = Tag.query.filter_by(tag=tagname).first()
+            if not tag:
+                tag = Tag(tag=tagname)
+                db.session.add(tag)
+            pathmap.tag = tag
+
+        for name in PathMap.types().columns:
+            if name in g.json:
+                type = PathMap.types().mappings[name]
+                value = g.json.pop(name)
+                if not isinstance(value, type):
+                    return (jsonify(error="Column `%s` is of type %r, but we "
+                                    "expected %r" % (name,
+                                                     type(value),
+                                                     type)),
+                            BAD_REQUEST)
+                setattr(pathmap, name, value)
+
+        if g.json:
+            return jsonify(error="Unknown columns: %r" % g.json), BAD_REQUEST
+
+        db.session.add(pathmap)
+        db.session.commit()
+
+        out = pathmap.to_dict(unpack_relationships=False)
+        if pathmap.tag:
+            out["tag"] = pathmap.tag.tag
+
+        logger.info("Pathmap with id %s was updated, new data: %r",
+                    pathmap_id, out)
+
+        return jsonify(out), OK
