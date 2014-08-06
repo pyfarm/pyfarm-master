@@ -23,9 +23,9 @@ API endpoints for viewing and managing path maps
 """
 
 try:
-    from httplib import OK, CREATED, BAD_REQUEST, NOT_FOUND
+    from httplib import OK, CREATED, BAD_REQUEST, NOT_FOUND, NO_CONTENT
 except ImportError:  # pragma: no cover
-    from http.client import OK, CREATED, BAD_REQUEST, NOT_FOUND
+    from http.client import OK, CREATED, BAD_REQUEST, NOT_FOUND, NO_CONTENT
 
 
 from flask import g
@@ -346,3 +346,36 @@ class SinglePathMapAPI(MethodView):
                     pathmap_id, out)
 
         return jsonify(out), OK
+
+    def delete(self, pathmap_id):
+        """
+        A ``DELETE`` to this endpoint will remove the specified pathmap
+
+        .. http:delete:: /api/v1/pathmaps/<int:pathmap_id> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/pathmaps/1 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 204 NO_CONTENT
+
+        :statuscode 204: the path map was deleted or did not exist in the first
+                         place
+        """
+        pathmap = PathMap.query.filter_by(id=pathmap_id).first()
+        if not pathmap:
+            return jsonify(None), NO_CONTENT
+
+        db.session.delete(pathmap)
+        db.session.commit()
+
+        logger.info("deleted pathmap id %s", pathmap_id)
+
+        return jsonify(None), NO_CONTENT
