@@ -254,7 +254,12 @@ class SinglePathMapAPI(MethodView):
         if not pathmap:
             return jsonify(error="No pathmap with that id"), NOT_FOUND
 
-        return jsonify(pathmap.to_dict()), OK
+        out = pathmap.to_dict(unpack_relationships=False)
+        if pathmap.tag:
+            out["tag"] = pathmap.tag.tag
+        del out["tag_id"]
+
+        return jsonify(out), OK
 
     def post(self, pathmap_id):
         """
