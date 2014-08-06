@@ -50,13 +50,13 @@ def schema():
     """
     Returns the basic schema of :class:`.Agent`
 
-    .. http:get:: /api/v1/agents/schema HTTP/1.1
+    .. http:get:: /api/v1/pathmaps/schema HTTP/1.1
 
         **Request**
 
         .. sourcecode:: http
 
-            GET /api/v1/agents/schema HTTP/1.1
+            GET /api/v1/pathmaps/schema HTTP/1.1
             Accept: application/json
 
         **Response**
