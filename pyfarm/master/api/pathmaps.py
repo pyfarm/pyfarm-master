@@ -81,6 +81,7 @@ def schema():
     out["tag"] = "VARCHAR(%s)" % MAX_TAG_LENGTH
     return jsonify(out)
 
+
 class PathMapIndexAPI(MethodView):
     @validate_with_model(PathMap, disallow=("id", ), ignore=("tag_id", "tag"))
     def post(self):
