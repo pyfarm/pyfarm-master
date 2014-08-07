@@ -87,10 +87,10 @@ class UserTest(BaseTestCase):
         self.assertFalse(user.is_active())
         user.active = True
         self.assertTrue(user.is_active())
-        user.expiration = datetime.now() + timedelta(seconds=.5)
+        user.expiration = datetime.utcnow() + timedelta(seconds=.5)
         time.sleep(1.5)
         self.assertFalse(user.is_active())
-        user.expiration = datetime.now() + timedelta(days=1)
+        user.expiration = datetime.utcnow() + timedelta(days=1)
         self.assertTrue(user.is_active())
 
     def test_roles(self):
@@ -142,11 +142,11 @@ class RoleTest(BaseTestCase):
         self.assertFalse(role.is_active())
         role.active = True
         self.assertTrue(role.is_active())
-        role.expiration = datetime.now() - timedelta(days=1)
+        role.expiration = datetime.utcnow() - timedelta(days=1)
         self.assertFalse(role.is_active())
-        role.expiration = datetime.now() + timedelta(days=1)
+        role.expiration = datetime.utcnow() + timedelta(days=1)
         self.assertTrue(role.is_active())
-        role.expiration = datetime.now() + timedelta(seconds=.5)
+        role.expiration = datetime.utcnow() + timedelta(seconds=.5)
         self.assertTrue(role.is_active())
         time.sleep(1)
         self.assertFalse(role.is_active())
