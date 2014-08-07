@@ -341,6 +341,7 @@ class SinglePathMapAPI(MethodView):
         out = pathmap.to_dict(unpack_relationships=False)
         if pathmap.tag:
             out["tag"] = pathmap.tag.tag
+        del out["tag_id"]
 
         logger.info("Pathmap with id %s was updated, new data: %r",
                     pathmap_id, out)
