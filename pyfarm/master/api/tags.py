@@ -147,7 +147,7 @@ class TagIndexAPI(MethodView):
             new_tag = Tag(**g.json)
             db.session.add(new_tag)
             db.session.commit()
-            tag_data = new_tag.to_dict()
+            tag_data = new_tag.to_dict(unpack_relationships=("agents", "jobs"))
             logger.info("created tag %s: %r", new_tag.id, tag_data)
             return jsonify(tag_data), CREATED
 
@@ -195,7 +195,7 @@ class TagIndexAPI(MethodView):
         out = []
 
         for tag in Tag.query.all():
-            out.append(tag.to_dict())
+            out.append(tag.to_dict(unpack_relationships=("agents", "jobs")))
 
         return jsonify(out), OK
 
@@ -246,7 +246,7 @@ class SingleTagAPI(MethodView):
         if tag is None:
             return jsonify(error="tag `%s` not found" % tagname), NOT_FOUND
 
-        tag_dict = tag.to_dict()
+        tag_dict = tag.to_dict(unpack_relationships=("agents", "jobs"))
 
         return jsonify(tag_dict), OK
 
@@ -396,7 +396,8 @@ class SingleTagAPI(MethodView):
         db.session.add(new_tag)
         db.session.commit()
 
-        return jsonify(new_tag.to_dict()), CREATED
+        return (jsonify(new_tag.to_dict(unpack_relationships=("agents", "jobs"))),
+                CREATED)
 
     def delete(self, tagname=None):
         """
