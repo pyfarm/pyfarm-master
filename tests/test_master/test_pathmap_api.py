@@ -144,3 +144,106 @@ class TestPathMapAPI(BaseTestCase):
     def test_pathmap_get_unknown(self):
         response1 = self.client.get("/api/v1/pathmaps/10")
         self.assert_not_found(response1)
+
+    def test_pathmap_edit(self):
+        response1 = self.client.post(
+            "/api/v1/pathmaps/",
+            content_type="application/json",
+            data=dumps({"path_linux": "/test",
+                        "path_windows": "c:\\test",
+                        "path_osx": "/test",
+                        "tag": "testtag"}))
+        self.assert_created(response1)
+        id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/pathmaps/%s" % id,
+            content_type="application/json",
+            data=dumps({"path_linux": "/test2",
+                        "tag": "newtag"}))
+        self.assert_ok(response2)
+        self.assertEqual(response2.json,
+                         {"id": id,
+                          "path_linux": "/test2",
+                          "path_windows": "c:\\test",
+                          "path_osx": "/test",
+                          "tag": "newtag"})
+
+    def test_pathmap_edit_id(self):
+        response1 = self.client.post(
+            "/api/v1/pathmaps/",
+            content_type="application/json",
+            data=dumps({"path_linux": "/test",
+                        "path_windows": "c:\\test",
+                        "path_osx": "/test",
+                        "tag": "testtag"}))
+        self.assert_created(response1)
+        id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/pathmaps/%s" % id,
+            content_type="application/json",
+            data=dumps({"id": 42}))
+        self.assert_bad_request(response2)
+
+    def test_pathmap_edit_unknown(self):
+        response1 = self.client.post(
+            "/api/v1/pathmaps/42",
+            content_type="application/json",
+            data=dumps({"path_linux": "/test2"}))
+        self.assert_not_found(response1)
+
+    def test_pathmap_edit_bad_col_type(self):
+        response1 = self.client.post(
+            "/api/v1/pathmaps/",
+            content_type="application/json",
+            data=dumps({"path_linux": "/test",
+                        "path_windows": "c:\\test",
+                        "path_osx": "/test",
+                        "tag": "testtag"}))
+        self.assert_created(response1)
+        id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/pathmaps/%s" % id,
+            content_type="application/json",
+            data=dumps({"path_linux": 1.0}))
+        self.assert_bad_request(response2)
+
+    def test_pathmap_edit_bad_col(self):
+        response1 = self.client.post(
+            "/api/v1/pathmaps/",
+            content_type="application/json",
+            data=dumps({"path_linux": "/test",
+                        "path_windows": "c:\\test",
+                        "path_osx": "/test",
+                        "tag": "testtag"}))
+        self.assert_created(response1)
+        id = response1.json['id']
+
+        response2 = self.client.post(
+            "/api/v1/pathmaps/%s" % id,
+            content_type="application/json",
+            data=dumps({"unknown_key": 1.0}))
+        self.assert_bad_request(response2)
+
+    def test_pathmap_delete(self):
+        response1 = self.client.post(
+            "/api/v1/pathmaps/",
+            content_type="application/json",
+            data=dumps({"path_linux": "/test",
+                        "path_windows": "c:\\test",
+                        "path_osx": "/test",
+                        "tag": "testtag"}))
+        self.assert_created(response1)
+        id = response1.json['id']
+
+        response2 = self.client.delete("/api/v1/pathmaps/%s" % id)
+        self.assert_no_content(response2)
+
+        response3 = self.client.get("/api/v1/pathmaps/%s" % id)
+        self.assert_not_found(response3)
+
+    def test_pathmap_delete_unknown(self):
+        response1 = self.client.delete("/api/v1/pathmaps/42")
+        self.assert_no_content(response1)
