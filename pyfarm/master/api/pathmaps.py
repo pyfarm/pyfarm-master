@@ -322,13 +322,13 @@ class SinglePathMapAPI(MethodView):
 
         for name in PathMap.types().columns:
             if name in g.json:
-                type = PathMap.types().mappings[name]
+                expected_type = PathMap.types().mappings[name]
                 value = g.json.pop(name)
-                if not isinstance(value, type):
+                if not isinstance(value, expected_type):
                     return (jsonify(error="Column `%s` is of type %r, but we "
                                     "expected %r" % (name,
                                                      type(value),
-                                                     type)),
+                                                     expected_type)),
                             BAD_REQUEST)
                 setattr(pathmap, name, value)
 
