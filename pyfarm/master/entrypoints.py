@@ -56,6 +56,7 @@ from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.pathmap import PathMap
+from pyfarm.models.tasklog import TaskLog
 
 
 def load_before_first(app_instance, database_instance):
