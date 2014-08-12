@@ -28,7 +28,7 @@ for execution.
 
 from datetime import datetime
 
-from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.schema import UniqueConstraint, PrimaryKeyConstraint
 
 from pyfarm.master.application import db
 from pyfarm.models.core.mixins import ReprMixin, UtilityMixins
@@ -38,15 +38,13 @@ from pyfarm.models.core.cfg import (
 
 class TaskTaskLogAssociation(db.Model):
     __tablename__ = TABLE_TASK_TASK_LOG_ASSOC
-    task_log_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_TASK_LOG),
-                            primary_key=True)
-    task_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_TASK),
-                        primary_key=True)
-    attempt = db.Column(db.Integer, primary_key=True)
+    __table_args__ = (PrimaryKeyConstraint("task_log_id", "task_id", "attempt"),)
+    task_log_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_TASK_LOG))
+    task_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_TASK))
+    attempt = db.Column(db.Integer)
 
-    task = db.relationship("Task",
-                           backref=db.backref("log_associations",
-                                               lazy="dynamic"))
+    task = db.relationship("Task", backref=db.backref("log_associations",
+                                                      lazy="dynamic"))
 
 class TaskLog(db.Model, UtilityMixins, ReprMixin):
     __tablename__ = TABLE_TASK_LOG
