@@ -144,7 +144,8 @@ def load_api(app_instance, api_instance):
     from pyfarm.master.api.agent_updates import AgentUpdatesAPI
     from pyfarm.master.api.pathmaps import (
         schema as pathmap_schema, PathMapIndexAPI, SinglePathMapAPI)
-    from pyfarm.master.api.tasklogs import LogsInTaskAttemptsIndexAPI
+    from pyfarm.master.api.tasklogs import (
+        LogsInTaskAttemptsIndexAPI, SingleLogInTaskAttempt, TaskLogfileAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -368,6 +369,14 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobs/<int:job_id>/tasks/<int:task_id>/attempts/<int:attempt>/logs/",
         view_func=LogsInTaskAttemptsIndexAPI.as_view("job_task_log_index_api"))
+    api_instance.add_url_rule(
+        "/jobs/<int:job_id>/tasks/<int:task_id>/attempts/<int:attempt>/logs/"
+        "<string:log_identifier>",
+        view_func=SingleLogInTaskAttempt.as_view("job_task_single_log_api"))
+    api_instance.add_url_rule(
+        "/jobs/<int:job_id>/tasks/<int:task_id>/attempts/<int:attempt>/logs/"
+        "<string:log_identifier>/logfile",
+        view_func=TaskLogfileAPI.as_view("task_log_file_api"))
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)
