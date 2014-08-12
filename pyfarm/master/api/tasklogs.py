@@ -51,9 +51,9 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
         out = []
         for item in association_objects:
             log = item.log
-            out.append({"identifier": item.identifier,
-                        "created_on": item.created_on,
-                        "agent_id": item.agent_id})
+            out.append({"identifier": log.identifier,
+                        "created_on": log.created_on,
+                        "agent_id": log.agent_id})
 
         return jsonify(out), OK
 
