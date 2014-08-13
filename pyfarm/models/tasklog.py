@@ -41,7 +41,7 @@ class TaskTaskLogAssociation(db.Model):
     __table_args__ = (PrimaryKeyConstraint("task_log_id", "task_id", "attempt"),)
     task_log_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_TASK_LOG))
     task_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_TASK))
-    attempt = db.Column(db.Integer)
+    attempt = db.Column(db.Integer, autoincrement=False)
 
     task = db.relationship("Task", backref=db.backref("log_associations",
                                                       lazy="dynamic"))
