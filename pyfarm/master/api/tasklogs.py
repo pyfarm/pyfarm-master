@@ -23,9 +23,10 @@ This module defines an API for managing and querying logs belonging to tasks
 """
 
 try:
-    from httplib import OK, NOT_FOUND, CONFLICT, TEMPORARY_REDIRECT
+    from httplib import OK, NOT_FOUND, CONFLICT, TEMPORARY_REDIRECT, CREATED
 except ImportError:  # pragma: no cover
-    from http.client import OK, NOT_FOUND, CONFLICT, TEMPORARY_REDIRECT
+    from http.client import OK, NOT_FOUND, CONFLICT, TEMPORARY_REDIRECT, CREATED
+
 import tempfile
 from os import makedirs
 from os.path import join, isfile, realpath
