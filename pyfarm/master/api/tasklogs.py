@@ -182,5 +182,7 @@ class TaskLogfileAPI(MethodView):
 
         with open(path, "wb+") as log_file:
             log_file.write(request.data)
+        logger.info("Writing task log file for task %s, attempt %s to path %s",
+                    task_id, attempt, path)
 
         return "", CREATED
