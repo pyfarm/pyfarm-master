@@ -180,9 +180,16 @@ class TaskLogfileAPI(MethodView):
         if not realpath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
 
-        with open(path, "wb+") as log_file:
-            log_file.write(request.data)
         logger.info("Writing task log file for task %s, attempt %s to path %s",
                     task_id, attempt, path)
+
+        try:
+            with open(path, "wb+") as log_file:
+                log_file.write(request.data)
+        except IOError as e:
+            logger.error("Could not write task log file: %s (%s)", e.errno,
+                         e.strerror)
+            return (jsonify(error="Could not write file to disk"),
+                    INTERNAL_SERVER_ERROR)
 
         return "", CREATED
