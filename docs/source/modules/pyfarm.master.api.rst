@@ -11,6 +11,7 @@ Submodules
    pyfarm.master.api.jobqueues
    pyfarm.master.api.jobs
    pyfarm.master.api.jobtypes
+   pyfarm.master.api.pathmaps
    pyfarm.master.api.software
    pyfarm.master.api.tags
 

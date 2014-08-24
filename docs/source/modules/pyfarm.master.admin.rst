@@ -10,6 +10,7 @@ Submodules
    pyfarm.master.admin.baseview
    pyfarm.master.admin.core
    pyfarm.master.admin.jobtypes
+   pyfarm.master.admin.pathmaps
    pyfarm.master.admin.projects
    pyfarm.master.admin.software
    pyfarm.master.admin.tag

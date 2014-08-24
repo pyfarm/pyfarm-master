@@ -17,6 +17,7 @@ Submodules
    pyfarm.models.job
    pyfarm.models.jobqueue
    pyfarm.models.jobtype
+   pyfarm.models.pathmap
    pyfarm.models.project
    pyfarm.models.software
    pyfarm.models.tag
