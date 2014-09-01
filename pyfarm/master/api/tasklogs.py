@@ -46,7 +46,7 @@ logger = getLogger("api.tasklogs")
 
 # TODO a temp directory might not be a good default for putting logs
 LOGFILES_DIR = read_env(
-    "PYFARM_AGENT_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
+    "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
 
 try:
     makedirs(LOGFILES_DIR)
