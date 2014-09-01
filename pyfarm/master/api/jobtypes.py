@@ -494,8 +494,10 @@ class SingleJobTypeAPI(MethodView):
             # If the user did not specify a list of software requirements and
             # this jobtype is not new, retain the requirements from the previous
             # version
-            previous_version = JobTypeVersion.query.filter_by(
-                jobtype=jobtype).order_by("version desc").first()
+            previous_version = JobTypeVersion.query.filter(
+                JobTypeVersion.jobtype == jobtype,
+                JobTypeVersion.version != version).order_by(
+                    "version desc").first()
 
             if previous_version:
                 for old_req in previous_version.software_requirements:

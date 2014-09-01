@@ -535,34 +535,35 @@ class SoftwareVersionsIndexAPI(MethodView):
             return (jsonify(error="Version %s already exixts" %
                             g.json["version"]), CONFLICT)
 
-        version = SoftwareVersion(**g.json)
-        version.software = software
+        with db.session.no_autoflush:
+            version = SoftwareVersion(**g.json)
+            version.software = software
 
-        if version.rank is None:
-            max_rank, = db.session.query(
-                func.max(SoftwareVersion.rank)).filter_by(
-                    software=software).one()
-            version.rank = max_rank + 100 if max_rank is not None else 100
-            if version.rank % 100 != 0:
-                version.rank += 100 - (version.rank % 100)
+            if version.rank is None:
+                max_rank, = db.session.query(
+                    func.max(SoftwareVersion.rank)).filter_by(
+                        software=software).one()
+                version.rank = max_rank + 100 if max_rank is not None else 100
+                if version.rank % 100 != 0:
+                    version.rank += 100 - (version.rank % 100)
 
-        db.session.add(version)
-        try:
-            db.session.commit()
-        except DatabaseError as e:
-            logger.error("DatabaseError error on SoftwareVersion POST: %r",
-                         e.args)
-            return jsonify(error="Database error"), INTERNAL_SERVER_ERROR
+            db.session.add(version)
+            try:
+                db.session.commit()
+            except DatabaseError as e:
+                logger.error("DatabaseError error on SoftwareVersion POST: %r",
+                            e.args)
+                return jsonify(error="Database error"), INTERNAL_SERVER_ERROR
 
-        version_data = {
-            "id": version.id,
-            "version": version.version,
-            "rank": version.rank
-            }
-        logger.info("created software version %s for software %s: %r",
-                    version.id, software.software, version_data)
+            version_data = {
+                "id": version.id,
+                "version": version.version,
+                "rank": version.rank
+                }
+            logger.info("created software version %s for software %s: %r",
+                        version.id, software.software, version_data)
 
-        return jsonify(version_data), CREATED
+            return jsonify(version_data), CREATED
 
 class SingleSoftwareVersionAPI(MethodView):
     def delete(self, software_rq, version_name):
