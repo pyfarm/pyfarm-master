@@ -186,7 +186,7 @@ class TaskLogfileAPI(MethodView):
         try:
             with open(path, "wb+") as log_file:
                 log_file.write(request.data)
-        except IOError as e:
+        except (IOError, OSError) as e:
             logger.error("Could not write task log file: %s (%s)", e.errno,
                          e.strerror)
             return (jsonify(error="Could not write file to disk"),
