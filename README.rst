@@ -27,7 +27,6 @@ PyFarm Master
     :target: https://coveralls.io/r/pyfarm/pyfarm-master?branch=master
     :align: left
 
-
 Sub-library which contains the code necessary to run an instance of the master
 server.  Each master instance is intended to be able to serve:
     * the underlying REST api for PyFarm
