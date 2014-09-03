@@ -106,7 +106,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
         logger.info("Registered task log %s with attempt %s for task %s",
                     task_log.identifier, attempt, task.id)
 
-        return jsonify(task_log.to_dict(unpack_relationships=False))
+        return jsonify(task_log.to_dict(unpack_relationships=False)), CREATED
 
 
 class SingleLogInTaskAttempt(MethodView):
