@@ -56,7 +56,6 @@ except OSError as e:  # pragma: no cover
 
 
 class LogsInTaskAttemptsIndexAPI(MethodView):
-
     def get(self, job_id, task_id, attempt):
         """
         A ``GET`` to this endpoint will return a list of all known logs that are
@@ -116,13 +115,13 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
         tasks get assigned a logfile with the same id, it is considered to be the
         same log.
 
-        .. http:post:: /api/v1/jobs/4/tasks/1300/attempts/5/logs/ HTTP/1.1
+        .. http:post:: /api/v1/jobs/<job_id>/tasks/<task_id>/attempts/<attempt>/logs/ HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                POST /api/v1/tags/ HTTP/1.1
+                POST /api/v1/jobs/4/tasks/1300/attempts/5/logs/ HTTP/1.1
                 Content-Type: application/json
 
                 {
