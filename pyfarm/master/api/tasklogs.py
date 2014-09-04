@@ -235,7 +235,7 @@ class SingleLogInTaskAttempt(MethodView):
             log=log,
             attempt=attempt).first()
         if not association:
-            return jsonify(task_id=task.task_id, log=log.identifier,
+            return jsonify(task_id=task.id, log=log.identifier,
                            error="Specified log not found in task"), NOT_FOUND
 
         return jsonify(log.to_dict(unpack_relationships=False))
