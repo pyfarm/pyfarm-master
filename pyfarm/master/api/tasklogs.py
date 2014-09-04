@@ -170,7 +170,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
             task=task, log=task_log, attempt=attempt).first()
         if association:
             return (jsonify(
-                log=task_log, attempt=attemp, task_id=task_id,
+                log=task_log, attempt=attempt, task_id=task_id,
                 error="This log is already registered for this task"), CONFLICT)
 
         association = TaskTaskLogAssociation()
