@@ -90,7 +90,8 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
         """
         task = Task.query.filter_by(id=task_id, job_id=job_id).first()
         if not task:
-            return jsonify(error="Specified task not found"), NOT_FOUND
+            return jsonify(task_id=task_id, job_id=job_id,
+                           error="Specified task not found"), NOT_FOUND
 
         association_objects = TaskTaskLogAssociation.query.filter(
             TaskTaskLogAssociation.task == task,
@@ -154,7 +155,8 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
         """
         task = Task.query.filter_by(id=task_id, job_id=job_id).first()
         if not task:
-            return jsonify(error="Specified task not found"), NOT_FOUND
+            return jsonify(task_id=task_id, job_id=job_id,
+                           error="Specified task not found"), NOT_FOUND
 
         path = join(LOGFILES_DIR, g.json["identifier"])
         if not realpath(path).startswith(LOGFILES_DIR):
@@ -168,6 +170,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
             task=task, log=task_log, attempt=attempt).first()
         if association:
             return (jsonify(
+                log=task_log, attempt=attemp, task_id=task_id,
                 error="This log is already registered for this task"), CONFLICT)
 
         association = TaskTaskLogAssociation()
@@ -219,18 +222,21 @@ class SingleLogInTaskAttempt(MethodView):
         """
         task = Task.query.filter_by(id=task_id, job_id=job_id).first()
         if not task:
-            return jsonify(error="Specified task not found"), NOT_FOUND
+            return jsonify(task_id=task_id, job_id=job_id,
+                           error="Specified task not found"), NOT_FOUND
 
         log = TaskLog.query.filter_by(identifier=log_identifier).first()
         if not log:
-            return jsonify(error="Specified log not found"), NOT_FOUND
+            return jsonify(task_id=task_id, job_id=job_id,
+                           error="Specified log not found"), NOT_FOUND
 
         association = TaskTaskLogAssociation.query.filter_by(
             task=task,
             log=log,
             attempt=attempt).first()
         if not association:
-            return jsonify(error="Specified log not found in task"), NOT_FOUND
+            return jsonify(task_id=task.task_id, log=log.identifier,
+                           error="Specified log not found in task"), NOT_FOUND
 
         return jsonify(log.to_dict(unpack_relationships=False))
 
@@ -268,18 +274,21 @@ class TaskLogfileAPI(MethodView):
         """
         task = Task.query.filter_by(id=task_id, job_id=job_id).first()
         if not task:
-            return jsonify(error="Specified task not found"), NOT_FOUND
+            return jsonify(task_id=task.task_id, log=log.identifier,
+                           error="Specified task not found"), NOT_FOUND
 
         log = TaskLog.query.filter_by(identifier=log_identifier).first()
         if not log:
-            return jsonify(error="Specified log not found"), NOT_FOUND
+            return jsonify(task_id=task.task_id, log=log.identifier,
+                           error="Specified log not found"), NOT_FOUND
 
         association = TaskTaskLogAssociation.query.filter_by(
             task=task,
             log=log,
             attempt=attempt).first()
         if not association:
-            return jsonify(error="Specified log not found in task"), NOT_FOUND
+            return jsonify(task_id=task.task_id, log=log.identifier,
+                           error="Specified log not found in task"), NOT_FOUND
 
         path = join(LOGFILES_DIR, log_identifier)
         if not realpath(path).startswith(LOGFILES_DIR):
@@ -290,8 +299,10 @@ class TaskLogfileAPI(MethodView):
         else:
             agent = log.agent
             if not agent:
-                return (jsonify(error="Logfile is not available on master and "
-                                      "agent is not known"), NOT_FOUND)
+                return (jsonify(
+                    path=path, log=log_identifier,
+                    error="Logfile is not available on master and agent is "
+                          "not known"), NOT_FOUND)
             return redirect(agent.api_url() + "/task_logs/" + log_identifier,
                             TEMPORARY_REDIRECT)
 
@@ -322,18 +333,21 @@ class TaskLogfileAPI(MethodView):
         """
         task = Task.query.filter_by(id=task_id, job_id=job_id).first()
         if not task:
-            return jsonify(error="Specified task not found"), NOT_FOUND
+            return jsonify(task_id=task.task_id, log=log.identifier,
+                           error="Specified task not found"), NOT_FOUND
 
         log = TaskLog.query.filter_by(identifier=log_identifier).first()
         if not log:
-            return jsonify(error="Specified log not found"), NOT_FOUND
+            return jsonify(task_id=task.task_id, log=log.identifier,
+                           error="Specified log not found"), NOT_FOUND
 
         association = TaskTaskLogAssociation.query.filter_by(
             task=task,
             log=log,
             attempt=attempt).first()
         if not association:
-            return jsonify(error="Specified log not found in task"), NOT_FOUND
+            return jsonify(task_id=task.task_id, log=log.identifier,
+                           error="Specified log not found in task"), NOT_FOUND
 
         path = join(LOGFILES_DIR, log_identifier)
         if not realpath(path).startswith(LOGFILES_DIR):
