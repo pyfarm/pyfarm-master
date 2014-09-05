@@ -274,12 +274,12 @@ class TaskLogfileAPI(MethodView):
         """
         task = Task.query.filter_by(id=task_id, job_id=job_id).first()
         if not task:
-            return jsonify(task_id=task.task_id, log=log.identifier,
+            return jsonify(task_id=task_id, log=log_identifier,
                            error="Specified task not found"), NOT_FOUND
 
         log = TaskLog.query.filter_by(identifier=log_identifier).first()
         if not log:
-            return jsonify(task_id=task.task_id, log=log.identifier,
+            return jsonify(task_id=task_id, log=log_identifier,
                            error="Specified log not found"), NOT_FOUND
 
         association = TaskTaskLogAssociation.query.filter_by(
@@ -287,7 +287,7 @@ class TaskLogfileAPI(MethodView):
             log=log,
             attempt=attempt).first()
         if not association:
-            return jsonify(task_id=task.task_id, log=log.identifier,
+            return jsonify(task_id=task.id, log=log.identifier,
                            error="Specified log not found in task"), NOT_FOUND
 
         path = join(LOGFILES_DIR, log_identifier)
@@ -333,12 +333,12 @@ class TaskLogfileAPI(MethodView):
         """
         task = Task.query.filter_by(id=task_id, job_id=job_id).first()
         if not task:
-            return jsonify(task_id=task.task_id, log=log.identifier,
+            return jsonify(task_id=task_id, log=log_identifier,
                            error="Specified task not found"), NOT_FOUND
 
         log = TaskLog.query.filter_by(identifier=log_identifier).first()
         if not log:
-            return jsonify(task_id=task.task_id, log=log.identifier,
+            return jsonify(task_id=task_id, log=log_identifier,
                            error="Specified log not found"), NOT_FOUND
 
         association = TaskTaskLogAssociation.query.filter_by(
@@ -346,7 +346,7 @@ class TaskLogfileAPI(MethodView):
             log=log,
             attempt=attempt).first()
         if not association:
-            return jsonify(task_id=task.task_id, log=log.identifier,
+            return jsonify(task_id=task_id, log=log.identifier,
                            error="Specified log not found in task"), NOT_FOUND
 
         path = join(LOGFILES_DIR, log_identifier)
