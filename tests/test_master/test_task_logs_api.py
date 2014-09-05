@@ -26,6 +26,10 @@ from pyfarm.master.application import get_api_blueprint
 from pyfarm.master.entrypoints import load_api
 
 
+dummy_log = """1,test log entry
+2,another test log entry
+"""
+
 class TestTaskLogsAPI(BaseTestCase):
     def setup_app(self):
         super(TestTaskLogsAPI, self).setup_app()
@@ -227,6 +231,173 @@ class TestTaskLogsAPI(BaseTestCase):
             "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/testlogidentifier/logfile"
             % (job_id, task_id),
             content_type="text/csv",
-            data="1,test log entry\n"
-                 "2,another test log entry")
+            data=dummy_log)
         self.assert_created(response2)
+
+    def test_task_logs_upload_logfile_unknown_task(self):
+        response1 = self.client.put(
+            "/api/v1/jobs/42/tasks/42/attempts/1/logs/testlogidentifier/logfile",
+            content_type="text/csv",
+            data=dummy_log)
+        self.assert_not_found(response1)
+
+    def test_task_logs_upload_logfile_unknown_log(self):
+        job_id, task_id, agent_id = self.make_objects()
+        response1 = self.client.put(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/testlogidentifier/logfile"
+            % (job_id, task_id),
+            content_type="text/csv",
+            data=dummy_log)
+        self.assert_not_found(response1)
+
+    def test_task_logs_upload_logfile_wrong_task(self):
+        job_id, task_id, agent_id = self.make_objects()
+
+        response1 = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/" % (job_id, task_id),
+            content_type="application/json",
+            data=dumps({
+                "identifier": "testlogidentifier",
+                "agent_id": agent_id}))
+        self.assert_created(response1)
+        created_on = response1.json["created_on"]
+
+        response2 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 1.0,
+                    "title": "Test Job 2",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response2)
+        job2_id = response2.json["id"]
+
+        response3 = self.client.get("/api/v1/jobs/%s/tasks/" % job2_id)
+        self.assert_ok(response3)
+        self.assertEqual(len(response3.json), 1)
+        task2_id = response3.json[0]["id"]
+
+        response4 = self.client.put(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/testlogidentifier/logfile"
+            % (job2_id, task2_id),
+            content_type="text/csv",
+            data=dummy_log)
+        self.assert_not_found(response4)
+
+    def test_task_logs_download_logfile(self):
+        job_id, task_id, agent_id = self.make_objects()
+
+        response1 = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/" % (job_id, task_id),
+            content_type="application/json",
+            data=dumps({
+                "identifier": "testlogidentifier",
+                "agent_id": agent_id}))
+        self.assert_created(response1)
+        created_on = response1.json["created_on"]
+
+        response2 = self.client.put(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/testlogidentifier/logfile"
+            % (job_id, task_id),
+            content_type="text/csv",
+            data=dummy_log)
+        self.assert_created(response2)
+
+        response3 = self.client.get(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/testlogidentifier/logfile"
+            % (job_id, task_id))
+        self.assert_ok(response3)
+        self.assertEqual(response3.data.decode(), dummy_log)
+
+    def test_task_logs_download_logfile_unknown_task(self):
+        response1 = self.client.get(
+            "/api/v1/jobs/42/tasks/42/attempts/1/logs/testlogidentifier/logfile")
+        self.assert_not_found(response1)
+
+    def test_task_logs_download_logfile_unknown_log(self):
+        job_id, task_id, agent_id = self.make_objects()
+
+        response1 = self.client.get(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/testlogidentifier/logfile"
+            % (job_id, task_id))
+        self.assert_not_found(response1)
+
+    def test_task_logs_download_logfile_wrong_task(self):
+        job_id, task_id, agent_id = self.make_objects()
+
+        response1 = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/" % (job_id, task_id),
+            content_type="application/json",
+            data=dumps({
+                "identifier": "testlogidentifier",
+                "agent_id": agent_id}))
+        self.assert_created(response1)
+        created_on = response1.json["created_on"]
+
+        response2 = self.client.put(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/testlogidentifier/logfile"
+            % (job_id, task_id),
+            content_type="text/csv",
+            data=dummy_log)
+        self.assert_created(response2)
+
+        response3 = self.client.post(
+            "/api/v1/jobs/",
+            content_type="application/json",
+            data=dumps({
+                    "start": 1.0,
+                    "end": 1.0,
+                    "title": "Test Job 2",
+                    "jobtype": "TestJobType",
+                    "data": {"foo": "bar"},
+                    "software_requirements": []
+                    }))
+        self.assert_created(response3)
+        job2_id = response3.json["id"]
+
+        response4 = self.client.get("/api/v1/jobs/%s/tasks/" % job2_id)
+        self.assert_ok(response4)
+        self.assertEqual(len(response4.json), 1)
+        task2_id = response4.json[0]["id"]
+
+        response5 = self.client.get(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/testlogidentifier/logfile"
+            % (job2_id, task2_id))
+        self.assert_not_found(response5)
+
+    def test_task_logs_download_logfile_redirect(self):
+        job_id, task_id, agent_id = self.make_objects()
+
+        response1 = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/" % (job_id, task_id),
+            content_type="application/json",
+            data=dumps({
+                "identifier": "testlogidentifier-neveruploaded",
+                "agent_id": agent_id}))
+        self.assert_created(response1)
+        created_on = response1.json["created_on"]
+
+        response2 = self.client.get(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/"
+            "testlogidentifier-neveruploaded/logfile" % (job_id, task_id))
+        self.assert_temporary_redirect(response2)
+
+    def test_task_logs_download_logfile_failed_redirect(self):
+        job_id, task_id, agent_id = self.make_objects()
+
+        response1 = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/" % (job_id, task_id),
+            content_type="application/json",
+            data=dumps({
+                "identifier": "testlogidentifier-neveruploaded"}))
+        self.assert_created(response1)
+        created_on = response1.json["created_on"]
+
+        response2 = self.client.get(
+            "/api/v1/jobs/%s/tasks/%s/attempts/1/logs/"
+            "testlogidentifier-neveruploaded/logfile" % (job_id, task_id))
+        self.assert_not_found(response2)
