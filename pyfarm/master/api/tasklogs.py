@@ -294,9 +294,10 @@ class TaskLogfileAPI(MethodView):
         if not realpath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
 
-        if isfile(path):
-            return send_file(path)
-        else:
+        try:
+            logfile = open(path, "rb")
+            return send_file(logfile)
+        except IOError:
             agent = log.agent
             if not agent:
                 return (jsonify(
