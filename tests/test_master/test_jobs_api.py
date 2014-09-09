@@ -182,7 +182,8 @@ class TestJobAPI(BaseTestCase):
                             ],
                             "ram": 32,
                             "cpus": 1,
-                            "children": []
+                            "children": [],
+                            "to_be_deleted": False
                          })
 
     def test_job_post_with_notified_users(self):
@@ -250,7 +251,8 @@ class TestJobAPI(BaseTestCase):
                             "software_requirements": [],
                             "ram": 32,
                             "cpus": 1,
-                            "children": []
+                            "children": [],
+                            "to_be_deleted": False
                          })
 
     def test_job_post_bad_requirements(self):
@@ -515,7 +517,8 @@ class TestJobAPI(BaseTestCase):
                             "software_requirements": [],
                             "ram": 32,
                             "cpus": 1,
-                            "children": []
+                            "children": [],
+                            "to_be_deleted": False
                          })
 
     def test_job_post_unknown_type(self):
@@ -633,7 +636,8 @@ class TestJobAPI(BaseTestCase):
                             "ram_max": None,
                             "children": [],
                             "by": 1.0,
-                            "project_id": None
+                            "project_id": None,
+                            "to_be_deleted": False
                         })
 
         response4 = self.client.get("/api/v1/jobs/%s" % id)
@@ -672,7 +676,8 @@ class TestJobAPI(BaseTestCase):
                             "ram_max": None,
                             "children": [],
                             "by": 1.0,
-                            "project_id": None
+                            "project_id": None,
+                            "to_be_deleted": False
                         })
 
     def test_job_get_unknown(self):
@@ -749,7 +754,8 @@ class TestJobAPI(BaseTestCase):
                             "ram_max": None,
                             "children": [],
                             "by": 1.0,
-                            "project_id": None
+                            "project_id": None,
+                            "to_be_deleted": False
                         })
 
         response4 = self.client.post(
