@@ -257,6 +257,10 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                         Changes made directly to this object are **not**
                         applied to the session."""))
 
+    to_be_deleted = db.Column(db.Boolean, nullable=False, default=False,
+                              doc="If true, the master will stop all running "
+                                  "tasks for this job and then delete it.")
+
     project = db.relationship("Project",
                               backref=db.backref("jobs", lazy="dynamic"),
                               doc=dedent("""
