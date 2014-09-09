@@ -39,7 +39,8 @@ from sqlalchemy.sql import func, or_, and_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES
-from pyfarm.scheduler.tasks import assign_tasks, send_job_completion_mail
+from pyfarm.scheduler.tasks import (
+    assign_tasks, send_job_completion_mail, delete_job)
 from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
@@ -742,6 +743,26 @@ class SingleJobAPI(MethodView):
         assign_tasks.delay()
 
         return jsonify(job_data), OK
+
+    def delete(self, job_name):
+        if isinstance(job_name, STRING_TYPES):
+            job = Job.query.filter_by(title=job_name).first()
+        else:
+            job = Job.query.filter_by(id=job_name).first()
+
+        if not job:
+            return jsonify(error="Job not found"), NOT_FOUND
+
+        job.to_be_deleted = True
+        db.session.add(job)
+        db.session.commit()
+
+        logger.info("Marking job %s for deletion", job.id)
+
+        delete_job.delay(job.id)
+
+        return jsonify(None), NO_CONTENT
+
 
 class JobTasksIndexAPI(MethodView):
     def get(self, job_name):

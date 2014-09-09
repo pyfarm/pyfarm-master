@@ -630,3 +630,49 @@ def update_agent(self, agent_id):
             db.session.add(agent)
             db.session.commit()
             raise
+
+@celery_app.task(ignore_results=True)
+def delete_task(task_id):
+    task = Task.query.filter_by(id=task_id).one()
+    job = task.job
+
+    if task.agent is None or Task.state in [WorkState.DONE, WorkState.FAILED]:
+        db.session.delete(task)
+        db.session.flush()
+    else:
+        agent = task.agent
+        response = requests.delete(agent.api_url() + "/tasks/" + task.id,
+                                   headers={"User-Agent": USERAGENT})
+
+        logger.info("Deleting task %s from agent %s", task.id, agent.id)
+        if response.status_code not in [requests.codes.accepted,
+                                        requests.codes.ok,
+                                        requests.codes.no_content,
+                                        requests.codes.not_found]:
+            raise ValueError("Unexpected return code on deleting task %s on "
+                             "agent %s: %s",
+                             task.id, agent.id, response.status_code)
+        else:
+            db.session.delete(task)
+            db.session.flush()
+
+    if job.to_be_deleted:
+        num_remaining_tasks = Task.query.filter_by(job=job).count()
+        if num_remaining_tasks == 0:
+            logger.info("Job %s is marked for deletion and has no tasks left, "
+                        "deleting it from the database now.", job.id)
+            db.session.delete(job)
+
+    db.session.commit()
+
+@celery_app.task(ignore_results=True)
+def delete_job(job_id):
+    job = Job.query.filter_by(id=job_id).one()
+    if not job.to_be_deleted:
+        logger.warning("Not deleting job %s, it is not marked for deletion.",
+                       job.id)
+        return
+
+    tasks_query = Task.query.filter_by(job=job)
+    for task in tasks_query:
+        delete_task(task.id)
