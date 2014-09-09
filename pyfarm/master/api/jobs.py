@@ -951,7 +951,9 @@ class JobSingleTaskAPI(MethodView):
         db.session.add(task)
         db.session.commit()
 
-        task_data = task.to_dict()
+        task_data = task.to_dict(unpack_relationships=("job", "agent",
+                                                       "children", "parents",
+                                                       "project"))
         if task.state is None and task.agent is None:
             task_data["state"] = "queued"
         elif task.state is None:
@@ -1016,7 +1018,9 @@ class JobSingleTaskAPI(MethodView):
         if not task:
             return jsonify(error="Task not found"), NOT_FOUND
 
-        task_data = task.to_dict()
+        task_data = task.to_dict(unpack_relationships=("job", "agent",
+                                                       "children", "parents",
+                                                       "project"))
         if task.state is None and task.agent is None:
             task_data["state"] = "queued"
         elif task.state is None:

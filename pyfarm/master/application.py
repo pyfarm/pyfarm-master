@@ -47,7 +47,7 @@ from pyfarm.master.admin.baseview import AdminIndex
 POST_METHODS = set(("POST", "PUT"))
 IGNORED_MIMETYPES = set((
     "application/x-www-form-urlencoded", "multipart/form-data",
-    "application/zip"))
+    "application/zip", "text/csv"))
 
 
 def get_application(**configuration_keywords):
