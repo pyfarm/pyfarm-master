@@ -363,7 +363,8 @@ class TaskLogfileAPI(MethodView):
         except (IOError, OSError) as e:
             logger.error("Could not write task log file: %s (%s)", e.errno,
                          e.strerror)
-            return (jsonify(error="Could not write file to disk"),
+            return (jsonify(error="Could not write file %s to disk: %s"
+                                  % (path, e)),
                     INTERNAL_SERVER_ERROR)
 
         return "", CREATED
