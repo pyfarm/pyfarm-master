@@ -44,7 +44,9 @@ class TaskTaskLogAssociation(db.Model):
     attempt = db.Column(db.Integer, autoincrement=False)
 
     task = db.relationship("Task", backref=db.backref("log_associations",
-                                                      lazy="dynamic"))
+                                                      lazy="dynamic",
+                                                      cascade="all, delete, "
+                                                              "delete-orphan"))
 
 class TaskLog(db.Model, UtilityMixins, ReprMixin):
     __tablename__ = TABLE_TASK_LOG
