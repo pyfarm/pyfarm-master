@@ -39,14 +39,15 @@ from pyfarm.models.core.cfg import (
 class TaskTaskLogAssociation(db.Model):
     __tablename__ = TABLE_TASK_TASK_LOG_ASSOC
     __table_args__ = (PrimaryKeyConstraint("task_log_id", "task_id", "attempt"),)
-    task_log_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_TASK_LOG))
-    task_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_TASK))
+    task_log_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_TASK_LOG,
+                                                      ondelete="CASCADE"))
+    task_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_TASK,
+                                                  ondelete="CASCADE"))
     attempt = db.Column(db.Integer, autoincrement=False)
 
     task = db.relationship("Task", backref=db.backref("log_associations",
                                                       lazy="dynamic",
-                                                      cascade="all, delete, "
-                                                              "delete-orphan"))
+                                                      passive_deletes=True))
 
 class TaskLog(db.Model, UtilityMixins, ReprMixin):
     __tablename__ = TABLE_TASK_LOG
