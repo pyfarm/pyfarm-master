@@ -745,6 +745,28 @@ class SingleJobAPI(MethodView):
         return jsonify(job_data), OK
 
     def delete(self, job_name):
+        """
+        A ``DELETE`` to this endpoint will mark the specified job for deletion
+        and remove it after stopping and removing all of its tasks.
+
+        .. http:delete:: /api/v1/jobs/[<str:name>|<int:id>] HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/jobs/1 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 204 NO_CONTENT
+
+        :statuscode 204: the specified job was marked for deletion
+        :statuscode 404: the job does not exist
+        """
         if isinstance(job_name, STRING_TYPES):
             job = Job.query.filter_by(title=job_name).first()
         else:
@@ -824,7 +846,8 @@ class JobTasksIndexAPI(MethodView):
             job = Job.query.filter_by(id=job_name).first()
 
         if not job:
-            return jsonify(error="Job not found"), NOT_FOUND
+            return jsonify(error="Job not found",
+                           id=job_name), NOT_FOUND
 
         tasks_q = Task.query.filter_by(job=job).order_by("frame asc")
         out = []
