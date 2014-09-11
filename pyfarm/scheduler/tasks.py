@@ -694,4 +694,4 @@ def delete_job(job_id):
 
     tasks_query = Task.query.filter_by(job=job)
     for task in tasks_query:
-        delete_task(task.id)
+        delete_task.delay(task.id)
