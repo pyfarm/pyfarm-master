@@ -646,7 +646,7 @@ def delete_task(self, task_id):
     task = Task.query.filter_by(id=task_id).one()
     job = task.job
 
-    if task.agent is None or Task.state in [WorkState.DONE, WorkState.FAILED]:
+    if task.agent is None or task.state in [WorkState.DONE, WorkState.FAILED]:
         db.session.delete(task)
         db.session.flush()
     else:
