@@ -631,8 +631,8 @@ def update_agent(self, agent_id):
             db.session.commit()
             raise
 
-@celery_app.task(ignore_results=True)
-def delete_task(task_id):
+@celery_app.task(ignore_results=True, bind=True)
+def delete_task(self, task_id):
     task = Task.query.filter_by(id=task_id).one()
     job = task.job
 
@@ -641,20 +641,39 @@ def delete_task(task_id):
         db.session.flush()
     else:
         agent = task.agent
-        response = requests.delete(agent.api_url() + "/tasks/" + task.id,
-                                   headers={"User-Agent": USERAGENT})
+        try:
+            response = requests.delete("%s/tasks/%s" %
+                                            (agent.api_url(), task.id),
+                                       headers={"User-Agent": USERAGENT})
 
-        logger.info("Deleting task %s from agent %s", task.id, agent.id)
-        if response.status_code not in [requests.codes.accepted,
-                                        requests.codes.ok,
-                                        requests.codes.no_content,
-                                        requests.codes.not_found]:
-            raise ValueError("Unexpected return code on deleting task %s on "
-                             "agent %s: %s",
-                             task.id, agent.id, response.status_code)
-        else:
-            db.session.delete(task)
-            db.session.flush()
+            logger.info("Deleting task %s from agent %s", task.id, agent.id)
+            if response.status_code not in [requests.codes.accepted,
+                                            requests.codes.ok,
+                                            requests.codes.no_content,
+                                            requests.codes.not_found]:
+                raise ValueError("Unexpected return code on deleting task %s on "
+                                 "agent %s: %s",
+                                 task.id, agent.id, response.status_code)
+            else:
+                db.session.delete(task)
+                db.session.flush()
+        except ConnectionError as e:
+            if self.request.retries < self.max_retries:
+                logger.warning("Caught ConnectionError trying to delete task %s "
+                               "from agent %s (id %s), retry %s of %s: %s",
+                               task.id,
+                               agent.hostname,
+                               agent.id,
+                               self.request.retries,
+                               self.max_retries,
+                               e)
+                self.retry(exc=e)
+            else:
+                logger.error("Could not contact agent %s, (id %s), for stopping "
+                             "task %s, just deleting it locally",
+                             agent.hostname, agent.id, task.id)
+                db.session.delete(task)
+                db.session.flush()
 
     if job.to_be_deleted:
         num_remaining_tasks = Task.query.filter_by(job=job).count()
