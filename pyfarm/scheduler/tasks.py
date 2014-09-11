@@ -31,7 +31,9 @@ from email.mime.text import MIMEText
 from sqlalchemy import or_, and_, func
 
 import requests
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, RequestException
+# Workaround for https://github.com/kennethreitz/requests/issues/2204
+from requests.packages.urllib3.exceptions import ProtocolError
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import AgentState, WorkState, UseAgentAddress
@@ -510,7 +512,9 @@ def poll_agent(self, agent_id):
                 "%s (id %s): %s" % (
                     agent.hostname, agent.id, response.status_code))
         json_data = response.json()
-    except ConnectionError as e:
+    # Catching ProtocolError here is a work around for
+    # https://github.com/kennethreitz/requests/issues/2204
+    except (ConnectionError, ProtocolError) as e:
         if self.request.retries < self.max_retries:
             logger.warning("Caught ConnectionError trying to contact agent "
                            "%s (id %s), retry %s of %s: %s",
@@ -657,7 +661,9 @@ def delete_task(self, task_id):
             else:
                 db.session.delete(task)
                 db.session.flush()
-        except ConnectionError as e:
+        # Catching ProtocolError here is a work around for
+        # https://github.com/kennethreitz/requests/issues/2204
+        except (ConnectionError, ProtocolError) as e:
             if self.request.retries < self.max_retries:
                 logger.warning("Caught ConnectionError trying to delete task %s "
                                "from agent %s (id %s), retry %s of %s: %s",
