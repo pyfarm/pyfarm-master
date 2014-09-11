@@ -196,7 +196,8 @@ def read_queue_tree(queue):
 
     child_jobs_query = Job.query.filter(Job.job_queue_id == queue.id,
                                         or_(Job.state == WorkState.RUNNING,
-                                            Job.state == None))
+                                            Job.state == None),
+                                        Job.to_be_deleted == False)
     for job in child_jobs_query:
         # TODO Get this number as part of the above query, so we don't do one
         # query per job
@@ -453,6 +454,11 @@ def assign_tasks():
         or_(Task.agent == None,
             Task.agent.has(Agent.state.in_([AgentState.OFFLINE,
                                             AgentState.DISABLED]))))
+    tasks_query = tasks_query.filter(Task.job.has(Job.to_be_deleted == False))
+    tasks_query = tasks_query.filter(
+        or_(Task.job.has(Job.state == None),
+            Task.job.has(Job.state != WorkState.PAUSED)))
+
     unassigned_tasks = tasks_query.count()
     logger.debug("Got %s unassigned tasks" % unassigned_tasks)
     if not unassigned_tasks:
