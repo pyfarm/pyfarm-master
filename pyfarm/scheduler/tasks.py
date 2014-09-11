@@ -647,6 +647,8 @@ def delete_task(self, task_id):
     job = task.job
 
     if task.agent is None or task.state in [WorkState.DONE, WorkState.FAILED]:
+        logger.info("Deleting task %s (job %s - \"%s\")",
+                    task.id, job.id, job.title)
         db.session.delete(task)
         db.session.flush()
     else:
@@ -656,7 +658,8 @@ def delete_task(self, task_id):
                                             (agent.api_url(), task.id),
                                        headers={"User-Agent": USERAGENT})
 
-            logger.info("Deleting task %s from agent %s", task.id, agent.id)
+            logger.info("Deleting task %s (job %s - \"%s\")from agent %s (id %s)",
+                        task.id, job.id, job.title, agent.hostname, agent.id)
             if response.status_code not in [requests.codes.accepted,
                                             requests.codes.ok,
                                             requests.codes.no_content,
@@ -690,8 +693,9 @@ def delete_task(self, task_id):
     if job.to_be_deleted:
         num_remaining_tasks = Task.query.filter_by(job=job).count()
         if num_remaining_tasks == 0:
-            logger.info("Job %s is marked for deletion and has no tasks left, "
-                        "deleting it from the database now.", job.id)
+            logger.info("Job %s (%s) is marked for deletion and has no tasks "
+                        "left, deleting it from the database now.",
+                        job.id, job.title)
             db.session.delete(job)
 
     db.session.commit()
