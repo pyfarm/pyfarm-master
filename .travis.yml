@@ -39,6 +39,7 @@ script:
   - nosetests -s --verbose --with-coverage --cover-package=pyfarm.master tests/test_master
   - mv -v .coverage .coverage.2
   - coverage combine
+  - pylint pyfarm --errors-only
 
 after_success:
  - coveralls
