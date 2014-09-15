@@ -142,7 +142,7 @@ class IPAddress(_IPAddress):
     Custom version of :class:`netaddr.IPAddress` which can match itself
     against other instance of the same class, a string, or an integer.
     """
-    def __eq__(self, other):
+    def __eq__(self, other):  # pylint: disable=super-on-old-class
         if isinstance(other, STRING_TYPES):
             return str(self) == other
         elif isinstance(other, int):
@@ -150,7 +150,7 @@ class IPAddress(_IPAddress):
         else:
             return super(IPAddress, self).__eq__(other)
 
-    def __ne__(self, other):
+    def __ne__(self, other):  # pylint: disable=super-on-old-class
         if isinstance(other, STRING_TYPES):
             return str(self) != other
         elif isinstance(other, int):

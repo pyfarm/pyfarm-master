@@ -75,6 +75,7 @@ class LoginForm(Form):
     username = TextField(validators=[validators.Required()])
     password = PasswordField(validators=[validators.Required()])
 
+    # pylint: disable=super-on-old-class
     def __init__(self, *args, **kwargs):
         self.dbuser = False
         super(LoginForm, self).__init__(*args, **kwargs)
