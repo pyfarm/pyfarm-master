@@ -33,7 +33,7 @@ except ImportError:  # pragma: no cover
 
 import tempfile
 from os import makedirs
-from os.path import join, isfile, realpath
+from os.path import join, realpath
 from errno import EEXIST
 
 from flask.views import MethodView
