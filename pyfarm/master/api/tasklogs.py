@@ -24,10 +24,12 @@ This module defines an API for managing and querying logs belonging to tasks
 
 try:
     from httplib import (
-      OK, NOT_FOUND, CONFLICT, TEMPORARY_REDIRECT, CREATED, BAD_REQUEST)
+      OK, NOT_FOUND, CONFLICT, TEMPORARY_REDIRECT, CREATED, BAD_REQUEST,
+      INTERNAL_SERVER_ERROR)
 except ImportError:  # pragma: no cover
     from http.client import (
-      OK, NOT_FOUND, CONFLICT, TEMPORARY_REDIRECT, CREATED, BAD_REQUEST)
+      OK, NOT_FOUND, CONFLICT, TEMPORARY_REDIRECT, CREATED, BAD_REQUEST,
+      INTERNAL_SERVER_ERROR)
 
 import tempfile
 from os import makedirs
