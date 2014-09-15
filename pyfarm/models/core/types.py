@@ -47,6 +47,7 @@ RESUB_GUID_CHARS = re.compile("[{}-]")
 
 # types which our custom column types will accept via json
 try:
+    # pylint: disable=undefined-variable
     JSON_CUSTOM_COLUMN_TYPES = (str, unicode, int, long)
 except NameError:
     JSON_CUSTOM_COLUMN_TYPES = (str, int)

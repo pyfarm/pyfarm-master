@@ -357,9 +357,11 @@ class UtilityMixins(object):
             # a couple of extra types that could potentially
             # come in with a request
             if PY2 and python_types is str:
+                # pylint: disable=undefined-variable
                 python_types = (python_types, unicode)
 
             elif PY2 and python_types is int:
+                # pylint: disable=undefined-variable
                 python_types = (python_types, long)
 
             type_mapping[name] = python_types
