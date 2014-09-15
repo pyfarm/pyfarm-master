@@ -86,6 +86,7 @@ class JSONSerializable(TypeDecorator):
     serialize_types = None
     serialize_none = False
 
+    # pylint: disable=super-on-old-class
     def __init__(self, *args, **kwargs):
         super(JSONSerializable, self).__init__(*args, **kwargs)
 
@@ -219,6 +220,7 @@ class EnumType(TypeDecorator):
     enum = NotImplemented
     json_types = JSON_CUSTOM_COLUMN_TYPES
 
+    # pylint: disable=super-on-old-class
     def __init__(self, *args, **kwargs):
         super(EnumType, self).__init__(*args, **kwargs)
         assert self.enum is not NotImplemented, "`enum` not set"
