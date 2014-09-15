@@ -100,8 +100,7 @@ zope=no
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E0201 when accessed. Python regular
 # expressions are accepted.
-generated-members=query,software,agents,agent,as_view
-generated-members=requests.codes.([ok|accepted])
+generated-members=query,software,agents,agent,as_view,requests.codes.([ok|accepted])
 
 
 [FORMAT]
