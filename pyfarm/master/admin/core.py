@@ -72,6 +72,7 @@ class AjaxLoader(QueryAjaxModelLoader):
     :keyword fmt:
         callable function which will format the row's model
     """
+    # pylint: disable=super-on-old-class
     def __init__(self, name, model, session=db.session, **options):
         pk = options.pop("pk", None)
         self.fmt = options.pop("fmt", lambda model: model.decode("utf-8"))
@@ -105,6 +106,7 @@ class BaseFilter(BaseSQLAFilter):
                 return self.column._parententity.class_.__table__
             return object.__getattribute__(self, item)
 
+    # pylint: disable=super-on-old-class
     def __init__(self, column, name, options=None, data_type=None):
         if not hasattr(column, "table"):
             column = self.MapTableAttribute(column)

@@ -56,7 +56,7 @@ from pyfarm.scheduler.celery_app import celery_app
 
 
 try:
-    range_ = xrange
+    range_ = xrange  # pylint: disable=undefined-variable
 except NameError:  # pragma: no cover
     range_ = range
 

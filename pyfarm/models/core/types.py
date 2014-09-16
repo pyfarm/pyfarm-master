@@ -47,6 +47,7 @@ RESUB_GUID_CHARS = re.compile("[{}-]")
 
 # types which our custom column types will accept via json
 try:
+    # pylint: disable=undefined-variable
     JSON_CUSTOM_COLUMN_TYPES = (str, unicode, int, long)
 except NameError:
     JSON_CUSTOM_COLUMN_TYPES = (str, int)
@@ -86,6 +87,7 @@ class JSONSerializable(TypeDecorator):
     serialize_types = None
     serialize_none = False
 
+    # pylint: disable=super-on-old-class
     def __init__(self, *args, **kwargs):
         super(JSONSerializable, self).__init__(*args, **kwargs)
 
@@ -141,7 +143,7 @@ class IPAddress(_IPAddress):
     Custom version of :class:`netaddr.IPAddress` which can match itself
     against other instance of the same class, a string, or an integer.
     """
-    def __eq__(self, other):
+    def __eq__(self, other):  # pylint: disable=super-on-old-class
         if isinstance(other, STRING_TYPES):
             return str(self) == other
         elif isinstance(other, int):
@@ -149,7 +151,7 @@ class IPAddress(_IPAddress):
         else:
             return super(IPAddress, self).__eq__(other)
 
-    def __ne__(self, other):
+    def __ne__(self, other):  # pylint: disable=super-on-old-class
         if isinstance(other, STRING_TYPES):
             return str(self) != other
         elif isinstance(other, int):
@@ -219,6 +221,7 @@ class EnumType(TypeDecorator):
     enum = NotImplemented
     json_types = JSON_CUSTOM_COLUMN_TYPES
 
+    # pylint: disable=super-on-old-class
     def __init__(self, *args, **kwargs):
         super(EnumType, self).__init__(*args, **kwargs)
         assert self.enum is not NotImplemented, "`enum` not set"

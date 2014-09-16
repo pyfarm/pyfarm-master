@@ -40,6 +40,7 @@ admin_log = logging.getLogger("flask-admin.sqla")
 
 class LimitedLength(DataRequired):
     """Validates that a given field is the proper length"""
+    # pylint: disable=super-on-old-class
     def __init__(self, length):
         super(LimitedLength, self).__init__()
         self.length = length
