@@ -44,4 +44,4 @@ script:
   - if [[ $PYLINT == "1" ]]; then pylint pyfarm --errors-only; fi
 
 after_success:
- - coveralls
+ - if [[ $PYLINT != "1" ]]; then coveralls; fi
