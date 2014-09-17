@@ -32,14 +32,14 @@ install_requires = [
     "sqlalchemy>=0.9.3",
     "flask",
     "flask-admin>=1.0.7",
-    "flask-login", 
-    "flask-sqlalchemy", 
-    "itsdangerous", 
+    "flask-login",
+    "flask-sqlalchemy",
+    "itsdangerous",
     "blinker",
     "voluptuous",
     "celery",
     "redis",
-    "requests",
+    "requests!=2.4.0",
     "netaddr"]
 
 if "READTHEDOCS" in os.environ:
