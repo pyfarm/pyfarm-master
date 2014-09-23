@@ -969,7 +969,7 @@ class JobSingleTaskAPI(MethodView):
                     logger.info("Job %s: state transition \"%s\" -> \"failed\"",
                                 job.title, job.state)
                     job.state = "failed"
-                    send_job_completion_mail.delay(job.id, True)
+                    send_job_completion_mail.delay(job.id, False)
                 db.session.add(job)
 
         # Iterate over all keys in the request
