@@ -1,0 +1,54 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Agents{% endblock %}
+{% block agent_nb_class %}active{% endblock %}
+{% block content %}
+<table class="table table-striped table-bordered model-list">
+  <tr>
+    <th>
+      <a href="{{ url_for('agents_index_ui', order_by='hostname', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        Hostname
+        {% if order_by == 'hostname' and order_dir == 'desc' %}
+        <i class="icon-chevron-down"></i>
+        {% elif order_by == 'hostname' %}
+        <i class="icon-chevron-up"></i>
+        {% endif %}
+      </a>
+    </th>
+    <th>
+      <a href="{{ url_for('agents_index_ui', order_by='remote_ip', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        IP-Address
+        {% if order_by == 'remote_ip' and order_dir == 'desc' %}
+        <i class="icon-chevron-down"></i>
+        {% elif order_by == 'remote_ip' %}
+        <i class="icon-chevron-up"></i>
+        {% endif %}
+      </a>
+    </th>
+    <th>
+      <a href="{{ url_for('agents_index_ui', order_by='state', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        State
+        {% if order_by == 'state' and order_dir == 'desc' %}
+        <i class="icon-chevron-down"></i>
+        {% elif order_by == 'state' %}
+        <i class="icon-chevron-up"></i>
+        {% endif %}
+      </a>
+    </th>
+    <th>Tags</th>
+  </tr>
+  {% for agent in agents %}
+  <tr>
+    <td>
+    {{ agent.hostname }}
+    </td>
+    <td>{{ agent.remote_ip }}</td>
+    <td>{{ agent.state }}</td>
+    <td>
+      {% for tag in agent.tags %}
+      <div>{{ tag.tag }}</div>
+      {% endfor %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
