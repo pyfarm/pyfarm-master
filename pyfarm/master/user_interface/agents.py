@@ -15,14 +15,15 @@
 # limitations under the License.
 
 try:
-    from httplib import BAD_REQUEST
+    from httplib import BAD_REQUEST, NOT_FOUND, SEE_OTHER
 except ImportError:  # pragma: no cover
-    from http.client import BAD_REQUEST
+    from http.client import BAD_REQUEST, NOT_FOUND, SEE_OTHER
 
-from flask import render_template, request
+from flask import render_template, request, url_for, redirect
 
 from pyfarm.models.agent import Agent
 from pyfarm.models.tag import Tag
+from pyfarm.master.application import db
 
 def agents():
     agents_query = Agent.query
@@ -52,3 +53,15 @@ def agents():
                            agents=agents, filters=filters, order_by=order_by,
                            order_dir=order_dir,
                            order={"order_by": order_by, "order_dir": order_dir})
+
+def delete_single_agent(agent_id):
+    agent = Agent.query.filter_by(id=agent_id).first()
+    if not agent:
+        return (render_template(
+                    "pyfarm/error.html", error="Agent %s not found" % agent_id),
+                NOT_FOUND)
+
+    db.session.delete(agent)
+    db.session.commit()
+
+    return redirect(url_for("agents_index_ui"), SEE_OTHER)
