@@ -183,7 +183,7 @@ class JobTypeIndexAPI(MethodView):
                             "self.assignment_data[\"job\"][\"data\"][\"path\"], "
                             "\"%04d\" % self.assignment_data[\"tasks\"]"
                             "[0][\"frame\"])]\n"
-                    "class": "TestJobType"
+                    "classname": "TestJobType"
                 }
 
             **Response**
