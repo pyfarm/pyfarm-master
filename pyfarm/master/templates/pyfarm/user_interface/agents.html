@@ -2,6 +2,41 @@
 {% block title %}Agents{% endblock %}
 {% block agent_nb_class %}active{% endblock %}
 {% block content %}
+
+<form method="GET" action="{{ url_for('agents_index_ui') }}" class="form-inline" role="form">
+  <input type="hidden" name="order_by" value="{{ order_by }}"/>
+  <input type="hidden" name="order_dir" value="{{ order_dir }}"/>
+  <label for="tags">Tags</label>
+  <input type="text" id="tags" name="tags" value="{{ filters.tags }}" placeholder="Tags separated by commas"/>
+  <label for="hostname">Hostname</label>
+  <input type="text" id="hostname" name="hostname" value="{{ filters.hostname }}" placeholder="Part of hostname"/>
+  <label for="state">State</label>
+  <select id="state" name="state">
+    <option value="" selected ></option>
+    {% if filters.state == 'online' %}
+    <option value="online" selected >online</option>
+    {% else %}
+    <option value="online">online</option>
+    {% endif %}
+    {% if filters.state == 'offline' %}
+    <option value="offline" selected >offline</option>
+    {% else %}
+    <option value="offline">offline</option>
+    {% endif %}
+    {% if filters.state == 'running' %}
+    <option value="running" selected >running</option>
+    {% else %}
+    <option value="running">running</option>
+    {% endif %}
+    {% if filters.state == 'disabled' %}
+    <option value="disabled" selected >disabled</option>
+    {% else %}
+    <option value="disabled">disabled</option>
+    {% endif %}
+  </select>
+  <input type="submit" class="btn" value="Filter">
+</form>
+
 <table class="table table-striped table-bordered model-list">
   <tr>
     <th></th>

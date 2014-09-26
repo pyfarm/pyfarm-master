@@ -32,7 +32,27 @@ def agents():
     if "tags" in request.args:
         filters["tags"] = request.args.get("tags")
         tags = request.args.get("tags").split(",")
-        agents_query = agents_query.filter(Agent.tags.any(Tag.tag.in_(tags)))
+        tags = [x for x in tags if not x == ""]
+        if tags:
+            agents_query = agents_query.filter(Agent.tags.any(Tag.tag.in_(tags)))
+
+    if "state" in request.args:
+        state = request.args.get("state")
+        filters["state"] = state
+        # TODO Use the actual AgentState enum here
+        if state not in ["online", "offline", "disabled", "running", ""]:
+            return (render_template(
+                "pyfarm/error.html", error="unknown state"), BAD_REQUEST)
+        if state != "":
+            agents_query = agents_query.filter(Agent.state == state)
+
+    if "hostname" in request.args:
+        hostname = request.args.get("hostname")
+        filters["hostname"] = hostname
+        # TODO Use the actual AgentState enum here
+        if hostname != "":
+            agents_query = agents_query.filter(
+                Agent.hostname.like("%%%s%%" % hostname))
 
     order_dir = "asc"
     order_by = "hostname"
