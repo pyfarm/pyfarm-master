@@ -125,12 +125,14 @@ def load_index(app_instance):
 
 def load_user_interface(app_instance):
     from pyfarm.master.user_interface.agents import (
-        agents, delete_single_agent)
+        agents, single_agent, delete_single_agent)
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
     app_instance.add_url_rule("/agents/<int:agent_id>/delete",
                               "delete_single_agent_ui", delete_single_agent,
                               methods=("POST", ))
+    app_instance.add_url_rule("/agents/<int:agent_id>", "single_agent_ui",
+                              single_agent, methods=("GET", ))
 
 
 def load_api(app_instance, api_instance):

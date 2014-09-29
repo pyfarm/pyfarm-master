@@ -82,7 +82,9 @@
       </form>
     </td>
     <td>
-    {{ agent.hostname }}
+      <a href="{{ url_for('single_agent_ui', agent_id=agent.id) }}">
+        {{ agent.hostname }}
+      </a>
     </td>
     <td>{{ agent.remote_ip }}</td>
     <td>{{ agent.state }}</td>
