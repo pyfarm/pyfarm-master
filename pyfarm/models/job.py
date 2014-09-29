@@ -284,6 +284,20 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                               backref=db.backref("subscribed_jobs",
                                                  lazy="dynamic"))
 
+    tasks_queued = db.relationship("Task", lazy="dynamic",
+        primaryjoin="(Task.state == None) & "
+                    "(Task.job_id == Job.id)",
+        doc=dedent("""
+        Relationship between this job and any :class:`Task` objects which are
+        queued."""))
+
+    tasks_running = db.relationship("Task", lazy="dynamic",
+        primaryjoin="(Task.state == %s) & "
+                    "(Task.job_id == Job.id)" % DBWorkState.RUNNING,
+        doc=dedent("""
+        Relationship between this job and any :class:`Task` objects which are
+        running."""))
+
     tasks_done = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
                     "(Task.job_id == Job.id)" % DBWorkState.DONE,
