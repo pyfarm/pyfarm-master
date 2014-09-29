@@ -123,6 +123,16 @@ def load_index(app_instance):
     app_instance.add_url_rule("/favicon.ico", "favicon", favicon)
 
 
+def load_user_interface(app_instance):
+    from pyfarm.master.user_interface.agents import (
+        agents, delete_single_agent)
+    app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
+                              methods=("GET", ))
+    app_instance.add_url_rule("/agents/<int:agent_id>/delete",
+                              "delete_single_agent_ui", delete_single_agent,
+                              methods=("POST", ))
+
+
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
     from pyfarm.master.api.agents import (
@@ -429,6 +439,7 @@ def load_master(app, admin, api):
     """loads and attaches all endpoints needed to run the master"""
     load_error_handlers(app)
     load_index(app)
+    load_user_interface(app)
     load_authentication(app)
     load_admin(admin)
     load_api(app, api)

@@ -23,7 +23,8 @@ from flask.ext.admin import BaseView, expose
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.master.entrypoints import load_authentication, load_index
+from pyfarm.master.entrypoints import (
+    load_authentication, load_index, load_user_interface)
 from pyfarm.master.admin.baseview import AuthMixins
 from pyfarm.master.login import load_token, load_user
 from pyfarm.master.application import (
@@ -54,6 +55,7 @@ class TestLogin(BaseTestCase):
         login_manger.token_callback = load_token
         login_manger.user_callback = load_user
         load_authentication(self.app)
+        load_user_interface(self.app)
 
         # add an index url because the login page
         # will redirect there if there's not a 'next'
