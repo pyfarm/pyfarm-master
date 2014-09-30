@@ -78,7 +78,7 @@
   {% for job in jobs %}
   <tr>
     <td>
-      <form class="icon" method="POST" action="/jobs/{{ job.id }}/delete">
+      <form class="icon" method="POST" action="{{ url_for('delete_single_job_ui', job_id=job.id) }}">
         <button onclick="return confirm('Are you sure you want to delete this job?');" title="Delete job">
           <i class="icon-trash"></i>
         </button>
@@ -92,7 +92,7 @@
     <td>{{ job.title }}</td>
     <td> {{ job.tasks_queued.count() }}/{{ job.tasks_running.count() }}/{{ job.tasks_failed.count() }}/{{ job.tasks_done.count() }} </td>
     <td> {{ job.time_submitted }} </td>
-    <td>{{ job.state }}</td>
+    <td>{{ 'deleting' if job.to_be_deleted else job.state }}</td>
     <td>
       {% for tag in job.tags %}
       <div>{{ tag.tag }}</div>

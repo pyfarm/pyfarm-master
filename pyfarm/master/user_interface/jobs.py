@@ -15,15 +15,20 @@
 # limitations under the License.
 
 try:
-    from httplib import BAD_REQUEST
+    from httplib import BAD_REQUEST, NOT_FOUND, SEE_OTHER
 except ImportError:  # pragma: no cover
-    from http.client import BAD_REQUEST
+    from http.client import BAD_REQUEST, NOT_FOUND, SEE_OTHER
 
-from flask import render_template, request
+from flask import render_template, request, redirect, url_for
 
+from pyfarm.core.logger import getLogger
+from pyfarm.scheduler.tasks import delete_job
 from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
+from pyfarm.master.application import db
+
+logger = getLogger("ui.jobs")
 
 def jobs():
     jobs_query = Job.query
@@ -72,3 +77,20 @@ def jobs():
                            jobs=jobs, filters=filters, order_by=order_by,
                            order_dir=order_dir,
                            order={"order_by": order_by, "order_dir": order_dir})
+
+def delete_single_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    job.to_be_deleted = True
+    db.session.add(job)
+    db.session.commit()
+
+    logger.info("Marking job %s for deletion", job.id)
+
+    delete_job.delay(job.id)
+
+    return redirect(url_for("jobs_index_ui"), SEE_OTHER)

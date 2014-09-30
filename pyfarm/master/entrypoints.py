@@ -126,7 +126,8 @@ def load_index(app_instance):
 def load_user_interface(app_instance):
     from pyfarm.master.user_interface.agents import (
         agents, single_agent, delete_single_agent)
-    from pyfarm.master.user_interface.jobs import jobs
+    from pyfarm.master.user_interface.jobs import jobs, delete_single_job
+
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
     app_instance.add_url_rule("/agents/<int:agent_id>/delete",
@@ -137,6 +138,9 @@ def load_user_interface(app_instance):
 
     app_instance.add_url_rule("/jobs/", "jobs_index_ui", jobs,
                               methods=("GET", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/delete",
+                              "delete_single_job_ui", delete_single_job,
+                              methods=("POST", ))
 
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
