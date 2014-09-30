@@ -83,7 +83,7 @@
           <i class="icon-trash"></i>
         </button>
       </form>
-      <form class="icon" method="POST" action="/jobs/{{ job.id }}/rerun">
+      <form class="icon" method="POST" action="{{ url_for('rerun_single_job_ui', job_id=job.id) }}">
         <button onclick="return confirm('Are you sure you want to rerun this job? This will include all tasks, even those already done.');" title="Rerun job">
           <i class="icon-repeat"></i>
         </button>

@@ -22,6 +22,7 @@ except ImportError:  # pragma: no cover
 from flask import render_template, request, redirect, url_for
 
 from pyfarm.core.logger import getLogger
+from pyfarm.core.enums import WorkState
 from pyfarm.scheduler.tasks import delete_job
 from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
@@ -92,5 +93,24 @@ def delete_single_job(job_id):
     logger.info("Marking job %s for deletion", job.id)
 
     delete_job.delay(job.id)
+
+    return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
+def rerun_single_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    for task in job.tasks:
+        if task.state is not WorkState.RUNNING:
+            task.state = None
+            task.agent = None
+            db.session.add(task)
+
+    task.state = None
+    db.session.add(job)
+    db.session.commit()
 
     return redirect(url_for("jobs_index_ui"), SEE_OTHER)
