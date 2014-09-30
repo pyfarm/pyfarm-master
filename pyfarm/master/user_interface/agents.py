@@ -51,7 +51,7 @@ def agents():
         filters["hostname"] = hostname
         if hostname != "":
             agents_query = agents_query.filter(
-                Agent.hostname.like("%%%s%%" % hostname))
+                Agent.hostname.ilike("%%%s%%" % hostname))
 
     order_dir = "asc"
     order_by = "hostname"
