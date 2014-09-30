@@ -702,6 +702,7 @@ def delete_task(self, task_id):
 
 @celery_app.task(ignore_results=True)
 def delete_job(job_id):
+    db.session.commit()
     job = Job.query.filter_by(id=job_id).one()
     if not job.to_be_deleted:
         logger.warning("Not deleting job %s, it is not marked for deletion.",
