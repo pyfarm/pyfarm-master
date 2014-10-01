@@ -20,9 +20,12 @@ except ImportError:  # pragma: no cover
     from http.client import BAD_REQUEST, NOT_FOUND, SEE_OTHER
 
 from flask import render_template, request, url_for, redirect
+from sqlalchemy import or_
 
+from pyfarm.core.enums import WorkState
 from pyfarm.models.agent import Agent
 from pyfarm.models.tag import Tag
+from pyfarm.models.task import Task
 from pyfarm.master.application import db
 
 def agents():
@@ -72,6 +75,20 @@ def agents():
                            agents=agents, filters=filters, order_by=order_by,
                            order_dir=order_dir,
                            order={"order_by": order_by, "order_dir": order_dir})
+
+def single_agent(agent_id):
+    agent = Agent.query.filter_by(id=agent_id).first()
+    if not agent:
+        return (render_template(
+                    "pyfarm/error.html", error="Agent %s not found" % agent_id),
+                NOT_FOUND)
+
+    tasks = Task.query.filter(Task.agent == agent,
+                              or_(Task.state == None,
+                                  Task.state == WorkState.RUNNING)).all()
+
+    return render_template("pyfarm/user_interface/agent.html", agent=agent,
+                           tasks=tasks)
 
 def delete_single_agent(agent_id):
     agent = Agent.query.filter_by(id=agent_id).first()
