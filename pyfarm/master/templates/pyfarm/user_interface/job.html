@@ -125,6 +125,45 @@
   </tbody>
 </table>
 
+<h4>Frame Selection</h4>
+<form method="POST" action="/jobs/{{job.id}}/alter_frame_selection">
+<table class="table">
+  <tbody>
+    <tr>
+      <td>
+        Start
+      </td>
+      <td>
+        <input type="text" name="start" value="{{ first_task.frame }}"/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        End
+      </td>
+      <td>
+        <input type="text" name="end" value="{{ last_task.frame }}"/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        By
+      </td>
+      <td>
+        <input type="text" name="by" value="{{ job.by }}"/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      </td>
+      <td>
+        <input type=submit class="btn" value="Alter Frame Selection"/>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</form>
+
 <h4>Tasks</h4>
 <table class="table">
   <thead>

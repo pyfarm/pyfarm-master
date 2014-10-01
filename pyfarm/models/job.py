@@ -48,6 +48,7 @@ from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin, UtilityMixins)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
+from pyfarm.models.task import Task
 
 __all__ = ("Job", )
 
@@ -321,6 +322,41 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     def paused(self):
         return self.state == WorkState.PAUSED
+
+    def alter_frame_range(self, start, end, by):
+        # We have to import this down here instead of at the top to break a
+        # circular dependency between the modules
+        from pyfarm.scheduler.tasks import delete_task
+
+        if end < start:
+            raise ValueError("`end` must be greater than or equal to `start`")
+
+        self.by = by
+
+        required_frames = []
+        current_frame = start
+        while current_frame <= end:
+            required_frames.append(current_frame)
+            current_frame += by
+
+        existing_tasks = Task.query.filter_by(job=self).all()
+        frames_to_create = required_frames
+        for task in existing_tasks:
+            if task.frame not in required_frames:
+                delete_task.delay(task.id)
+            else:
+                frames_to_create.remove(task.frame)
+
+        for frame in frames_to_create:
+            task = Task()
+            task.job = self
+            task.frame = frame
+            task.priority = self.priority
+            db.session.add(task)
+
+        if frames_to_create:
+            if self.state != WorkState.RUNNING:
+                self.state = None
 
     @validates("ram", "cpus")
     def validate_resource(self, key, value):

@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from decimal import Decimal
+
 try:
     from httplib import BAD_REQUEST, NOT_FOUND, SEE_OTHER
 except ImportError:  # pragma: no cover
@@ -106,10 +108,14 @@ def single_job(job_id):
                     "pyfarm/error.html", error="Job %s not found" % job_id),
                 NOT_FOUND)
 
+    first_task = Task.query.filter_by(job=job).order_by("frame asc").first()
+    last_task = Task.query.filter_by(job=job).order_by("frame desc").first()
+
     tasks = job.tasks.order_by(Task.frame)
 
     return render_template("pyfarm/user_interface/job.html", job=job,
-                           tasks=tasks)
+                           tasks=tasks, first_task=first_task,
+                           last_task=last_task)
 
 def delete_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
@@ -190,3 +196,24 @@ def unpause_single_job(job_id):
         return redirect(request.args.get("next"), SEE_OTHER)
     else:
         return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
+def alter_frames_in_single_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+    start = Decimal(request.form['start'])
+    end = Decimal(request.form['end'])
+    by = Decimal(request.form['by'])
+
+    try:
+        job.alter_frame_range(start, end, by)
+    except ValueError as e:
+        return (render_template(
+                    "pyfarm/error.html", error=e), BAD_REQUEST)
+
+    db.session.commit()
+    assign_tasks.delay()
+
+    return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
