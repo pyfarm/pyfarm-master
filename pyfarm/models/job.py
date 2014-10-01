@@ -86,7 +86,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     REPR_COLUMNS = ("id", "state", "project")
     REPR_CONVERT_COLUMN = {
         "state": repr}
-    STATE_ENUM = WorkState
+    STATE_ENUM = list(WorkState) + [None]
     MIN_CPUS = read_env_int("PYFARM_QUEUE_MIN_CPUS", 1)
     MAX_CPUS = read_env_int("PYFARM_QUEUE_MAX_CPUS", 256)
     MIN_RAM = read_env_int("PYFARM_QUEUE_MIN_RAM", 16)
