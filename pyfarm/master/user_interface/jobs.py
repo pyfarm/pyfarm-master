@@ -109,7 +109,7 @@ def rerun_single_job(job_id):
             task.agent = None
             db.session.add(task)
 
-    task.state = None
+    job.state = None
     db.session.add(job)
     db.session.commit()
 
