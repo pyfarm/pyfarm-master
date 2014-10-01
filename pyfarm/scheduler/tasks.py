@@ -658,7 +658,7 @@ def delete_task(self, task_id):
                                             (agent.api_url(), task.id),
                                        headers={"User-Agent": USERAGENT})
 
-            logger.info("Deleting task %s (job %s - \"%s\")from agent %s (id %s)",
+            logger.info("Deleting task %s (job %s - \"%s\") from agent %s (id %s)",
                         task.id, job.id, job.title, agent.hostname, agent.id)
             if response.status_code not in [requests.codes.accepted,
                                             requests.codes.ok,
