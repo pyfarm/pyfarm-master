@@ -133,4 +133,7 @@ def rerun_single_job(job_id):
     db.session.add(job)
     db.session.commit()
 
-    return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
