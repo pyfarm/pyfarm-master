@@ -87,7 +87,7 @@
         Tasks queued
       </td>
       <td>
-        {{ ((job.tasks_queued.count() / job.tasks.count()) * 100) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_queued.count() }})
+        {{ ((job.tasks_queued.count() / job.tasks.count()) * 100)|round(2) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_queued.count() }})
       </td>
     </tr>
     <tr>
@@ -95,7 +95,7 @@
         Tasks running
       </td>
       <td>
-        {{ ((job.tasks_running.count() / job.tasks.count()) * 100) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_running.count() }})
+        {{ ((job.tasks_running.count() / job.tasks.count()) * 100)|round(2) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_running.count() }})
       </td>
     </tr>
     <tr>
@@ -103,7 +103,7 @@
         Tasks done
       </td>
       <td>
-        {{ ((job.tasks_done.count() / job.tasks.count()) * 100) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_done.count() }})
+        {{ ((job.tasks_done.count() / job.tasks.count()) * 100)|round(2) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_done.count() }})
       </td>
     </tr>
     <tr>
@@ -111,7 +111,7 @@
         Tasks failed
       </td>
       <td>
-        {{ ((job.tasks_failed.count() / job.tasks.count()) * 100) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_failed.count() }})
+        {{ ((job.tasks_failed.count() / job.tasks.count()) * 100)|round(2) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_failed.count() }})
       </td>
     </tr>
     <tr>
