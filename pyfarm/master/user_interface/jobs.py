@@ -25,7 +25,7 @@ from sqlalchemy import func
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
-from pyfarm.scheduler.tasks import delete_job, stop_task
+from pyfarm.scheduler.tasks import delete_job, stop_task, assign_tasks
 from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
@@ -142,6 +142,8 @@ def rerun_single_job(job_id):
     db.session.add(job)
     db.session.commit()
 
+    assign_tasks.delay()
+
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)
     else:
@@ -161,6 +163,8 @@ def pause_single_job(job_id):
     job.state = WorkState.PAUSED
     db.session.add(job)
     db.session.commit()
+
+    assign_tasks.delay()
 
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)
