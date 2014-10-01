@@ -49,10 +49,9 @@ def agents():
     if "hostname" in request.args:
         hostname = request.args.get("hostname")
         filters["hostname"] = hostname
-        # TODO Use the actual AgentState enum here
         if hostname != "":
             agents_query = agents_query.filter(
-                Agent.hostname.like("%%%s%%" % hostname))
+                Agent.hostname.ilike("%%%s%%" % hostname))
 
     order_dir = "asc"
     order_by = "hostname"

@@ -14,7 +14,7 @@
           <span class="brand">PyFarm</span>
           {% if not current_user.is_anonymous() %}
           <ul class="nav">
-              <li class="{% block agent_nb_class %}{% endblock %}"><a href="{{ url_for('agents_index_ui') }}">Agents</a></li>
+              <li class="{% block agents_nb_class %}{% endblock %}"><a href="{{ url_for('agents_index_ui') }}">Agents</a></li>
           </ul>
           {% endif %}
           <ul class="nav pull-right">
