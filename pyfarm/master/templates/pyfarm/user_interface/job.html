@@ -53,6 +53,19 @@
             <i class="icon-repeat"></i> Rerun
           </button>
         </form>
+        {% if not job.paused() %}
+        <form class="icon" method="POST" action="{{ url_for('pause_single_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
+          <button onclick="return confirm('Are you sure you want to pause this job?');" title="Pause job">
+            <i class="icon-pause"></i> Pause
+          </button>
+        </form>
+        {% else %}
+        <form class="icon" method="POST" action="{{ url_for('unpause_single_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
+          <button onclick="return confirm('Are you sure you want to unpause this job?');" title="Unpause job">
+            <i class="icon-play"></i> Unpause
+          </button>
+        </form>
+        {% endif %}
       </td>
     </tr>
   </tbody>

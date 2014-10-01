@@ -127,7 +127,8 @@ def load_user_interface(app_instance):
     from pyfarm.master.user_interface.agents import (
         agents, single_agent, delete_single_agent)
     from pyfarm.master.user_interface.jobs import (
-        jobs, delete_single_job, rerun_single_job, single_job)
+        jobs, delete_single_job, rerun_single_job, single_job, pause_single_job,
+        unpause_single_job)
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
     app_instance.add_url_rule("/agents/<int:agent_id>/delete",
@@ -143,6 +144,12 @@ def load_user_interface(app_instance):
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/rerun",
                               "rerun_single_job_ui", rerun_single_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/pause",
+                              "pause_single_job_ui", pause_single_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/unpause",
+                              "unpause_single_job_ui", unpause_single_job,
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>",
                               "single_job_ui", single_job, methods=("GET", ))

@@ -319,6 +319,9 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                            Relationship between this job and
                            :class:`.Tag` objects"""))
 
+    def paused(self):
+        return self.state == WorkState.PAUSED
+
     @validates("ram", "cpus")
     def validate_resource(self, key, value):
         """
