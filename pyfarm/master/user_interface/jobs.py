@@ -25,7 +25,7 @@ from sqlalchemy import func
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
-from pyfarm.scheduler.tasks import delete_job
+from pyfarm.scheduler.tasks import delete_job, stop_task
 from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
@@ -154,7 +154,9 @@ def pause_single_job(job_id):
                     "pyfarm/error.html", error="Job %s not found" % job_id),
                 NOT_FOUND)
 
-    # TODO Go through running tasks and stop them
+    for task in job.tasks:
+        if task.state == WorkState.RUNNING:
+            stop_task.delay(task.id)
 
     job.state = WorkState.PAUSED
     db.session.add(job)
