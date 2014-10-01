@@ -106,7 +106,10 @@ def single_job(job_id):
                     "pyfarm/error.html", error="Job %s not found" % job_id),
                 NOT_FOUND)
 
-    return render_template("pyfarm/user_interface/job.html", job=job)
+    tasks = job.tasks.order_by(Task.frame)
+
+    return render_template("pyfarm/user_interface/job.html", job=job,
+                           tasks=tasks)
 
 def delete_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
