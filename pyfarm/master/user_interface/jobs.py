@@ -99,6 +99,15 @@ def jobs():
                            order_dir=order_dir,
                            order={"order_by": order_by, "order_dir": order_dir})
 
+def single_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    return render_template("pyfarm/user_interface/job.html", job=job)
+
 def delete_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
     if not job:

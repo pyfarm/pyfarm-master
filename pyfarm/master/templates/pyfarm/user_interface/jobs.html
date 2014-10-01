@@ -124,7 +124,7 @@
         </button>
       </form>
     </td>
-    <td>{{ job.Job.title }}</td>
+    <td><a href="{{ url_for('single_job_ui', job_id=job.Job.id) }}">{{ job.Job.title }}</a></td>
     <td> {{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }} </td>
     <td> {{ job.Job.time_submitted }} </td>
     <td>{{ 'deleting' if job.Job.to_be_deleted else job.Job.state }}</td>

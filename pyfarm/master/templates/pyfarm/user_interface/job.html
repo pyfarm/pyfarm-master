@@ -1,0 +1,140 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Job {{job.title}} {% endblock %}
+{% block jobs_nb_class %}active{% endblock %}
+{% block content %}
+<h1 style="margin-bottom:20px">{{ job.title }}</h1>
+<h4>Job</h4>
+<table class="table">
+  <tbody>
+    <tr>
+      <td>
+        Jobtype
+      </td>
+      <td>
+        {{ job.jobtype_version.jobtype.name }} Version {{job.jobtype_version.version}}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Submitted
+      </td>
+      <td>
+        {{ job.time_submitted if job.time_submitted }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Started
+      </td>
+      <td>
+        {{ job.time_started if job.time_started }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Finished
+      </td>
+      <td>
+        {{ job.time_finished if job.time_finished}}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Actions
+      </td>
+      <td>
+        <form class="icon" method="POST" action="{{ url_for('delete_single_job_ui', job_id=job.id) }}">
+          <button onclick="return confirm('Are you sure you want to delete this job?');" title="Delete job">
+            <i class="icon-trash"></i> Delete
+          </button>
+        </form>
+        <form class="icon" method="POST" action="{{ url_for('rerun_single_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
+          <button onclick="return confirm('Are you sure you want to rerun this job? This will include all tasks, even those already done.');" title="Rerun job">
+            <i class="icon-repeat"></i> Rerun
+          </button>
+        </form>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>State</h4>
+<table class="table">
+  <tbody>
+    <tr>
+      <td>
+        State
+      </td>
+      <td>
+        {{ job.state }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Tasks queued
+      </td>
+      <td>
+        {{ ((job.tasks_queued.count() / job.tasks.count()) * 100) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_queued.count() }})
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Tasks running
+      </td>
+      <td>
+        {{ ((job.tasks_running.count() / job.tasks.count()) * 100) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_running.count() }})
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Tasks done
+      </td>
+      <td>
+        {{ ((job.tasks_done.count() / job.tasks.count()) * 100) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_done.count() }})
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Tasks failed
+      </td>
+      <td>
+        {{ ((job.tasks_failed.count() / job.tasks.count()) * 100) if job.tasks.count() != 0 else "n/a "}}% ({{ job.tasks_failed.count() }})
+      </td>
+    </tr>
+    <tr>
+      <td>
+        To be deleted
+      </td>
+      <td>
+        {{ "Yes" if job.to_be_deleted else "No" }}
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>Tasks</h4>
+<table class="table">
+  <thead>
+    <th>ID</th>
+    <th>Frame</th>
+    <th>State</job>
+    <th>Agent</job>
+  </thead>
+  <tbody>
+    {% for task in job.tasks %}
+    <tr>
+      <td>{{ task.id }}</td>
+      <td>{{ task.frame }}</td>
+      <td>{{ task.state if task.state else "queued" }}</td>
+      <td>
+        {% if task.agent %}
+        <a href="{{ url_for('single_agent_ui', agent_id=task.agent_id) }}">
+          {{ task.agent.hostname }}
+        </a>
+        {%endif%}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
