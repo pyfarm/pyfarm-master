@@ -31,6 +31,7 @@ from pyfarm.scheduler.tasks import delete_job, stop_task, assign_tasks
 from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
+from pyfarm.models.jobqueue import JobQueue
 from pyfarm.master.application import db
 
 logger = getLogger("ui.jobs")
@@ -113,9 +114,11 @@ def single_job(job_id):
 
     tasks = job.tasks.order_by(Task.frame)
 
+    jobqueues = JobQueue.query.all()
+
     return render_template("pyfarm/user_interface/job.html", job=job,
                            tasks=tasks, first_task=first_task,
-                           last_task=last_task)
+                           last_task=last_task, queues=jobqueues)
 
 def delete_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
@@ -215,5 +218,40 @@ def alter_frames_in_single_job(job_id):
 
     db.session.commit()
     assign_tasks.delay()
+
+    return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
+
+def alter_scheduling_parameters_for_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    job.priority = int(request.form['priority'])
+    job.weight = int(request.form['weight'])
+    if request.form['minimum_agents']:
+        job.minimum_agents = int(request.form['minimum_agents'])
+    else:
+        job.minimum_agents = None
+    if request.form['maximum_agents']:
+        job.maximum_agents = int(request.form['maximum_agents'])
+    else:
+        job.maximum_agents = None
+    job.batch = int(request.form['batch'])
+
+    if request.form['queue']:
+        queue_id = int(request.form['queue'])
+        queue = JobQueue.query.filter_by(id=queue_id).first()
+        if not queue:
+            return (render_template(
+                        "pyfarm/error.html", error="Queue %s not found" % queue_id),
+                    NOT_FOUND)
+        job.queue = queue
+    else:
+        job.queue = None
+
+    db.session.add(job)
+    db.session.commit()
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)

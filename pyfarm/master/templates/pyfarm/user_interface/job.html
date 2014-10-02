@@ -126,7 +126,7 @@
 </table>
 
 <h4>Frame Selection</h4>
-<form method="POST" action="/jobs/{{job.id}}/alter_frame_selection">
+<form method="POST" action="{{ url_for('alter_frames_in_job_ui', job_id=job.id) }}">
 <table class="table">
   <tbody>
     <tr>
@@ -158,6 +158,78 @@
       </td>
       <td>
         <input type=submit class="btn" value="Alter Frame Selection"/>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</form>
+
+<h4>Scheduling Parameters</h4>
+<form method="POST" action="{{ url_for('alter_scheduling_parameters_in_job_ui', job_id=job.id)}}">
+<table class="table">
+  <tbody>
+    <tr>
+      <td>
+        Jobqueue
+      </td>
+      <td>
+        <select name="queue">
+          <option value=""></option>
+          {% for queue in queues %}
+          {% if queue == job.queue %}
+            <option value="{{ queue.id }}" selected>{{ queue.path() }}</option>
+          {% else %}
+            <option value="{{ queue.id }}">{{ queue.path() }}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Priority
+      </td>
+      <td>
+        <input type="text" name="priority" value="{{ job.priority }}"/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Weight
+      </td>
+      <td>
+        <input type="text" name="weight" value="{{ job.weight }}"/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Minimum Agents
+      </td>
+      <td>
+        <input type="text" name="minimum_agents" value="{{ job.minimum_agents if job.minimum_agents }}"/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Maximum Agents
+      </td>
+      <td>
+        <input type="text" name="maximum_agents" value="{{ job.maximum_agents if job.maximum_agents }}"/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Batch Size
+      </td>
+      <td>
+        <input type="text" name="batch" value="{{ job.batch }}"/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      </td>
+      <td>
+        <input type=submit class="btn" value="Alter Scheduling Parameters"/>
       </td>
     </tr>
   </tbody>

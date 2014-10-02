@@ -80,3 +80,10 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                              remote_side=[id],
                              backref=db.backref("children", lazy="dynamic"),
                              doc="Relationship between this queue its parent")
+
+    def path(self):
+        path = "/%s" % self.name
+        if self.parent:
+            return self.parent.path() + path
+        else:
+            return path
