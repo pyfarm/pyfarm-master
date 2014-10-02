@@ -20,6 +20,8 @@ except ImportError:  # pragma: no cover
     from http.client import BAD_REQUEST, NOT_FOUND, SEE_OTHER
 
 from flask import render_template, request, redirect, url_for
+from sqlalchemy.orm import aliased
+from sqlalchemy import func
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
@@ -32,7 +34,24 @@ from pyfarm.master.application import db
 logger = getLogger("ui.jobs")
 
 def jobs():
-    jobs_query = Job.query
+    a_q = aliased(Task)
+    a_r = aliased(Task)
+    a_d = aliased(Task)
+    a_f = aliased(Task)
+    jobs_query = db.session.query(Job,
+                                  func.count(
+                                      a_q.id.distinct()).label("t_queued"),
+                                  func.count(
+                                      a_r.id.distinct()).label("t_running"),
+                                  func.count(
+                                      a_d.id.distinct()).label("t_done"),
+                                  func.count(
+                                      a_f.id.distinct()).label("t_failed")).\
+        outerjoin(a_q, Job.tasks_queued).\
+        outerjoin(a_r, Job.tasks_running).\
+        outerjoin(a_d, Job.tasks_done).\
+        outerjoin(a_f, Job.tasks_failed).\
+        group_by(Job)
 
     filters = {}
     if "tags" in request.args:
@@ -63,7 +82,8 @@ def jobs():
     order_by = "title"
     if "order_by" in request.args:
         order_by = request.args.get("order_by")
-        if order_by not in ["title", "state", "time_submitted"]:
+        if order_by not in ["title", "state", "time_submitted", "t_queued",
+                            "t_running", "t_failed", "t_done"]:
             return (render_template(
                 "pyfarm/error.html", error="unknown order key"), BAD_REQUEST)
         if "order_dir" in request.args:
