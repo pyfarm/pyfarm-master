@@ -269,3 +269,27 @@ def update_notes_for_job(job_id):
     db.session.commit()
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
+
+def update_tags_in_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    tagnames = request.form["tags"].split(" ")
+    tagnames = [x for x in tagnames if not x == ""]
+    tags = []
+    for name in tagnames:
+        tag = Tag.query.filter_by(tag=name).first()
+        if not tag:
+            tag = Tag(tag=name)
+            db.session.add(tag)
+        tags.append(tag)
+
+    job.tags = tags
+
+    db.session.add(job)
+    db.session.commit()
+
+    return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
