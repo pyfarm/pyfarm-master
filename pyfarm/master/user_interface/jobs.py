@@ -255,3 +255,17 @@ def alter_scheduling_parameters_for_job(job_id):
     db.session.commit()
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
+
+def update_notes_for_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    job.notes = request.form['notes']
+
+    db.session.add(job)
+    db.session.commit()
+
+    return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)

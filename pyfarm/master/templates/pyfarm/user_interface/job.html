@@ -71,6 +71,12 @@
   </tbody>
 </table>
 
+<h4>Notes</h4>
+<form method="POST" action="{{ url_for('update_job_notes_ui', job_id=job.id) }}">
+  <p><textarea name="notes" class="form-control">{{ job.notes }}</textarea></p>
+  <input type="submit" class="btn"/>
+</form>
+
 <h4>State</h4>
 <table class="table">
   <tbody>
