@@ -126,6 +126,11 @@ def load_index(app_instance):
 def load_user_interface(app_instance):
     from pyfarm.master.user_interface.agents import (
         agents, single_agent, delete_single_agent)
+    from pyfarm.master.user_interface.jobs import (
+        jobs, delete_single_job, rerun_single_job, single_job, pause_single_job,
+        unpause_single_job, alter_frames_in_single_job,
+        alter_scheduling_parameters_for_job, update_notes_for_job,
+        update_tags_in_job)
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
     app_instance.add_url_rule("/agents/<int:agent_id>/delete",
@@ -134,6 +139,35 @@ def load_user_interface(app_instance):
     app_instance.add_url_rule("/agents/<int:agent_id>", "single_agent_ui",
                               single_agent, methods=("GET", ))
 
+    app_instance.add_url_rule("/jobs/", "jobs_index_ui", jobs,
+                              methods=("GET", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/delete",
+                              "delete_single_job_ui", delete_single_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/rerun",
+                              "rerun_single_job_ui", rerun_single_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/pause",
+                              "pause_single_job_ui", pause_single_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/unpause",
+                              "unpause_single_job_ui", unpause_single_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/alter_frame_selection",
+                              "alter_frames_in_job_ui",
+                              alter_frames_in_single_job, methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/alter_scheduling_parameters",
+                              "alter_scheduling_parameters_in_job_ui",
+                              alter_scheduling_parameters_for_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/update_notes",
+                              "update_job_notes_ui", update_notes_for_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/update_tags",
+                              "update_job_tags_ui", update_tags_in_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>",
+                              "single_job_ui", single_job, methods=("GET", ))
 
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""

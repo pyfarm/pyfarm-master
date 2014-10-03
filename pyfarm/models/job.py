@@ -48,6 +48,7 @@ from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin, UtilityMixins)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
+from pyfarm.models.task import Task
 
 __all__ = ("Job", )
 
@@ -86,7 +87,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     REPR_COLUMNS = ("id", "state", "project")
     REPR_CONVERT_COLUMN = {
         "state": repr}
-    STATE_ENUM = WorkState
+    STATE_ENUM = list(WorkState) + [None]
     MIN_CPUS = read_env_int("PYFARM_QUEUE_MIN_CPUS", 1)
     MAX_CPUS = read_env_int("PYFARM_QUEUE_MAX_CPUS", 256)
     MIN_RAM = read_env_int("PYFARM_QUEUE_MIN_RAM", 16)
@@ -284,6 +285,20 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                               backref=db.backref("subscribed_jobs",
                                                  lazy="dynamic"))
 
+    tasks_queued = db.relationship("Task", lazy="dynamic",
+        primaryjoin="(Task.state == None) & "
+                    "(Task.job_id == Job.id)",
+        doc=dedent("""
+        Relationship between this job and any :class:`Task` objects which are
+        queued."""))
+
+    tasks_running = db.relationship("Task", lazy="dynamic",
+        primaryjoin="(Task.state == %s) & "
+                    "(Task.job_id == Job.id)" % DBWorkState.RUNNING,
+        doc=dedent("""
+        Relationship between this job and any :class:`Task` objects which are
+        running."""))
+
     tasks_done = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
                     "(Task.job_id == Job.id)" % DBWorkState.DONE,
@@ -304,6 +319,44 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                            doc=dedent("""
                            Relationship between this job and
                            :class:`.Tag` objects"""))
+
+    def paused(self):
+        return self.state == WorkState.PAUSED
+
+    def alter_frame_range(self, start, end, by):
+        # We have to import this down here instead of at the top to break a
+        # circular dependency between the modules
+        from pyfarm.scheduler.tasks import delete_task
+
+        if end < start:
+            raise ValueError("`end` must be greater than or equal to `start`")
+
+        self.by = by
+
+        required_frames = []
+        current_frame = start
+        while current_frame <= end:
+            required_frames.append(current_frame)
+            current_frame += by
+
+        existing_tasks = Task.query.filter_by(job=self).all()
+        frames_to_create = required_frames
+        for task in existing_tasks:
+            if task.frame not in required_frames:
+                delete_task.delay(task.id)
+            else:
+                frames_to_create.remove(task.frame)
+
+        for frame in frames_to_create:
+            task = Task()
+            task.job = self
+            task.frame = frame
+            task.priority = self.priority
+            db.session.add(task)
+
+        if frames_to_create:
+            if self.state != WorkState.RUNNING:
+                self.state = None
 
     @validates("ram", "cpus")
     def validate_resource(self, key, value):

@@ -658,7 +658,7 @@ def delete_task(self, task_id):
                                             (agent.api_url(), task.id),
                                        headers={"User-Agent": USERAGENT})
 
-            logger.info("Deleting task %s (job %s - \"%s\")from agent %s (id %s)",
+            logger.info("Deleting task %s (job %s - \"%s\") from agent %s (id %s)",
                         task.id, job.id, job.title, agent.hostname, agent.id)
             if response.status_code not in [requests.codes.accepted,
                                             requests.codes.ok,
@@ -700,8 +700,52 @@ def delete_task(self, task_id):
 
     db.session.commit()
 
+
+@celery_app.task(ignore_results=True, bind=True)
+def stop_task(self, task_id):
+    task = Task.query.filter_by(id=task_id).one()
+    job = task.job
+
+    if (task.agent is not None and
+        task.state not in [WorkState.DONE, WorkState.FAILED]):
+        agent = task.agent
+        try:
+            response = requests.delete("%s/tasks/%s" %
+                                            (agent.api_url(), task.id),
+                                       headers={"User-Agent": USERAGENT})
+
+            logger.info("Stopping task %s (job %s - \"%s\") on agent %s (id %s)",
+                        task.id, job.id, job.title, agent.hostname, agent.id)
+            if response.status_code not in [requests.codes.accepted,
+                                            requests.codes.ok,
+                                            requests.codes.no_content,
+                                            requests.codes.not_found]:
+                raise ValueError("Unexpected return code on stopping task %s on "
+                                 "agent %s: %s",
+                                 task.id, agent.id, response.status_code)
+            else:
+                task.agent = None
+                task.state = None
+                db.session.add(task)
+        # Catching ProtocolError here is a work around for
+        # https://github.com/kennethreitz/requests/issues/2204
+        except (ConnectionError, ProtocolError) as e:
+            if self.request.retries < self.max_retries:
+                logger.warning("Caught ConnectionError trying to delete task %s "
+                               "from agent %s (id %s), retry %s of %s: %s",
+                               task.id,
+                               agent.hostname,
+                               agent.id,
+                               self.request.retries,
+                               self.max_retries,
+                               e)
+                self.retry(exc=e)
+
+    db.session.commit()
+
 @celery_app.task(ignore_results=True)
 def delete_job(job_id):
+    db.session.commit()
     job = Job.query.filter_by(id=job_id).one()
     if not job.to_be_deleted:
         logger.warning("Not deleting job %s, it is not marked for deletion.",

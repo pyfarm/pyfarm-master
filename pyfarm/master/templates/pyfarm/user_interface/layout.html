@@ -16,6 +16,9 @@
           <ul class="nav">
               <li class="{% block agents_nb_class %}{% endblock %}"><a href="{{ url_for('agents_index_ui') }}">Agents</a></li>
           </ul>
+          <ul class="nav">
+              <li class="{% block jobs_nb_class %}{% endblock %}"><a href="{{ url_for('jobs_index_ui') }}">Jobs</a></li>
+          </ul>
           {% endif %}
           <ul class="nav pull-right">
               <li><a href="/admin">Admin</a></li>
