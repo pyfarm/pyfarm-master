@@ -115,7 +115,7 @@ class JobQueueIndexAPI(MethodView):
                     "name": "Test Queue",
                     "maximum_agents": null,
                     "id": 1,
-                    "parent": [],
+                    "parent": null,
                     "parent_jobqueue_id": null
                 }
 
