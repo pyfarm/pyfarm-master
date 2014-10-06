@@ -126,7 +126,7 @@ class JobQueueIndexAPI(MethodView):
         """
         jobqueue = JobQueue.query.filter_by(name=g.json["name"]).first()
         if jobqueue:
-            return (jsonify(error="Job queue %s already exixts" %
+            return (jsonify(error="Job queue %s already exists" %
                             g.json["name"]), CONFLICT)
 
         jobqueue = JobQueue(**g.json)
