@@ -130,7 +130,7 @@ def load_user_interface(app_instance):
         jobs, delete_single_job, rerun_single_job, single_job, pause_single_job,
         unpause_single_job, alter_frames_in_single_job,
         alter_scheduling_parameters_for_job, update_notes_for_job,
-        update_tags_in_job)
+        update_tags_in_job, rerun_single_task)
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
     app_instance.add_url_rule("/agents/<int:agent_id>/delete",
@@ -165,6 +165,9 @@ def load_user_interface(app_instance):
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/update_tags",
                               "update_job_tags_ui", update_tags_in_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/tasks/<int:task_id>",
+                              "rerun_single_task_ui", rerun_single_task,
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>",
                               "single_job_ui", single_job, methods=("GET", ))
