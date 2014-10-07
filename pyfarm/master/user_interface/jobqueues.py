@@ -39,7 +39,8 @@ def jobqueue_create():
     if request.method == 'POST':
         jobqueue = JobQueue()
         jobqueue.name = request.form["name"]
-        jobqueue.parent_jobqueue_id = request.form["parent"]
+        if request.form["parent"] != "":
+            jobqueue.parent_jobqueue_id = request.form["parent"]
         if request.form["minimum_agents"] != "":
             jobqueue.minimum_agents = request.form["minimum_agents"]
         if request.form["maximum_agents"] != "":
