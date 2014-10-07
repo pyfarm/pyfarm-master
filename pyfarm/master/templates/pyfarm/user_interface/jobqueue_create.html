@@ -1,0 +1,71 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Create Queue{% endblock %}
+{% block jobqueues_nb_class %}active{% endblock %}
+{% block content %}
+<form method="POST" action="{{ url_for('jobqueue_create_ui') }}" class="form-horizontal">
+  <fieldset>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="name">Name</label>
+      </div>
+      <div class="control">
+        <input id="name" name="name" type="text"/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="parent">Parent Queue</label>
+      </div>
+      <div class="control">
+        <select id="parent" name="parent">
+          <option value="">-</option>
+          {% for queue in jobqueues %}
+          {% if queue.id == parent %}
+          <option value="{{ queue.id }}" selected>{{ queue.path() }}</option>
+          {% else %}
+          <option value="{{ queue.id }}">{{ queue.path() }}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="minimum_agents">Minimum Agents</label>
+      </div>
+      <div class="control">
+        <input id="minimum_agents" name="minimum_agents" type="text"/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="maximum_agents">Maximum Agents</label>
+      </div>
+      <div class="control">
+        <input id="maximum_agents" name="maximum_agents" type="text"/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="priority">Priority</label>
+      </div>
+      <div class="control">
+        <input id="priority" name="priority" type="text"/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="weight">Weight</label>
+      </div>
+      <div class="control">
+        <input id="weight" name="weight" type="text"/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control">
+        <input type="submit" class="btn btn-primary btn-large" value="Create"/>
+      </div>
+    </div>
+  </fieldset>
+</form>
+{% endblock %}
