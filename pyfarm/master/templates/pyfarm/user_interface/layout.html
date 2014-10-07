@@ -22,7 +22,11 @@
           {% endif %}
           <ul class="nav pull-right">
               <li><a href="/admin">Admin</a></li>
+              {% if current_user.is_anonymous() %}
               <li><a href="/login">Login</a></li>
+              {% else %}
+              <li><a href="/logout">Logout</a></li>
+              {% endif %}
           </ul>
         </div>
       </div>
