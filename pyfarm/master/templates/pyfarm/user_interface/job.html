@@ -253,6 +253,7 @@
 <h4>Tasks</h4>
 <table class="table">
   <thead>
+    <th></th>
     <th>ID</th>
     <th>Frame</th>
     <th>State</job>
@@ -261,6 +262,13 @@
   <tbody>
     {% for task in tasks %}
     <tr>
+      <td>
+        <form class="icon" method="POST" action="{{ url_for('rerun_single_task_ui', job_id=job.id, task_id=task.id) }}">
+            <button onclick="return confirm('Are you sure you want to rerun this task?');" title="Rerun task">
+            <i class="icon-repeat"></i>
+            </button>
+        </form>
+      </td>
       <td>{{ task.id }}</td>
       <td>{{ task.frame }}</td>
       <td>{{ task.state if task.state else "queued" }}</td>

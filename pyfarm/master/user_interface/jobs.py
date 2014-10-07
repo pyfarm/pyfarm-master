@@ -293,3 +293,39 @@ def update_tags_in_job(job_id):
     db.session.commit()
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
+
+def rerun_single_task(job_id, task_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    task = Task.query.filter_by(id=task_id, job=job).first()
+    if not task:
+        return (render_template(
+                    "pyfarm/error.html", error="Task %s not found" % task_id),
+                NOT_FOUND)
+    if task.state == WorkState.RUNNING:
+        return (render_template(
+                    "pyfarm/error.html", error="Cannot rerun task while it is "
+                    "still running" % job_id),
+                BAD_REQUEST)
+
+    task.state = None
+    task.agent = None
+    task.attempts = 0
+
+    if Job.state != WorkState.RUNNING:
+        job.state = None
+
+    db.session.add(job)
+    db.session.add(task)
+    db.session.commit()
+
+    assign_tasks.delay()
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
