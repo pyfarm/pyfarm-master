@@ -23,7 +23,7 @@ except ImportError:  # pragma: no cover
 
 from flask import render_template, request, redirect, url_for
 from sqlalchemy.orm import aliased
-from sqlalchemy import func
+from sqlalchemy import func, desc, asc
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
@@ -41,7 +41,8 @@ def jobs():
     a_r = aliased(Task)
     a_d = aliased(Task)
     a_f = aliased(Task)
-    jobs_query = db.session.query(Job,
+    a_job = aliased(Job)
+    jobs_query = db.session.query(a_job,
                                   func.count(
                                       a_q.id.distinct()).label("t_queued"),
                                   func.count(
@@ -50,11 +51,11 @@ def jobs():
                                       a_d.id.distinct()).label("t_done"),
                                   func.count(
                                       a_f.id.distinct()).label("t_failed")).\
-        outerjoin(a_q, Job.tasks_queued).\
-        outerjoin(a_r, Job.tasks_running).\
-        outerjoin(a_d, Job.tasks_done).\
-        outerjoin(a_f, Job.tasks_failed).\
-        group_by(Job)
+        outerjoin(a_q, a_job.tasks_queued).\
+        outerjoin(a_r, a_job.tasks_running).\
+        outerjoin(a_d, a_job.tasks_done).\
+        outerjoin(a_f, a_job.tasks_failed).\
+        group_by(a_job)
 
     filters = {}
     if "tags" in request.args:
@@ -62,7 +63,7 @@ def jobs():
         tags = request.args.get("tags").split(",")
         tags = [x for x in tags if not x == ""]
         if tags:
-            jobs_query = jobs_query.filter(Job.tags.any(Tag.tag.in_(tags)))
+            jobs_query = jobs_query.filter(a_job.tags.any(Tag.tag.in_(tags)))
 
     if "state" in request.args:
         state = request.args.get("state")
@@ -72,14 +73,14 @@ def jobs():
             return (render_template(
                 "pyfarm/error.html", error="unknown state"), BAD_REQUEST)
         if state != "":
-            jobs_query = jobs_query.filter(Job.state == state)
+            jobs_query = jobs_query.filter(a_job.state == state)
 
     if "title" in request.args:
         title = request.args.get("title")
         filters["title"] = title
         if title != "":
             jobs_query = jobs_query.filter(
-                Job.title.ilike("%%%s%%" % title))
+                a_job.title.ilike("%%%s%%" % title))
 
     order_dir = "asc"
     order_by = "title"
@@ -94,7 +95,16 @@ def jobs():
             if order_dir not in ["asc", "desc"]:
                 return (render_template(
                 "pyfarm/error.html", error="unknown order dir"), BAD_REQUEST)
-        jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
+        if order_by == "time_submitted" and order_dir == "desc":
+            jobs_query = jobs_query.order_by(desc(a_job.time_submitted))
+        elif order_by == "time_submitted" and order_dir == "asc":
+            jobs_query = jobs_query.order_by(asc(a_job.time_submitted))
+        elif order_by == "state" and order_dir == "desc":
+            jobs_query = jobs_query.order_by(desc(a_job.state))
+        elif order_by == "state" and order_dir == "asc":
+            jobs_query = jobs_query.order_by(asc(a_job.state))
+        else:
+            jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
     jobs = jobs_query.all()
     return render_template("pyfarm/user_interface/jobs.html",
