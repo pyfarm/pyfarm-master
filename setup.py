@@ -76,6 +76,7 @@ setup(
         "pyfarm.master",
         "pyfarm.master.admin",
         "pyfarm.master.api",
+        "pyfarm.master.user_interface",
         "pyfarm.models",
         "pyfarm.models.core",
         "pyfarm.scheduler"],
