@@ -445,6 +445,7 @@ def assign_tasks():
     Descends the tree of job queues recursively to assign agents to the jobs
     registered with those queues
     """
+    db.session.commit()
     logger.info("Assigning tasks to agents")
     tasks_query = Task.query.filter(
         or_(Task.state == None, ~Task.state.in_([WorkState.DONE,
