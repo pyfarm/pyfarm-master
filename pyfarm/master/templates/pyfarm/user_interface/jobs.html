@@ -113,23 +113,23 @@
   {% for job in jobs %}
   <tr>
     <td>
-      <form class="icon" method="POST" action="{{ url_for('delete_single_job_ui', job_id=job.Job.id) }}">
+      <form class="icon" method="POST" action="{{ url_for('delete_single_job_ui', job_id=job[0].id) }}">
         <button onclick="return confirm('Are you sure you want to delete this job?');" title="Delete job">
           <i class="icon-trash"></i>
         </button>
       </form>
-      <form class="icon" method="POST" action="{{ url_for('rerun_single_job_ui', job_id=job.Job.id) }}">
+      <form class="icon" method="POST" action="{{ url_for('rerun_single_job_ui', job_id=job[0].id) }}">
         <button onclick="return confirm('Are you sure you want to rerun this job? This will include all tasks, even those already done.');" title="Rerun job">
           <i class="icon-repeat"></i>
         </button>
       </form>
     </td>
-    <td><a href="{{ url_for('single_job_ui', job_id=job.Job.id) }}">{{ job.Job.title }}</a></td>
+    <td><a href="{{ url_for('single_job_ui', job_id=job[0].id) }}">{{ job[0].title }}</a></td>
     <td> {{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }} </td>
-    <td> {{ job.Job.time_submitted }} </td>
-    <td>{{ 'deleting' if job.Job.to_be_deleted else job.Job.state }}</td>
+    <td> {{ job[0].time_submitted }} </td>
+    <td>{{ 'deleting' if job[0].to_be_deleted else job[0].state }}</td>
     <td>
-      {% for tag in job.Job.tags %}
+      {% for tag in job[0].tags %}
       <div>{{ tag.tag }}</div>
       {% endfor %}
     </td>
