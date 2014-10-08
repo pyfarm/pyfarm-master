@@ -1,0 +1,62 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Queue {{ queue.path() }} {% endblock %}
+{% block jobqueues_nb_class %}active{% endblock %}
+{% block content %}
+<form method="POST" action="{{ url_for('single_jobqueue_ui', queue_id=queue.id) }}" class="form-horizontal">
+  <fieldset>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="name">Name</label>
+      </div>
+      <div class="control">
+        <input id="name" type="text" value="{{ queue.name }}" disabled/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="parent">Parent Queue</label>
+      </div>
+      <div class="control">
+        <input id="parent" type="text" value="{{ queue.parent.path() }}" disabled/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="minimum_agents">Minimum Agents</label>
+      </div>
+      <div class="control">
+        <input id="minimum_agents" name="minimum_agents" type="text" value="{{ queue.minimum_agents or ''}}"/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="maximum_agents">Maximum Agents</label>
+      </div>
+      <div class="control">
+        <input id="maximum_agents" name="maximum_agents" type="text" value="{{ queue.maximum_agents or ''}}"/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="priority">Priority</label>
+      </div>
+      <div class="control">
+        <input id="priority" name="priority" type="text" value="{{ queue.priority }}"/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="weight">Weight</label>
+      </div>
+      <div class="control">
+        <input id="weight" name="weight" type="text" value="{{ queue.weight }}"/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control">
+        <input type="submit" class="btn btn-primary btn-large" value="Create"/>
+      </div>
+    </div>
+  </fieldset>
+</form>
+{% endblock %}

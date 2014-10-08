@@ -1,0 +1,50 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Queues{% endblock %}
+{% block jobqueues_nb_class %}active{% endblock %}
+{% block content %}
+
+<div class="tree">
+<ul>
+  {% for queue in jobqueues.order_by("priority desc") recursive %}
+  <li>
+    <span>
+      <i class="icon-minus-sign"></i>{{ queue.path() }}
+      <p>
+        Agents min / max: {{ queue.minimum_agents or "-"}} / {{ queue.maximum_agents or "-" }}<br/>
+        Priority: {{ queue.priority }}<br/>
+        Weight: {{ queue.weight }}
+      </p>
+    </span>
+    <a href="{{ url_for('single_jobqueue_ui', queue_id=queue.id) }}" title="Edit Queue">
+      <i class="icon-pencil"></i>
+    </a>
+    {% if queue.children or queue.jobs.count() != 0 %}
+    <ul>
+      {{ loop(queue.children) }}
+      <li><a href="{{ url_for('jobqueue_create_ui', parent=queue.id) }}" class="btn">Create</a></li>
+      {% for job in queue.jobs.order_by("state desc") %}
+      <li>
+        <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }} {{ 'badge-important' if job.state == WorkState.FAILED }}">
+          <i class="icon-leaf"></i>
+          {{ job.title }}<br/>
+          State: {{ job.state }}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </li>
+  {% endfor %}
+  <li><a href="{{ url_for('jobqueue_create_ui') }}" class="btn">Create</a></li>
+  {% for job in top_level_jobs %}
+  <li>
+    <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }}{{ 'badge-important' if job.state == WorkState.FAILED }}{{ 'badge-warning' if job.state == WorkState.RUNNING }}">
+      <i class="icon-leaf"></i>
+      {{ job.title }}<br/>
+      State: {{ job.state }}
+    </span>
+  </li>
+  {% endfor %}
+</ul>
+</div>
+{% endblock %}

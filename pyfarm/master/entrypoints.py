@@ -131,6 +131,9 @@ def load_user_interface(app_instance):
         unpause_single_job, alter_frames_in_single_job,
         alter_scheduling_parameters_for_job, update_notes_for_job,
         update_tags_in_job, rerun_single_task)
+    from pyfarm.master.user_interface.jobqueues import (
+        jobqueues, jobqueue_create, jobqueue)
+
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
     app_instance.add_url_rule("/agents/<int:agent_id>/delete",
@@ -171,6 +174,15 @@ def load_user_interface(app_instance):
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>",
                               "single_job_ui", single_job, methods=("GET", ))
+
+    app_instance.add_url_rule("/jobqueues/",
+                              "jobqueues_index_ui", jobqueues, methods=("GET", ))
+    app_instance.add_url_rule("/jobqueues/create",
+                              "jobqueue_create_ui", jobqueue_create,
+                              methods=("GET", "POST"))
+    app_instance.add_url_rule("/jobqueues/<int:queue_id>",
+                              "single_jobqueue_ui", jobqueue,
+                              methods=("GET", "POST"))
 
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
