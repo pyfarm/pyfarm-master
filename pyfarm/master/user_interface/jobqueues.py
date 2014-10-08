@@ -19,7 +19,7 @@ try:
 except ImportError:  # pragma: no cover
     from http.client import SEE_OTHER, NOT_FOUND
 
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, flash
 
 from pyfarm.master.application import db
 from pyfarm.core.enums import WorkState
@@ -53,6 +53,8 @@ def jobqueue_create():
         db.session.add(jobqueue)
         db.session.commit()
 
+        flash("Created new jobqueue \"%s\"." % jobqueue.name)
+
         return redirect(url_for("jobqueues_index_ui"), SEE_OTHER)
     else:
         jobqueues = JobQueue.query
@@ -85,6 +87,8 @@ def jobqueue(queue_id):
 
         db.session.add(queue)
         db.session.commit()
+
+        flash("Jobqueue %s has been updated." % queue.name)
 
         return redirect(url_for("single_jobqueue_ui", queue_id=queue_id),
                         SEE_OTHER)

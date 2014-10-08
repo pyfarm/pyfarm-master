@@ -19,7 +19,7 @@ try:
 except ImportError:  # pragma: no cover
     from http.client import BAD_REQUEST, NOT_FOUND, SEE_OTHER
 
-from flask import render_template, request, url_for, redirect
+from flask import render_template, request, url_for, redirect, flash
 from sqlalchemy import or_
 
 from pyfarm.core.enums import WorkState
@@ -99,5 +99,7 @@ def delete_single_agent(agent_id):
 
     db.session.delete(agent)
     db.session.commit()
+
+    flash("Agent %s has been deleted" % agent.hostname)
 
     return redirect(url_for("agents_index_ui"), SEE_OTHER)

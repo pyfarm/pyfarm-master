@@ -10,6 +10,7 @@
     {% block additional_styles %}{% endblock %}
     <script src="{{ url_for('static', filename='js/vendor/jquery-2.0.3.min.js') }}" type="text/javascript"></script>
     <script src="{{ url_for('static', filename='js/bootstrap-tree.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='js/layout.js') }}" type="text/javascript"></script>
     {% block additional_scripts %}{% endblock %}
 </head>
 <body>
@@ -35,6 +36,16 @@
           </ul>
         </div>
       </div>
+      {% with messages = get_flashed_messages() %}
+      {% if messages %}
+      {% for message in messages %}
+      <div class="alert-info flash">
+        <a class="close" href="#" onclick="hide_parent(this)">×</a>
+        {{ message }}
+      </div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
       {% block content %}{% endblock %}
     </div>
 </body>

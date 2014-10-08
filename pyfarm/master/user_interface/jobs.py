@@ -21,7 +21,7 @@ try:
 except ImportError:  # pragma: no cover
     from http.client import BAD_REQUEST, NOT_FOUND, SEE_OTHER
 
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, flash
 from sqlalchemy.orm import aliased
 from sqlalchemy import func, desc, asc
 
@@ -145,6 +145,8 @@ def delete_single_job(job_id):
 
     delete_job.delay(job.id)
 
+    flash("Job %s will be deleted." % job.title)
+
     return redirect(url_for("jobs_index_ui"), SEE_OTHER)
 
 def rerun_single_job(job_id):
@@ -166,6 +168,8 @@ def rerun_single_job(job_id):
     db.session.commit()
 
     assign_tasks.delay()
+
+    flash("Job %s will run again." % job.title)
 
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)
@@ -189,6 +193,8 @@ def pause_single_job(job_id):
 
     assign_tasks.delay()
 
+    flash("Job %s will be paused." % job.title)
+
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)
     else:
@@ -204,6 +210,8 @@ def unpause_single_job(job_id):
     job.state = None
     db.session.add(job)
     db.session.commit()
+
+    flash("Job %s is unpaused." % job.title)
 
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)
@@ -228,6 +236,8 @@ def alter_frames_in_single_job(job_id):
 
     db.session.commit()
     assign_tasks.delay()
+
+    flash("Frame selection for job %s has been changed." % job.title)
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
 
@@ -264,6 +274,8 @@ def alter_scheduling_parameters_for_job(job_id):
     db.session.add(job)
     db.session.commit()
 
+    flash("Scheduling parameters for job %s have been changed." % job.title)
+
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
 
 def update_notes_for_job(job_id):
@@ -277,6 +289,8 @@ def update_notes_for_job(job_id):
 
     db.session.add(job)
     db.session.commit()
+
+    flash("Free form note for job %s have been edited." % job.title)
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
 
@@ -301,6 +315,8 @@ def update_tags_in_job(job_id):
 
     db.session.add(job)
     db.session.commit()
+
+    flash("Tags for job %s have been updated." % job.title)
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
 
@@ -334,6 +350,9 @@ def rerun_single_task(job_id, task_id):
     db.session.commit()
 
     assign_tasks.delay()
+
+    flash("Task %s (frame %s) in job %s will be run again." %
+          (task.id, task.frame, job.title))
 
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)
