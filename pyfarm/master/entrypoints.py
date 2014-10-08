@@ -133,6 +133,7 @@ def load_user_interface(app_instance):
         update_tags_in_job, rerun_single_task)
     from pyfarm.master.user_interface.jobqueues import (
         jobqueues, jobqueue_create, jobqueue)
+    from pyfarm.master.user_interface.jobtypes import jobtypes, jobtype
 
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
@@ -182,6 +183,12 @@ def load_user_interface(app_instance):
                               methods=("GET", "POST"))
     app_instance.add_url_rule("/jobqueues/<int:queue_id>",
                               "single_jobqueue_ui", jobqueue,
+                              methods=("GET", "POST"))
+
+    app_instance.add_url_rule("/jobtypes/",
+                              "jobtypes_index_ui", jobtypes, methods=("GET", ))
+    app_instance.add_url_rule("/jobtypes/<int:jobtype_id>",
+                              "single_jobtype_ui", jobtype,
                               methods=("GET", "POST"))
 
 def load_api(app_instance, api_instance):

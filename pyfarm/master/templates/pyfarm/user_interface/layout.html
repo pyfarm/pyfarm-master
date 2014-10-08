@@ -24,6 +24,9 @@
           <ul class="nav">
               <li class="{% block jobqueues_nb_class %}{% endblock %}"><a href="{{ url_for('jobqueues_index_ui')}}">Queues</a></li>
           </ul>
+          <ul class="nav">
+              <li class="{% block jobtypes_nb_class %}{% endblock %}"><a href="{{ url_for('jobtypes_index_ui')}}">Jobtypes</a></li>
+          </ul>
           {% endif %}
           <ul class="nav pull-right">
               <li><a href="/admin">Admin</a></li>

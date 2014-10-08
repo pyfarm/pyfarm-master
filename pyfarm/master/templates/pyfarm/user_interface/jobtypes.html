@@ -1,0 +1,17 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Jobtypes{% endblock %}
+{% block jobtypes_nb_class %}active{% endblock %}
+{% block content %}
+
+<table class="table table-striped table-bordered model-list">
+  <tr>
+    <th>Name</th>
+  </tr>
+  {% for jobtype in jobtypes %}
+  <tr>
+    <td><a href="{{ url_for('single_jobtype_ui', jobtype_id=jobtype.id) }}">{{ jobtype.name }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}
