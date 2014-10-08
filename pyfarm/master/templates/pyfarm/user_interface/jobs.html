@@ -125,7 +125,12 @@
       </form>
     </td>
     <td><a href="{{ url_for('single_job_ui', job_id=job[0].id) }}">{{ job[0].title }}</a></td>
-    <td> {{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }} </td>
+    <td>
+      <nobr>{{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }}</nobr><br/>
+      <progress style="width:100%" value="{{ job.t_done }}" max="{{ job.t_queued + job.t_running + job.t_failed + job.t_done }}">
+        {{ (100 * job.t_done / (job.t_queued + job.t_running + job.t_failed + job.t_done)) if (job.t_queued + job.t_running + job.t_failed + job.t_done) > 0 else "n/a" }}%
+      </progress>
+    </td>
     <td> {{ job[0].time_submitted }} </td>
     <td>{{ 'deleting' if job[0].to_be_deleted else job[0].state }}</td>
     <td>
