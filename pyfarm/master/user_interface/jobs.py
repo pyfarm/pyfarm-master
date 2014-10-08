@@ -169,7 +169,7 @@ def rerun_single_job(job_id):
 
     assign_tasks.delay()
 
-    flash("Job %s will run again." % job.title)
+    flash("Job %s will be run again." % job.title)
 
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)
@@ -290,7 +290,7 @@ def update_notes_for_job(job_id):
     db.session.add(job)
     db.session.commit()
 
-    flash("Free form note for job %s have been edited." % job.title)
+    flash("Free form notes for job %s have been edited." % job.title)
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
 
