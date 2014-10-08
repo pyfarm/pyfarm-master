@@ -456,7 +456,7 @@ class SingleJobTypeAPI(MethodView):
                 "jobtype %s will get a new version with data %r on commit",
                 jobtype.name, g.json)
             max_version, = db.session.query(func.max(
-                JobTypeVersion.version)).first()
+                JobTypeVersion.version)).filter_by(jobtype=jobtype).first()
         else:
             jobtype = JobType()
 
