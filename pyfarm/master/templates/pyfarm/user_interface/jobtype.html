@@ -1,0 +1,81 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Jobtype {{ jobtype.name }}{% endblock %}
+{% block jobtypes_nb_class %}active{% endblock %}
+{% block content %}
+
+<h1 style="margin-bottom:20px">{{ jobtype.name }}</h1>
+<form method="POST" action="{{ url_for('single_jobtype_ui', jobtype_id=jobtype.id) }}">
+<table class="table">
+  <tbody>
+    <tr>
+      <td>
+        Name
+      </td>
+      <td>
+        <input type="text" value="{{ jobtype.name }}" disabled/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <label for="description">Description</label>
+      </td>
+      <td>
+        <textarea id="description" name="description">{{ jobtype.description or '' }}</textarea>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <label for="version">Version</label>
+      </td>
+      <td>
+        <input type="text" id="version" value="{{ latest_version.version }}" disabled/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <label for="max_batch">Max Batch</label>
+      </td>
+      <td>
+        <input type="text" id="max_batch" name="max_batch" value="{{ latest_version.max_batch }} "/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <label for="batch_contiguous">Batch Contiguous</label>
+      </td>
+      <td>
+        {% if latest_version.batch_contiguous %}
+        <input type="checkbox" id="batch_contiguous" name="batch_contiguous" value="true" checked/>
+        {% else %}
+        <input type="checkbox" id="batch_contiguous" name="batch_contiguous" value="true"/>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <label for="classname">Class Name</label>
+      </td>
+      <td>
+        <input type="text" id="classname" name="classname" value="{{ latest_version.classname }}"/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <label for="code">Code</label>
+      </td>
+      <td>
+        <textarea id="code" name="code">{{ latest_version.code }}</textarea>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      </td>
+      <td>
+        <input type=submit class="btn" value="Update Jobtype"/>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</form>
+
+{% endblock %}
