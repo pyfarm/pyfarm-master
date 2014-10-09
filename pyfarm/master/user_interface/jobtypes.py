@@ -13,6 +13,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Jobtypes
+============
+
+UI endpoints allowing seeing and manipulating jobtypes via the web interface
+"""
 
 try:
     from httplib import NOT_FOUND, INTERNAL_SERVER_ERROR, SEE_OTHER
@@ -33,6 +39,9 @@ def jobtypes():
                            jobtypes=jobtypes)
 
 def jobtype(jobtype_id):
+    """
+    UI endpoint for a single jobtype. Allows showing and updating the jobtype
+    """
     jobtype = JobType.query.filter_by(id=jobtype_id).first()
     if not jobtype:
         return (render_template(
