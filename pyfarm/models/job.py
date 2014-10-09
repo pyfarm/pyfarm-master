@@ -43,7 +43,7 @@ from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
     MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT, TABLE_JOB_QUEUE,
-    TABLE_USERS_USER, TABLE_JOB_NOTIFIED_USERS)
+    TABLE_USERS_USER, TABLE_JOB_NOTIFIED_USERS, TABLE_USERS_USER)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin, UtilityMixins)
@@ -122,6 +122,8 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                              doc=dedent("""
                                 The foreign key which stores
                                 :class:`JobQueue.id`"""))
+    user_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_USERS_USER),
+                        doc="The id of the user who owns this job")
     minimum_agents = db.Column(db.Integer, nullable=True,
                           doc=dedent("""
                           The scheduler will try to assign at least this number
@@ -142,19 +144,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                             """))
     title = db.Column(db.String(MAX_JOBTITLE_LENGTH), nullable=False,
                       doc="The title of this job")
-    user = db.Column(db.String(MAX_USERNAME_LENGTH),
-                     doc=dedent("""
-                     The user this job should execute as.  The agent
-                     process will have to be running as root on platforms
-                     that support setting the user id.
-
-                     .. note::
-                        The length of this field is limited by the
-                        configuration value `job.max_username_length`
-
-                     .. warning::
-                        this may not behave as expected on all platforms
-                        (windows in particular)"""))
     notes = db.Column(db.Text, default="",
                       doc=dedent("""
                       Notes that are provided on submission or added after
@@ -271,6 +260,10 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     queue = db.relationship("JobQueue",
                             backref=db.backref("jobs", lazy="dynamic"),
                             doc="The queue for this job")
+
+    user = db.relationship("User",
+                           backref=db.backref("jobs", lazy="dynamic"),
+                           doc="The owner of this job")
 
     # self-referential many-to-many relationship
     parents = db.relationship("Job",
