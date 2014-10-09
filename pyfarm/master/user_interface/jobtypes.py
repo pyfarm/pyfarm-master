@@ -33,10 +33,8 @@ from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.master.application import db
 
 def jobtypes():
-    jobtypes = JobType.query
-
     return render_template("pyfarm/user_interface/jobtypes.html",
-                           jobtypes=jobtypes)
+                           jobtypes=JobType.query)
 
 def jobtype(jobtype_id):
     """
