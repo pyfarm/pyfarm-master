@@ -1,0 +1,24 @@
+div.software_requirement {
+    display: inline-block;
+    border: 1px solid #999;
+    padding: 8px;
+    margin-left: 15px;
+    margin-top: 10px;
+    border-radius: 4px;
+}
+
+div.software_requirement > .software {
+    font-size: 150%;
+    font-weight: bold;
+    margin: 5px;
+}
+
+div.software_requirement > .min_version {
+    display: block;
+    margin: 5px;
+}
+
+div.software_requirement > .max_version {
+    display: block;
+    margin: 5px;
+}

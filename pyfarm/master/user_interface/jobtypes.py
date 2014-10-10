@@ -30,6 +30,7 @@ from flask import render_template, request, redirect, flash, url_for
 from sqlalchemy import desc, func
 
 from pyfarm.models.jobtype import JobType, JobTypeVersion
+from pyfarm.models.software import JobTypeSoftwareRequirement
 from pyfarm.master.application import db
 
 def jobtypes():
@@ -81,3 +82,41 @@ def jobtype(jobtype_id):
 
         return render_template("pyfarm/user_interface/jobtype.html",
                             jobtype=jobtype, latest_version=latest_version)
+
+def remove_jobtype_software_requirement(jobtype_id, software_id):
+    jobtype = JobType.query.filter_by(id=jobtype_id).first()
+    if not jobtype:
+        return (render_template(
+                    "pyfarm/error.html", error="Jobtype %s not found" %
+                    jobtype_id), NOT_FOUND)
+
+    previous_version = JobTypeVersion.query.filter_by(
+        jobtype=jobtype).order_by(desc(JobTypeVersion.version)).first()
+    if not previous_version:
+        return (render_template(
+            "pyfarm/error.html", error="Jobtype %s has no versions" %
+            jobtype_id), INTERNAL_SERVER_ERROR)
+
+    new_version = JobTypeVersion(jobtype=jobtype)
+    new_version.max_batch = previous_version.max_batch
+    new_version.batch_contiguous = previous_version.batch_contiguous
+    new_version.classname = previous_version.classname
+    new_version.code = previous_version.code
+    new_version.version = previous_version.version + 1
+
+    for requirement in previous_version.software_requirements:
+        if requirement.software_id != software_id:
+            new_requirement = JobTypeSoftwareRequirement()
+            new_requirement.jobtype_version = new_version
+            new_requirement.software = requirement.software
+            new_requirement.min_version = requirement.min_version
+            new_requirement.max_version = requirement.max_version
+            db.session.add(new_requirement)
+
+    db.session.commit()
+
+    flash("Software requirement has been removed from jobtype %s" %
+          jobtype.name)
+
+    return redirect(url_for("single_jobtype_ui", jobtype_id=jobtype.id),
+                            SEE_OTHER)
