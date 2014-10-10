@@ -62,6 +62,17 @@ def jobtype(jobtype_id):
                     JobTypeVersion.version)).filter_by(jobtype=jobtype).first()
             new_version.version = (max_version or 0) + 1
 
+            previous_version = JobTypeVersion.query.filter_by(
+                jobtype=jobtype).order_by(desc(JobTypeVersion.version)).first()
+            if previous_version:
+                for requirement in previous_version.software_requirements:
+                    new_requirement = JobTypeSoftwareRequirement()
+                    new_requirement.jobtype_version = new_version
+                    new_requirement.software = requirement.software
+                    new_requirement.min_version = requirement.min_version
+                    new_requirement.max_version = requirement.max_version
+                    db.session.add(new_requirement)
+
             db.session.add(jobtype)
             db.session.add(new_version)
             db.session.commit()
