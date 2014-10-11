@@ -439,13 +439,13 @@ def assign_agents_to_queue(queue, max_agents):
     return assigned_agents
 
 
-@celery_app.task(ignore_result=True,
-                 rate_limit=read_env("PYFARM_SCHEDULER_RATE_LIMIT", "1/s"))
+@celery_app.task(ignore_result=True)
 def assign_tasks():
     """
     Descends the tree of job queues recursively to assign agents to the jobs
     registered with those queues
     """
+    db.session.commit()
     logger.info("Assigning tasks to agents")
     tasks_query = Task.query.filter(
         or_(Task.state == None, ~Task.state.in_([WorkState.DONE,
