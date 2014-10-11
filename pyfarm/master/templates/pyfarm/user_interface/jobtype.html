@@ -1,6 +1,9 @@
 {% extends "pyfarm/user_interface/layout.html" %}
 {% block title %}Jobtype {{ jobtype.name }}{% endblock %}
 {% block jobtypes_nb_class %}active{% endblock %}
+{% block additional_styles %}
+<link href="{{ url_for('static', filename='css/jobtype.css') }}" rel="stylesheet">
+{% endblock %}
 {% block content %}
 
 <h1 style="margin-bottom:20px">{{ jobtype.name }}</h1>
@@ -77,5 +80,23 @@
   </tbody>
 </table>
 </form>
+
+<h4>Required Software</h4>
+{% for requirement in latest_version.software_requirements %}
+<div class="software_requirement">
+  <form class="icon" method="POST" action="{{ url_for('single_jobtype_remove_requirement_ui', jobtype_id=jobtype.id, software_id=requirement.software_id) }}" style="float: right;">
+    <button onclick="return confirm('Are you sure you want to remove this software requirement?');" title="Delete requirement">
+      <i class="icon-trash"></i>
+    </button>
+  </form>
+  <span class="software">{{ requirement.software.software }}</span>
+  {% if requirement.min_version %}
+  <span class="min_version">&gt; {{ requirement.min_version.version }}</span>
+  {% endif %}
+  {% if requirement.max_version %}
+  <span class="max_version">&lt; {{ requirement.max_version.version }}</span>
+  {% endif %}
+</div>
+{% endfor %}
 
 {% endblock %}
