@@ -128,8 +128,7 @@
       </form>
     </td>
     <td><a href="{{ url_for('single_job_ui', job_id=job[0].id) }}">{{ job[0].title }}</a></td>
-    <td>{{ job[0].user.username }}</td>
-    <td>{{ job[0].time_submitted }}</td>
+<<<<<<< HEAD
     <td>
       <nobr>{{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }}</nobr><br/>
       <div class="progress">
@@ -144,6 +143,12 @@
         </div>
       </div>
     </td>
+    <td> {{ job[0].time_submitted }} </td>
+=======
+    <td>{{ job[0].user.username }}</td>
+    <td> {{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }} </td>
+    <td> {{ job[0].time_submitted.strftime('%Y-%m-%d %H:%M:%S UTC') }} </td>
+>>>>>>> 51c3c4d018b19253895582a9d0e30158e602c613
     <td>{{ 'deleting' if job[0].to_be_deleted else job[0].state }}</td>
     <td>
       {% for tag in job[0].tags %}

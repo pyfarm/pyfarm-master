@@ -41,7 +41,7 @@ from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES
 from pyfarm.scheduler.tasks import (
     assign_tasks, send_job_completion_mail, delete_job)
-from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
+from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH, MAX_USERNAME_LENGTH
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 from pyfarm.models.user import User
@@ -182,14 +182,17 @@ def schema():
     """
     schema_dict = Job.to_schema()
 
-    # These two columns are not part of the actual database model, but will be
+    # These three columns are not part of the actual database model, but will be
     # dynamically computed by the api
     schema_dict["start"] = "NUMERIC(10,4)"
     schema_dict["end"] = "NUMERIC(10,4)"
+    schema_dict["user"] = "VARCHAR(%s)" % MAX_USERNAME_LENGTH
 
     # In the database, we are storing the jobtype_version_id, but over the wire,
     # we are using the jobtype's name plus version to identify it
     del schema_dict["jobtype_version_id"]
+    # Same for user_id
+    del schema_dict["user_id"]
     schema_dict["jobtype"] = "VARCHAR(%s)" % MAX_JOBTYPE_LENGTH
     schema_dict["jobtype_version"] = "INTEGER"
     return jsonify(schema_dict), OK
@@ -199,7 +202,8 @@ class JobIndexAPI(MethodView):
     @validate_with_model(Job,
                          type_checks={"by": lambda x: isinstance(
                              x, RANGE_TYPES)},
-                         ignore=["start", "end", "jobtype", "jobtype_version"],
+                         ignore=["start", "end", "jobtype", "jobtype_version",
+                                 "user"],
                          disallow=["jobtype_version_id", "time_submitted",
                                    "time_started", "time_finished"])
     def post(self):
@@ -328,12 +332,21 @@ class JobIndexAPI(MethodView):
                             NOT_FOUND)
                 notified_users.append(user)
 
+        user = None
+        username = g.json.pop("user", None)
+        if username:
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                return (jsonify(
+                    error="User %s not found" % username), NOT_FOUND)
+
         g.json.pop("start", None)
         g.json.pop("end", None)
         job = Job(**g.json)
         job.jobtype_version = jobtype_version
         job.software_requirements = software_requirements
         job.notified_users = notified_users
+        job.user = user
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
         if "start" not in custom_json or "end" not in custom_json:
@@ -378,6 +391,8 @@ class JobIndexAPI(MethodView):
         del job_data["jobtype_version_id"]
         job_data["jobtype"] = job.jobtype_version.jobtype.name
         job_data["jobtype_version"] = job.jobtype_version.version
+        job_data["user"] = job.user.username if job.user else None
+        del job_data["user_id"]
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()
@@ -541,6 +556,8 @@ class SingleJobAPI(MethodView):
         job_data["end"] = last_task.frame
         job_data["jobtype"] = job.jobtype_version.jobtype.name
         job_data["jobtype_version"] = job.jobtype_version.version
+        job_data["user"] = job.user.username if job.user else None
+        del job_data["user_id"]
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()
@@ -676,6 +693,14 @@ class SingleJobAPI(MethodView):
                 task.priority = job.priority
                 db.session.add(task)
 
+        username = g.json.pop("user", None)
+        if username:
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                return (jsonify(
+                    error="User %s not found" % username), NOT_FOUND)
+            job.user = user
+
         if "time_started" in g.json:
             return (jsonify(error="`time_started` cannot be set manually"),
                     BAD_REQUEST)
@@ -731,6 +756,8 @@ class SingleJobAPI(MethodView):
         del job_data["jobtype_version_id"]
         job_data["jobtype"] = job.jobtype_version.jobtype.name
         job_data["jobtype_version"] = job.jobtype_version.version
+        job_data["user"] = job.user.username if job.user else None
+        del job_data["user_id"]
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()

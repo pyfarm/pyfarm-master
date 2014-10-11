@@ -22,7 +22,7 @@ from json import dumps
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH
+from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH, MAX_USERNAME_LENGTH
 from pyfarm.master.application import get_api_blueprint
 from pyfarm.master.entrypoints import load_api
 from pyfarm.master.application import db
@@ -89,6 +89,8 @@ class TestJobAPI(BaseTestCase):
         del schema["jobtype_version_id"]
         schema["jobtype"] = "VARCHAR(%s)" % MAX_JOBTYPE_LENGTH
         schema["jobtype_version"] = "INTEGER"
+        del schema["user_id"]
+        schema["user"] = "VARCHAR(%s)" % MAX_USERNAME_LENGTH
         self.assertEqual(response.json, schema)
 
     def test_job_post(self):
