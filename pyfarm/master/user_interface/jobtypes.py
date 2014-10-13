@@ -189,7 +189,8 @@ def add_jobtype_software_requirement(jobtype_id):
                 return (render_template(
                         "pyfarm/error.html", error="Software version %s does "
                         "not belong to software %s" %
-                        (min_version.version, software.software)), BAD_REQUEST)
+                        (min_version.version,
+                         new_requirement_software.software)), BAD_REQUEST)
             new_requirement.min_version = min_version
 
         if request.form["maximum_version"] != "":
@@ -203,7 +204,8 @@ def add_jobtype_software_requirement(jobtype_id):
                 return (render_template(
                         "pyfarm/error.html", error="Software version %s does "
                         "not belong to software %s" %
-                        (max_version.version, software.software)), BAD_REQUEST)
+                        (max_version.version,
+                         new_requirement_software.software)), BAD_REQUEST)
             new_requirement.max_version = max_version
 
         db.session.add(new_version)
