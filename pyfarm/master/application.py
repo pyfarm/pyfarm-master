@@ -41,13 +41,16 @@ from sqlalchemy import event
 from werkzeug.exceptions import BadRequest
 
 from pyfarm.core.enums import NOTSET
-from pyfarm.core.config import read_env, read_env_bool
+from pyfarm.core.config import Configuration, read_env, read_env_bool
 from pyfarm.master.admin.baseview import AdminIndex
 
 POST_METHODS = set(("POST", "PUT"))
 IGNORED_MIMETYPES = set((
     "application/x-www-form-urlencoded", "multipart/form-data",
     "application/zip", "text/csv"))
+
+config = Configuration("pyfarm.master")
+config.load(environment=os.environ)
 
 
 def get_application(**configuration_keywords):
@@ -125,6 +128,14 @@ def get_application(**configuration_keywords):
     app = Flask("pyfarm.master", static_folder=static_folder)
     app.config.update(app_config)
     app.config.update(configuration_keywords)
+
+    @app.context_processor
+    def template_context_processor():
+        return {
+            "timestamp_format": config.get(
+                "timestamp_format", "YYYY-MM-DD HH:mm:ss")
+        }
+
     return app
 
 
@@ -239,7 +250,6 @@ def before_request():
     elif request.get_data():
         g.error = "Unsupported media type %r" % request.mimetype
         abort(UNSUPPORTED_MEDIA_TYPE)
-
 
 # main object setup (app, api, etc)
 app = get_application()
