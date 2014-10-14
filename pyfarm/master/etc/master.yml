@@ -12,5 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The format for timestamps in the user interface.
-timestamp_format: YYYY-MM-DD HH:mm:ss
+# The format for timestamps in the user interface.  When not set this
+# value is read from $PYFARM_TIMESTAMP_FORMAT which will default
+# to "YYYY-MM-DD HH:mm:ss"
+timestamp_format:

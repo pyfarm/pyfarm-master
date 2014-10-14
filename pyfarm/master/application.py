@@ -118,6 +118,10 @@ def get_application(**configuration_keywords):
     app_config.setdefault(
         "ALLOW_AGENT_LOOPBACK_ADDRESSES",
         read_env_bool("PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES", False))
+    app_config.setdefault(
+        "PYFARM_TIMESTAMP_FORMAT",
+        config.get("timestamp_format") or
+        read_env("PYFARM_TIMESTAMP_FORMAT", "YYYY-MM-DD HH:mm:ss"))
 
     static_folder = configuration_keywords.pop("static_folder", None)
     if static_folder is None:  # static folder not provided
@@ -129,11 +133,11 @@ def get_application(**configuration_keywords):
     app.config.update(app_config)
     app.config.update(configuration_keywords)
 
+
     @app.context_processor
     def template_context_processor():
         return {
-            "timestamp_format": config.get(
-                "timestamp_format", "YYYY-MM-DD HH:mm:ss")
+            "timestamp_format": app.config["PYFARM_TIMESTAMP_FORMAT"]
         }
 
     return app
