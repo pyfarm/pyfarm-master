@@ -1,6 +1,4 @@
-body {
-    width: 550px;
-    margin-top: 75px;
-    margin-left: auto;
-    margin-right: auto;
+.main-container {
+    margin-left:10%;
+    margin-right:10%
 }
