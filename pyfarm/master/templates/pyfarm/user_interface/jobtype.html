@@ -91,10 +91,10 @@
   </form>
   <span class="software">{{ requirement.software.software }}</span>
   {% if requirement.min_version %}
-  <span class="min_version">&gt; {{ requirement.min_version.version }}</span>
+  <span class="min_version">&gt;= {{ requirement.min_version.version }}</span>
   {% endif %}
   {% if requirement.max_version %}
-  <span class="max_version">&lt; {{ requirement.max_version.version }}</span>
+  <span class="max_version">&lt;= {{ requirement.max_version.version }}</span>
   {% endif %}
 </div>
 {% endfor %}
