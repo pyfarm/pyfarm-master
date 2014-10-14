@@ -4,6 +4,9 @@
 {% block additional_styles %}
 <link href="{{ url_for('static', filename='css/jobtype.css') }}" rel="stylesheet">
 {% endblock %}
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/jobtype.js') }}" type="text/javascript"></script>
+{% endblock %}
 {% block content %}
 
 <h1 style="margin-bottom:20px">{{ jobtype.name }}</h1>
@@ -98,5 +101,49 @@
   {% endif %}
 </div>
 {% endfor %}
+
+<h5>Add</h5>
+<form method="POST" action="{{ url_for('single_jobtype_add_requirement_ui', jobtype_id=jobtype.id) }}" class="form-horizontal">
+  <fieldset>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="software">Software</label>
+      </div>
+      <div class="control">
+        <select id="software" name="software">
+          <option value=""></option>
+          {% for software in software_items %}
+          <option value="{{ software.id }}">{{ software.software }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="minimum_version">Minimum Version</label>
+      </div>
+      <div class="control">
+        <select id="minimum_version" name="minimum_version">
+          <option value=""></option>
+        </select>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label for="maximum_version">Maximum Version</label>
+      </div>
+      <div class="control">
+        <select id="maximum_version" name="maximum_version">
+          <option value=""></option>
+        </select>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control">
+        <input type="submit" class="btn" value="Add"/>
+      </div>
+    </div>
+  </fieldset>
+</form>
 
 {% endblock %}

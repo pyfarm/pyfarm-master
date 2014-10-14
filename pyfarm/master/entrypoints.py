@@ -134,7 +134,8 @@ def load_user_interface(app_instance):
     from pyfarm.master.user_interface.jobqueues import (
         jobqueues, jobqueue_create, jobqueue)
     from pyfarm.master.user_interface.jobtypes import (
-        jobtypes, jobtype, remove_jobtype_software_requirement)
+        jobtypes, jobtype, remove_jobtype_software_requirement,
+        add_jobtype_software_requirement)
 
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
@@ -195,6 +196,11 @@ def load_user_interface(app_instance):
                               "<int:software_id>/delete",
                               "single_jobtype_remove_requirement_ui",
                               remove_jobtype_software_requirement,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobtypes/<int:jobtype_id>/software_requirements/"
+                              "add",
+                              "single_jobtype_add_requirement_ui",
+                              add_jobtype_software_requirement,
                               methods=("POST", ))
 
 def load_api(app_instance, api_instance):

@@ -21,16 +21,19 @@ UI endpoints allowing seeing and manipulating jobtypes via the web interface
 """
 
 try:
-    from httplib import NOT_FOUND, INTERNAL_SERVER_ERROR, SEE_OTHER
+    from httplib import (
+        NOT_FOUND, INTERNAL_SERVER_ERROR, SEE_OTHER, BAD_REQUEST)
 except ImportError:  # pragma: no cover
-    from http.client import NOT_FOUND, INTERNAL_SERVER_ERROR, SEE_OTHER
+    from http.client import (
+        NOT_FOUND, INTERNAL_SERVER_ERROR, SEE_OTHER, BAD_REQUEST)
 
 from flask import render_template, request, redirect, flash, url_for
 
 from sqlalchemy import desc, func
 
 from pyfarm.models.jobtype import JobType, JobTypeVersion
-from pyfarm.models.software import JobTypeSoftwareRequirement
+from pyfarm.models.software import (
+    JobTypeSoftwareRequirement, Software, SoftwareVersion)
 from pyfarm.master.application import db
 
 def jobtypes():
@@ -91,8 +94,10 @@ def jobtype(jobtype_id):
                         "pyfarm/error.html", error="Jobtype %s has no versions" %
                         jobtype_id), INTERNAL_SERVER_ERROR)
 
+
         return render_template("pyfarm/user_interface/jobtype.html",
-                            jobtype=jobtype, latest_version=latest_version)
+                            jobtype=jobtype, latest_version=latest_version,
+                            software_items=Software.query)
 
 def remove_jobtype_software_requirement(jobtype_id, software_id):
     jobtype = JobType.query.filter_by(id=jobtype_id).first()
@@ -127,6 +132,87 @@ def remove_jobtype_software_requirement(jobtype_id, software_id):
     db.session.commit()
 
     flash("Software requirement has been removed from jobtype %s" %
+          jobtype.name)
+
+    return redirect(url_for("single_jobtype_ui", jobtype_id=jobtype.id),
+                            SEE_OTHER)
+
+def add_jobtype_software_requirement(jobtype_id):
+    with db.session.no_autoflush:
+        jobtype = JobType.query.filter_by(id=jobtype_id).first()
+        if not jobtype:
+            return (render_template(
+                        "pyfarm/error.html", error="Jobtype %s not found" %
+                        jobtype_id), NOT_FOUND)
+
+        previous_version = JobTypeVersion.query.filter_by(
+            jobtype=jobtype).order_by(desc(JobTypeVersion.version)).first()
+        if not previous_version:
+            return (render_template(
+                "pyfarm/error.html", error="Jobtype %s has no versions" %
+                jobtype_id), INTERNAL_SERVER_ERROR)
+
+        new_version = JobTypeVersion(jobtype=jobtype)
+        new_version.max_batch = previous_version.max_batch
+        new_version.batch_contiguous = previous_version.batch_contiguous
+        new_version.classname = previous_version.classname
+        new_version.code = previous_version.code
+        new_version.version = previous_version.version + 1
+
+        for requirement in previous_version.software_requirements:
+            retained_requirement = JobTypeSoftwareRequirement()
+            retained_requirement.jobtype_version = new_version
+            retained_requirement.software = requirement.software
+            retained_requirement.min_version = requirement.min_version
+            retained_requirement.max_version = requirement.max_version
+            db.session.add(retained_requirement)
+
+        new_requirement = JobTypeSoftwareRequirement()
+        new_requirement.jobtype_version = new_version
+
+        new_requirement_software = Software.query.filter_by(
+            id=request.form["software"]).first()
+        if not new_requirement_software:
+            return (render_template(
+                        "pyfarm/error.html", error="Software %s not found" %
+                        request.form["software"]), NOT_FOUND)
+        new_requirement.software = new_requirement_software
+
+        if request.form["minimum_version"] != "":
+            min_version = SoftwareVersion.query.filter_by(
+                id=request.form["minimum_version"]).first()
+            if not min_version:
+                return (render_template(
+                        "pyfarm/error.html", error="Software version %s not "
+                        "found" %  request.form["minimum_version"]), NOT_FOUND)
+            if min_version.software != new_requirement_software:
+                return (render_template(
+                        "pyfarm/error.html", error="Software version %s does "
+                        "not belong to software %s" %
+                        (min_version.version,
+                         new_requirement_software.software)), BAD_REQUEST)
+            new_requirement.min_version = min_version
+
+        if request.form["maximum_version"] != "":
+            max_version = SoftwareVersion.query.filter_by(
+                id=request.form["maximum_version"]).first()
+            if not max_version:
+                return (render_template(
+                        "pyfarm/error.html", error="Software version %s not "
+                        "found" %  request.form["maximum_version"]), NOT_FOUND)
+            if max_version.software != new_requirement_software:
+                return (render_template(
+                        "pyfarm/error.html", error="Software version %s does "
+                        "not belong to software %s" %
+                        (max_version.version,
+                         new_requirement_software.software)), BAD_REQUEST)
+            new_requirement.max_version = max_version
+
+        db.session.add(new_version)
+        db.session.add(new_requirement)
+        db.session.commit()
+
+    flash("Software requirement has been added to jobtype %s" %
           jobtype.name)
 
     return redirect(url_for("single_jobtype_ui", jobtype_id=jobtype.id),
