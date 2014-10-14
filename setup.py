@@ -84,11 +84,11 @@ setup(
     namespace_packages=["pyfarm"],
     include_package_data=True,
     package_data={"pyfarm.master": get_package_data()},
-    data_files={
+    data_files=[
         ("etc/pyfarm", [
             "pyfarm/master/etc/master.yml"
         ])
-    },
+    ],
     entry_points={
         "console_scripts": [
             "pyfarm-master = pyfarm.master.entrypoints:run_master",
