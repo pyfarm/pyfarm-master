@@ -10,6 +10,7 @@
     {% block additional_styles %}{% endblock %}
     <script src="{{ url_for('static', filename='js/vendor/jquery-2.0.3.min.js') }}" type="text/javascript"></script>
     <script src="{{ url_for('static', filename='js/bootstrap-tree.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='js/vendor/moment-2.8.3.min.js') }}" type="text/javascript"></script>
     {% block additional_scripts %}{% endblock %}
 </head>
 <body>
@@ -37,5 +38,12 @@
       </div>
       {% block content %}{% endblock %}
     </div>
+
+    <script>
+        $(".timestamp").each(function() {
+            var local_time  = moment($(this).text() + "Z", moment.ISO_8601);
+            $(this).html(local_time.format("{{ timestamp_format }}"));
+        });
+    </script>
 </body>
 </html>
