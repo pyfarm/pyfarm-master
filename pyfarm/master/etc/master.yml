@@ -13,4 +13,4 @@
 # limitations under the License.
 
 # The format for timestamps in the user interface.
-timestamp_format: "YYYY-MM-DD HH:mm:ss"
+timestamp_format: YYYY-MM-DD HH:mm:ss
