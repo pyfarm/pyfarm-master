@@ -22,3 +22,7 @@ div.software_requirement > .max_version {
     display: block;
     margin: 5px;
 }
+
+.clickable-icon {
+    cursor: pointer;
+}

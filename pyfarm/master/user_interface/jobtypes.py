@@ -217,3 +217,80 @@ def add_jobtype_software_requirement(jobtype_id):
 
     return redirect(url_for("single_jobtype_ui", jobtype_id=jobtype.id),
                             SEE_OTHER)
+
+def create_jobtype():
+    if request.method == "GET":
+        return render_template("pyfarm/user_interface/jobtype_create.html",
+                               jobtypes=JobType.query,
+                               software_items=Software.query)
+    else:
+        with db.session.no_autoflush:
+            print("form: %s" % request.form)
+            jobtype = JobType()
+            jobtype.name = request.form["name"]
+            jobtype.description = request.form["description"]
+            jobtype_version = JobTypeVersion()
+            jobtype_version.jobtype = jobtype
+            jobtype_version.version = 1
+            jobtype_version.max_batch = int(request.form["max_batch"])
+            jobtype_version.batch_contiguous =\
+                ("batch_contiguous" in request.form and
+                 request.form["batch_contiguous"] == "true")
+            jobtype_version.classname = request.form["classname"]
+            jobtype_version.code = request.form["code"]
+
+            requirements = zip(request.form.getlist("software"),
+                            request.form.getlist("min_version"),
+                            request.form.getlist("min_version"))
+            print("Requirements: %s" % requirements)
+
+            for requirement_tuple in requirements:
+                software = Software.query.filter_by(
+                    id=int(requirement_tuple[0])).first()
+                if not software:
+                    return (render_template(
+                        "pyfarm/error.html", error="Software %s not found" %
+                        requirement_tuple[0]), NOT_FOUND)
+                requirement = JobTypeSoftwareRequirement()
+                requirement.software = software
+                requirement.jobtype_version = jobtype_version
+
+                if requirement_tuple[1] != "":
+                    minimum_version = SoftwareVersion.query.filter_by(
+                        id=int(requirement_tuple[1])).first()
+                    if not minimum_version:
+                        return (render_template(
+                            "pyfarm/error.html", error="Software version %s not "
+                            "found" % requirement_tuple[1]), NOT_FOUND)
+                    if minimum_version.software != software:
+                        return (render_template(
+                            "pyfarm/error.html", error="Software version %s "
+                            "does not belong to software %s" %
+                            (minimum_version.version, software.software)),
+                            NOT_FOUND)
+                    requirement.min_version = minimum_version
+
+                if requirement_tuple[2] != "":
+                    maximum_version = SoftwareVersion.query.filter_by(
+                        id=int(requirement_tuple[2])).first()
+                    if not maximum_version:
+                        return (render_template(
+                            "pyfarm/error.html", error="Software version %s not "
+                            "found" % requirement_tuple[2]), NOT_FOUND)
+                    if maximum_version.software != software:
+                        return (render_template(
+                            "pyfarm/error.html", error="Software version %s "
+                            "does not belong to software %s" %
+                            (maximum_version.version, software.software)),
+                            NOT_FOUND)
+                    requirement.max_version = maximum_version
+
+                db.session.add(requirement)
+
+            db.session.add(jobtype)
+            db.session.add(jobtype_version)
+            db.session.commit()
+
+        flash("Jobtype %s created" % jobtype.name)
+
+        return redirect(url_for('jobtypes_index_ui'), SEE_OTHER)

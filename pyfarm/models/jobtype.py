@@ -68,6 +68,13 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
                             field is not required and is not directly relied
                             upon anywhere."""))
 
+    @validates("name")
+    def validate_name(self, key, value):
+        if value == "":
+            raise ValueError("Name cannot be empty")
+
+        return value
+
 
 class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
     __tablename__ = TABLE_JOB_TYPE_VERSION
