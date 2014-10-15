@@ -27,8 +27,14 @@
         <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }} {{ 'badge-important' if job.state == WorkState.FAILED }}">
           <i class="icon-leaf"></i>
           {{ job.title }}<br/>
-          State: {{ job.state }}
+          State: {{ job.state }}<br/>
+          Agents min / max: {{ job.minimum_agents or "-"}} / {{ job.maximum_agents or "-" }}<br/>
+          Priority: {{ job.priority }}<br/>
+          Weight: {{ job.weight }}
         </span>
+        <a href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
+          <i class="icon-eye-open"></i>
+        </a>
       </li>
       {% endfor %}
     </ul>
@@ -41,8 +47,15 @@
     <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }}{{ 'badge-important' if job.state == WorkState.FAILED }}{{ 'badge-warning' if job.state == WorkState.RUNNING }}">
       <i class="icon-leaf"></i>
       {{ job.title }}<br/>
-      State: {{ job.state }}
+      State: {{ job.state }}<br/>
+      Agents min / max: {{ job.minimum_agents or "-"}} / {{ job.maximum_agents or "-" }}<br/>
+      Priority: {{ job.priority }}<br/>
+      Weight: {{ job.weight }}
     </span>
+    <a href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
+      <i class="icon-eye-open"></i>
+    </a>
+
   </li>
   {% endfor %}
 </ul>
