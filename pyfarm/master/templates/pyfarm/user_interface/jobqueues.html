@@ -18,6 +18,11 @@
     <a href="{{ url_for('single_jobqueue_ui', queue_id=queue.id) }}" title="Edit Queue">
       <i class="icon-pencil"></i>
     </a>
+    <form class="icon" method="POST" action="{{ url_for('delete_jobqueue_ui', queue_id=queue.id) }}">
+      <button onclick="return confirm('Are you sure you want to delete this jobqueue?');" title="Delete Jobqueue">
+        <i class="icon-trash"></i>
+      </button>
+    </form>
     {% if queue.children or queue.jobs.count() != 0 %}
     <ul>
       {{ loop(queue.children) }}
