@@ -267,7 +267,7 @@ def create_jobtype():
                             "pyfarm/error.html", error="Software version %s "
                             "does not belong to software %s" %
                             (minimum_version.version, software.software)),
-                            NOT_FOUND)
+                            BAD_REQUEST)
                     requirement.min_version = minimum_version
 
                 if requirement_tuple[2] != "":
@@ -282,7 +282,7 @@ def create_jobtype():
                             "pyfarm/error.html", error="Software version %s "
                             "does not belong to software %s" %
                             (maximum_version.version, software.software)),
-                            NOT_FOUND)
+                            BAD_REQUEST)
                     requirement.max_version = maximum_version
 
                 db.session.add(requirement)
