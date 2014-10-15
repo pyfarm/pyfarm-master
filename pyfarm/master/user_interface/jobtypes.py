@@ -57,7 +57,8 @@ def jobtype(jobtype_id):
             new_version = JobTypeVersion(jobtype=jobtype)
             new_version.max_batch = request.form["max_batch"]
             new_version.batch_contiguous =\
-                request.form["batch_contiguous"] == "true"
+                ("batch_contiguous" in request.form and
+                 request.form["batch_contiguous"] == "true")
             new_version.classname = request.form["classname"]
             new_version.code = request.form["code"]
 
