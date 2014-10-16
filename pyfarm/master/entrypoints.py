@@ -136,7 +136,8 @@ def load_user_interface(app_instance):
         jobqueues, jobqueue_create, jobqueue, delete_jobqueue)
     from pyfarm.master.user_interface.jobtypes import (
         jobtypes, jobtype, remove_jobtype_software_requirement,
-        add_jobtype_software_requirement, remove_jobtype)
+        add_jobtype_software_requirement, remove_jobtype, create_jobtype)
+        add_jobtype_software_requirement)
 
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
@@ -215,6 +216,8 @@ def load_user_interface(app_instance):
                               "single_jobtype_add_requirement_ui",
                               add_jobtype_software_requirement,
                               methods=("POST", ))
+    app_instance.add_url_rule("/jobtypes/create", "jobtype_create_ui",
+                              create_jobtype, methods=("GET", "POST"))
 
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
