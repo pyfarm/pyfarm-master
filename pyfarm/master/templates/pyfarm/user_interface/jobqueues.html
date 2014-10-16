@@ -18,6 +18,11 @@
     <a href="{{ url_for('single_jobqueue_ui', queue_id=queue.id) }}" title="Edit Queue">
       <i class="icon-pencil"></i>
     </a>
+    <form class="icon" method="POST" action="{{ url_for('delete_jobqueue_ui', queue_id=queue.id) }}">
+      <button onclick="return confirm('Are you sure you want to delete this jobqueue?');" title="Delete Jobqueue">
+        <i class="icon-trash"></i>
+      </button>
+    </form>
     {% if queue.children or queue.jobs.count() != 0 %}
     <ul>
       {{ loop(queue.children) }}
@@ -27,8 +32,14 @@
         <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }} {{ 'badge-important' if job.state == WorkState.FAILED }}">
           <i class="icon-leaf"></i>
           {{ job.title }}<br/>
-          State: {{ job.state }}
+          State: {{ job.state }}<br/>
+          Agents min / max: {{ job.minimum_agents or "-"}} / {{ job.maximum_agents or "-" }}<br/>
+          Priority: {{ job.priority }}<br/>
+          Weight: {{ job.weight }}
         </span>
+        <a href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
+          <i class="icon-eye-open"></i>
+        </a>
       </li>
       {% endfor %}
     </ul>
@@ -41,8 +52,15 @@
     <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }}{{ 'badge-important' if job.state == WorkState.FAILED }}{{ 'badge-warning' if job.state == WorkState.RUNNING }}">
       <i class="icon-leaf"></i>
       {{ job.title }}<br/>
-      State: {{ job.state }}
+      State: {{ job.state }}<br/>
+      Agents min / max: {{ job.minimum_agents or "-"}} / {{ job.maximum_agents or "-" }}<br/>
+      Priority: {{ job.priority }}<br/>
+      Weight: {{ job.weight }}
     </span>
+    <a href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
+      <i class="icon-eye-open"></i>
+    </a>
+
   </li>
   {% endfor %}
 </ul>

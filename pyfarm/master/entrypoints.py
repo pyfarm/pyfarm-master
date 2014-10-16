@@ -133,7 +133,7 @@ def load_user_interface(app_instance):
         alter_scheduling_parameters_for_job, update_notes_for_job,
         update_tags_in_job, rerun_single_task)
     from pyfarm.master.user_interface.jobqueues import (
-        jobqueues, jobqueue_create, jobqueue)
+        jobqueues, jobqueue_create, jobqueue, delete_jobqueue)
     from pyfarm.master.user_interface.jobtypes import (
         jobtypes, jobtype, remove_jobtype_software_requirement,
         add_jobtype_software_requirement, remove_jobtype)
@@ -193,6 +193,9 @@ def load_user_interface(app_instance):
     app_instance.add_url_rule("/jobqueues/<int:queue_id>",
                               "single_jobqueue_ui", jobqueue,
                               methods=("GET", "POST"))
+    app_instance.add_url_rule("/jobqueues/<int:queue_id>/delete",
+                              "delete_jobqueue_ui", delete_jobqueue,
+                              methods=("POST", ))
 
     app_instance.add_url_rule("/jobtypes/",
                               "jobtypes_index_ui", jobtypes, methods=("GET", ))

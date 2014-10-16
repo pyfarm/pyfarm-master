@@ -97,3 +97,23 @@ def jobqueue(queue_id):
 
         return render_template("pyfarm/user_interface/jobqueue.html",
                             queue=queue)
+
+def delete_jobqueue(queue_id):
+    with db.session.no_autoflush:
+        queue = JobQueue.query.filter_by(id=queue_id).first()
+        if not queue:
+            return (render_template(
+                        "pyfarm/error.html",
+                        error="Jobqueue %s not found" % queue_id), NOT_FOUND)
+
+        for subqueue in queue.children:
+            delete_jobqueue(subqueue.id)
+
+        for job in queue.jobs:
+            job.queue = queue.parent
+            db.session.add(job)
+
+    db.session.delete(queue)
+    db.session.commit()
+
+    return redirect(url_for("jobqueues_index_ui"), SEE_OTHER)

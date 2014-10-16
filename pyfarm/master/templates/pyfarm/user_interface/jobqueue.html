@@ -54,7 +54,12 @@
     </div>
     <div class="control-group">
       <div class="control">
-        <input type="submit" class="btn btn-primary btn-large" value="Create"/>
+        <input type="submit" class="btn btn-primary" value="Update"/>
+        <form class="icon" method="POST" action="{{ url_for('delete_jobqueue_ui', queue_id=queue.id) }}">
+          <button onclick="return confirm('Are you sure you want to delete this jobqueue?');" title="Delete Jobqueue" class="btn">
+            <i class="icon-trash"></i> Delete
+          </button>
+        </form>
       </div>
     </div>
   </fieldset>
