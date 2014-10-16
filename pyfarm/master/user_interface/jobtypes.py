@@ -219,3 +219,23 @@ def add_jobtype_software_requirement(jobtype_id):
 
     return redirect(url_for("single_jobtype_ui", jobtype_id=jobtype.id),
                             SEE_OTHER)
+
+def remove_jobtype(jobtype_id):
+    with db.session.no_autoflush:
+        jobtype = JobType.query.filter_by(id=jobtype_id).first()
+        if not jobtype:
+            return (render_template(
+                        "pyfarm/error.html", error="Jobtype %s not found" %
+                        jobtype_id), NOT_FOUND)
+
+        for version in jobtype.versions:
+            if version.jobs.count() > 0:
+                 return (render_template(
+                     "pyfarm/error.html", error="Jobtype %s cannot be deleted "
+                     "because there are still jobs referencing it. Please "
+                     "delete those jobs first." % jobtype.name), BAD_REQUEST)
+
+        db.session.delete(jobtype)
+        db.session.commit()
+
+    return redirect(url_for("jobtypes_index_ui"), SEE_OTHER)
