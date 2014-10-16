@@ -1,6 +1,9 @@
 {% extends "pyfarm/user_interface/layout.html" %}
 {% block title %}Agent {{agent.hostname}} {% endblock %}
 {% block agents_nb_class %}active{% endblock %}
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/agent.js') }}" type="text/javascript"></script>
+{% endblock %}
 {% block content %}
 <h1 style="margin-bottom:20px">{{ agent.hostname }}</h1>
 <h4>State</h4>
@@ -57,13 +60,59 @@
   </tbody>
 </table>
 
+<h4>Software</h4>
+<table class="table">
+  <thead>
+    <th></th>
+    <th>Software</th>
+    <th>Version</th>
+    <th></th>
+  </thead>
+  <tbody>
+    {% for software_version in agent.software_versions %}
+    <tr>
+      <td>
+        <form class="icon" method="POST" action="{{ url_for('single_agent_remove_software_ui', agent_id=agent.id, version_id=software_version.id) }}">
+          <button onclick="return confirm('Are you sure you want to remove this software version from this agent?');" title="Delete Software Version">
+            <i class="icon-trash"></i>
+          </button>
+        </form>
+      </td>
+      <td>{{ software_version.software.software }}</td>
+      <td>{{ software_version.version }}</td>
+      <td></td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <form method="POST" action="{{ url_for('single_agent_add_software_ui', agent_id=agent.id) }}">
+        <td></td>
+        <td>
+          <select id="add_software_sw" name="software">
+            <option></option>
+            {% for software in software_items %}
+            <option value="{{ software.id }}">{{ software.software }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td>
+          <select id="add_software_version" name="version">
+          </select>
+        </td>
+        <td>
+          <input type="submit" class="btn" value="Add"/>
+        </td>
+      </form>
+    </tr>
+  </tbody>
+</table>
+
 <h4>Tasks</h4>
 <table class="table">
   <thead>
     <th>ID</th>
     <th>Frame</th>
-    <th>Job</job>
-    <th>State</job>
+    <th>Job</th>
+    <th>State</th>
   </thead>
   <tbody>
     {% for task in tasks %}

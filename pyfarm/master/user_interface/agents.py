@@ -26,6 +26,7 @@ from pyfarm.core.enums import WorkState
 from pyfarm.models.agent import Agent
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
+from pyfarm.models.software import Software, SoftwareVersion
 from pyfarm.master.application import db
 
 def agents():
@@ -85,10 +86,11 @@ def single_agent(agent_id):
 
     tasks = Task.query.filter(Task.agent == agent,
                               or_(Task.state == None,
-                                  Task.state == WorkState.RUNNING)).all()
+                                  Task.state == WorkState.RUNNING)).\
+                                      order_by(Task.job_id, Task.frame)
 
     return render_template("pyfarm/user_interface/agent.html", agent=agent,
-                           tasks=tasks)
+                           tasks=tasks, software_items=Software.query)
 
 def delete_single_agent(agent_id):
     agent = Agent.query.filter_by(id=agent_id).first()
@@ -103,3 +105,55 @@ def delete_single_agent(agent_id):
     flash("Agent %s has been deleted" % agent.hostname)
 
     return redirect(url_for("agents_index_ui"), SEE_OTHER)
+
+def agent_add_software(agent_id):
+    agent = Agent.query.filter_by(id=agent_id).first()
+    if not agent:
+        return (render_template(
+                    "pyfarm/error.html", error="Agent %s not found" % agent_id),
+                NOT_FOUND)
+
+    software = Software.query.filter_by(id=int(request.form["software"])).first()
+    if not software:
+        return (render_template(
+                    "pyfarm/error.html", error="Software %s not found" %
+                    request.form["software"]), NOT_FOUND)
+
+    version = SoftwareVersion.query.filter_by(
+        id=int(request.form["software"]), software=software).first()
+    if not version:
+         return (render_template(
+                    "pyfarm/error.html", error="Software version %s not found" %
+                    request.form["version"]), NOT_FOUND)
+
+    agent.software_versions.append(version)
+    db.session.add(agent)
+    db.session.add(version)
+    db.session.commit()
+
+    flash("Software %s %s has been added to agent %s" %
+          (software.software, version.version, agent.hostname))
+
+    return redirect(url_for("single_agent_ui", agent_id=agent.id), SEE_OTHER)
+
+def agent_delete_software(agent_id, version_id):
+    agent = Agent.query.filter_by(id=agent_id).first()
+    if not agent:
+        return (render_template(
+                    "pyfarm/error.html", error="Agent %s not found" % agent_id),
+                NOT_FOUND)
+
+    version = SoftwareVersion.query.filter_by(id=version_id).first()
+    if not version:
+         return (render_template(
+                    "pyfarm/error.html", error="Software version %s not found" %
+                    version_id), NOT_FOUND)
+
+    agent.software_versions.remove(version)
+    db.session.add(agent)
+    db.session.commit()
+
+    flash("Software %s %s removed from agent %s" %
+          (version.software.software, version.version, agent.hostname))
+
+    return redirect(url_for("single_agent_ui", agent_id=agent.id), SEE_OTHER)
