@@ -120,7 +120,7 @@ def agent_add_software(agent_id):
                     request.form["software"]), NOT_FOUND)
 
     version = SoftwareVersion.query.filter_by(
-        id=int(request.form["software"]), software=software).first()
+        id=int(request.form["version"]), software=software).first()
     if not version:
          return (render_template(
                     "pyfarm/error.html", error="Software version %s not found" %
