@@ -349,10 +349,11 @@ class JobIndexAPI(MethodView):
         job.user = user
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
-        if "start" not in custom_json or "end" not in custom_json:
-            return jsonify(error="`start` or `end` not specified"), BAD_REQUEST
-        start = custom_json["start"]
-        end = custom_json["end"]
+        if "end" in custom_json and "start" not in custom_json:
+            return (jsonify(error="`end` is specified while `start` is not"),
+                    BAD_REQUEST)
+        start = custom_json.get("start", Decimal("1.0"))
+        end = custom_json.get("end", start)
         if (not isinstance(start, RANGE_TYPES) or
             not isinstance(end, RANGE_TYPES)):
             return (jsonify(error="`start` and `end` need to be of type decimal "
