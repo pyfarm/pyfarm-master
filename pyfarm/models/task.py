@@ -26,6 +26,7 @@ from textwrap import dedent
 
 from sqlalchemy import event
 from sqlalchemy.orm.attributes import NO_VALUE, NO_CHANGE
+from sqlalchemy.sql import or_, and_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
@@ -132,6 +133,46 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             return new_value
 
     @staticmethod
+    def set_job_state(target, new_value, old_value, initiator):
+        # Importing this at the top of th file would like to a circular
+        # dependency, so we import it here instead.
+        from pyfarm.scheduler.tasks import send_job_completion_mail
+
+        # There's nothing else we should do here if
+        # we don't have a parent job.  This can happen if you're
+        # testing or a job is disconnected from a task.
+        if target.job is None:
+            return
+
+        if (new_value in [WorkState.FAILED, WorkState.DONE] and
+            new_value != old_value):
+            job = target.job
+
+            num_active_tasks = db.session.query(Task).\
+                filter(Task.job == job, or_(Task.state == None, and_(
+                             Task.state != WorkState.DONE,
+                             Task.state != WorkState.FAILED))).count()
+            # Since we did not flush the session yet, the newly changed might
+            # still be counted as active in the database.
+            if num_active_tasks <= 1:
+                num_failed_tasks = db.session.query(
+                    Task).filter(Task.job == job,
+                                 Task.state == WorkState.FAILED).count()
+                if (num_failed_tasks == 0
+                    and new_value != WorkState.FAILED):
+                    logger.info("Job %s: state transition \"%s\" -> \"done\"",
+                                job.title, job.state)
+                    job.state = WorkState.DONE
+                    send_job_completion_mail.delay(job.id, True)
+                else:
+                    logger.info("Job %s: state transition \"%s\" -> \"failed\"",
+                                job.title, job.state)
+                    job.state = WorkState.FAILED
+                    send_job_completion_mail.delay(job.id, False)
+                db.session.add(job)
+            return
+
+    @staticmethod
     def clear_error_state(target, new_value, old_value, initiator):
         """
         Sets ``last_error`` column to ``None`` if the task's state is 'done'
@@ -144,3 +185,4 @@ event.listen(Task.state, "set", Task.state_changed)
 event.listen(Task.agent_id, "set", Task.increment_attempts)
 event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry,
              retval=True)
+event.listen(Task.state, "set", Task.set_job_state)
