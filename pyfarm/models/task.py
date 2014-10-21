@@ -160,12 +160,12 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                  Task.state == WorkState.FAILED).count()
                 if (num_failed_tasks == 0
                     and new_value != WorkState.FAILED):
-                    logger.info("Job %s: state transition \"%s\" -> \"done\"",
+                    logger.info("Job %s: state transition %r -> 'done'",
                                 job.title, job.state)
                     job.state = WorkState.DONE
                     send_job_completion_mail.delay(job.id, True)
                 else:
-                    logger.info("Job %s: state transition \"%s\" -> \"failed\"",
+                    logger.info("Job %s: state transition %r -> 'failed'",
                                 job.title, job.state)
                     job.state = WorkState.FAILED
                     send_job_completion_mail.delay(job.id, False)
