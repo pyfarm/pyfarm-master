@@ -408,7 +408,7 @@ def assign_agents_to_queue(queue, max_agents, available_agents):
                 queued_jobs.sort(key=lambda job: job.time_submitted)
                 jobs_started = 0
                 while jobs_started == 0 and queued_jobs:
-                    job = queued_jobs.pop()
+                    job = queued_jobs.pop(0)
                     assigned = assign_agents_to_job(job, 1, available_agents)
                     max_agents -= len(assigned)
                     assigned_agents.update(assigned)
