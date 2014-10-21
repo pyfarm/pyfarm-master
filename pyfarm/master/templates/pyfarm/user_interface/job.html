@@ -264,10 +264,13 @@
     <tr>
       <td>
         <form class="icon" method="POST" action="{{ url_for('rerun_single_task_ui', job_id=job.id, task_id=task.id) }}">
-            <button onclick="return confirm('Are you sure you want to rerun this task?');" title="Rerun task">
+          <button onclick="return confirm('Are you sure you want to rerun this task?');" title="Rerun task">
             <i class="icon-repeat"></i>
-            </button>
+          </button>
         </form>
+        <a href="{{ url_for('logs_in_task_ui', job_id=job.id, task_id=task.id) }}" title="Show logs">
+          <i class="icon-list"></i>
+        </a>
       </td>
       <td>{{ task.id }}</td>
       <td>{{ task.frame }}</td>

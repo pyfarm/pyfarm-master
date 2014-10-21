@@ -1,0 +1,21 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Logs in Task {{ task.id }} {% endblock %}
+{% block jobs_nb_class %}active{% endblock %}
+{% block additional_styles %}
+{% endblock %}
+{% block content %}
+<h1>Logs in Task {{ task.id }} </h1>
+<h2>(Frame {{ task.frame }} from job <a href="{{ url_for('single_job_ui', job_id=task.job.id) }}">{{ task.job.title }}</a>)</h2>
+
+<ul>
+{% for attempt, logs in attempts.items() %}
+  <li> Attempt {{ attempt }}
+    <ul>
+    {% for log in logs %}
+      <li><a href="/api/v1/jobs/{{ task.job.id }}/tasks/{{ task.id }}/attempts/{{ attempt }}/logs/{{ log.log.identifier }}/logfile">{{ log.log.identifier }}</a></li>
+    {% endfor %}
+    </ul>
+  </li>
+{%endfor%}
+</ul>
+{% endblock %}
