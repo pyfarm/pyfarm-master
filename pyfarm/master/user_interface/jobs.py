@@ -89,12 +89,18 @@ def jobs():
     if order_by not in ["title", "state", "time_submitted", "t_queued",
                         "t_running", "t_failed", "t_done"]:
         return (render_template(
-            "pyfarm/error.html", error="unknown order key"), BAD_REQUEST)
+            "pyfarm/error.html",
+            error="Unknown order key %r. Options are 'title', 'state', "
+                  "'time_submitted', 't_queued', 't_running', 't_failed' or "
+                  "'t_done'" % order_by), BAD_REQUEST)
     if "order_dir" in request.args:
         order_dir = request.args.get("order_dir")
         if order_dir not in ["asc", "desc"]:
             return (render_template(
-            "pyfarm/error.html", error="unknown order dir"), BAD_REQUEST)
+            "pyfarm/error.html",
+            error="Unknown order direction %r. Options are 'asc' or 'desc'" %
+                  order_dir),
+            BAD_REQUEST)
     if order_by == "time_submitted" and order_dir == "desc":
         jobs_query = jobs_query.order_by(desc(a_job.time_submitted))
     elif order_by == "time_submitted" and order_dir == "asc":
