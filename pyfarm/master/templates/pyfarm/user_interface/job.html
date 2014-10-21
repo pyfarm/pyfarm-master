@@ -11,7 +11,9 @@
         Jobtype
       </td>
       <td>
-        {{ job.jobtype_version.jobtype.name }} Version {{job.jobtype_version.version}}
+        <a href="{{ url_for('single_jobtype_ui', jobtype_id=job.jobtype_version.jobtype.id) }}">
+          {{ job.jobtype_version.jobtype.name }}
+        </a> Version {{job.jobtype_version.version}}
       </td>
     </tr>
     <tr>
@@ -249,6 +251,23 @@
   </tbody>
 </table>
 </form>
+
+<h4>Data</h4>
+<div class="well">
+  {{ job.data }}
+</div>
+
+<h4>Notified Users</h4>
+<table class="table">
+  <tbody>
+    {% for user in job.notified_users %}
+    <tr>
+      <td>{{ user.username }}</td>
+      <td>{{ user.email }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 
 <h4>Tasks</h4>
 <table class="table">
