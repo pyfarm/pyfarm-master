@@ -978,27 +978,6 @@ class JobSingleTaskAPI(MethodView):
             logger.info("Task %s of job %s: state transition \"%s\" -> \"%s\"",
                         task_id, task.job.title, task.state, new_state)
             task.state = new_state
-            db.session.flush()
-            job = task.job
-            num_active_tasks = db.session.query(Task).\
-                filter(Task.job == job, or_(Task.state == None, and_(
-                             Task.state != "done",
-                             Task.state != "failed"))).count()
-            if num_active_tasks == 0:
-                num_failed_tasks = db.session.query(
-                    Task).filter(Task.job == job,
-                                  Task.state == "failed").count()
-                if num_failed_tasks == 0:
-                    logger.info("Job %s: state transition \"%s\" -> \"done\"",
-                                job.title, job.state)
-                    job.state = "done"
-                    send_job_completion_mail.delay(job.id, True)
-                else:
-                    logger.info("Job %s: state transition \"%s\" -> \"failed\"",
-                                job.title, job.state)
-                    job.state = "failed"
-                    send_job_completion_mail.delay(job.id, False)
-                db.session.add(job)
 
         # Iterate over all keys in the request
         for key in list(g.json):
