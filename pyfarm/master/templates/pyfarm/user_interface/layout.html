@@ -54,7 +54,7 @@
         $(".timestamp").each(function() {
             var local_time  = moment($(this).text() + "Z", moment.ISO_8601);
             if (local_time.isValid()) {
-                $(this).html(local_time.format('HH:mm:ss YYYY-MM-DD'));
+                $(this).html(local_time.format("{{ timestamp_format }}"));
             }
         });
     </script>
