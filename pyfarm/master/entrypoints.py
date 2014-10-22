@@ -137,6 +137,7 @@ def load_user_interface(app_instance):
     from pyfarm.master.user_interface.jobtypes import (
         jobtypes, jobtype, remove_jobtype_software_requirement,
         add_jobtype_software_requirement, remove_jobtype, create_jobtype)
+    from pyfarm.master.user_interface.logs_in_task import logs_in_task
 
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
@@ -184,6 +185,9 @@ def load_user_interface(app_instance):
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>",
                               "single_job_ui", single_job, methods=("GET", ))
+
+    app_instance.add_url_rule("/jobs/<int:job_id>/tasks/<int:task_id>/logs/",
+                              "logs_in_task_ui", logs_in_task, methods=("GET", ))
 
     app_instance.add_url_rule("/jobqueues/",
                               "jobqueues_index_ui", jobqueues, methods=("GET", ))
