@@ -37,25 +37,31 @@ from pyfarm.master.application import db
 logger = getLogger("ui.jobs")
 
 def jobs():
-    a_q = aliased(Task)
-    a_r = aliased(Task)
-    a_d = aliased(Task)
-    a_f = aliased(Task)
-    a_job = aliased(Job)
-    jobs_query = db.session.query(a_job,
-                                  func.count(
-                                      a_q.id.distinct()).label("t_queued"),
-                                  func.count(
-                                      a_r.id.distinct()).label("t_running"),
-                                  func.count(
-                                      a_d.id.distinct()).label("t_done"),
-                                  func.count(
-                                      a_f.id.distinct()).label("t_failed")).\
-        outerjoin(a_q, a_job.tasks_queued).\
-        outerjoin(a_r, a_job.tasks_running).\
-        outerjoin(a_d, a_job.tasks_done).\
-        outerjoin(a_f, a_job.tasks_failed).\
-        group_by(a_job)
+    queued_count_query = db.session.query(
+        Task.job_id, func.count('*').label('t_queued')).\
+            filter(Task.state == None).group_by(Task.job_id).subquery()
+    running_count_query = db.session.query(
+        Task.job_id, func.count('*').label('t_running')).\
+            filter(Task.state == WorkState.RUNNING).\
+                group_by(Task.job_id).subquery()
+    done_count_query = db.session.query(
+        Task.job_id, func.count('*').label('t_done')).\
+            filter(Task.state == WorkState.DONE).\
+                group_by(Task.job_id).subquery()
+    failed_count_query = db.session.query(
+        Task.job_id, func.count('*').label('t_failed')).\
+            filter(Task.state == WorkState.FAILED).\
+                group_by(Task.job_id).subquery()
+
+    jobs_query = db.session.query(Job,
+                                  queued_count_query.c.t_queued,
+                                  running_count_query.c.t_running,
+                                  done_count_query.c.t_done,
+                                  failed_count_query.c.t_failed).\
+        outerjoin(queued_count_query, Job.id == queued_count_query.c.job_id).\
+        outerjoin(running_count_query, Job.id == running_count_query.c.job_id).\
+        outerjoin(done_count_query, Job.id == done_count_query.c.job_id).\
+        outerjoin(failed_count_query, Job.id == failed_count_query.c.job_id)
 
     filters = {}
     if "tags" in request.args:
@@ -63,7 +69,7 @@ def jobs():
         tags = request.args.get("tags").split(",")
         tags = [x for x in tags if not x == ""]
         if tags:
-            jobs_query = jobs_query.filter(a_job.tags.any(Tag.tag.in_(tags)))
+            jobs_query = jobs_query.filter(Job.tags.any(Tag.tag.in_(tags)))
 
     if "state" in request.args:
         state = request.args.get("state")
@@ -73,14 +79,14 @@ def jobs():
             return (render_template(
                 "pyfarm/error.html", error="unknown state"), BAD_REQUEST)
         if state != "":
-            jobs_query = jobs_query.filter(a_job.state == state)
+            jobs_query = jobs_query.filter(Job.state == state)
 
     if "title" in request.args:
         title = request.args.get("title")
         filters["title"] = title
         if title != "":
             jobs_query = jobs_query.filter(
-                a_job.title.ilike("%%%s%%" % title))
+                Job.title.ilike("%%%s%%" % title))
 
     order_dir = "asc"
     order_by = "title"
@@ -102,17 +108,22 @@ def jobs():
                   order_dir),
             BAD_REQUEST)
     if order_by == "time_submitted" and order_dir == "desc":
-        jobs_query = jobs_query.order_by(desc(a_job.time_submitted))
+        jobs_query = jobs_query.order_by(desc(Job.time_submitted))
     elif order_by == "time_submitted" and order_dir == "asc":
-        jobs_query = jobs_query.order_by(asc(a_job.time_submitted))
+        jobs_query = jobs_query.order_by(asc(Job.time_submitted))
     elif order_by == "state" and order_dir == "desc":
-        jobs_query = jobs_query.order_by(desc(a_job.state))
+        jobs_query = jobs_query.order_by(desc(Job.state))
     elif order_by == "state" and order_dir == "asc":
-        jobs_query = jobs_query.order_by(asc(a_job.state))
+        jobs_query = jobs_query.order_by(asc(Job.state))
     else:
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
     jobs = jobs_query.all()
+    for entry in jobs:
+        entry.t_queued = entry.t_queued or 0
+        entry.t_running = entry.t_running or 0
+        entry.t_done = entry.t_done or 0
+        entry.t_failed = entry.t_failed or 0
     return render_template("pyfarm/user_interface/jobs.html",
                            jobs=jobs, filters=filters, order_by=order_by,
                            order_dir=order_dir,
