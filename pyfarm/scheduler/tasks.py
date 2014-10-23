@@ -253,6 +253,7 @@ def assign_agents_to_job(job, max_agents, available_agents):
             batch = []
             for task in tasks_query:
                 if (len(batch) < job.batch and
+                    len(batch) < job.jobtype_version.max_batch and
                     (not job.jobtype_version.batch_contiguous or
                      (len(batch) == 0 or
                       batch[-1].frame + job.by == task.frame))):
