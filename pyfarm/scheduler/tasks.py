@@ -260,8 +260,7 @@ def assign_agents_to_job(job, max_agents, available_agents):
 
             if not batch:
                 agents_needed = False
-
-            if selected_agent:
+            else:
                 for task in batch:
                     task.agent = selected_agent
                     db.session.add(task)
@@ -284,8 +283,6 @@ def assign_agents_to_job(job, max_agents, available_agents):
                 db.session.flush()
                 max_agents -= 1
                 job.total_assigned_agents += 1
-            else:
-                agents_needed = False
 
     if not assigned_agents:
         job.can_use_more_agents = False
