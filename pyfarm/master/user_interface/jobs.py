@@ -54,10 +54,18 @@ def jobs():
                 group_by(Task.job_id).subquery()
 
     jobs_query = db.session.query(Job,
-                                  queued_count_query.c.t_queued,
-                                  running_count_query.c.t_running,
-                                  done_count_query.c.t_done,
-                                  failed_count_query.c.t_failed).\
+                                  func.coalesce(
+                                      queued_count_query.c.t_queued,
+                                      0).label('t_queued'),
+                                  func.coalesce(
+                                      running_count_query.c.t_running,
+                                      0).label('t_running'),
+                                  func.coalesce(
+                                      done_count_query.c.t_done,
+                                      0).label('t_done'),
+                                  func.coalesce(
+                                      failed_count_query.c.t_failed,
+                                      0).label('t_failed')).\
         outerjoin(queued_count_query, Job.id == queued_count_query.c.job_id).\
         outerjoin(running_count_query, Job.id == running_count_query.c.job_id).\
         outerjoin(done_count_query, Job.id == done_count_query.c.job_id).\
@@ -119,11 +127,6 @@ def jobs():
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
     jobs = jobs_query.all()
-    for entry in jobs:
-        entry.t_queued = entry.t_queued or 0
-        entry.t_running = entry.t_running or 0
-        entry.t_done = entry.t_done or 0
-        entry.t_failed = entry.t_failed or 0
     return render_template("pyfarm/user_interface/jobs.html",
                            jobs=jobs, filters=filters, order_by=order_by,
                            order_dir=order_dir,
