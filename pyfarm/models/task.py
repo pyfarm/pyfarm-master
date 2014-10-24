@@ -82,6 +82,11 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                          task. This value is auto incremented when
                          :attr:`state` changes to a value synonymous with a
                          running state."""))
+    failures = db.Column(db.Integer, nullable=False, default=0,
+                         doc=dedent("""
+                         The number of times this task has failed. This value
+                         is auto incremented when :attr:`state` changes to a
+                         value synonymous with a failed state."""))
     frame = db.Column(db.Numeric(10, 4), nullable=False,
                       doc="The frame this :class:`Task` will be executing.")
     last_error = db.Column(db.UnicodeText, nullable=True,
@@ -115,6 +120,11 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             target.attempts += 1
 
     @staticmethod
+    def update_failures(target, new_value, old_value, initiator):
+        if new_value == WorkState.FAILED and new_value != old_value:
+            target.failures += 1
+
+    @staticmethod
     def reset_agent_if_failed_and_retry(
             target, new_value, old_value, initiator):
         # There's nothing else we should do here if
@@ -134,7 +144,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     @staticmethod
     def set_job_state(target, new_value, old_value, initiator):
-        # Importing this at the top of th file would like to a circular
+        # Importing this at the top of the file would lead to a circular
         # dependency, so we import it here instead.
         from pyfarm.scheduler.tasks import send_job_completion_mail
 
@@ -182,6 +192,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
 event.listen(Task.state, "set", Task.clear_error_state)
 event.listen(Task.state, "set", Task.state_changed)
+event.listen(Task.state, "set", Task.update_failures)
 event.listen(Task.agent_id, "set", Task.increment_attempts)
 event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry,
              retval=True)
