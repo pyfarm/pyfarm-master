@@ -177,10 +177,10 @@ def rerun_single_job(job_id):
                 NOT_FOUND)
 
     for task in job.tasks:
-        if task.state is not WorkState.RUNNING:
+        if task.state != WorkState.RUNNING:
             task.state = None
             task.agent = None
-            task.attempts = 0
+            task.failures = 0
             db.session.add(task)
 
     job.state = None
@@ -360,7 +360,7 @@ def rerun_single_task(job_id, task_id):
 
     task.state = None
     task.agent = None
-    task.attempts = 0
+    task.failures = 0
 
     if Job.state != WorkState.RUNNING:
         job.state = None
