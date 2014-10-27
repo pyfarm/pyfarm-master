@@ -27,6 +27,7 @@ from logging import DEBUG
 from json import dumps
 from smtplib import SMTP
 from email.mime.text import MIMEText
+from time import time, sleep
 
 from sqlalchemy import or_, and_, func
 
@@ -34,6 +35,8 @@ import requests
 from requests.exceptions import ConnectionError, RequestException
 # Workaround for https://github.com/kennethreitz/requests/issues/2204
 from requests.packages.urllib3.exceptions import ProtocolError
+
+from lockfile import LockFile, AlreadyLocked
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import AgentState, WorkState, _WorkState, UseAgentAddress
@@ -430,50 +433,89 @@ def assign_tasks():
     Descends the tree of job queues recursively to assign agents to the jobs
     registered with those queues
     """
-    db.session.commit()
-    logger.info("Assigning tasks to agents")
-    tasks_query = Task.query.filter(
-        or_(Task.state == None, ~Task.state.in_([WorkState.DONE,
-                                                 WorkState.FAILED])))
-    tasks_query = tasks_query.filter(
-        or_(Task.agent == None,
-            Task.agent.has(Agent.state.in_([AgentState.OFFLINE,
-                                            AgentState.DISABLED]))))
-    tasks_query = tasks_query.filter(Task.job.has(Job.to_be_deleted == False))
-    tasks_query = tasks_query.filter(
-        or_(Task.job.has(Job.state == None),
-            Task.job.has(Job.state != WorkState.PAUSED)))
+    lock = LockFile("/tmp/pyfarm_scheduler_lock")
+    try:
+        lock.acquire(timeout=-1)
+        with lock:
+            with open("/tmp/pyfarm_scheduler_lock", "w") as file:
+                file.write(str(time()))
 
-    unassigned_tasks = tasks_query.count()
-    logger.debug("Got %s unassigned tasks" % unassigned_tasks)
-    if not unassigned_tasks:
-        logger.info("No unassigned tasks, not assigning anything")
-        return
+            db.session.commit()
+            logger.info("Assigning tasks to agents")
+            tasks_query = Task.query.filter(
+                or_(Task.state == None, ~Task.state.in_([WorkState.DONE,
+                                                        WorkState.FAILED])))
+            tasks_query = tasks_query.filter(
+                or_(Task.agent == None,
+                    Task.agent.has(Agent.state.in_([AgentState.OFFLINE,
+                                                    AgentState.DISABLED]))))
+            tasks_query = tasks_query.filter(
+                Task.job.has(Job.to_be_deleted == False))
+            tasks_query = tasks_query.filter(
+                or_(Task.job.has(Job.state == None),
+                    Task.job.has(Job.state != WorkState.PAUSED)))
 
-    idle_agents = Agent.query.filter(Agent.state == AgentState.ONLINE,
-                                     ~Agent.tasks.any(
-                                         or_(
-                                         Task.state == None,
-                                         ~Task.state.in_(
-                                             [WorkState.DONE,
-                                             WorkState.FAILED])))).all()
-    if not idle_agents:
-        logger.info("No idle agents, not assigning anything")
-        return
+            unassigned_tasks = tasks_query.count()
+            logger.debug("Got %s unassigned tasks" % unassigned_tasks)
+            if not unassigned_tasks:
+                logger.info("No unassigned tasks, not assigning anything")
+                return
 
-    tree_root = read_queue_tree(JobQueue())
-    agents_with_new_tasks = assign_agents_to_queue(tree_root, len(idle_agents),
-                                                   idle_agents)
+            idle_agents = Agent.query.filter(Agent.state == AgentState.ONLINE,
+                                            ~Agent.tasks.any(
+                                                or_(
+                                                Task.state == None,
+                                                ~Task.state.in_(
+                                                    [WorkState.DONE,
+                                                    WorkState.FAILED])))).all()
+            if not idle_agents:
+                logger.info("No idle agents, not assigning anything")
+                return
 
-    for agent in agents_with_new_tasks:
-        db.session.add(agent)
-    db.session.commit()
+            tree_root = read_queue_tree(JobQueue())
+            agents_with_new_tasks = assign_agents_to_queue(tree_root,
+                                                        len(idle_agents),
+                                                        idle_agents)
 
-    for agent in agents_with_new_tasks:
-        logger.debug("Registering asynchronous task pusher for agent %s",
-                     agent.id)
-        send_tasks_to_agent.delay(agent.id)
+            for agent in agents_with_new_tasks:
+                db.session.add(agent)
+            db.session.commit()
 
+            for agent in agents_with_new_tasks:
+                logger.debug("Registering asynchronous task pusher for agent %s",
+                            agent.id)
+                send_tasks_to_agent.delay(agent.id)
+
+    except AlreadyLocked:
+        logger.debug("The scheduler lockfile is locked, the scheduler seems to "
+                     "already be running")
+        try:
+            with open("/tmp/pyfarm_scheduler_lock", "r") as file:
+                locktime = float(file.read())
+                if locktime < time() - 60:
+                    logger.error("The old lock was held for more than 60 "
+                                 "seconds. Breaking the lock.")
+                    lock.break_lock()
+        except (IOError, ValueError) as e:
+            # It is possible that we tried to read the file in the narrow window
+            # between lock acquisition and actually writing the time
+            logger.warning("Could not read a time value from the scheduler "
+                           "lockfile. Waiting 60 seconds before trying again. "
+                           "Error: %s", e)
+            sleep(1)
+            try:
+                with open("/tmp/pyfarm_scheduler_lock", "r") as file:
+                    locktime = float(file.read())
+                    if locktime < time() - 60:
+                         logger.error("The old lock was held for more than 60 "
+                                      "seconds. Breaking the lock.")
+                         lock.break_lock()
+            except(IOError, ValueError):
+                # If we still cannot read a time value from the file after 1s
+                # there was something wrong with the process holding the lock
+                logger.error("Could not read a time value from the scheduler "
+                             "lockfile even after waiting 1s. Breaking the lock")
+                lock.break_lock()
 
 @celery_app.task(ignore_results=True, bind=True)
 def poll_agent(self, agent_id):
