@@ -36,7 +36,7 @@ from requests.exceptions import ConnectionError, RequestException
 from requests.packages.urllib3.exceptions import ProtocolError
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import AgentState, WorkState, UseAgentAddress
+from pyfarm.core.enums import AgentState, WorkState, _WorkState, UseAgentAddress
 from pyfarm.core.config import read_env, read_env_int
 from pyfarm.models.project import Project
 from pyfarm.models.software import (
@@ -293,7 +293,9 @@ def assign_agents_to_job(job, max_agents):
                     job.id)
             assigned_agents.add(selected_agent)
             db.session.add(selected_agent)
-            if job.state != WorkState.RUNNING:
+            if job.state != _WorkState.RUNNING:
+                logger.info("Setting state of job %s (id %s) to running",
+                            job.title, job.id)
                 job.state = WorkState.RUNNING
                 db.session.add(job)
             # This is necessary because otherwise, the next query will still see
