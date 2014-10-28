@@ -131,9 +131,19 @@ def send_tasks_to_agent(self, agent_id):
 
             logger.debug("Return code after sending batch to agent: %s",
                          response.status_code)
-            if response.status_code not in [requests.codes.accepted,
-                                            requests.codes.ok,
-                                            requests.codes.created]:
+            if response.status_code == requests.codes.service_unavailable:
+                logger.error("Agent %s, (id %s), answered SERVICE_UNAVAILABLE, "
+                             "marking it as offline", agent.hostname, agent.id)
+                agent.state = AgentState.OFFLINE
+                db.session.add(agent)
+                for task in tasks:
+                    task.agent = None
+                    task.attempts -= 1
+                    db.session.add(task)
+                db.session.commit()
+            elif response.status_code not in [requests.codes.accepted,
+                                              requests.codes.ok,
+                                              requests.codes.created]:
                 raise ValueError("Unexpected return code on sending batch to "
                                  "agent: %s", response.status_code)
 
