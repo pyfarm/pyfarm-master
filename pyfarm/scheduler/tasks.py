@@ -511,11 +511,12 @@ def assign_tasks():
                                       "seconds. Breaking the lock.")
                          lock.break_lock()
             except(IOError, ValueError):
-                # If we still cannot read a time value from the file after 1s
+                # If we still cannot read a time value from the file after 1s,
                 # there was something wrong with the process holding the lock
                 logger.error("Could not read a time value from the scheduler "
                              "lockfile even after waiting 1s. Breaking the lock")
                 lock.break_lock()
+
 
 @celery_app.task(ignore_results=True, bind=True)
 def poll_agent(self, agent_id):
