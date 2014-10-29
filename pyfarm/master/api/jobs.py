@@ -915,13 +915,14 @@ class JobSingleTaskAPI(MethodView):
 
             .. sourcecode:: http
 
-                HTTP/1.1 201 CREATED
+                HTTP/1.1 200 OK
                 Content-Type: application/json
 
                 {
                     "time_finished": null,
                     "agent": null,
                     "attempts": 0,
+                    "failures": 0,
                     "frame": 2.0,
                     "agent_id": null,
                     "job": {
