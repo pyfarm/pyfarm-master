@@ -277,6 +277,8 @@
     <th>Frame</th>
     <th>State</job>
     <th>Agent</job>
+    <th>Failures</job>
+    <th>Last Error</job>
   </thead>
   <tbody>
     {% for task in tasks %}
@@ -300,6 +302,12 @@
           {{ task.agent.hostname }}
         </a>
         {%endif%}
+      </td>
+      <td>
+        {{ task.failures }}
+      </td>
+      <td>
+        {{ task.last_error or "" }}
       </td>
     </tr>
     {% endfor %}
