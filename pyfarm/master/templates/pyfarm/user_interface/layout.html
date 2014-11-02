@@ -12,6 +12,8 @@
     <script src="{{ url_for('static', filename='js/bootstrap-tree.js') }}" type="text/javascript"></script>
     <script src="{{ url_for('static', filename='js/layout.js') }}" type="text/javascript"></script>
     <script src="{{ url_for('static', filename='js/vendor/moment-2.8.3.min.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='js/vendor/moment-tz-2010-2020-0.2.3.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='canop-tzdetect-2b2feb6811.js') }}" type="text/javascript"></script>
     {% block additional_scripts %}{% endblock %}
 </head>
 <body>
@@ -51,10 +53,12 @@
     </div>
 
     <script>
+        var timezone = moment.tz(tzdetect.matches()[0]).zoneAbbr();
         $(".timestamp").each(function() {
-            var local_time  = moment($(this).text() + "Z", moment.ISO_8601);
-            if (local_time.isValid()) {
-                $(this).html(local_time.format("{{ timestamp_format }}"));
+            var utc  = moment.utc($(this).text() + "Z", moment.ISO_8601);
+            if (utc.isValid()) {
+                var local = utc.local();
+                $(this).html(local.format("{{ timestamp_format }}") + timezone);
             }
         });
     </script>
