@@ -262,12 +262,30 @@
   <tbody>
     {% for user in job.notified_users %}
     <tr>
+      <td>
+        <form class="icon" method="POST" action="{{ url_for('remove_notified_user_ui', job_id=job.id, user_id=user.id) }}">
+          <button onclick="return confirm('Are you sure you want to remove this users from the notified users list?');" title="Remove user from list">
+            <i class="icon-trash"></i>
+          </button>
+        </form>
+      </td>
       <td>{{ user.username }}</td>
       <td>{{ user.email }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
+
+<form method="POST" action="{{ url_for('add_notified_user_ui', job_id=job.id) }}" class="form-horizontal">
+  <label for="user">User</label>
+  <select id="user" name="user">
+    <option value=""></option>
+    {% for user in users %}
+    <option value="{{ user.id }}">{{ user.username }} ({{ user.email }})</option>
+    {% endfor %}
+  </select>
+  <input type="submit" class="btn" value="Add"/>
+</form>
 
 <h4>Tasks</h4>
 <table class="table">

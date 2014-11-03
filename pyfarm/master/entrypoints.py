@@ -131,7 +131,8 @@ def load_user_interface(app_instance):
         jobs, delete_single_job, rerun_single_job, single_job, pause_single_job,
         unpause_single_job, alter_frames_in_single_job,
         alter_scheduling_parameters_for_job, update_notes_for_job,
-        update_tags_in_job, rerun_single_task)
+        update_tags_in_job, rerun_single_task, add_notified_user_to_job,
+        remove_notified_user_from_job)
     from pyfarm.master.user_interface.jobqueues import (
         jobqueues, jobqueue_create, jobqueue, delete_jobqueue)
     from pyfarm.master.user_interface.jobtypes import (
@@ -183,6 +184,12 @@ def load_user_interface(app_instance):
     app_instance.add_url_rule("/jobs/<int:job_id>/tasks/<int:task_id>",
                               "rerun_single_task_ui", rerun_single_task,
                               methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/notified_users/add",
+                              "add_notified_user_ui", add_notified_user_to_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/notified_users/<int:user_id>/"
+                              "remove", "remove_notified_user_ui",
+                              remove_notified_user_from_job, methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>",
                               "single_job_ui", single_job, methods=("GET", ))
 
