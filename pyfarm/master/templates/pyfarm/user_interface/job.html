@@ -76,7 +76,7 @@
 <h4>Notes</h4>
 <form method="POST" action="{{ url_for('update_job_notes_ui', job_id=job.id) }}">
   <p><textarea name="notes" class="form-control">{{ job.notes }}</textarea></p>
-  <input type="submit" class="btn"/>
+  <input type="submit" class="btn" value="Change Notes"/>
 </form>
 
 <h4>Tags</h4>
@@ -84,7 +84,7 @@
   <p>
     <textarea name="tags" class="form-control">{% for tag in job.tags %}{{ tag.tag }} {% endfor %}</textarea>
   </p>
-  <input type="submit" class="btn"/>
+  <input type="submit" class="btn" value="Update Tags"/>
 </form>
 
 <h4>State</h4>
