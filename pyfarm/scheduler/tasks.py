@@ -72,6 +72,8 @@ POLL_BUSY_AGENTS_INTERVAL = read_env_int(
     "PYFARM_POLL_BUSY_AGENTS_INTERVAL", 600)
 POLL_IDLE_AGENTS_INTERVAL = read_env_int(
     "PYFARM_POLL_IDLE_AGENTS_INTERVAL", 3600)
+SCHEDULER_LOCKFILE = read_env(
+    "PYFARM_SCHEDULER_LOCKFILE", "/tmp/pyfarm_scheduler_lock")
 
 
 @celery_app.task(ignore_result=True, bind=True)
@@ -433,11 +435,11 @@ def assign_tasks():
     Descends the tree of job queues recursively to assign agents to the jobs
     registered with those queues
     """
-    lock = LockFile("/tmp/pyfarm_scheduler_lock")
+    lock = LockFile(SCHEDULER_LOCKFILE)
     try:
         lock.acquire(timeout=-1)
         with lock:
-            with open("/tmp/pyfarm_scheduler_lock", "w") as file:
+            with open(SCHEDULER_LOCKFILE, "w") as file:
                 file.write(str(time()))
 
             db.session.commit()
@@ -490,7 +492,7 @@ def assign_tasks():
         logger.debug("The scheduler lockfile is locked, the scheduler seems to "
                      "already be running")
         try:
-            with open("/tmp/pyfarm_scheduler_lock", "r") as file:
+            with open(SCHEDULER_LOCKFILE, "r") as file:
                 locktime = float(file.read())
                 if locktime < time() - 60:
                     logger.error("The old lock was held for more than 60 "
@@ -504,7 +506,7 @@ def assign_tasks():
                            "Error: %s", e)
             sleep(1)
             try:
-                with open("/tmp/pyfarm_scheduler_lock", "r") as file:
+                with open(SCHEDULER_LOCKFILE, "r") as file:
                     locktime = float(file.read())
                     if locktime < time() - 60:
                          logger.error("The old lock was held for more than 60 "
