@@ -40,7 +40,8 @@ install_requires = [
     "celery",
     "redis",
     "requests!=2.4.0",
-    "netaddr"]
+    "netaddr",
+    "lockfile"]
 
 if "READTHEDOCS" in os.environ:
     install_requires += ["sphinxcontrib-httpdomain", "sphinx"]
