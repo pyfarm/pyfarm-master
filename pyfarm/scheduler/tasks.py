@@ -28,6 +28,7 @@ from json import dumps
 from smtplib import SMTP
 from email.mime.text import MIMEText
 from time import time, sleep
+from sys import maxsize
 
 from sqlalchemy import or_, and_, func
 
@@ -258,7 +259,7 @@ def assign_agents_to_job(job, max_agents, available_agents):
             batch = []
             for task in tasks_query:
                 if (len(batch) < job.batch and
-                    len(batch) < job.jobtype_version.max_batch and
+                    len(batch) < (job.jobtype_version.max_batch or maxsize) and
                     (not job.jobtype_version.batch_contiguous or
                      (len(batch) == 0 or
                       batch[-1].frame + job.by == task.frame))):

@@ -95,7 +95,7 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
                           doc=dedent("""
                           When the queue runs, this is the maximum number of
                           tasks that the queue can select to assign to a single
-                          agent."""))
+                          agent.  If left empty, no maximum applies"""))
     batch_contiguous = db.Column(db.Boolean,
                                  default=read_env_bool(
                                      "JOBTYPE_DEFAULT_BATCH_CONTIGUOUS", True),
