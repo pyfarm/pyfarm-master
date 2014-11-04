@@ -78,6 +78,7 @@ SCHEDULER_LOCKFILE = read_env(
 
 @celery_app.task(ignore_result=True, bind=True)
 def send_tasks_to_agent(self, agent_id):
+    db.session.commit()
     agent = Agent.query.filter(Agent.id == agent_id).first()
     if not agent:
         raise KeyError("agent not found")
@@ -522,6 +523,7 @@ def assign_tasks():
 
 @celery_app.task(ignore_results=True, bind=True)
 def poll_agent(self, agent_id):
+    db.session.commit()
     agent = Agent.query.filter(Agent.id == agent_id).first()
 
     running_tasks_count = Task.query.filter(
@@ -588,6 +590,7 @@ def poll_agent(self, agent_id):
 
 @celery_app.task(ignore_results=True)
 def poll_agents():
+    db.session.commit()
     idle_agents_to_poll_query = Agent.query.filter(
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
@@ -615,6 +618,7 @@ def poll_agents():
 
 @celery_app.task(ignore_results=True)
 def send_job_completion_mail(job_id, successful=True):
+    db.session.commit()
     job = Job.query.filter_by(id=job_id).one()
     message = MIMEText("Job %s (id %s) has completed %s on %s.\n\n"
                        "Sincerely,\n\tThe PyFarm render manager" %
@@ -640,6 +644,7 @@ def send_job_completion_mail(job_id, successful=True):
 
 @celery_app.task(ignore_results=True, bind=True)
 def update_agent(self, agent_id):
+    db.session.commit()
     agent = Agent.query.filter_by(id=agent_id).one()
     if agent.version == agent.upgrade_to:
         return True
@@ -676,6 +681,7 @@ def update_agent(self, agent_id):
 
 @celery_app.task(ignore_results=True, bind=True)
 def delete_task(self, task_id):
+    db.session.commit()
     task = Task.query.filter_by(id=task_id).one()
     job = task.job
 
@@ -736,6 +742,7 @@ def delete_task(self, task_id):
 
 @celery_app.task(ignore_results=True, bind=True)
 def stop_task(self, task_id):
+    db.session.commit()
     task = Task.query.filter_by(id=task_id).one()
     job = task.job
 
