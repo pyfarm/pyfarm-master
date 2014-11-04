@@ -599,7 +599,11 @@ def run_master():  # pragma: no cover
 
     load_setup(app)
     load_master(app, admin, api)
-    app.run()
+
+    if read_env_bool("PYFARM_DEV_LISTEN_ON_WILDCARD", False):
+        app.run(host='0.0.0.0')
+    else:
+        app.run()
 
 
 def create_app():
