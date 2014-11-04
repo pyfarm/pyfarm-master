@@ -76,8 +76,8 @@ def jobs():
         filters["tags"] = request.args.get("tags")
         tags = request.args.get("tags").split(" ")
         tags = [x for x in tags if not x == ""]
-        if tags:
-            jobs_query = jobs_query.filter(Job.tags.any(Tag.tag.in_(tags)))
+        for tag in tags:
+            jobs_query = jobs_query.filter(Job.tags.any(Tag.tag == tag))
 
     if "state" in request.args:
         state = request.args.get("state")
