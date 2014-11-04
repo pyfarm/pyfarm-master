@@ -136,7 +136,7 @@
         {{ tag.tag }}
       </span>
       {% else %}
-      <a class="label label-success" href="{{ url_for('jobs_index_ui', tags=filters.tags + ' ' + tag.tag, title=filters.title, state=filters.state, **order) }}">
+      <a class="label label-success" href="{{ url_for('jobs_index_ui', tags=(filters.tags or '') + ' ' + tag.tag, title=filters.title, state=filters.state, **order) }}">
         {{ tag.tag }}
       </a>
       {% endif %}
