@@ -277,7 +277,6 @@
 </table>
 
 <form method="POST" action="{{ url_for('add_notified_user_ui', job_id=job.id) }}" class="form-horizontal">
-  <label for="user">User</label>
   <select id="user" name="user">
     <option value=""></option>
     {% for user in users %}
