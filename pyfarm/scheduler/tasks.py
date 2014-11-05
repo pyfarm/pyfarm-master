@@ -234,6 +234,10 @@ def read_queue_tree(queue):
 
 def assign_agents_to_job(job, max_agents, available_agents):
     assigned_agents = set()
+    for parent in job.parents:
+        if parent.state != WorkState.DONE:
+            return assigned_agents
+
     agents_needed = True
     while max_agents > 0 and agents_needed and available_agents:
         logger.debug("Looking for an agent for a for job %s", job.title)
