@@ -39,7 +39,7 @@ from flask.views import MethodView
 from sqlalchemy import or_, not_
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState
+from pyfarm.core.enums import WorkState, AgentState
 from pyfarm.scheduler.tasks import assign_tasks, update_agent
 from pyfarm.models.agent import Agent
 from pyfarm.models.task import Task
@@ -272,10 +272,10 @@ class AgentIndexAPI(MethodView):
                     else:
                         updated = True
 
-
             # TODO Only do that if this is really the agent speaking to us.
-            if current_assignments is not None:
-                fail_missing_assignments(agent, current_assignments)
+            if (current_assignments is not None and
+                agent.state != AgentState.OFFLINE):
+                    fail_missing_assignments(agent, current_assignments)
 
             if updated:
                 db.session.add(agent)
@@ -575,7 +575,8 @@ class SingleAgentAPI(MethodView):
             update_agent.delay(model.id)
 
         # TODO Only do that if this is really the agent speaking to us.
-        if current_assignments is not None:
+        if (current_assignments is not None and
+            model.state != AgentState.OFFLINE):
             fail_missing_assignments(model, current_assignments)
 
         logger.debug(

@@ -975,10 +975,13 @@ class JobSingleTaskAPI(MethodView):
             return jsonify(error="`frame` cannot be changed"), BAD_REQUEST
 
         new_state = g.json.pop("state", None)
-        if new_state is not None and new_state is not task.state:
+        if new_state is not None and new_state != task.state:
             logger.info("Task %s of job %s: state transition \"%s\" -> \"%s\"",
                         task_id, task.job.title, task.state, new_state)
-            task.state = new_state
+            if new_state != "queued":
+                task.state = new_state
+            else:
+                task.state = None
 
         # Iterate over all keys in the request
         for key in list(g.json):
@@ -987,7 +990,7 @@ class JobSingleTaskAPI(MethodView):
                 expected_types = TASK_MODEL_MAPPINGS[key]
 
                 # incorrect type for `value`
-                if not isinstance(value, expected_types):
+                if not isinstance(value, (expected_types, type(None))):
                     return (jsonify(
                         error="Column %r is of type %r but we expected "
                               "type(s) %r" % (key, type(value),
