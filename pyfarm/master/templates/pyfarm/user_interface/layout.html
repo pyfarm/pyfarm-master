@@ -58,7 +58,7 @@
             var utc  = moment.utc($(this).text() + "Z", moment.ISO_8601);
             if (utc.isValid()) {
                 var local = utc.local();
-                $(this).html(local.format("{{ timestamp_format }}") + timezone);
+                $(this).html(local.format("{{ timestamp_format }}") + " " + timezone);
             }
         });
     </script>
