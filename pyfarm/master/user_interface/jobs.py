@@ -32,6 +32,7 @@ from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
 from pyfarm.models.jobqueue import JobQueue
+from pyfarm.models.user import User
 from pyfarm.master.application import db
 
 logger = getLogger("ui.jobs")
@@ -146,9 +147,12 @@ def single_job(job_id):
 
     jobqueues = JobQueue.query.all()
 
+    users_query = User.query.filter(User.email != None)
+
     return render_template("pyfarm/user_interface/job.html", job=job,
                            tasks=tasks, first_task=first_task,
-                           last_task=last_task, queues=jobqueues)
+                           last_task=last_task, queues=jobqueues,
+                           users=users_query)
 
 def delete_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
@@ -311,6 +315,53 @@ def update_notes_for_job(job_id):
     db.session.commit()
 
     flash("Free form notes for job %s have been edited." % job.title)
+
+    return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
+
+def add_notified_user_to_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    user_id = request.form['user']
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return (render_template(
+                    "pyfarm/error.html", error="User %s not found" % user_id),
+                NOT_FOUND)
+
+    job.notified_users.append(user)
+
+    db.session.add(job)
+    db.session.commit()
+
+    flash("User %s has been added as notified user to job %s." %
+          (user.username, job.title))
+
+    return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
+
+def remove_notified_user_from_job(job_id, user_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return (render_template(
+                    "pyfarm/error.html", error="User %s not found" % user_id),
+                NOT_FOUND)
+
+    job.notified_users.remove(user)
+
+    db.session.add(job)
+    db.session.commit()
+
+    flash("User %s has been removed from notified users for job %s." %
+          (user.username, job.title))
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
 
