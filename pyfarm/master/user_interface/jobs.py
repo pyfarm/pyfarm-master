@@ -97,8 +97,8 @@ def jobs():
             jobs_query = jobs_query.filter(
                 Job.title.ilike("%%%s%%" % title))
 
-    order_dir = "asc"
-    order_by = "title"
+    order_dir = "desc"
+    order_by = "time_submitted"
     if "order_by" in request.args:
         order_by = request.args.get("order_by")
     if order_by not in ["title", "state", "time_submitted", "t_queued",
