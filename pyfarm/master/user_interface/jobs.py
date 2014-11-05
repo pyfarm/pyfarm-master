@@ -23,7 +23,7 @@ except ImportError:  # pragma: no cover
 
 from flask import render_template, request, redirect, url_for, flash
 from sqlalchemy.orm import aliased
-from sqlalchemy import func, desc, asc
+from sqlalchemy import func, desc, asc, or_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
@@ -80,15 +80,38 @@ def jobs():
         if tags:
             jobs_query = jobs_query.filter(Job.tags.any(Tag.tag.in_(tags)))
 
-    if "state" in request.args:
-        state = request.args.get("state")
-        filters["state"] = state
-        # TODO Use the actual WorkState enum here
-        if state not in ["paused", "running", "done", "failed", ""]:
-            return (render_template(
-                "pyfarm/error.html", error="unknown state"), BAD_REQUEST)
-        if state != "":
-            jobs_query = jobs_query.filter(Job.state == state)
+    filters["state_paused"] = ("state_paused" in request.args and
+                               request.args["state_paused"] == "true")
+    filters["state_queued"] = ("state_queued" in request.args and
+                               request.args["state_queued"] == "true")
+    filters["state_running"] = ("state_running" in request.args and
+                                request.args["state_running"] == "true")
+    filters["state_done"] = ("state_done" in request.args and
+                             request.args["state_done"] == "true")
+    filters["state_failed"] = ("state_failed" in request.args and
+                               request.args["state_failed"] == "true")
+    no_state_filters = True
+    if (filters["state_paused"] or
+        filters["state_queued"] or
+        filters["state_running"] or
+        filters["state_done"] or
+        filters["state_failed"]):
+        no_state_filters = False
+        wanted_states = []
+        if filters["state_paused"]:
+            wanted_states.append("paused")
+        if filters["state_running"]:
+            wanted_states.append("running")
+        if filters["state_done"]:
+            wanted_states.append("done")
+        if filters["state_failed"]:
+            wanted_states.append(WorkState.FAILED)
+        if filters["state_queued"]:
+            jobs_query = jobs_query.filter(or_(
+                Job.state == None,
+                Job.state in wanted_states))
+        else:
+            jobs_query = jobs_query.filter(Job.state.in_(wanted_states))
 
     if "title" in request.args:
         title = request.args.get("title")
@@ -131,7 +154,8 @@ def jobs():
     return render_template("pyfarm/user_interface/jobs.html",
                            jobs=jobs, filters=filters, order_by=order_by,
                            order_dir=order_dir,
-                           order={"order_by": order_by, "order_dir": order_dir})
+                           order={"order_by": order_by, "order_dir": order_dir},
+                           no_state_filters=no_state_filters)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
