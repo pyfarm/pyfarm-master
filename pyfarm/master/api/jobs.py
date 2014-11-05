@@ -337,8 +337,8 @@ class JobIndexAPI(MethodView):
         if username:
             user = User.query.filter_by(username=username).first()
             if not user:
-                return (jsonify(
-                    error="User %s not found" % username), NOT_FOUND)
+                user = User(username=username)
+                db.session.add(user)
 
         g.json.pop("start", None)
         g.json.pop("end", None)
