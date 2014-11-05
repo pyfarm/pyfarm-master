@@ -119,7 +119,7 @@
     <tr>
       <td>{{ task.id }}</td>
       <td>{{ task.frame }}</td>
-      <td>{{ task.job.title }} (ID {{ task.job.id }})</td>
+      <td><a href="{{ url_for('single_job_ui', job_id=task.job.id) }}"> {{ task.job.title }} (ID {{ task.job.id }})</a></td>
       <td>{{ task.state }}</td>
     </tr>
     {% endfor %}
