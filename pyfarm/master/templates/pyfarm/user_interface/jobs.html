@@ -51,6 +51,9 @@
       </a>
     </th>
     <th>
+      JobType
+    </th>
+    <th>
       User
     </th>
     <th>
@@ -128,6 +131,7 @@
       </form>
     </td>
     <td><a href="{{ url_for('single_job_ui', job_id=job[0].id) }}">{{ job[0].title }}</a></td>
+    <td><a href="{{ url_for('single_jobtype_ui', jobtype_id=job[0].jobtype_version.jobtype_id) }}">{{ job[0].jobtype_version.jobtype.name }}</a></td>
     <td>{{ job[0].user.username }}</td>
     <td>
       <nobr>{{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }}</nobr><br/>
