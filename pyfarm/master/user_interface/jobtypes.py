@@ -29,7 +29,7 @@ except ImportError:  # pragma: no cover
 
 from flask import render_template, request, redirect, flash, url_for
 
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, sql
 
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.software import (
@@ -55,7 +55,8 @@ def jobtype(jobtype_id):
             jobtype.description = request.form["description"]
 
             new_version = JobTypeVersion(jobtype=jobtype)
-            new_version.max_batch = request.form["max_batch"]
+            new_version.max_batch = request.form["max_batch"].strip() or\
+                sql.null()
             new_version.batch_contiguous =\
                 ("batch_contiguous" in request.form and
                  request.form["batch_contiguous"] == "true")

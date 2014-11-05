@@ -42,7 +42,7 @@
         <label for="max_batch">Max Batch</label>
       </td>
       <td>
-        <input type="text" id="max_batch" name="max_batch" value="{{ latest_version.max_batch }} "/>
+        <input type="text" id="max_batch" name="max_batch" value="{{ latest_version.max_batch or ''}}"/>
       </td>
     </tr>
     <tr>
