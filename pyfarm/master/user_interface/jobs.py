@@ -99,11 +99,11 @@ def jobs():
         no_state_filters = False
         wanted_states = []
         if filters["state_paused"]:
-            wanted_states.append("paused")
+            wanted_states.append(WorkState.PAUSED)
         if filters["state_running"]:
-            wanted_states.append("running")
+            wanted_states.append(WorkState.RUNNING)
         if filters["state_done"]:
-            wanted_states.append("done")
+            wanted_states.append(WorkState.DONE)
         if filters["state_failed"]:
             wanted_states.append(WorkState.FAILED)
         if filters["state_queued"]:
