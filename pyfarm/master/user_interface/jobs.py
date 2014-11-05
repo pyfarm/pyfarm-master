@@ -109,7 +109,7 @@ def jobs():
         if filters["state_queued"]:
             jobs_query = jobs_query.filter(or_(
                 Job.state == None,
-                Job.state in wanted_states))
+                Job.state.in_(wanted_states)))
         else:
             jobs_query = jobs_query.filter(Job.state.in_(wanted_states))
 
