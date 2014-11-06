@@ -582,7 +582,6 @@ def poll_agent(self, agent_id):
             agent.state = AgentState.OFFLINE
             db.session.add(agent)
             db.session.commit()
-            raise
 
     else:
         present_task_ids = [x["id"] for x in json_data]
