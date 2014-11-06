@@ -321,6 +321,17 @@ class JobIndexAPI(MethodView):
                 return jsonify(error=e.args), NOT_FOUND
             del g.json["software_requirements"]
 
+        parents = []
+        if "parents" in g.json:
+            for parent_job_data in g.json["parents"]:
+                parent_job = Job.query.filter_by(
+                    id=parent_job_data["id"]).first()
+                if not parent_job:
+                    return (jsonify("Parent job %s not found" %
+                                    parent_job_data["id"] ), NOT_FOUND)
+                parents.append(parent_job)
+            del g.json["parents"]
+
         notified_usernames = g.json.pop("notified_users", None)
         notified_users = []
         if notified_usernames:
@@ -346,6 +357,7 @@ class JobIndexAPI(MethodView):
         job.jobtype_version = jobtype_version
         job.software_requirements = software_requirements
         job.notified_users = notified_users
+        job.parents = parents
         job.user = user
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
@@ -693,6 +705,17 @@ class SingleJobAPI(MethodView):
                 task.frame = frame
                 task.priority = job.priority
                 db.session.add(task)
+
+        if "parents" in g.json:
+            parents = []
+            for parent_job_data in g.json["parents"]:
+                parent_job = Job.query.filter_by(
+                    id=parent_job_data["id"]).first()
+                if not parent_job:
+                    return (jsonify("Parent job %s not found" %
+                                    parent_job_data["id"] ), NOT_FOUND)
+                parents.append(parent_job)
+            job.parents = parents
 
         username = g.json.pop("user", None)
         if username:

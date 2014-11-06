@@ -87,6 +87,46 @@
   <input type="submit" class="btn" value="Update Tags"/>
 </form>
 
+{% if job.parents %}
+<h4>Parent jobs</h4>
+<table class="table table-striped table-bordered model-list">
+  <tr>
+    <th>Title</th>
+    <th>User</th>
+    <th>Submitted</th>
+    <th>State</th>
+  </tr>
+  {% for parent in job.parents %}
+  <tr>
+    <td><a href="{{ url_for('single_job_ui', job_id=parent.id) }}">{{ parent.title }}</a></td>
+    <td>{{ parent.user.username }}</td>
+    <td>{{ parent.time_submitted.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+    <td>{{ 'deleting' if parent.to_be_deleted else parent.state }}</td>
+  </tr>
+  {% endfor %}
+<table>
+{% endif %}
+
+{% if job.children %}
+<h4>Child jobs</h4>
+<table class="table table-striped table-bordered model-list">
+  <tr>
+    <th>Title</th>
+    <th>User</th>
+    <th>Submitted</th>
+    <th>State</th>
+  </tr>
+  {% for child in job.children %}
+  <tr>
+    <td><a href="{{ url_for('single_job_ui', job_id=child.id) }}">{{ child.title }}</a></td>
+    <td>{{ child.user.username }}</td>
+    <td>{{ child.time_submitted.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+    <td>{{ 'deleting' if child.to_be_deleted else child.state }}</td>
+  </tr>
+  {% endfor %}
+<table>
+{% endif %}
+
 <h4>State</h4>
 <table class="table">
   <tbody>

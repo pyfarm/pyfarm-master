@@ -192,6 +192,12 @@ class UtilityMixins(object):
                     out.append({"id": relationship.id,
                                 "username": relationship.username,
                                 "email": relationship.email})
+                elif name == "parents":
+                    out.append({"id": relationship.id,
+                                "title": relationship.title})
+                elif name == "children":
+                    out.append({"id": relationship.id,
+                                "title": relationship.title})
                 else:
                     raise NotImplementedError(
                         "don't know how to unpack relationships for `%s`" % name)
