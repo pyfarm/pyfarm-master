@@ -255,7 +255,8 @@ def create_jobtype():
             jobtype_version = JobTypeVersion()
             jobtype_version.jobtype = jobtype
             jobtype_version.version = 1
-            jobtype_version.max_batch = int(request.form["max_batch"])
+            jobtype_version.max_batch = request.form["max_batch"].strip() or\
+                sql.null()
             jobtype_version.batch_contiguous =\
                 ("batch_contiguous" in request.form and
                  request.form["batch_contiguous"] == "true")
