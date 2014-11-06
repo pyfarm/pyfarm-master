@@ -7,7 +7,7 @@
   <input type="hidden" name="order_by" value="{{ order_by }}"/>
   <input type="hidden" name="order_dir" value="{{ order_dir }}"/>
   <label for="tags">Tags</label>
-  <input type="text" id="tags" name="tags" value="{{ filters.tags }}" placeholder="Tags separated by commas"/>
+  <input type="text" id="tags" name="tags" value="{{ filters.tags }}" placeholder="Tags separated by spaces"/>
   <label for="title">Title</label>
   <input type="text" id="title" name="title" value="{{ filters.title }}" placeholder="Part of job title"/>
   <label for="state">State</label>
@@ -111,7 +111,6 @@
         {% endif %}
       </a>
     </th>
-    <th>Tags</th>
   </tr>
   {% for job in jobs %}
   <tr>
@@ -127,7 +126,22 @@
         </button>
       </form>
     </td>
-    <td><a href="{{ url_for('single_job_ui', job_id=job[0].id) }}">{{ job[0].title }}</a></td>
+    <td>
+      <a href="{{ url_for('single_job_ui', job_id=job[0].id) }}">
+        {{ job[0].title }}
+      </a>
+      {% for tag in job[0].tags %}
+      {% if tag.tag in filters.tags %}
+      <span class="label label-default">
+        {{ tag.tag }}
+      </span>
+      {% else %}
+      <a class="label label-success" href="{{ url_for('jobs_index_ui', tags=(filters.tags or '') + ' ' + tag.tag, title=filters.title, state=filters.state, **order) }}">
+        {{ tag.tag }}
+      </a>
+      {% endif %}
+      {% endfor %}
+    </td>
     <td>{{ job[0].user.username }}</td>
     <td>
       <nobr>{{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }}</nobr><br/>
@@ -145,11 +159,6 @@
     </td>
     <td>{{ job[0].time_submitted.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
     <td>{{ 'deleting' if job[0].to_be_deleted else job[0].state }}</td>
-    <td>
-      {% for tag in job[0].tags %}
-      <div>{{ tag.tag }}</div>
-      {% endfor %}
-    </td>
   </tr>
   {% endfor %}
 </table>
