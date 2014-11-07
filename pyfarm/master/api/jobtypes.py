@@ -478,7 +478,10 @@ class SingleJobTypeAPI(MethodView):
             jobtype_version.classname = g.json.pop("classname", None)
             jobtype_version.batch_contiguous = g.json.pop("batch_contiguous",
                                                           None)
-            jobtype_version.max_batch = g.json.pop("max_batch", None)
+            if "max_batch" in g.json and g.json["max_batch"] == None:
+                jobtype_version.max_batch = sql.null()
+            else:
+                jobtype_version.max_batch = g.json.pop("max_batch", None)
         except KeyError as e:
             return (jsonify(error="Missing key in input: %r" % e.args),
                     BAD_REQUEST)
