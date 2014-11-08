@@ -41,13 +41,16 @@ from sqlalchemy import event
 from werkzeug.exceptions import BadRequest
 
 from pyfarm.core.enums import NOTSET
-from pyfarm.core.config import read_env, read_env_bool
+from pyfarm.core.config import Configuration, read_env, read_env_bool
 from pyfarm.master.admin.baseview import AdminIndex
 
 POST_METHODS = set(("POST", "PUT"))
 IGNORED_MIMETYPES = set((
     "application/x-www-form-urlencoded", "multipart/form-data",
     "application/zip", "text/csv"))
+
+config = Configuration("pyfarm.master")
+config.load(environment=os.environ)
 
 
 def get_application(**configuration_keywords):
@@ -115,6 +118,10 @@ def get_application(**configuration_keywords):
     app_config.setdefault(
         "ALLOW_AGENT_LOOPBACK_ADDRESSES",
         read_env_bool("PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES", False))
+    app_config.setdefault(
+        "PYFARM_TIMESTAMP_FORMAT",
+        config.get("timestamp_format") or
+        read_env("PYFARM_TIMESTAMP_FORMAT", "YYYY-MM-DD HH:mm:ss"))
 
     static_folder = configuration_keywords.pop("static_folder", None)
     if static_folder is None:  # static folder not provided
@@ -125,6 +132,14 @@ def get_application(**configuration_keywords):
     app = Flask("pyfarm.master", static_folder=static_folder)
     app.config.update(app_config)
     app.config.update(configuration_keywords)
+
+
+    @app.context_processor
+    def template_context_processor():
+        return {
+            "timestamp_format": app.config["PYFARM_TIMESTAMP_FORMAT"]
+        }
+
     return app
 
 
@@ -239,7 +254,6 @@ def before_request():
     elif request.get_data():
         g.error = "Unsupported media type %r" % request.mimetype
         abort(UNSUPPORTED_MEDIA_TYPE)
-
 
 # main object setup (app, api, etc)
 app = get_application()

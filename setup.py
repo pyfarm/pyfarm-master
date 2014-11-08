@@ -56,6 +56,7 @@ else:
 def get_package_data():
     master_root = join("pyfarm", "master")
     packge_data_roots = (
+        join("pyfarm", "master", "etc"),
         join("pyfarm", "master", "static"),
         join("pyfarm", "master", "templates"),
         join("pyfarm", "master", "api", "templates"),
@@ -84,6 +85,11 @@ setup(
     namespace_packages=["pyfarm"],
     include_package_data=True,
     package_data={"pyfarm.master": get_package_data()},
+    data_files=[
+        ("etc/pyfarm", [
+            "pyfarm/master/etc/master.yml"
+        ])
+    ],
     entry_points={
         "console_scripts": [
             "pyfarm-master = pyfarm.master.entrypoints:run_master",
