@@ -122,6 +122,18 @@ def jobs():
             jobs_query = jobs_query.filter(
                 Job.title.ilike("%%%s%%" % title))
 
+    no_user = "no_user" in request.args
+    if "u" in request.args or no_user:
+        user_ids = request.args.getlist("u")
+        user_ids = [int(x) for x in user_ids]
+        if no_user:
+            jobs_query = jobs_query.filter(or_(
+                Job.user_id.in_(user_ids),
+                Job.user_id == None))
+        else:
+            jobs_query = jobs_query.filter(Job.user_id.in_(user_ids))
+        filters["u"] = user_ids
+
     order_dir = "desc"
     order_by = "time_submitted"
     if "order_by" in request.args:
@@ -153,11 +165,15 @@ def jobs():
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
     jobs = jobs_query.all()
+
+    users_query = User.query
+
     return render_template("pyfarm/user_interface/jobs.html",
                            jobs=jobs, filters=filters, order_by=order_by,
                            order_dir=order_dir,
                            order={"order_by": order_by, "order_dir": order_dir},
-                           no_state_filters=no_state_filters)
+                           no_state_filters=no_state_filters, users=users_query,
+                           no_user=no_user)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()

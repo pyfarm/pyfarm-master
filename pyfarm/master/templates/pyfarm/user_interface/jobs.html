@@ -73,6 +73,34 @@
       </li>
     </ul>
   </div>
+  <div class="dropdown user_filter_dropdown">
+    <a class="dropdown-toggle btn" data-toggle="dropdown" href="#">
+      User <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-form" role="menu">
+      <li>
+        <label class="checkbox">
+          {% if no_user %}
+          <input type="checkbox" name="no_user" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="no_user" value="true"/>
+          {% endif %}
+        </label>
+      </li>
+      {% for user in users %}
+      <li>
+        <label class="checkbox">
+          {% if user.id in filters.u %}
+          <input type="checkbox" name="u" value="{{ user.id }}" checked/>
+          {% else %}
+          <input type="checkbox" name="u" value="{{ user.id }}"/>
+          {% endif %}
+          {{ user.username }}
+        </label>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
   <input type="submit" class="btn" value="Filter">
 </form>
 
