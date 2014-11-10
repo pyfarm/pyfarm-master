@@ -122,11 +122,11 @@ def jobs():
             jobs_query = jobs_query.filter(
                 Job.title.ilike("%%%s%%" % title))
 
-    no_user = "no_user" in request.args
-    if "u" in request.args or no_user:
+    filters["no_user"] = "no_user" in request.args
+    if "u" in request.args or filters["no_user"]:
         user_ids = request.args.getlist("u")
         user_ids = [int(x) for x in user_ids]
-        if no_user:
+        if filters["no_user"]:
             jobs_query = jobs_query.filter(or_(
                 Job.user_id.in_(user_ids),
                 Job.user_id == None))
@@ -172,8 +172,7 @@ def jobs():
                            jobs=jobs, filters=filters, order_by=order_by,
                            order_dir=order_dir,
                            order={"order_by": order_by, "order_dir": order_dir},
-                           no_state_filters=no_state_filters, users=users_query,
-                           no_user=no_user)
+                           no_state_filters=no_state_filters, users=users_query)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
