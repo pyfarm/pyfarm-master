@@ -341,6 +341,7 @@ class JobIndexAPI(MethodView):
             if not user and AUTOCREATE_USERS:
                 user = User(username=username)
                 db.session.add(user)
+                logger.warning("User %s was autocreated on job submit", username)
             elif not user:
                 return (jsonify(
                     error="User %s not found" % username), NOT_FOUND)
