@@ -37,6 +37,7 @@ from flask import g, request
 
 from sqlalchemy.sql import func, or_, and_
 
+from pyfarm.core.config import read_env_bool
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES
 from pyfarm.scheduler.tasks import (
@@ -58,6 +59,7 @@ logger = getLogger("api.jobs")
 # Load model mappings once per process
 TASK_MODEL_MAPPINGS = Task.types().mappings
 
+AUTOCREATE_USERS = read_env_bool("PYFARM_AUTOCREATE_USERS", True)
 
 class ObjectNotFound(Exception):
     pass
@@ -336,9 +338,12 @@ class JobIndexAPI(MethodView):
         username = g.json.pop("user", None)
         if username:
             user = User.query.filter_by(username=username).first()
-            if not user:
+            if not user and AUTOCREATE_USERS:
                 user = User(username=username)
                 db.session.add(user)
+            elif not user:
+                return (jsonify(
+                    error="User %s not found" % username), NOT_FOUND)
 
         g.json.pop("start", None)
         g.json.pop("end", None)
