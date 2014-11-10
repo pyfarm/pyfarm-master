@@ -200,7 +200,7 @@
         </div>
       </div>
     </td>
-    <td>{{ job[0].time_submitted.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+    <td class="timestamp">{{ job[0].time_submitted.strftime('%Y-%m-%d %H:%M:%S') }}</td>
     <td>{{ 'deleting' if job[0].to_be_deleted else (job[0].state or "queued") }}</td>
   </tr>
   {% endfor %}
