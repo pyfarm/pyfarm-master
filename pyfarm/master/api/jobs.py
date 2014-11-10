@@ -48,6 +48,7 @@ from pyfarm.models.user import User
 from pyfarm.models.job import Job
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement)
+from pyfarm.models.tag import Tag
 from pyfarm.master.application import db
 from pyfarm.master.utility import jsonify, validate_with_model
 
@@ -343,6 +344,15 @@ class JobIndexAPI(MethodView):
                             NOT_FOUND)
                 notified_users.append(user)
 
+        tag_names = g.json.pop("tags", None)
+        tags = []
+        if tag_names:
+            for tag_name in tag_names:
+                tag = Tag.query.filter_by(tag=tag_name).first()
+                if not tag:
+                    tag = Tag(tag=tag_name)
+                tags.append(tag)
+
         user = None
         username = g.json.pop("user", None)
         if username:
@@ -358,6 +368,7 @@ class JobIndexAPI(MethodView):
         job.software_requirements = software_requirements
         job.notified_users = notified_users
         job.parents = parents
+        job.tags = tags
         job.user = user
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
