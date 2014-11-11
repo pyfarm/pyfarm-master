@@ -66,11 +66,13 @@ def jobs():
                                       0).label('t_done'),
                                   func.coalesce(
                                       failed_count_query.c.t_failed,
-                                      0).label('t_failed')).\
+                                      0).label('t_failed'),
+                                  User.username).\
         outerjoin(queued_count_query, Job.id == queued_count_query.c.job_id).\
         outerjoin(running_count_query, Job.id == running_count_query.c.job_id).\
         outerjoin(done_count_query, Job.id == done_count_query.c.job_id).\
-        outerjoin(failed_count_query, Job.id == failed_count_query.c.job_id)
+        outerjoin(failed_count_query, Job.id == failed_count_query.c.job_id).\
+        outerjoin(User, Job.user_id == User.id)
 
     filters = {}
     if "tags" in request.args:
@@ -120,17 +122,29 @@ def jobs():
             jobs_query = jobs_query.filter(
                 Job.title.ilike("%%%s%%" % title))
 
+    filters["no_user"] = "no_user" in request.args
+    if "u" in request.args or filters["no_user"]:
+        user_ids = request.args.getlist("u")
+        user_ids = [int(x) for x in user_ids]
+        if filters["no_user"]:
+            jobs_query = jobs_query.filter(or_(
+                Job.user_id.in_(user_ids),
+                Job.user_id == None))
+        else:
+            jobs_query = jobs_query.filter(Job.user_id.in_(user_ids))
+        filters["u"] = user_ids
+
     order_dir = "desc"
     order_by = "time_submitted"
     if "order_by" in request.args:
         order_by = request.args.get("order_by")
     if order_by not in ["title", "state", "time_submitted", "t_queued",
-                        "t_running", "t_failed", "t_done"]:
+                        "t_running", "t_failed", "t_done", "username"]:
         return (render_template(
             "pyfarm/error.html",
             error="Unknown order key %r. Options are 'title', 'state', "
-                  "'time_submitted', 't_queued', 't_running', 't_failed' or "
-                  "'t_done'" % order_by), BAD_REQUEST)
+                  "'time_submitted', 't_queued', 't_running', 't_failed', "
+                  "'t_done', or 'username'" % order_by), BAD_REQUEST)
     if "order_dir" in request.args:
         order_dir = request.args.get("order_dir")
         if order_dir not in ["asc", "desc"]:
@@ -151,11 +165,14 @@ def jobs():
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
     jobs = jobs_query.all()
+
+    users_query = User.query
+
     return render_template("pyfarm/user_interface/jobs.html",
                            jobs=jobs, filters=filters, order_by=order_by,
                            order_dir=order_dir,
                            order={"order_by": order_by, "order_dir": order_dir},
-                           no_state_filters=no_state_filters)
+                           no_state_filters=no_state_filters, users=users_query)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()

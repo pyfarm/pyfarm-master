@@ -73,6 +73,34 @@
       </li>
     </ul>
   </div>
+  <div class="dropdown user_filter_dropdown">
+    <a class="dropdown-toggle btn" data-toggle="dropdown" href="#">
+      User <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-form" role="menu">
+      <li>
+        <label class="checkbox">
+          {% if filters.no_user %}
+          <input type="checkbox" name="no_user" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="no_user" value="true"/>
+          {% endif %}
+        </label>
+      </li>
+      {% for user in users %}
+      <li>
+        <label class="checkbox">
+          {% if user.id in filters.u %}
+          <input type="checkbox" name="u" value="{{ user.id }}" checked/>
+          {% else %}
+          <input type="checkbox" name="u" value="{{ user.id }}"/>
+          {% endif %}
+          {{ user.username }}
+        </label>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
   <input type="submit" class="btn" value="Filter">
 </form>
 
@@ -93,7 +121,14 @@
       JobType
     </th>
     <th>
-      User
+      <a href="{{ url_for('jobs_index_ui', order_by='username', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        User
+        {% if order_by == 'username' and order_dir == 'desc' %}
+        <i class="icon-chevron-down"></i>
+        {% elif order_by == 'username' %}
+        <i class="icon-chevron-up"></i>
+        {% endif %}
+      </a>
     </th>
     <th>
       Tasks (
@@ -185,7 +220,7 @@
       {% endfor %}
     </td>
     <td><a href="{{ url_for('single_jobtype_ui', jobtype_id=job[0].jobtype_version.jobtype_id) }}">{{ job[0].jobtype_version.jobtype.name }}</a></td>
-    <td>{{ job[0].user.username }}</td>
+    <td>{{ job.username or '' }}</td>
     <td>
       <nobr>{{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }}</nobr><br/>
       <div class="progress">
