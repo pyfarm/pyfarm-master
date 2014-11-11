@@ -34,7 +34,7 @@ except ImportError:  # pragma: no cover
 from flask import g, Response
 from flask.views import MethodView
 
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, sql
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, PY3
@@ -237,7 +237,10 @@ class JobTypeIndexAPI(MethodView):
             jobtype_version.classname = g.json.pop("classname", None)
             jobtype_version.batch_contiguous = g.json.pop("batch_contiguous",
                                                           None)
-            jobtype_version.max_batch = g.json.pop("max_batch", None)
+            if "max_batch" in g.json and g.json["max_batch"] is None:
+                jobtype_version.max_batch = sql.null()
+            else:
+                jobtype_version.max_batch = g.json.pop("max_batch", None)
         except KeyError as e:
             return (jsonify(error="Missing key in input: %r" % e.args),
                     BAD_REQUEST)
@@ -475,7 +478,10 @@ class SingleJobTypeAPI(MethodView):
             jobtype_version.classname = g.json.pop("classname", None)
             jobtype_version.batch_contiguous = g.json.pop("batch_contiguous",
                                                           None)
-            jobtype_version.max_batch = g.json.pop("max_batch", None)
+            if "max_batch" in g.json and g.json["max_batch"] is None:
+                jobtype_version.max_batch = sql.null()
+            else:
+                jobtype_version.max_batch = g.json.pop("max_batch", None)
         except KeyError as e:
             return (jsonify(error="Missing key in input: %r" % e.args),
                     BAD_REQUEST)
