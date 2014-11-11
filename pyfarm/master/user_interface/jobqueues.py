@@ -107,7 +107,7 @@ def delete_jobqueue(queue_id):
                         error="Jobqueue %s not found" % queue_id), NOT_FOUND)
 
         for subqueue in queue.children:
-            delete_jobqueue(subqueue.id)
+            delete_subqueue(subqueue)
 
         for job in queue.jobs:
             job.queue = queue.parent
@@ -117,3 +117,14 @@ def delete_jobqueue(queue_id):
     db.session.commit()
 
     return redirect(url_for("jobqueues_index_ui"), SEE_OTHER)
+
+def delete_subqueue(queue):
+    for subqueue in queue.children:
+        delete_subqueue(subqueue)
+
+    for job in queue.jobs:
+        job.queue = queue.parent
+        db.session.add(job)
+
+    db.session.delete(queue)
+    db.session.flush()
