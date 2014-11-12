@@ -93,7 +93,7 @@ class TestJobAPI(BaseTestCase):
         del schema["user_id"]
         schema["user"] = "VARCHAR(%s)" % MAX_USERNAME_LENGTH
         del schema["job_queue_id"]
-        schema["job_queue"] = "VARCHAR(%s)" % MAX_JOBQUEUE_NAME_LENGTH
+        schema["jobqueue"] = "VARCHAR(%s)" % MAX_JOBQUEUE_NAME_LENGTH
         self.assertEqual(response.json, schema)
 
     def test_job_post(self):
@@ -147,7 +147,7 @@ class TestJobAPI(BaseTestCase):
         self.assertEqual(response3.json,
                         {
                             "id": id,
-                            "job_queue": None,
+                            "jobqueue": None,
                             "time_finished": None,
                             "time_started": None,
                             "end": 2.0,
@@ -219,7 +219,7 @@ class TestJobAPI(BaseTestCase):
         self.assertEqual(response1.json,
                         {
                             "id": id,
-                            "job_queue": None,
+                            "jobqueue": None,
                             "time_finished": None,
                             "time_started": None,
                             "end": 2.0,
@@ -491,7 +491,7 @@ class TestJobAPI(BaseTestCase):
         self.assertEqual(response3.json,
                         {
                             "id": id,
-                            "job_queue": None,
+                            "jobqueue": None,
                             "time_finished": None,
                             "time_started": None,
                             "end": 2.0,
@@ -609,7 +609,7 @@ class TestJobAPI(BaseTestCase):
         self.assert_ok(response3)
         self.assertEqual(response3.json,
                          {
-                            "job_queue": None,
+                            "jobqueue": None,
                             "ram_warning": None,
                             "title": "Test Job",
                             "state": "queued",
@@ -649,7 +649,7 @@ class TestJobAPI(BaseTestCase):
         self.assert_ok(response4)
         self.assertEqual(response4.json,
                          {
-                            "job_queue": None,
+                            "jobqueue": None,
                             "ram_warning": None,
                             "title": "Test Job",
                             "state": "queued",
@@ -728,7 +728,7 @@ class TestJobAPI(BaseTestCase):
         self.assert_ok(response3)
         self.assertEqual(response3.json,
                          {
-                            "job_queue": None,
+                            "jobqueue": None,
                             "ram_warning": None,
                             "title": "Test Job",
                             "state": "queued",

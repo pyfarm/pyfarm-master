@@ -167,7 +167,7 @@ def schema():
                 "id": "INTEGER",
                 "jobtype": "VARCHAR(64)",
                 "jobtype_version": "INTEGER",
-                "job_queue": "BIGINT",
+                "jobqueue": "BIGINT",
                 "notes": "TEXT",
                 "priority": "INTEGER",
                 "project_id": "INTEGER",
@@ -193,7 +193,7 @@ def schema():
     schema_dict["start"] = "NUMERIC(10,4)"
     schema_dict["end"] = "NUMERIC(10,4)"
     schema_dict["user"] = "VARCHAR(%s)" % MAX_USERNAME_LENGTH
-    schema_dict["job_queue"] = "VARCHAR(%s)" % MAX_JOBQUEUE_NAME_LENGTH
+    schema_dict["jobqueue"] = "VARCHAR(%s)" % MAX_JOBQUEUE_NAME_LENGTH
 
     # In the database, we are storing the jobtype_version_id, but over the wire,
     # we are using the jobtype's name plus version to identify it
@@ -212,9 +212,10 @@ class JobIndexAPI(MethodView):
                          type_checks={"by": lambda x: isinstance(
                              x, RANGE_TYPES)},
                          ignore=["start", "end", "jobtype", "jobtype_version",
-                                 "user"],
+                                 "user", "jobqueue"],
                          disallow=["jobtype_version_id", "time_submitted",
-                                   "time_started", "time_finished"])
+                                   "time_started", "time_finished",
+                                   "job_queue_id"])
     def post(self):
         """
         A ``POST`` to this endpoint will submit a new job.
@@ -257,6 +258,7 @@ class JobIndexAPI(MethodView):
                     "time_submitted": "2014-03-06T15:40:58.335259",
                     "jobtype_version": 1,
                     "jobtype": "TestJobType",
+                    "jobqueue": None
                     "start": 1.0,
                     "priority": 0,
                     "state": "queued",
@@ -442,7 +444,7 @@ class JobIndexAPI(MethodView):
         job_data["jobtype_version"] = job.jobtype_version.version
         job_data["user"] = job.user.username if job.user else None
         del job_data["user_id"]
-        job_data["job_queue"] = job.queue.path() if job.queue else None
+        job_data["jobqueue"] = job.queue.path() if job.queue else None
         del job_data["job_queue_id"]
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
@@ -609,7 +611,7 @@ class SingleJobAPI(MethodView):
         job_data["jobtype_version"] = job.jobtype_version.version
         job_data["user"] = job.user.username if job.user else None
         del job_data["user_id"]
-        job_data["job_queue"] = job.queue.path() if job.queue else None
+        job_data["jobqueue"] = job.queue.path() if job.queue else None
         del job_data["job_queue_id"]
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
@@ -836,7 +838,7 @@ class SingleJobAPI(MethodView):
         job_data["jobtype_version"] = job.jobtype_version.version
         job_data["user"] = job.user.username if job.user else None
         del job_data["user_id"]
-        job_data["job_queue"] = job.queue.path if job.queue else None
+        job_data["jobqueue"] = job.queue.path if job.queue else None
         del job_data["job_queue_id"]
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
