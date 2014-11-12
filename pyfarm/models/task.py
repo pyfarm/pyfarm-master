@@ -172,13 +172,15 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                     and new_value != WorkState.FAILED):
                     logger.info("Job %s: state transition %r -> 'done'",
                                 job.title, job.state)
-                    job.state = WorkState.DONE
-                    send_job_completion_mail.delay(job.id, True)
+                    if job.state != _WorkState.DONE:
+                        job.state = WorkState.DONE
+                        send_job_completion_mail.delay(job.id, True)
                 else:
                     logger.info("Job %s: state transition %r -> 'failed'",
                                 job.title, job.state)
-                    job.state = WorkState.FAILED
-                    send_job_completion_mail.delay(job.id, False)
+                    if job.state != WorkState.FAILED:
+                        job.state = WorkState.FAILED
+                        send_job_completion_mail.delay(job.id, False)
                 db.session.add(job)
             return
 
