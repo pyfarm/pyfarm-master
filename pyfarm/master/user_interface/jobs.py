@@ -122,7 +122,8 @@ def jobs():
             jobs_query = jobs_query.filter(
                 Job.title.ilike("%%%s%%" % title))
 
-    filters["no_user"] = "no_user" in request.args
+    filters["no_user"] = ("no_user" in request.args and
+                          request.args["no_user"].lower == "true")
     if "u" in request.args or filters["no_user"]:
         user_ids = request.args.getlist("u")
         user_ids = [int(x) for x in user_ids]
