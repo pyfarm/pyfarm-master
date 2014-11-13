@@ -192,7 +192,7 @@
   {% for job in jobs %}
   <tr>
     <td>
-      <form class="icon" method="POST" action="{{ url_for('delete_single_job_ui', job_id=job[0].id) }}">
+      <form class="icon" method="POST" action="{{ url_for('delete_single_job_ui', job_id=job[0].id, next=url_for('jobs_index_ui', **filters_and_order)) }}">
         <button onclick="return confirm('Are you sure you want to delete this job?');" title="Delete job">
           <i class="icon-trash"></i>
         </button>

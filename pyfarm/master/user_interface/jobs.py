@@ -83,15 +83,15 @@ def jobs():
             jobs_query = jobs_query.filter(Job.tags.any(Tag.tag == tag))
 
     filters["state_paused"] = ("state_paused" in request.args and
-                               request.args["state_paused"] == "true")
+                               request.args["state_paused"].lower() == "true")
     filters["state_queued"] = ("state_queued" in request.args and
-                               request.args["state_queued"] == "true")
+                               request.args["state_queued"].lower() == "true")
     filters["state_running"] = ("state_running" in request.args and
-                                request.args["state_running"] == "true")
+                                request.args["state_running"].lower() == "true")
     filters["state_done"] = ("state_done" in request.args and
-                             request.args["state_done"] == "true")
+                             request.args["state_done"].lower() == "true")
     filters["state_failed"] = ("state_failed" in request.args and
-                               request.args["state_failed"] == "true")
+                               request.args["state_failed"].lower() == "true")
     no_state_filters = True
     if (filters["state_paused"] or
         filters["state_queued"] or
@@ -169,11 +169,14 @@ def jobs():
 
     users_query = User.query
 
+    filters_and_order = filters.copy()
+    filters_and_order.update({"order_by": order_by, "order_dir": order_dir})
     return render_template("pyfarm/user_interface/jobs.html",
                            jobs=jobs, filters=filters, order_by=order_by,
                            order_dir=order_dir,
                            order={"order_by": order_by, "order_dir": order_dir},
-                           no_state_filters=no_state_filters, users=users_query)
+                           no_state_filters=no_state_filters, users=users_query,
+                           filters_and_order=filters_and_order)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
@@ -213,7 +216,10 @@ def delete_single_job(job_id):
 
     flash("Job %s will be deleted." % job.title)
 
-    return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
 
 def rerun_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
