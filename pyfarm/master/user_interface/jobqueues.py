@@ -21,10 +21,13 @@ except ImportError:  # pragma: no cover
 
 from flask import render_template, request, redirect, url_for, flash
 
-from pyfarm.master.application import db
+from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
+from pyfarm.master.application import db
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.job import Job
+
+logger = getLogger("ui.jobqueues")
 
 def jobqueues():
     jobqueues = JobQueue.query.filter_by(parent_jobqueue_id=None)
@@ -113,6 +116,8 @@ def delete_jobqueue(queue_id):
             job.queue = queue.parent
             db.session.add(job)
 
+    logger.info("Deleting jobqueue %s", queue.path())
+
     db.session.delete(queue)
     db.session.commit()
 
@@ -125,6 +130,8 @@ def delete_subqueue(queue):
     for job in queue.jobs:
         job.queue = queue.parent
         db.session.add(job)
+
+    logger.info("Deleting jobqueue %s", queue.path())
 
     db.session.delete(queue)
     db.session.flush()
