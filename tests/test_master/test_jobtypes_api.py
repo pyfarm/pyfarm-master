@@ -94,6 +94,34 @@ class TestJobTypeAPI(BaseTestCase):
                 "version": 1
                 })
 
+    def test_jobtype_post_empty_max_batch(self):
+        response1 = self.client.post(
+            "/api/v1/jobtypes/",
+            content_type="application/json",
+            data=dumps({
+                    "name": "TestJobType",
+                    "description": "Jobtype for testing inserts and queries",
+                    "max_batch": None,
+                    "code": code
+                    }))
+        self.assert_created(response1)
+        id = response1.json['id']
+
+        response2 = self.client.get("/api/v1/jobtypes/TestJobType")
+        self.assert_ok(response2)
+        self.assertEqual(
+            response2.json, {
+                "batch_contiguous": True,
+                "classname": None,
+                "code": code,
+                "description": "Jobtype for testing inserts and queries",
+                "id": id,
+                "max_batch": None,
+                "name": "TestJobType",
+                "software_requirements": [],
+                "version": 1
+                })
+
     def test_jobtype_post_with_requirements(self):
         response1 = self.client.post(
             "/api/v1/software/",

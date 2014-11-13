@@ -238,6 +238,7 @@ class JobTypeIndexAPI(MethodView):
             jobtype_version.batch_contiguous = g.json.pop("batch_contiguous",
                                                           None)
             if "max_batch" in g.json and g.json["max_batch"] is None:
+                g.json.pop("max_batch")
                 jobtype_version.max_batch = sql.null()
             else:
                 jobtype_version.max_batch = g.json.pop("max_batch", None)
@@ -479,6 +480,7 @@ class SingleJobTypeAPI(MethodView):
             jobtype_version.batch_contiguous = g.json.pop("batch_contiguous",
                                                           None)
             if "max_batch" in g.json and g.json["max_batch"] is None:
+                g.json.pop("max_batch")
                 jobtype_version.max_batch = sql.null()
             else:
                 jobtype_version.max_batch = g.json.pop("max_batch", None)
