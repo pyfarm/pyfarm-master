@@ -222,8 +222,7 @@
     <td><a href="{{ url_for('single_jobtype_ui', jobtype_id=job[0].jobtype_version.jobtype_id) }}">{{ job[0].jobtype_version.jobtype.name }}</a></td>
     <td>{{ job.username or '' }}</td>
     <td>
-      <nobr>{{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }}</nobr><br/>
-      <div class="progress">
+      <div class="progress job_progress">
         <div class="bar bar-success" style="width:{{ (100 * job.t_done / (job.t_queued + job.t_running + job.t_failed + job.t_done)) if (job.t_queued + job.t_running + job.t_failed + job.t_done) > 0 else 0 }}%">
           <span class="sr-only">{{ (100 * job.t_done / (job.t_queued + job.t_running + job.t_failed + job.t_done))|round(1) if (job.t_queued + job.t_running + job.t_failed + job.t_done) > 0 else 0 }}%</span>
         </div>
@@ -234,6 +233,7 @@
           <span class="sr-only">{{ (100 * job.t_failed / (job.t_queued + job.t_running + job.t_failed + job.t_done))|round(1) if (job.t_queued + job.t_running + job.t_failed + job.t_done) > 0 else 0 }}%</span>
         </div>
       </div>
+      {{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }}
     </td>
     <td class="timestamp">{{ job[0].time_submitted.isoformat() }}</td>
     <td>{{ 'deleting' if job[0].to_be_deleted else (job[0].state or "queued") }}</td>
