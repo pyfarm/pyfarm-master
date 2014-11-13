@@ -21,8 +21,8 @@
       <td>
         Last heard from
       </td>
-      <td>
-        {{ agent.last_heard_from }} UTC
+      <td class="timestamp">
+        {{ agent.last_heard_from.isoformat() }}
       </td>
     </tr>
     <tr>

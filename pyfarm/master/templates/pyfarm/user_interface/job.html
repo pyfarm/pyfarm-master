@@ -20,24 +20,24 @@
       <td>
         Submitted
       </td>
-      <td>
-        {{ job.time_submitted.strftime('%Y-%m-%d %H:%M:%S UTC') if job.time_submitted }}
+      <td class="timestamp">
+        {{ job.time_submitted.isoformat() if job.time_submitted }}
       </td>
     </tr>
     <tr>
       <td>
         Started
       </td>
-      <td>
-        {{ job.time_started.strftime('%Y-%m-%d %H:%M:%S UTC') if job.time_started }}
+      <td class="timestamp">
+        {{ job.time_started.isoformat() if job.time_started }}
       </td>
     </tr>
     <tr>
       <td>
         Finished
       </td>
-      <td>
-        {{ job.time_finished.strftime('%Y-%m-%d %H:%M:%S UTC') if job.time_finished}}
+      <td class="timestamp">
+        {{ job.time_finished.isoformat() if job.time_finished}}
       </td>
     </tr>
     <tr>
@@ -100,7 +100,7 @@
   <tr>
     <td><a href="{{ url_for('single_job_ui', job_id=parent.id) }}">{{ parent.title }}</a></td>
     <td>{{ parent.user.username }}</td>
-    <td>{{ parent.time_submitted.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+    <td class="timestamp">{{ parent.time_submitted.isoformat() }}</td>
     <td>{{ 'deleting' if parent.to_be_deleted else parent.state }}</td>
   </tr>
   {% endfor %}
@@ -120,7 +120,7 @@
   <tr>
     <td><a href="{{ url_for('single_job_ui', job_id=child.id) }}">{{ child.title }}</a></td>
     <td>{{ child.user.username }}</td>
-    <td>{{ child.time_submitted.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+    <td class="timestamp">{{ child.time_submitted.isoformat() }}</td>
     <td>{{ 'deleting' if child.to_be_deleted else child.state }}</td>
   </tr>
   {% endfor %}
