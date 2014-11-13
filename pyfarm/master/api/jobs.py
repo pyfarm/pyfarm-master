@@ -167,7 +167,7 @@ def schema():
                 "id": "INTEGER",
                 "jobtype": "VARCHAR(64)",
                 "jobtype_version": "INTEGER",
-                "jobqueue": "BIGINT",
+                "jobqueue": "VARCHAR(255)",
                 "notes": "TEXT",
                 "priority": "INTEGER",
                 "project_id": "INTEGER",
