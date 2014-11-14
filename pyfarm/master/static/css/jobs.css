@@ -11,3 +11,9 @@ ul.dropdown-menu-form {
 .user_filter_dropdown {
     display: inline;
 }
+
+.job_progress {
+    display: inline-block;
+    width: 15em;
+    margin-bottom: 0px;
+}
