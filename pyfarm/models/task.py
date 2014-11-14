@@ -29,7 +29,7 @@ from sqlalchemy.orm.attributes import NO_VALUE, NO_CHANGE
 from sqlalchemy.sql import or_, and_
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState
+from pyfarm.core.enums import WorkState, _WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
 from pyfarm.models.core.functions import work_columns, repr_enum
@@ -172,13 +172,15 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                     and new_value != WorkState.FAILED):
                     logger.info("Job %s: state transition %r -> 'done'",
                                 job.title, job.state)
-                    job.state = WorkState.DONE
-                    send_job_completion_mail.delay(job.id, True)
+                    if job.state != _WorkState.DONE:
+                        job.state = WorkState.DONE
+                        send_job_completion_mail.delay(job.id, True)
                 else:
                     logger.info("Job %s: state transition %r -> 'failed'",
                                 job.title, job.state)
-                    job.state = WorkState.FAILED
-                    send_job_completion_mail.delay(job.id, False)
+                    if job.state != _WorkState.FAILED:
+                        job.state = WorkState.FAILED
+                        send_job_completion_mail.delay(job.id, False)
                 db.session.add(job)
             return
 
