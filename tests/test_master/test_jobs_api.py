@@ -22,7 +22,8 @@ from json import dumps
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH, MAX_USERNAME_LENGTH
+from pyfarm.models.core.cfg import (
+    MAX_JOBTYPE_LENGTH, MAX_USERNAME_LENGTH, MAX_JOBQUEUE_NAME_LENGTH)
 from pyfarm.master.application import get_api_blueprint
 from pyfarm.master.entrypoints import load_api
 from pyfarm.master.application import db
@@ -91,6 +92,8 @@ class TestJobAPI(BaseTestCase):
         schema["jobtype_version"] = "INTEGER"
         del schema["user_id"]
         schema["user"] = "VARCHAR(%s)" % MAX_USERNAME_LENGTH
+        del schema["job_queue_id"]
+        schema["jobqueue"] = "VARCHAR(%s)" % MAX_JOBQUEUE_NAME_LENGTH
         self.assertEqual(response.json, schema)
 
     def test_job_post(self):
@@ -144,7 +147,7 @@ class TestJobAPI(BaseTestCase):
         self.assertEqual(response3.json,
                         {
                             "id": id,
-                            "job_queue_id": None,
+                            "jobqueue": None,
                             "time_finished": None,
                             "time_started": None,
                             "end": 2.0,
@@ -216,7 +219,7 @@ class TestJobAPI(BaseTestCase):
         self.assertEqual(response1.json,
                         {
                             "id": id,
-                            "job_queue_id": None,
+                            "jobqueue": None,
                             "time_finished": None,
                             "time_started": None,
                             "end": 2.0,
@@ -488,7 +491,7 @@ class TestJobAPI(BaseTestCase):
         self.assertEqual(response3.json,
                         {
                             "id": id,
-                            "job_queue_id": None,
+                            "jobqueue": None,
                             "time_finished": None,
                             "time_started": None,
                             "end": 2.0,
@@ -606,7 +609,7 @@ class TestJobAPI(BaseTestCase):
         self.assert_ok(response3)
         self.assertEqual(response3.json,
                          {
-                            "job_queue_id": None,
+                            "jobqueue": None,
                             "ram_warning": None,
                             "title": "Test Job",
                             "state": "queued",
@@ -646,7 +649,7 @@ class TestJobAPI(BaseTestCase):
         self.assert_ok(response4)
         self.assertEqual(response4.json,
                          {
-                            "job_queue_id": None,
+                            "jobqueue": None,
                             "ram_warning": None,
                             "title": "Test Job",
                             "state": "queued",
@@ -725,7 +728,7 @@ class TestJobAPI(BaseTestCase):
         self.assert_ok(response3)
         self.assertEqual(response3.json,
                          {
-                            "job_queue_id": None,
+                            "jobqueue": None,
                             "ram_warning": None,
                             "title": "Test Job",
                             "state": "queued",

@@ -42,7 +42,8 @@ from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES
 from pyfarm.scheduler.tasks import (
     assign_tasks, send_job_completion_mail, delete_job)
-from pyfarm.models.core.cfg import MAX_JOBTYPE_LENGTH, MAX_USERNAME_LENGTH
+from pyfarm.models.core.cfg import (
+    MAX_JOBTYPE_LENGTH, MAX_USERNAME_LENGTH, MAX_JOBQUEUE_NAME_LENGTH)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 from pyfarm.models.user import User
@@ -50,6 +51,7 @@ from pyfarm.models.job import Job
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement)
 from pyfarm.models.tag import Tag
+from pyfarm.models.jobqueue import JobQueue
 from pyfarm.master.application import db
 from pyfarm.master.utility import jsonify, validate_with_model
 
@@ -165,6 +167,7 @@ def schema():
                 "id": "INTEGER",
                 "jobtype": "VARCHAR(64)",
                 "jobtype_version": "INTEGER",
+                "jobqueue": "VARCHAR(255)",
                 "notes": "TEXT",
                 "priority": "INTEGER",
                 "project_id": "INTEGER",
@@ -185,17 +188,20 @@ def schema():
     """
     schema_dict = Job.to_schema()
 
-    # These three columns are not part of the actual database model, but will be
+    # These columns are not part of the actual database model, but will be
     # dynamically computed by the api
     schema_dict["start"] = "NUMERIC(10,4)"
     schema_dict["end"] = "NUMERIC(10,4)"
     schema_dict["user"] = "VARCHAR(%s)" % MAX_USERNAME_LENGTH
+    schema_dict["jobqueue"] = "VARCHAR(%s)" % MAX_JOBQUEUE_NAME_LENGTH
 
     # In the database, we are storing the jobtype_version_id, but over the wire,
     # we are using the jobtype's name plus version to identify it
     del schema_dict["jobtype_version_id"]
     # Same for user_id
     del schema_dict["user_id"]
+    # jobqueue too
+    del schema_dict["job_queue_id"]
     schema_dict["jobtype"] = "VARCHAR(%s)" % MAX_JOBTYPE_LENGTH
     schema_dict["jobtype_version"] = "INTEGER"
     return jsonify(schema_dict), OK
@@ -206,9 +212,10 @@ class JobIndexAPI(MethodView):
                          type_checks={"by": lambda x: isinstance(
                              x, RANGE_TYPES)},
                          ignore=["start", "end", "jobtype", "jobtype_version",
-                                 "user"],
+                                 "user", "jobqueue"],
                          disallow=["jobtype_version_id", "time_submitted",
-                                   "time_started", "time_finished"])
+                                   "time_started", "time_finished",
+                                   "job_queue_id"])
     def post(self):
         """
         A ``POST`` to this endpoint will submit a new job.
@@ -251,6 +258,7 @@ class JobIndexAPI(MethodView):
                     "time_submitted": "2014-03-06T15:40:58.335259",
                     "jobtype_version": 1,
                     "jobtype": "TestJobType",
+                    "jobqueue": None
                     "start": 1.0,
                     "priority": 0,
                     "state": "queued",
@@ -367,6 +375,18 @@ class JobIndexAPI(MethodView):
                 return (jsonify(
                     error="User %s not found" % username), NOT_FOUND)
 
+        jobqueue = None
+        jobqueue_name = g.json.pop("jobqueue", None)
+        if jobqueue_name:
+            path_elements = jobqueue_name.split("/")
+            for element in path_elements:
+                jobqueue = JobQueue.query.filter_by(
+                    parent=jobqueue, name=element).first()
+                if not jobqueue:
+                    return (jsonify(error="Jobqueue %s not found" %
+                                    jobqueue_name),
+                            NOT_FOUND)
+
         g.json.pop("start", None)
         g.json.pop("end", None)
         job = Job(**g.json)
@@ -376,6 +396,7 @@ class JobIndexAPI(MethodView):
         job.parents = parents
         job.tags = tags
         job.user = user
+        job.queue = jobqueue
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
         if "end" in custom_json and "start" not in custom_json:
@@ -423,6 +444,8 @@ class JobIndexAPI(MethodView):
         job_data["jobtype_version"] = job.jobtype_version.version
         job_data["user"] = job.user.username if job.user else None
         del job_data["user_id"]
+        job_data["jobqueue"] = job.queue.path() if job.queue else None
+        del job_data["job_queue_id"]
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()
@@ -588,6 +611,8 @@ class SingleJobAPI(MethodView):
         job_data["jobtype_version"] = job.jobtype_version.version
         job_data["user"] = job.user.username if job.user else None
         del job_data["user_id"]
+        job_data["jobqueue"] = job.queue.path() if job.queue else None
+        del job_data["job_queue_id"]
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()
@@ -742,6 +767,20 @@ class SingleJobAPI(MethodView):
                     error="User %s not found" % username), NOT_FOUND)
             job.user = user
 
+
+        jobqueue_name = g.json.pop("jobqueue", None)
+        if jobqueue_name:
+            jobqueue = None
+            path_elements = jobqueue_name.split("/")
+            for element in path_elements:
+                jobqueue = JobQueue.query.filter_by(
+                    parent=jobqueue, name=element).first()
+                if not jobqueue:
+                    return (jsonify(error="Jobqueue %s not found" %
+                                    jobqueue_name),
+                            NOT_FOUND)
+            job.queue = jobqueue
+
         if "time_started" in g.json:
             return (jsonify(error="`time_started` cannot be set manually"),
                     BAD_REQUEST)
@@ -799,6 +838,8 @@ class SingleJobAPI(MethodView):
         job_data["jobtype_version"] = job.jobtype_version.version
         job_data["user"] = job.user.username if job.user else None
         del job_data["user_id"]
+        job_data["jobqueue"] = job.queue.path if job.queue else None
+        del job_data["job_queue_id"]
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()

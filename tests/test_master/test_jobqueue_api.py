@@ -254,7 +254,6 @@ class TestJobQueueAPI(BaseTestCase):
             content_type="application/json",
             data=dumps({"name": "Test JobQueue"}))
         self.assert_created(response1)
-        parent_id = response1.json["id"]
 
         response2 = self.client.post(
             "/api/v1/jobtypes/",
@@ -277,7 +276,7 @@ class TestJobQueueAPI(BaseTestCase):
                     "title": "Test Job",
                     "jobtype": "TestJobType",
                     "data": {"foo": "bar"},
-                    "job_queue_id": parent_id
+                    "jobqueue": "Test JobQueue"
                     }))
         self.assert_created(response3)
 
