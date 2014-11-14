@@ -207,6 +207,9 @@
       <a href="{{ url_for('single_job_ui', job_id=job[0].id) }}">
         {{ job[0].title }}
       </a>
+      {% if job[0].children %}
+      <i class="icon-circle-arrow-down clickable-icon subjob_toggle" data-jobid="{{ job[0].id }}" data-open=false></i>
+      {%endif%}
       {% for tag in job[0].tags %}
       {% if tag.tag in filters.tags %}
       <span class="label label-default">
