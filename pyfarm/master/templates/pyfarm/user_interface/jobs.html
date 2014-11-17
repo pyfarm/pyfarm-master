@@ -73,6 +73,34 @@
       </li>
     </ul>
   </div>
+  <input type="hidden" name="hidden_filter" value="true">
+  <div class="dropdown hidden_filter_dropdown">
+    <a class="dropdown-toggle btn" data-toggle="dropdown" href="#">
+      Hidden <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-form" role="menu">
+      <li>
+        <label class="checkbox">
+          {% if filters.hidden %}
+          <input type="checkbox" name="hidden" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="hidden" value="true"/>
+          {% endif %}
+          Show Hidden
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+          {% if filters.not_hidden %}
+          <input type="checkbox" name="not_hidden" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="not_hidden" value="true"/>
+          {% endif %}
+          Show Not Hidden
+        </label>
+      </li>
+    </ul>
+  </div>
   <div class="dropdown user_filter_dropdown">
     <a class="dropdown-toggle btn" data-toggle="dropdown" href="#">
       User <b class="caret"></b>
