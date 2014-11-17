@@ -115,7 +115,7 @@ def parse_requirements(requirements):
                 SoftwareVersion.version == min_version_str).first()
             if not min_version:
                 raise ObjectNotFound("Version %s of software %s not found" %
-                                        (software_name, min_version_str))
+                                        (min_version_str, software_name))
             requirement.min_version = min_version
 
         max_version_str = entry.pop("max_version", None)
@@ -125,7 +125,7 @@ def parse_requirements(requirements):
                 SoftwareVersion.version == max_version_str).first()
             if not max_version:
                 raise ObjectNotFound("Version %s of software %s not found" %
-                                     (software_name, max_version_str))
+                                     (max_version_str, software_name))
             requirement.max_version = max_version
 
         if entry:
