@@ -32,6 +32,7 @@ from pyfarm.models.job import Job
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
 from pyfarm.models.jobqueue import JobQueue
+from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.user import User
 from pyfarm.master.application import db
 
@@ -67,7 +68,11 @@ def jobs():
                                   func.coalesce(
                                       failed_count_query.c.t_failed,
                                       0).label('t_failed'),
-                                  User.username).\
+                                  User.username,
+                                  JobType.name.label('jobtype_name'),
+                                  JobType.id.label('jobtype_id')).\
+        join(JobTypeVersion, Job.jobtype_version_id == JobTypeVersion.id).\
+        join(JobType, JobTypeVersion.jobtype_id == JobType.id).\
         outerjoin(queued_count_query, Job.id == queued_count_query.c.job_id).\
         outerjoin(running_count_query, Job.id == running_count_query.c.job_id).\
         outerjoin(done_count_query, Job.id == done_count_query.c.job_id).\
@@ -135,12 +140,19 @@ def jobs():
             jobs_query = jobs_query.filter(Job.user_id.in_(user_ids))
         filters["u"] = user_ids
 
+    if "jt" in request.args:
+        jobtype_ids = request.args.getlist("jt")
+        jobtype_ids = [int(x) for x in jobtype_ids]
+        jobs_query = jobs_query.filter(JobType.id.in_(jobtype_ids))
+        filters["jt"] = jobtype_ids
+
     order_dir = "desc"
     order_by = "time_submitted"
     if "order_by" in request.args:
         order_by = request.args.get("order_by")
     if order_by not in ["title", "state", "time_submitted", "t_queued",
-                        "t_running", "t_failed", "t_done", "username"]:
+                        "t_running", "t_failed", "t_done", "username",
+                        "jobtype_name"]:
         return (render_template(
             "pyfarm/error.html",
             error="Unknown order key %r. Options are 'title', 'state', "
@@ -169,6 +181,8 @@ def jobs():
 
     users_query = User.query
 
+    jobtypes_query = JobType.query
+
     filters_and_order = filters.copy()
     filters_and_order.update({"order_by": order_by, "order_dir": order_dir})
     return render_template("pyfarm/user_interface/jobs.html",
@@ -176,7 +190,8 @@ def jobs():
                            order_dir=order_dir,
                            order={"order_by": order_by, "order_dir": order_dir},
                            no_state_filters=no_state_filters, users=users_query,
-                           filters_and_order=filters_and_order)
+                           filters_and_order=filters_and_order,
+                           jobtypes=jobtypes_query)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
