@@ -248,7 +248,6 @@ def create_jobtype():
                                software_items=Software.query)
     else:
         with db.session.no_autoflush:
-            print("form: %s" % request.form)
             jobtype = JobType()
             jobtype.name = request.form["name"]
             jobtype.description = request.form["description"]
@@ -266,7 +265,6 @@ def create_jobtype():
             requirements = zip(request.form.getlist("software"),
                             request.form.getlist("min_version"),
                             request.form.getlist("min_version"))
-            print("Requirements: %s" % requirements)
 
             for requirement_tuple in requirements:
                 software = Software.query.filter_by(
