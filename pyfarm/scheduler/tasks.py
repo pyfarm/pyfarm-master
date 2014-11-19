@@ -239,8 +239,7 @@ def read_queue_tree(queue):
                                             0).label('num_agents')).\
         outerjoin(agent_count_query, Job.id == agent_count_query.c.job_id).\
         filter(Job.job_queue_id == queue.id,
-               or_(Job.state == WorkState.RUNNING,
-                   Job.state == None),
+               Job.state == WorkState.RUNNING,
                Job.to_be_deleted == False)
 
     for tuple in child_jobs_query:
@@ -446,16 +445,40 @@ def assign_agents_to_queue(queue, max_agents,
             assigned_this_round = assigned
             queue.total_assigned_agents += len(assigned)
 
-            # Running jobs and subqueues at this priority did not use up all
-            # available agents, start a queued job
-            if max_agents > 0:
-                queued_jobs = [x for x in objects if isinstance(x, Job) and
-                               x.state == None]
-                queued_jobs.sort(key=lambda job: job.time_submitted)
-                jobs_started = 0
-                while jobs_started == 0 and queued_jobs:
-                    job = queued_jobs.pop(0)
-                    assigned = assign_agents_to_job(job, 1,
+
+
+            if not assigned_this_round:
+                agents_needed = False
+
+    if not assigned_agents:
+        # Running jobs and subqueues in this queue did not use up all
+        # available agents, start a queued job
+        if max_agents > 0:
+            logger.debug("Ran out of running jobs for queue %s, trying to "
+                "start one", queue.path())
+            queued_jobs_query = Job.query.filter(
+                Job.state == None,
+                ~Job.parents.any(or_(Job.state == None,
+                                        and_(Job.state != None,
+                                            Job.state != WorkState.DONE))))
+            if queue.id:
+                queued_jobs_query = queued_jobs_query.filter(
+                    Job.queue == queue)
+            else:
+                queued_jobs_query = queued_jobs_query.filter(
+                    Job.queue == None)
+            queud_jobs_query = queued_jobs_query.order_by(
+                                                    asc(Job.time_submitted))
+            jobs_started = 0
+            queued_jobs_iterator = iter(queued_jobs_query)
+            logger.debug("Looking for a job to start")
+            try:
+                while jobs_started == 0:
+                    job = next(queued_jobs_iterator)
+                    job.total_assigned_agents = 0
+                    job.can_use_more_agents = True
+                    assigned = assign_agents_to_job(
+                        job, 1,
                         suitable_agents_by_jobtype_version[
                             job.jobtype_version_id])
                     max_agents -= len(assigned)
@@ -463,10 +486,11 @@ def assign_agents_to_queue(queue, max_agents,
                     assigned_this_round.update(assigned)
                     queue.total_assigned_agents += len(assigned)
                     if assigned:
+                        queue.branches.append(job)
                         jobs_started += 1
-
-            if not assigned_this_round:
-                agents_needed = False
+            except StopIteration:
+                pass
+            logger.debug("Finished looking for a job to start")
 
     if not assigned_agents:
         queue.can_use_more_agents = False
