@@ -122,6 +122,21 @@ def jobs():
             jobs_query = jobs_query.filter(
                 Job.title.ilike("%%%s%%" % title))
 
+    filters["hidden_filter"] = ("hidden_filter" in request.args and
+                                request.args["hidden_filter"].lower() == "true")
+    filters["hidden"] = False
+    filters["not_hidden"] = True
+
+    if filters["hidden_filter"]:
+        filters["hidden"] = ("hidden" in request.args and
+                             request.args["hidden"].lower() == "true")
+        filters["not_hidden"] = ("not_hidden" in request.args and
+                                 request.args["not_hidden"].lower() == "true")
+    if not filters["hidden"]:
+        jobs_query = jobs_query.filter(Job.hidden != True)
+    if not filters["not_hidden"]:
+        jobs_query = jobs_query.filter(Job.hidden != False)
+
     filters["no_user"] = ("no_user" in request.args and
                           request.args["no_user"].lower == "true")
     if "u" in request.args or filters["no_user"]:

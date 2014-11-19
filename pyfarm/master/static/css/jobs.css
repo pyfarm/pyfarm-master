@@ -8,6 +8,10 @@ ul.dropdown-menu-form {
     display: inline;
 }
 
+.hidden_filter_dropdown {
+    display: inline;
+}
+
 .user_filter_dropdown {
     display: inline;
 }
