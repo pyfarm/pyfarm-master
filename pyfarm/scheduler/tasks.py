@@ -540,7 +540,7 @@ def assign_tasks():
             agents_with_new_tasks = assign_agents_to_queue(
                 tree_root,
                 len(idle_agents),
-                suitable_agents_by_jobtype_version
+                suitable_agents_by_jobtype_version)
 
             for agent in agents_with_new_tasks:
                 db.session.add(agent)
