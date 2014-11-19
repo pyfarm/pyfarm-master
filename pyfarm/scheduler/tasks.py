@@ -513,25 +513,6 @@ def assign_tasks():
 
             db.session.commit()
             logger.info("Assigning tasks to agents")
-            tasks_query = Task.query.filter(
-                or_(Task.state == None, ~Task.state.in_([WorkState.DONE,
-                                                        WorkState.FAILED])))
-            tasks_query = tasks_query.filter(
-                or_(Task.agent == None,
-                    Task.agent.has(Agent.state.in_([AgentState.OFFLINE,
-                                                    AgentState.DISABLED]))))
-            tasks_query = tasks_query.filter(
-                Task.job.has(Job.to_be_deleted == False))
-            tasks_query = tasks_query.filter(
-                or_(Task.job.has(Job.state == None),
-                    Task.job.has(Job.state != WorkState.PAUSED)))
-
-            unassigned_tasks = tasks_query.count()
-            logger.debug("Got %s unassigned tasks" % unassigned_tasks)
-            if not unassigned_tasks:
-                logger.info("No unassigned tasks, not assigning anything")
-                return
-
             idle_agents = Agent.query.filter(Agent.state == AgentState.ONLINE,
                                             ~Agent.tasks.any(
                                                 or_(
