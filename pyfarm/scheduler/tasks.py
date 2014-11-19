@@ -30,7 +30,7 @@ from email.mime.text import MIMEText
 from time import time, sleep
 from sys import maxsize
 
-from sqlalchemy import or_, and_, func, distinct
+from sqlalchemy import or_, and_, func, distinct, desc, asc
 
 import requests
 from requests.exceptions import ConnectionError, RequestException
@@ -50,7 +50,7 @@ from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task, TaskDependencies
 from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobqueue import JobQueue
-from pyfarm.models.jobtype import JobType
+from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
 from pyfarm.master.application import db
@@ -199,6 +199,20 @@ def satisfies_requirements(agent, job):
 
     return len(requirements_to_satisfy) <= len(satisfied_requirements)
 
+def satisfies_jobtype_requirements(agent, jobtype_version):
+    requirements_to_satisfy = set(jobtype_version.software_requirements)
+
+    satisfied_requirements = []
+    for software_version in agent.software_versions:
+        for requirement in requirements_to_satisfy:
+            if (software_version.software == requirement.software and
+                (requirement.min_version == None or
+                 requirement.min_version.rank <= software_version.rank) and
+                (requirement.max_version == None or
+                 requirement.max_version.rank >= software_version.rank)):
+                satisfied_requirements.append(requirement)
+
+    return len(requirements_to_satisfy) <= len(satisfied_requirements)
 
 def read_queue_tree(queue):
     # Agents already assigned to this queue before the weight scheduler runs
@@ -315,12 +329,11 @@ def assign_agents_to_job(job, max_agents, available_agents):
 
     if not assigned_agents:
         job.can_use_more_agents = False
-        logger.info("Could not find any agent for job %s (id %s)", job.title,
-                    job.id)
 
     return assigned_agents
 
-def assign_agents_by_weight(objects, max_agents, available_agents):
+def assign_agents_by_weight(objects, max_agents,
+                            suitable_agents_by_jobtype_version):
     logger.debug("Assigning agents by weight between %s objects" % len(objects))
     max_weight = 1
     min_weight = 1
@@ -351,13 +364,15 @@ def assign_agents_by_weight(objects, max_agents, available_agents):
                                   (not i.maximum_agents or
                                        i.maximum_agents >
                                            i.total_assigned_agents)):
-                                assigned = assign_agents_to_job(i, 1,
-                                                                available_agents)
+                                assigned = assign_agents_to_job(
+                                    i, 1,
+                                    suitable_agents_by_jobtype_version[
+                                        i.jobtype_version_id])
                             elif (not i.maximum_agents or
                                       i.maximum_agents >
                                           i.total_assigned_agents):
                                 assigned = assign_agents_to_queue(
-                                    i, 1, available_agents)
+                                    i, 1, suitable_agents_by_jobtype_version)
                             assigned_this_round += len(assigned)
                             max_agents -= len(assigned)
                             assigned_agents.update(assigned)
@@ -369,7 +384,8 @@ def assign_agents_by_weight(objects, max_agents, available_agents):
 
 
 # TODO Make this a method of JobQueue and Job called assign_agents
-def assign_agents_to_queue(queue, max_agents, available_agents):
+def assign_agents_to_queue(queue, max_agents,
+                           suitable_agents_by_jobtype_version):
     """
     Distribute up to max_agents among the jobs and subqueues of queue.
     Returns the list of agents that have been assigned new tasks.
@@ -385,10 +401,13 @@ def assign_agents_to_queue(queue, max_agents, available_agents):
                 branch.minimum_agents > branch.total_assigned_agents and
                 branch.can_use_more_agents):
                 if isinstance(branch, Job):
-                    assigned = assign_agents_to_job(branch, 1, available_agents)
+                    assigned = assign_agents_to_job(
+                        branch, 1,
+                        suitable_agents_by_jobtype_version[
+                            branch.jobtype_version_id])
                 else:
-                    assigned = assign_agents_to_queue(branch, 1,
-                                                      available_agents)
+                    assigned = assign_agents_to_queue(
+                        branch, 1, suitable_agents_by_jobtype_version)
                 max_agents -= len(assigned)
                 assigned_agents.update(assigned)
                 queue.total_assigned_agents += len(assigned)
@@ -419,8 +438,9 @@ def assign_agents_to_queue(queue, max_agents, available_agents):
                             x.state == WorkState.RUNNING]
             subqueues = [x for x in objects if isinstance(x, JobQueue) and
                          x.can_use_more_agents]
-            assigned = assign_agents_by_weight(running_jobs + subqueues,
-                                               max_agents, available_agents)
+            assigned = assign_agents_by_weight(
+                running_jobs + subqueues, max_agents,
+                suitable_agents_by_jobtype_version)
             max_agents -= len(assigned)
             assigned_agents.update(assigned)
             assigned_this_round = assigned
@@ -435,7 +455,9 @@ def assign_agents_to_queue(queue, max_agents, available_agents):
                 jobs_started = 0
                 while jobs_started == 0 and queued_jobs:
                     job = queued_jobs.pop(0)
-                    assigned = assign_agents_to_job(job, 1, available_agents)
+                    assigned = assign_agents_to_job(job, 1,
+                        suitable_agents_by_jobtype_version[
+                            job.jobtype_version_id])
                     max_agents -= len(assigned)
                     assigned_agents.update(assigned)
                     assigned_this_round.update(assigned)
@@ -497,10 +519,23 @@ def assign_tasks():
                 logger.info("No idle agents, not assigning anything")
                 return
 
+            jobtype_versions_query = JobTypeVersion.query.filter(
+                JobTypeVersion.jobs.any(or_(
+                    Job.state == None, )))
+            suitable_agents_by_jobtype_version = {}
+            for jobtype_version in jobtype_versions_query:
+                suitable_agents = []
+                for agent in idle_agents:
+                    if satisfies_jobtype_requirements(agent, jobtype_version):
+                        suitable_agents.append(agent)
+                suitable_agents_by_jobtype_version[jobtype_version.id] =\
+                    suitable_agents
+
             tree_root = read_queue_tree(JobQueue())
-            agents_with_new_tasks = assign_agents_to_queue(tree_root,
-                                                        len(idle_agents),
-                                                        idle_agents)
+            agents_with_new_tasks = assign_agents_to_queue(
+                tree_root,
+                len(idle_agents),
+                suitable_agents_by_jobtype_version
 
             for agent in agents_with_new_tasks:
                 db.session.add(agent)
