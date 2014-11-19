@@ -30,7 +30,7 @@ from email.mime.text import MIMEText
 from time import time, sleep
 from sys import maxsize
 
-from sqlalchemy import or_, and_, func
+from sqlalchemy import or_, and_, func, distinct
 
 import requests
 from requests.exceptions import ConnectionError, RequestException
@@ -214,17 +214,24 @@ def read_queue_tree(queue):
         queue.total_assigned_agents += child_queue.total_assigned_agents
         queue.branches.append(child_queue)
 
-    child_jobs_query = Job.query.filter(Job.job_queue_id == queue.id,
-                                        or_(Job.state == WorkState.RUNNING,
-                                            Job.state == None),
-                                        Job.to_be_deleted == False)
-    for job in child_jobs_query:
-        # TODO Get this number as part of the above query, so we don't do one
-        # query per job
-        num_assigned_agents = Agent.query.filter(
-            Agent.tasks.any(and_(
-                or_(Task.state == WorkState.RUNNING, Task.state == None),
-                Task.job == job))).count()
+    agent_count_query = db.session.query(
+        Task.job_id, func.count(distinct(Task.agent_id)).label('num_agents')).\
+            filter(or_(Task.state == None, Task.state == WorkState.RUNNING)).\
+                group_by(Task.job_id).subquery()
+
+    child_jobs_query = db.session.query(Job,
+                                        func.coalesce(
+                                            agent_count_query.c.num_agents,
+                                            0).label('num_agents')).\
+        outerjoin(agent_count_query, Job.id == agent_count_query.c.job_id).\
+        filter(Job.job_queue_id == queue.id,
+               or_(Job.state == WorkState.RUNNING,
+                   Job.state == None),
+               Job.to_be_deleted == False)
+
+    for tuple in child_jobs_query:
+        num_assigned_agents = tuple[1]
+        job = tuple[0]
         job.total_assigned_agents = num_assigned_agents
         job.can_use_more_agents = True
         queue.total_assigned_agents += num_assigned_agents
