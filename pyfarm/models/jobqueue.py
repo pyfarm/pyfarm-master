@@ -23,6 +23,9 @@ Model for job queues
 
 from textwrap import dedent
 
+from sqlalchemy import event
+from sqlalchemy.schema import UniqueConstraint
+
 from pyfarm.core.config import read_env_int
 
 from pyfarm.master.application import db
@@ -37,6 +40,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
     distribution of computing capacity to jobs.
     """
     __tablename__ = TABLE_JOB_QUEUE
+    __table_args__ = (UniqueConstraint("parent_jobqueue_id", "name"),)
 
     REPR_COLUMNS = ("id", "name")
 
@@ -46,8 +50,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                                    nullable=True,
                                    doc="The parent queue of this queue. If "
                                        "NULL, this is a top level queue.")
-    name = db.Column(db.String(MAX_JOBQUEUE_NAME_LENGTH), nullable=False,
-                     unique=True)
+    name = db.Column(db.String(MAX_JOBQUEUE_NAME_LENGTH), nullable=False)
     minimum_agents = db.Column(db.Integer, nullable=True,
                           doc=dedent("""
                           The scheduler will try to assign at least this number
@@ -87,3 +90,14 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
             return self.parent.path() + path
         else:
             return path
+
+    @staticmethod
+    def top_level_unique_check(mapper, connection, target):
+        if target.parent_jobqueue_id is None:
+            count = JobQueue.query.filter_by(parent_jobqueue_id=None,
+                                             name=target.name).count()
+            if count > 0:
+                raise ValueError("Cannot have two jobqueues named %r at the "
+                                 "top level" % target.name)
+
+event.listen(JobQueue, "before_insert", JobQueue.top_level_unique_check)
