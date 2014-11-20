@@ -174,8 +174,6 @@ def send_tasks_to_agent(self, agent_id):
 
 
 def satisfies_requirements(agent, job):
-    logger.debug("Checking whether agent %s satisfies the requirements for "
-                 "job %s", agent.hostname, job.title)
     if job.ram > agent.ram or job.cpus > agent.cpus:
         return False
 
@@ -190,12 +188,7 @@ def satisfies_requirements(agent, job):
                  requirement.min_version.rank <= software_version.rank) and
                 (requirement.max_version == None or
                  requirement.max_version.rank >= software_version.rank)):
-                logger.debug("Software version %r satisfies requirement %r",
-                             software_version, requirement)
                 satisfied_requirements.append(requirement)
-            else:
-                logger.debug("Software version %r does not satisfy "
-                             "requirement %r", software_version, requirement)
 
     return len(requirements_to_satisfy) <= len(satisfied_requirements)
 
@@ -261,7 +254,6 @@ def assign_agents_to_job(job, max_agents, available_agents):
 
     agents_needed = True
     while max_agents > 0 and agents_needed and available_agents:
-        logger.debug("Looking for an agent for a for job %s", job.title)
         selected_agent = None
         for agent in available_agents:
             if satisfies_requirements(agent, job):
