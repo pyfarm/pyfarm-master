@@ -836,9 +836,9 @@ def clean_up_orphaned_task_logs():
         for filepath in tasklog_files:
             referencing_count = TaskLog.query.filter_by(identifier=file)
             if not referencing_count:
-                logger.info("Deleting log file %s", join(LOGFILES_DIR, file))
+                logger.info("Deleting log file %s", join(LOGFILES_DIR, filepath))
                 try:
-                    remove(join(LOGFILES_DIR, file))
+                    remove(join(LOGFILES_DIR, filepath))
                 except OSError as e:
                     if e.errno != ENOENT:
                         raise
