@@ -97,7 +97,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
             count = JobQueue.query.filter_by(parent_jobqueue_id=None,
                                              name=target.name).count()
             if count > 0:
-                raise ValueError("Cannot have two jobqueues named \"%s\" at the "
+                raise ValueError("Cannot have two jobqueues named %r at the "
                                  "top level" % target.name)
 
 event.listen(JobQueue, "before_insert", JobQueue.top_level_unique_check)
