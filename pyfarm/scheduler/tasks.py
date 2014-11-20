@@ -828,12 +828,21 @@ def clean_up_orphaned_task_logs():
         db.session.delete(log)
     db.session.commit()
 
-    tasklog_files = [f for f in listdir(LOGFILES_DIR)\
-                     if isfile(join(LOGFILES_DIR, f))]
+    try:
+        tasklog_files = [f for f in listdir(LOGFILES_DIR)\
+                         if isfile(join(LOGFILES_DIR, f))]
 
-    for file in tasklog_files:
-        referencing_count = TaskLog.query.filter_by(identifier=file)
-        if not referencing_count:
-            logger.info("Deleting file %s from task logs directory" %
-                        join(LOGFILES_DIR, file))
-            remove(join(LOGFILES_DIR, file))
+        for file in tasklog_files:
+            referencing_count = TaskLog.query.filter_by(identifier=file)
+            if not referencing_count:
+                logger.info("Deleting file %s from task logs directory" %
+                            join(LOGFILES_DIR, file))
+                try:
+                    remove(join(LOGFILES_DIR, file))
+                except OSError as e:
+                    if e.errno != ENOENT:
+                        raise
+    except OSError as e:
+        if e.errno != ENOENT:
+            raise
+        logger.warning("Log directory %r does not exist", LOGFILES_DIR)
