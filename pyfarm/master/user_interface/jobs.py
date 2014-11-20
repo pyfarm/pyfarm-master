@@ -28,7 +28,7 @@ from sqlalchemy import func, desc, asc, or_
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
 from pyfarm.scheduler.tasks import delete_job, stop_task, assign_tasks
-from pyfarm.models.job import Job
+from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
 from pyfarm.models.jobqueue import JobQueue
@@ -54,6 +54,9 @@ def jobs():
         Task.job_id, func.count('*').label('t_failed')).\
             filter(Task.state == WorkState.FAILED).\
                 group_by(Task.job_id).subquery()
+    child_count_query = db.session.query(
+        JobDependencies.c.parentid, func.count('*').label('child_count')).\
+                group_by(JobDependencies.c.parentid).subquery()
 
     jobs_query = db.session.query(Job,
                                   func.coalesce(
@@ -70,14 +73,18 @@ def jobs():
                                       0).label('t_failed'),
                                   User.username,
                                   JobType.name.label('jobtype_name'),
-                                  JobType.id.label('jobtype_id')).\
+                                  JobType.id.label('jobtype_id'),
+                                  func.coalesce(
+                                      child_count_query.c.child_count,
+                                      0).label('child_count')).\
         join(JobTypeVersion, Job.jobtype_version_id == JobTypeVersion.id).\
         join(JobType, JobTypeVersion.jobtype_id == JobType.id).\
         outerjoin(queued_count_query, Job.id == queued_count_query.c.job_id).\
         outerjoin(running_count_query, Job.id == running_count_query.c.job_id).\
         outerjoin(done_count_query, Job.id == done_count_query.c.job_id).\
         outerjoin(failed_count_query, Job.id == failed_count_query.c.job_id).\
-        outerjoin(User, Job.user_id == User.id)
+        outerjoin(User, Job.user_id == User.id).\
+        outerjoin(child_count_query, Job.id == child_count_query.c.parentid)
 
     filters = {}
     if "tags" in request.args:
