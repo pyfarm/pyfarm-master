@@ -538,6 +538,8 @@ def assign_tasks():
                 db.session.add(agent)
             db.session.commit()
 
+            logger.debug("Finished assigning tasks to agents")
+
             for agent in agents_with_new_tasks:
                 logger.debug("Registering asynchronous task pusher for agent %s",
                             agent.id)
