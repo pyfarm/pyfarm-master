@@ -32,6 +32,7 @@ from time import time, sleep
 from sys import maxsize
 from os.path import join, isfile, join
 from os import remove, listdir
+from errno import ENOENT
 
 from sqlalchemy import or_, and_, func
 
