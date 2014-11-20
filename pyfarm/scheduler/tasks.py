@@ -22,6 +22,7 @@ Tasks
 This module is responsible for finding and allocating tasks on agents.
 """
 
+import tempfile
 from datetime import timedelta, datetime
 from logging import DEBUG
 from json import dumps
@@ -31,7 +32,6 @@ from time import time, sleep
 from sys import maxsize
 from os.path import join, isfile
 from os import remove
-import tempfile
 
 from sqlalchemy import or_, and_, func
 
