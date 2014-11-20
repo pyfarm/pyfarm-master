@@ -423,7 +423,7 @@ def assign_agents_to_queue(queue, max_agents,
         objects = objects_by_priority[priority]
         agents_needed = True
         while max_agents > 0 and agents_needed:
-            # Not started jobs don't get anything as long running ones or
+            # Not started jobs don't get anything as long as running ones or
             # subqueues still need agents
             running_jobs = [x for x in objects if isinstance(x, Job) and
                             x.state == WorkState.RUNNING]
