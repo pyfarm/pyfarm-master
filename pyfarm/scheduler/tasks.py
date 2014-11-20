@@ -30,8 +30,8 @@ from smtplib import SMTP
 from email.mime.text import MIMEText
 from time import time, sleep
 from sys import maxsize
-from os.path import join, isfile
-from os import remove
+from os.path import join, isfile, join
+from os import remove, listdir
 
 from sqlalchemy import or_, and_, func
 
@@ -828,8 +828,6 @@ def clean_up_orphaned_task_logs():
         db.session.delete(log)
     db.session.commit()
 
-    from os import listdir
-    from os.path import isfile, join
     tasklog_files = [f for f in listdir(LOGFILES_DIR)\
                      if isfile(join(LOGFILES_DIR, f))]
 
