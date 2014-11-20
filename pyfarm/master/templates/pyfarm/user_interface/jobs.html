@@ -266,14 +266,14 @@
       {% if job["child_count"] %}
       <i class="icon-circle-arrow-down clickable-icon subjob_toggle" data-jobid="{{ job[0].id }}" data-open=false></i>
       {%endif%}
-      {% for tag in job[0].tags %}
-      {% if tag.tag in filters.tags %}
+      {% for tag in (tags_by_job_id[job[0].id] or []) %}
+      {% if tag in filters.tags %}
       <span class="label label-default">
-        {{ tag.tag }}
+        {{ tag }}
       </span>
       {% else %}
-      <a class="label label-success" href="{{ url_for('jobs_index_ui', tags=(filters.tags or '') + ' ' + tag.tag, title=filters.title, state=filters.state, **order) }}">
-        {{ tag.tag }}
+      <a class="label label-success" href="{{ url_for('jobs_index_ui', tags=(filters.tags or '') + ' ' + tag, title=filters.title, state=filters.state, **order) }}">
+        {{ tag }}
       </a>
       {% endif %}
       {% endfor %}

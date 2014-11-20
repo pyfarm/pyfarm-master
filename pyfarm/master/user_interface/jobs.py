@@ -28,7 +28,7 @@ from sqlalchemy import func, desc, asc, or_
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
 from pyfarm.scheduler.tasks import delete_job, stop_task, assign_tasks
-from pyfarm.models.job import Job, JobDependencies
+from pyfarm.models.job import Job, JobDependencies, JobTagAssociation
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
 from pyfarm.models.jobqueue import JobQueue
@@ -200,10 +200,18 @@ def jobs():
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
     jobs = jobs_query.all()
-
     users_query = User.query
 
     jobtypes_query = JobType.query
+
+    tags_by_job_query = db.session.query(JobTagAssociation.c.job_id, Tag.tag).\
+        join(Tag, JobTagAssociation.c.tag_id==Tag.id).all()
+    tags_by_job_id = {}
+    for association in tags_by_job_query:
+        if association[0] not in tags_by_job_id:
+            tags_by_job_id[association[0]] = [association[1]]
+        else:
+            tags_by_job_id[association[0]] += [association[1]]
 
     filters_and_order = filters.copy()
     filters_and_order.update({"order_by": order_by, "order_dir": order_dir})
@@ -213,7 +221,8 @@ def jobs():
                            order={"order_by": order_by, "order_dir": order_dir},
                            no_state_filters=no_state_filters, users=users_query,
                            filters_and_order=filters_and_order,
-                           jobtypes=jobtypes_query)
+                           jobtypes=jobtypes_query,
+                           tags_by_job_id=tags_by_job_id)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
