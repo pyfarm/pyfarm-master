@@ -268,8 +268,8 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     # self-referential many-to-many relationship
     parents = db.relationship("Job",
                               secondary=JobDependencies,
-                              primaryjoin=id==JobDependencies.c.parentid,
-                              secondaryjoin=id==JobDependencies.c.childid,
+                              primaryjoin=id==JobDependencies.c.childid,
+                              secondaryjoin=id==JobDependencies.c.parentid,
                               backref="children")
 
     notified_users = db.relationship("User",

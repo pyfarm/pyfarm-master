@@ -28,7 +28,7 @@ from sqlalchemy import func, desc, asc, or_
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
 from pyfarm.scheduler.tasks import delete_job, stop_task, assign_tasks
-from pyfarm.models.job import Job
+from pyfarm.models.job import Job, JobDependencies, JobTagAssociation
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
 from pyfarm.models.jobqueue import JobQueue
@@ -54,6 +54,9 @@ def jobs():
         Task.job_id, func.count('*').label('t_failed')).\
             filter(Task.state == WorkState.FAILED).\
                 group_by(Task.job_id).subquery()
+    child_count_query = db.session.query(
+        JobDependencies.c.parentid, func.count('*').label('child_count')).\
+                group_by(JobDependencies.c.parentid).subquery()
 
     jobs_query = db.session.query(Job,
                                   func.coalesce(
@@ -70,14 +73,18 @@ def jobs():
                                       0).label('t_failed'),
                                   User.username,
                                   JobType.name.label('jobtype_name'),
-                                  JobType.id.label('jobtype_id')).\
+                                  JobType.id.label('jobtype_id'),
+                                  func.coalesce(
+                                      child_count_query.c.child_count,
+                                      0).label('child_count')).\
         join(JobTypeVersion, Job.jobtype_version_id == JobTypeVersion.id).\
         join(JobType, JobTypeVersion.jobtype_id == JobType.id).\
         outerjoin(queued_count_query, Job.id == queued_count_query.c.job_id).\
         outerjoin(running_count_query, Job.id == running_count_query.c.job_id).\
         outerjoin(done_count_query, Job.id == done_count_query.c.job_id).\
         outerjoin(failed_count_query, Job.id == failed_count_query.c.job_id).\
-        outerjoin(User, Job.user_id == User.id)
+        outerjoin(User, Job.user_id == User.id).\
+        outerjoin(child_count_query, Job.id == child_count_query.c.parentid)
 
     filters = {}
     if "tags" in request.args:
@@ -193,10 +200,18 @@ def jobs():
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
     jobs = jobs_query.all()
-
     users_query = User.query
 
     jobtypes_query = JobType.query
+
+    tags_by_job_query = db.session.query(JobTagAssociation.c.job_id, Tag.tag).\
+        join(Tag, JobTagAssociation.c.tag_id==Tag.id).all()
+    tags_by_job_id = {}
+    for association in tags_by_job_query:
+        if association[0] not in tags_by_job_id:
+            tags_by_job_id[association[0]] = [association[1]]
+        else:
+            tags_by_job_id[association[0]] += [association[1]]
 
     filters_and_order = filters.copy()
     filters_and_order.update({"order_by": order_by, "order_dir": order_dir})
@@ -206,7 +221,8 @@ def jobs():
                            order={"order_by": order_by, "order_dir": order_dir},
                            no_state_filters=no_state_filters, users=users_query,
                            filters_and_order=filters_and_order,
-                           jobtypes=jobtypes_query)
+                           jobtypes=jobtypes_query,
+                           tags_by_job_id=tags_by_job_id)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
