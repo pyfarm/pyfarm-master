@@ -22,6 +22,7 @@ Tasks
 This module is responsible for finding and allocating tasks on agents.
 """
 
+import tempfile
 from datetime import timedelta, datetime
 from logging import DEBUG
 from json import dumps
@@ -29,6 +30,9 @@ from smtplib import SMTP
 from email.mime.text import MIMEText
 from time import time, sleep
 from sys import maxsize
+from os.path import join, isfile, join
+from os import remove, listdir
+from errno import ENOENT
 
 from sqlalchemy import or_, and_, func
 
@@ -48,6 +52,7 @@ from pyfarm.models.software import (
     JobTypeSoftwareRequirement)
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task, TaskDependencies
+from pyfarm.models.tasklog import TaskLog
 from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.jobtype import JobType
@@ -75,7 +80,8 @@ POLL_IDLE_AGENTS_INTERVAL = read_env_int(
     "PYFARM_POLL_IDLE_AGENTS_INTERVAL", 3600)
 SCHEDULER_LOCKFILE = read_env(
     "PYFARM_SCHEDULER_LOCKFILE", "/tmp/pyfarm_scheduler_lock")
-
+LOGFILES_DIR = read_env(
+    "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
 
 @celery_app.task(ignore_result=True, bind=True)
 def send_tasks_to_agent(self, agent_id):
@@ -797,6 +803,7 @@ def stop_task(self, task_id):
 
     db.session.commit()
 
+
 @celery_app.task(ignore_results=True)
 def delete_job(job_id):
     db.session.commit()
@@ -809,3 +816,33 @@ def delete_job(job_id):
     tasks_query = Task.query.filter_by(job=job)
     for task in tasks_query:
         delete_task.delay(task.id)
+
+
+@celery_app.task(ignore_results=True)
+def clean_up_orphaned_task_logs():
+    db.session.commit()
+
+    orphaned_task_logs = TaskLog.query.filter(
+        ~TaskLog.task_associations.any()).all()
+    for log in orphaned_task_logs:
+        logger.info("Removing orphaned task log %s" % log.identifier)
+        db.session.delete(log)
+    db.session.commit()
+
+    try:
+        tasklog_files = [f for f in listdir(LOGFILES_DIR)\
+                         if isfile(join(LOGFILES_DIR, f))]
+
+        for filepath in tasklog_files:
+            referencing_count = TaskLog.query.filter_by(identifier=filepath)
+            if not referencing_count:
+                logger.info("Deleting log file %s", join(LOGFILES_DIR, filepath))
+                try:
+                    remove(join(LOGFILES_DIR, filepath))
+                except OSError as e:
+                    if e.errno != ENOENT:
+                        raise
+    except OSError as e:
+        if e.errno != ENOENT:
+            raise
+        logger.warning("Log directory %r does not exist", LOGFILES_DIR)
