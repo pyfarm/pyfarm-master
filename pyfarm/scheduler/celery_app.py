@@ -43,7 +43,7 @@ celery_app.conf.CELERYBEAT_SCHEDULE = {
     "periodical_scheduler": {
         "task": "pyfarm.scheduler.tasks.assign_tasks",
         "schedule": timedelta(seconds=read_env_int("PYFARM_SCHEDULER_INTERVAL",
-                                                   30))},
+                                                   240))},
     "periodically_clean_task_logs": {
         "task": "pyfarm.scheduler.tasks.clean_up_orphaned_task_logs",
         "schedule": timedelta(seconds=read_env_int("PYFARM_LOG_CLEANUP_INTERVAL",

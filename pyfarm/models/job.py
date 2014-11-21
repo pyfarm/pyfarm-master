@@ -29,13 +29,14 @@ except ImportError:  # pragma: no cover
 
 
 from textwrap import dedent
+from sys import maxsize
 
-from sqlalchemy import event
+from sqlalchemy import event, distinct, or_
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.core.config import read_env, read_env_int
-from pyfarm.core.enums import WorkState, DBWorkState
+from pyfarm.core.enums import WorkState, DBWorkState, AgentState
 from pyfarm.master.application import db
 from pyfarm.models.core.functions import work_columns
 from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
@@ -315,6 +316,56 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     def paused(self):
         return self.state == WorkState.PAUSED
+
+    def num_assigned_agents(self):
+        try:
+            return self.assigned_agents_count
+        except AttributeError:
+            self.assigned_agents_count =\
+                db.session.query(distinct(Task.agent_id)).\
+                    filter(Task.job == self,
+                           or_(Task.state == None,
+                               Task.state == WorkState.RUNNING)).count()
+
+            return self.assigned_agents_count
+
+    def can_use_more_agents(self):
+        # Import here instead of at the top of the file to avoid circular import
+        from pyfarm.models.agent import Agent
+
+        unassigned_tasks = Task.query.filter(
+            Task.job == self,
+            or_(Task.state == None,
+                ~Task.state.in_([WorkState.DONE, WorkState.FAILED])),
+            or_(Task.agent == None,
+                Task.agent.has(Agent.state.in_(
+                    [AgentState.OFFLINE, AgentState.DISABLED])))).count()
+
+        return unassigned_tasks > 0
+
+    def get_batch(self):
+        # Import here instead of at the top of the file to avoid circular import
+        from pyfarm.models.agent import Agent
+
+        tasks_query = Task.query.filter(
+            Task.job == self,
+            or_(Task.state == None,
+                ~Task.state.in_([WorkState.DONE, WorkState.FAILED])),
+            or_(Task.agent == None,
+                Task.agent.has(Agent.state.in_(
+                    [AgentState.OFFLINE, AgentState.DISABLED])))).\
+                        order_by("frame asc")
+
+        batch = []
+        for task in tasks_query:
+            if (len(batch) < self.batch and
+                len(batch) < (self.jobtype_version.max_batch or maxsize) and
+                (not self.jobtype_version.batch_contiguous or
+                 (len(batch) == 0 or
+                  batch[-1].frame + self.by == task.frame))):
+                batch.append(task)
+
+        return batch
 
     def alter_frame_range(self, start, end, by):
         # We have to import this down here instead of at the top to break a

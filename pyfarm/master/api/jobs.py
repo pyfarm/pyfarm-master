@@ -39,9 +39,9 @@ from sqlalchemy.sql import func, or_, and_
 
 from pyfarm.core.config import read_env_bool
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES
+from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES, WorkState
 from pyfarm.scheduler.tasks import (
-    assign_tasks, send_job_completion_mail, delete_job)
+    assign_tasks_to_agent, assign_tasks, send_job_completion_mail, delete_job)
 from pyfarm.models.core.cfg import (
     MAX_JOBTYPE_LENGTH, MAX_USERNAME_LENGTH, MAX_JOBQUEUE_NAME_LENGTH)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
@@ -1096,7 +1096,15 @@ class JobSingleTaskAPI(MethodView):
             task_data["state"] = "assigned"
         logger.info("Task %s of job %s has been updated, new data: %r",
                     task_id, task.job.title, task_data)
-        assign_tasks.delay()
+
+        agent = task.agent
+        task_count = Task.query.filter(
+            Task.agent == agent,
+            or_(Task.state == None,
+                Task.state == WorkState.RUNNING)).\
+                    order_by(Task.job_id, Task.frame).count()
+        if task_count == 0:
+            assign_tasks_to_agent.delay(agent.id)
         return jsonify(task_data), OK
 
     def get(self, job_name, task_id):
