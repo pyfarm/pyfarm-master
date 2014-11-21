@@ -451,8 +451,8 @@ def assign_agents_to_queue(queue, max_agents,
             queued_jobs_query = Job.query.filter(
                 Job.state == None,
                 ~Job.parents.any(or_(Job.state == None,
-                                        and_(Job.state != None,
-                                            Job.state != WorkState.DONE))))
+                                     and_(Job.state != None,
+                                          Job.state != WorkState.DONE))))
             if queue.id:
                 queued_jobs_query = queued_jobs_query.filter(
                     Job.queue == queue)
