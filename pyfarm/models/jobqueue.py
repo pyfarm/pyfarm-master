@@ -85,7 +85,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                              doc="Relationship between this queue its parent")
 
     def path(self):
-        path = "/%s" % self.name
+        path = "/%s" % (self.name or "")
         if self.parent:
             return self.parent.path() + path
         else:
