@@ -459,7 +459,7 @@ def assign_agents_to_queue(queue, max_agents,
             else:
                 queued_jobs_query = queued_jobs_query.filter(
                     Job.queue == None)
-            queud_jobs_query = queued_jobs_query.order_by(
+            queued_jobs_query = queued_jobs_query.order_by(
                                                     asc(Job.time_submitted))
             jobs_started = 0
             queued_jobs_iterator = iter(queued_jobs_query)
