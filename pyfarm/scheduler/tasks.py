@@ -518,7 +518,7 @@ def assign_tasks():
 
             jobtype_versions_query = JobTypeVersion.query.filter(
                 JobTypeVersion.jobs.any(or_(
-                    Job.state == None, )))
+                    Job.state == None, Job.state == WorkState.RUNNING)))
             suitable_agents_by_jobtype_version = {}
             for jobtype_version in jobtype_versions_query:
                 suitable_agents = []
