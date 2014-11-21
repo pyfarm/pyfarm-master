@@ -437,8 +437,6 @@ def assign_agents_to_queue(queue, max_agents,
             assigned_this_round = assigned
             queue.total_assigned_agents += len(assigned)
 
-
-
             if not assigned_this_round:
                 agents_needed = False
 
