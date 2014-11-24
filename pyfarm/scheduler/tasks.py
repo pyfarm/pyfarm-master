@@ -78,8 +78,8 @@ POLL_BUSY_AGENTS_INTERVAL = read_env_int(
     "PYFARM_POLL_BUSY_AGENTS_INTERVAL", 600)
 POLL_IDLE_AGENTS_INTERVAL = read_env_int(
     "PYFARM_POLL_IDLE_AGENTS_INTERVAL", 3600)
-SCHEDULER_LOCKFILE = read_env(
-    "PYFARM_SCHEDULER_LOCKFILE", "/tmp/pyfarm_scheduler_lock")
+SCHEDULER_LOCKFILE_BASE = read_env(
+    "PYFARM_SCHEDULER_LOCKFILE_BASE", "/tmp/pyfarm_scheduler_lock")
 LOGFILES_DIR = read_env(
     "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
 
@@ -196,37 +196,75 @@ def assign_tasks():
 
 @celery_app.task(ignore_result=True)
 def assign_tasks_to_agent(agent_id):
-    db.session.commit()
+    lockfile_name = SCHEDULER_LOCKFILE_BASE + "-" + str(agent_id)
+    lock = LockFile(lockfile_name)
 
-    agent = Agent.query.filter_by(id=agent_id).first()
-    if not agent:
-        raise ValueError("No agent with id %s" % agent_id)
+    try:
+        lock.acquire(timeout=-1)
+        with lock:
+            db.session.commit()
 
-    task_count = Task.query.filter(Task.agent == agent,
-                                   or_(Task.state == None,
-                                       Task.state == WorkState.RUNNING)).\
-                                           order_by(Task.job_id, Task.frame).\
-                                               count()
-    if task_count > 0:
-        logger.debug("Agent %s already has %s tasks assigned, not assigning any "
-                     "more", agent.hostname, task_count)
-        return
+            agent = Agent.query.filter_by(id=agent_id).first()
+            if not agent:
+                raise ValueError("No agent with id %s" % agent_id)
 
-    queue = JobQueue()
-    job = queue.get_job_for_agent(agent)
-    if job:
-        batch = job.get_batch()
-        for task in batch:
-            task.agent = agent
-            logger.info("Assigned agent %s (id %s) to task %s (frame %s) from "
-                        "job %s (id %s)", agent.hostname, agent.id, task.id,
-                        task.frame, job.title, job.id)
-        db.session.add(task)
-        db.session.commit()
+            task_count = Task.query.filter(Task.agent == agent,
+                                        or_(Task.state == None,
+                                            Task.state == WorkState.RUNNING)).\
+                                                order_by(Task.job_id,
+                                                         Task.frame).\
+                                                    count()
+            if task_count > 0:
+                logger.debug("Agent %s already has %s tasks assigned, not "
+                             "assigning any more", agent.hostname, task_count)
+                return
 
-        send_tasks_to_agent.delay(agent.id)
-    else:
-        logger.debug("Did not find a job for agent %s", agent.hostname)
+            queue = JobQueue()
+            job = queue.get_job_for_agent(agent)
+            if job:
+                batch = job.get_batch()
+                for task in batch:
+                    task.agent = agent
+                    logger.info("Assigned agent %s (id %s) to task %s "
+                                "(frame %s) from job %s (id %s)", agent.hostname,
+                                agent.id, task.id, task.frame, job.title, job.id)
+                db.session.add(task)
+                db.session.commit()
+
+                send_tasks_to_agent.delay(agent.id)
+            else:
+                logger.debug("Did not find a job for agent %s", agent.hostname)
+
+    except AlreadyLocked:
+        logger.debug("The scheduler lockfile is locked, the scheduler seems to "
+                     "already be running for agent %s", agent_id)
+        try:
+            with open(lockfile_name, "r") as file:
+                locktime = float(file.read())
+                if locktime < time() - 60:
+                    logger.error("The old lock was held for more than 60 "
+                                 "seconds. Breaking the lock.")
+                    lock.break_lock()
+        except (IOError, ValueError) as e:
+            # It is possible that we tried to read the file in the narrow window
+            # between lock acquisition and actually writing the time
+            logger.warning("Could not read a time value from the scheduler "
+                           "lockfile. Waiting 1 second before trying again. "
+                           "Error: %s", e)
+            sleep(1)
+        try:
+            with open(lockfile_name, "r") as file:
+                locktime = float(file.read())
+                if locktime < time() - 60:
+                    logger.error("The old lock was held for more than 60 "
+                                 "seconds. Breaking the lock.")
+                    lock.break_lock()
+        except(IOError, ValueError):
+            # If we still cannot read a time value from the file after 1s,
+            # there was something wrong with the process holding the lock
+            logger.error("Could not read a time value from the scheduler "
+                         "lockfile even after waiting 1s. Breaking the lock")
+            lock.break_lock()
 
 
 @celery_app.task(ignore_results=True, bind=True)
