@@ -231,7 +231,11 @@ def assign_tasks_to_agent(agent_id):
                     logger.info("Assigned agent %s (id %s) to task %s "
                                 "(frame %s) from job %s (id %s)", agent.hostname,
                                 agent.id, task.id, task.frame, job.title, job.id)
-                db.session.add(task)
+                    db.session.add(task)
+
+                if job.state != _WorkState.RUNNING:
+                    job.state = WorkState.RUNNING
+                    db.session.add(job)
                 db.session.commit()
 
                 send_tasks_to_agent.delay(agent.id)
