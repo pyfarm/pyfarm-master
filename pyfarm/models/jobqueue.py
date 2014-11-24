@@ -169,7 +169,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                          reverse=True)
             for i in objects:
                 if isinstance(i, Job):
-                    if (i.can_use_more_agents and
+                    if (i.can_use_more_agents() and
                         i.num_assigned_agents() + 1 <
                             (i.maximum_agents or maxsize)):
                         return i
