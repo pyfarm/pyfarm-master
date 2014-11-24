@@ -128,12 +128,14 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
         child_jobs = Job.query.filter(Job.state == WorkState.RUNNING,
                                       Job.jobtype_version_id.in_(
                                             supported_types)).all()
+        child_queues = JobQueue.query.filter(
+            JobQueue.parent_jobqueue_id == self.id).all()
         for job in child_jobs:
             if (job.num_assigned_agents() < (job.minimum_agents or 0) and
                 job.num_assigned_agents()+1 < (job.maximum_agents or maxsize) and
                 job.can_use_more_agents()):
                 return job
-        for queue in self.children:
+        for queue in child_queues:
             if (queue.num_assigned_agents() < (queue.minimum_agents or 0) and
                 queue.num_assigned_agents() + 1 <
                     (queue.maximum_agents or maxsize)):
@@ -142,7 +144,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                     return job
 
         objects_by_priority = {}
-        for queue in self.children:
+        for queue in child_queues:
             if queue.priority in objects_by_priority:
                 objects_by_priority[queue.priority] += [queue]
             else:
