@@ -202,6 +202,9 @@ def assign_tasks_to_agent(agent_id):
     try:
         lock.acquire(timeout=-1)
         with lock:
+            with open(lockfile_name, "w") as file:
+                file.write(str(time()))
+
             db.session.commit()
 
             agent = Agent.query.filter_by(id=agent_id).first()
