@@ -1097,14 +1097,16 @@ class JobSingleTaskAPI(MethodView):
         logger.info("Task %s of job %s has been updated, new data: %r",
                     task_id, task.job.title, task_data)
 
-        agent = task.agent
-        task_count = Task.query.filter(
-            Task.agent == agent,
-            or_(Task.state == None,
-                Task.state == WorkState.RUNNING)).\
-                    order_by(Task.job_id, Task.frame).count()
-        if task_count == 0:
-            assign_tasks_to_agent.delay(agent.id)
+        if task.agent:
+            agent = task.agent
+            task_count = Task.query.filter(
+                Task.agent == agent,
+                or_(Task.state == None,
+                    Task.state == WorkState.RUNNING)).\
+                        order_by(Task.job_id, Task.frame).count()
+            if task_count == 0:
+                assign_tasks_to_agent.delay(agent.id)
+
         return jsonify(task_data), OK
 
     def get(self, job_name, task_id):
