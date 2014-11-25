@@ -151,6 +151,10 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                       consumption, is not scanned, index, or used when
                       searching"""))
 
+    output_link = db.Column(db.Text, nullable=True,
+                            doc="An optional link to a URI where this job's "
+                                "output can be viewed.")
+
     # task data
     by = db.Column(db.Numeric(10, 4), default=1,
                    doc=dedent("""

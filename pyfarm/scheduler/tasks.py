@@ -679,13 +679,16 @@ def poll_agents():
 def send_job_completion_mail(job_id, successful=True):
     db.session.commit()
     job = Job.query.filter_by(id=job_id).one()
-    message = MIMEText("Job %s (id %s) has completed %s on %s.\n\n"
-                       "Sincerely,\n\tThe PyFarm render manager" %
-                            (job.title,
-                             job_id,
-                             "successfully" if successful else "unsuccessfully",
-                             job.time_finished))
+    message_text = ("Job %s (id %s) has completed %s on %s.\n\n" %
+                    (job.title, job.id,
+                     "successfully" if successful else "unsuccessfully",
+                     job.time_finished))
+    if job.output_link:
+        message_text += "See:\n"
+        message_text += job.output_link + "\n\n"
+    message_text += "Sincerely,\n\tThe PyFarm render manager"
 
+    message = MIMEText(message_text)
     message["Subject"] = ("Job %s completed %ssuccessfully" %
                             (job.title, "" if successful else "un"))
     message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
