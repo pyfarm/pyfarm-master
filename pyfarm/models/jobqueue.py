@@ -113,6 +113,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
             self.assigned_agents_count +=\
                 db.session.query(distinct(Task.agent_id)).\
                     filter(Task.job.has(Job.queue == self),
+                           Task.agent_id != None,
                            or_(Task.state == None,
                                Task.state == WorkState.RUNNING)).count()
 

@@ -324,6 +324,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             self.assigned_agents_count =\
                 db.session.query(distinct(Task.agent_id)).\
                     filter(Task.job == self,
+                           Task.agent_id != None,
                            or_(Task.state == None,
                                Task.state == WorkState.RUNNING)).count()
 
