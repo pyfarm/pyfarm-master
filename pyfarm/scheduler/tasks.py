@@ -252,7 +252,7 @@ def assign_tasks_to_agent(agent_id):
                     logger.error("The old lock was held for more than 60 "
                                  "seconds. Breaking the lock.")
                     lock.break_lock()
-        except (IOError, ValueError) as e:
+        except (IOError, OSError, ValueError) as e:
             # It is possible that we tried to read the file in the narrow window
             # between lock acquisition and actually writing the time
             logger.warning("Could not read a time value from the scheduler "
@@ -266,7 +266,7 @@ def assign_tasks_to_agent(agent_id):
                     logger.error("The old lock was held for more than 60 "
                                  "seconds. Breaking the lock.")
                     lock.break_lock()
-        except(IOError, ValueError):
+        except(IOError, OSError, ValueError):
             # If we still cannot read a time value from the file after 1s,
             # there was something wrong with the process holding the lock
             logger.error("Could not read a time value from the scheduler "
