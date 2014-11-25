@@ -202,8 +202,8 @@ def assign_tasks_to_agent(agent_id):
     try:
         lock.acquire(timeout=-1)
         with lock:
-            with open(lockfile_name, "w") as file:
-                file.write(str(time()))
+            with open(lockfile_name, "w") as lockfile:
+                lockfile.write(str(time()))
 
             db.session.commit()
 
@@ -246,8 +246,8 @@ def assign_tasks_to_agent(agent_id):
         logger.debug("The scheduler lockfile is locked, the scheduler seems to "
                      "already be running for agent %s", agent_id)
         try:
-            with open(lockfile_name, "r") as file:
-                locktime = float(file.read())
+            with open(lockfile_name, "r") as lockfile:
+                locktime = float(lockfile.read())
                 if locktime < time() - 60:
                     logger.error("The old lock was held for more than 60 "
                                  "seconds. Breaking the lock.")
@@ -260,8 +260,8 @@ def assign_tasks_to_agent(agent_id):
                            "Error: %s", e)
             sleep(1)
         try:
-            with open(lockfile_name, "r") as file:
-                locktime = float(file.read())
+            with open(lockfile_name, "r") as lockfile:
+                locktime = float(lockfile.read())
                 if locktime < time() - 60:
                     logger.error("The old lock was held for more than 60 "
                                  "seconds. Breaking the lock.")
