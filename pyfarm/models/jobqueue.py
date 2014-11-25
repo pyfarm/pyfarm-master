@@ -184,9 +184,12 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
         logger.debug("Ran out of running jobs for agent %s, trying to start a "
                      "new one", agent.hostname)
         job = Job.query.filter(Job.job_queue_id == self.id, Job.state == None,
-                               Job.jobtype_version_id.in_(supported_types)).\
-                                   order_by(desc(Job.priority),
-                                            asc(Job.time_submitted)).first()
+                               Job.jobtype_version_id.in_(supported_types),
+                               ~Job.parents.any(or_(
+                                   Job.state == None,
+                                   Job.state != WorkState.DONE))).\
+                                       order_by(desc(Job.priority),
+                                                asc(Job.time_submitted)).first()
         if job:
             return job
         else:
