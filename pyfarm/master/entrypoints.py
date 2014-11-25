@@ -38,6 +38,7 @@ from flask import request
 from flask.ext.admin.base import MenuLink
 
 from pyfarm.core.config import read_env_bool
+from pyfarm.core.logger import getLogger
 from pyfarm.master.application import db, app
 from pyfarm.master.utility import error_handler
 
@@ -57,6 +58,8 @@ from pyfarm.models.user import User, Role
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.pathmap import PathMap
 from pyfarm.models.tasklog import TaskLog
+
+logger = getLogger("master.entrypoints")
 
 
 def load_before_first(app_instance, database_instance):
@@ -563,7 +566,7 @@ def tables():  # pragma: no cover
     db.engine.echo = args.echo
 
     if db.engine.name == "sqlite" and db.engine.url.database == ":memory:":
-        print("Nothing to do, in memory sqlite database is being used")
+        logger.info("Nothing to do, in memory sqlite database is being used")
         return
 
     if args.drop_all:
@@ -573,11 +576,11 @@ def tables():  # pragma: no cover
         try:
             db.create_all()
         except Exception as e:
-            print("Failed to call create_all().  This may be an error or "
-                  "it may be something that can be ignored: %r" % e)
+            logger.error(
+                "Failed to call create_all().  This may be an error or "
+                "it may be something that can be ignored: %r", e)
         else:
-            print()
-            print("Tables created or updated")
+            logger.info("Tables created or updated")
 
 
 def run_master():  # pragma: no cover
