@@ -29,7 +29,7 @@ from logging import DEBUG
 from sqlalchemy import event, desc, asc, func, distinct, or_
 from sqlalchemy.schema import UniqueConstraint
 
-from pyfarm.core.config import read_env_int
+from pyfarm.core.config import read_env_int, read_env_bool
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
@@ -39,7 +39,8 @@ from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
 from pyfarm.models.core.types import id_column, IDTypeWork
 
 logger = getLogger("pf.models.jobqueue")
-logger.setLevel(DEBUG)
+if read_env_bool("PYFARM_JOBQUEUE_DEBUG", True):
+    logger.setLevel(DEBUG)
 
 
 class JobQueue(db.Model, UtilityMixins, ReprMixin):
