@@ -175,16 +175,16 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                                     total_assigned else 0),
                          reverse=True)
 
-            for i in objects:
-                if isinstance(i, Job):
-                    if (i.can_use_more_agents() and
-                        i.num_assigned_agents() + 1 <
-                            (i.maximum_agents or maxsize)):
-                        return i
-                if isinstance(i, JobQueue):
-                    if (i.num_assigned_agents() + 1 <
-                            (i.maximum_agents or maxsize)):
-                        job = i.get_job_for_agent(agent)
+            for object in objects:
+                if isinstance(object, Job):
+                    if (object.can_use_more_agents() and
+                        object.num_assigned_agents() + 1 <
+                            (object.maximum_agents or maxsize)):
+                        return object
+                if isinstance(object, JobQueue):
+                    if (object.num_assigned_agents() + 1 <
+                            (object.maximum_agents or maxsize)):
+                        job = object.get_job_for_agent(agent)
                         if job:
                             return job
 
