@@ -1,8 +1,11 @@
 language: python
+
 python:
   - 2.7
   - 3.3
   - 3.4
+
+sudo: false
 
 env:
   - TDB_TYPE=sqlite PYFARM_DATABASE_URI="sqlite:///:memory:" PYFARM_CONFIG="debug"
