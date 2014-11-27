@@ -258,6 +258,11 @@
           <i class="icon-repeat"></i>
         </button>
       </form>
+      {% if job[0].output_link %}
+      <a href="{{ job[0].output_link }}">
+        <i class="icon-folder-open"></i>
+      </a>
+      {% endif %}
     </td>
     <td>
       <a href="{{ url_for('single_job_ui', job_id=job[0].id) }}">

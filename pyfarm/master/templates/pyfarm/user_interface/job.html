@@ -46,6 +46,18 @@
           </tr>
           <tr>
             <td>
+              Output
+            </td>
+            <td class="timestamp">
+              {% if job.output_link %}
+              <a href="{{ job.output_link }}">
+                {{ job.output_link if job.output_link }}
+              </a>
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>
               Actions
             </td>
             <td>
