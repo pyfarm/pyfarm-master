@@ -159,12 +159,12 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             job = target.job
 
             num_active_tasks = db.session.query(Task).\
-                filter(Task.job == job, or_(Task.state == None, and_(
+                filter(Task.job == job,
+                       Task.id != target.id,
+                       or_(Task.state == None, and_(
                              Task.state != WorkState.DONE,
                              Task.state != WorkState.FAILED))).count()
-            # Since we did not flush the session yet, the newly changed might
-            # still be counted as active in the database.
-            if num_active_tasks <= 1:
+            if num_active_tasks == 0:
                 num_failed_tasks = db.session.query(
                     Task).filter(Task.job == job,
                                  Task.state == WorkState.FAILED).count()
