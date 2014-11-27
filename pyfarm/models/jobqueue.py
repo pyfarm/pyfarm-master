@@ -21,17 +21,26 @@ Job Queue Model
 Model for job queues
 """
 
+from sys import maxsize
 from textwrap import dedent
+from functools import reduce
+from logging import DEBUG
 
-from sqlalchemy import event
+from sqlalchemy import event, desc, asc, func, distinct, or_
 from sqlalchemy.schema import UniqueConstraint
 
-from pyfarm.core.config import read_env_int
+from pyfarm.core.config import read_env_int, read_env_bool
 
+from pyfarm.core.logger import getLogger
+from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_JOB_QUEUE, MAX_JOBQUEUE_NAME_LENGTH
 from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
 from pyfarm.models.core.types import id_column, IDTypeWork
+
+logger = getLogger("pf.models.jobqueue")
+if read_env_bool("PYFARM_JOBQUEUE_DEBUG", True):
+    logger.setLevel(DEBUG)
 
 
 class JobQueue(db.Model, UtilityMixins, ReprMixin):
@@ -90,6 +99,108 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
             return self.parent.path() + path
         else:
             return path
+
+    def num_assigned_agents(self):
+        try:
+            return self.assigned_agents_count
+        except AttributeError:
+            # Import down here instead of at the top to avoid circular import
+            from pyfarm.models.task import Task
+            from pyfarm.models.job import Job
+
+            self.assigned_agents_count = 0
+            for queue in self.children:
+                self.assigned_agents_count += queue.num_assigned_agents()
+            self.assigned_agents_count +=\
+                db.session.query(distinct(Task.agent_id)).\
+                    filter(Task.job.has(Job.queue == self),
+                           Task.agent_id != None,
+                           or_(Task.state == None,
+                               Task.state == WorkState.RUNNING)).count()
+
+            return self.assigned_agents_count
+
+    def get_job_for_agent(self, agent):
+        # Import down here instead of at the top to avoid circular import
+        from pyfarm.models.job import Job
+
+        supported_types = agent.get_supported_types()
+
+        # Before anything else, enforce minimums
+        child_jobs = Job.query.filter(Job.state == WorkState.RUNNING,
+                                      Job.jobtype_version_id.in_(
+                                            supported_types)).all()
+        child_queues = JobQueue.query.filter(
+            JobQueue.parent_jobqueue_id == self.id).all()
+
+        for job in child_jobs:
+            if (job.num_assigned_agents() < (job.minimum_agents or 0) and
+                job.num_assigned_agents()+1 < (job.maximum_agents or maxsize) and
+                job.can_use_more_agents()):
+                return job
+
+        for queue in child_queues:
+            if (queue.num_assigned_agents() < (queue.minimum_agents or 0) and
+                queue.num_assigned_agents() + 1 <
+                    (queue.maximum_agents or maxsize)):
+                job = queue.get_job_for_agent(agent)
+                if job:
+                    return job
+
+        objects_by_priority = {}
+
+        for queue in child_queues:
+            if queue.priority in objects_by_priority:
+                objects_by_priority[queue.priority] += [queue]
+            else:
+                objects_by_priority[queue.priority] = [queue]
+
+        for job in child_jobs:
+            if job.priority in objects_by_priority:
+                objects_by_priority[job.priority] += [job]
+            else:
+                objects_by_priority[job.priority] = [job]
+
+        available_priorities = sorted(objects_by_priority.keys(), reverse=True)
+
+        # Work through the priorities in descending order
+        for priority in available_priorities:
+            objects = objects_by_priority[priority]
+            weight_sum = reduce(lambda a, b: a + b.weight, objects, 0)
+            total_assigned = reduce(lambda a, b: a + b.num_assigned_agents(),
+                                    objects, 0)
+            objects.sort(key=(lambda x:
+                               (x.weight / weight_sum) if weight_sum else 0 -
+                               (x.num_assigned_agents() / total_assigned) if
+                                    total_assigned else 0),
+                         reverse=True)
+
+            for object in objects:
+                if isinstance(object, Job):
+                    if (object.can_use_more_agents() and
+                        object.num_assigned_agents() + 1 <
+                            (object.maximum_agents or maxsize)):
+                        return object
+                if isinstance(object, JobQueue):
+                    if (object.num_assigned_agents() + 1 <
+                            (object.maximum_agents or maxsize)):
+                        job = object.get_job_for_agent(agent)
+                        if job:
+                            return job
+
+        logger.debug("Ran out of running jobs for agent %s, trying to start a "
+                     "new one", agent.hostname)
+        job = Job.query.filter(Job.job_queue_id == self.id, Job.state == None,
+                               Job.jobtype_version_id.in_(supported_types),
+                               ~Job.parents.any(or_(
+                                   Job.state == None,
+                                   Job.state != WorkState.DONE))).\
+                                       order_by(desc(Job.priority),
+                                                asc(Job.time_submitted)).first()
+        if job:
+            return job
+        else:
+            return None
 
     @staticmethod
     def top_level_unique_check(mapper, connection, target):

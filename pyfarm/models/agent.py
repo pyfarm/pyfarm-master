@@ -25,12 +25,13 @@ import re
 from textwrap import dedent
 from datetime import datetime
 
+from sqlalchemy import or_
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import validates
 from netaddr import AddrFormatError, IPAddress
 
 from pyfarm.core.enums import (
-    AgentState, STRING_TYPES, UseAgentAddress, INTEGER_TYPES)
+    AgentState, STRING_TYPES, UseAgentAddress, INTEGER_TYPES, WorkState)
 from pyfarm.core.config import read_env_number, read_env_int, read_env
 from pyfarm.master.application import db, app
 from pyfarm.models.core.functions import repr_ip
@@ -43,6 +44,8 @@ from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_SOFTWARE_VERSION, TABLE_TAG,
     TABLE_AGENT_TAG_ASSOC, MAX_HOSTNAME_LENGTH,
     TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_PROJECT_AGENTS, TABLE_PROJECT)
+from pyfarm.models.jobtype import JobTypeVersion
+from pyfarm.models.job import Job
 
 
 __all__ = ("Agent", )
@@ -244,6 +247,35 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                    "associated with.  By default an agent "
                                    "which is not associated with any projects "
                                    "will be a member of all projects.")
+
+    def get_supported_types(self):
+        try:
+            return self.support_jobtype_versions
+        except AttributeError:
+            jobtype_versions_query = JobTypeVersion.query.filter(
+                JobTypeVersion.jobs.any(
+                    or_(Job.state == None, Job.state == WorkState.RUNNING)))
+
+            self.support_jobtype_versions = []
+            for jobtype_version in jobtype_versions_query:
+                if self.satisfies_jobtype_requirements(jobtype_version):
+                    self.support_jobtype_versions.append(jobtype_version.id)
+
+            return self.support_jobtype_versions
+
+    def satisfies_jobtype_requirements(self, jobtype_version):
+        requirements_to_satisfy = list(jobtype_version.software_requirements)
+
+        for software_version in self.software_versions:
+            for requirement in list(requirements_to_satisfy):
+                if (software_version.software == requirement.software and
+                    (requirement.min_version == None or
+                    requirement.min_version.rank <= software_version.rank) and
+                    (requirement.max_version == None or
+                    requirement.max_version.rank >= software_version.rank)):
+                    requirements_to_satisfy.remove(requirement)
+
+        return len(requirements_to_satisfy) == 0
 
     @classmethod
     def validate_hostname(cls, key, value):
