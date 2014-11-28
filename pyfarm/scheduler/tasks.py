@@ -437,23 +437,72 @@ def update_agent(self, agent_id):
 @celery_app.task(ignore_results=True, bind=True)
 def delete_task(self, task_id):
     db.session.rollback()
-    task = Task.query.filter_by(id=task_id).one()
-    job = task.job
 
-    if task.agent is None or task.state in [WorkState.DONE, WorkState.FAILED]:
-        logger.info("Deleting task %s (job %s - \"%s\")",
-                    task.id, job.id, job.title)
-        db.session.delete(task)
-        db.session.flush()
-    else:
-        agent = task.agent
+    job_id = None
+    task = None
+    agent = None
+    job = None
+
+    retries = 10
+    deleted = False
+    while not deleted and retries > 0:
+        try:
+            task = Task.query.filter_by(id=task_id).one()
+            job = task.job
+            job_id = task.job_id
+            agent = task.agent
+
+            logger.info("Deleting task %s (job %s - \"%s\")",task.id, job.id,
+                        job.title)
+            db.session.delete(task)
+            db.session.commit()
+            deleted = True
+        except InvalidRequestError:
+            if retries > 0:
+                logger.debug("Caught an InvalidRequestError trying to delete "
+                             "task %s, retrying transaction", task_id)
+                retries -= 1
+                db.session.rollback()
+            else:
+                logger.error("While trying to delete task %s, caught an "
+                             "InvalidRequestError 10 times, giving up", task_id)
+                raise
+
+    retries = 10
+    done = False
+    while not done and retries > 0:
+        try:
+            job = Job.query.filter_by(id=job_id).one()
+            if job.to_be_deleted:
+                num_remaining_tasks = Task.query.filter_by(job=job).count()
+                if num_remaining_tasks == 0:
+                    logger.info("Job %s (%s) is marked for deletion and has no "
+                                "tasks left, deleting it from the database now.",
+                                job.id, job.title)
+                    db.session.delete(job)
+                db.session.commit()
+                done = True
+        except InvalidRequestError:
+            if retries > 0:
+                logger.debug("Caught an InvalidRequestError trying to delete "
+                             "job %s, retrying transaction", job_id)
+                retries -= 1
+                db.session.rollback()
+            else:
+                logger.error("While trying to delete job %s, caught an "
+                             "InvalidRequestError 10 times, giving up", job_id)
+                raise
+
+    if (agent is not None and
+        task.state not in [WorkState.DONE, WorkState.FAILED]):
         try:
             response = requests.delete("%s/tasks/%s" %
                                             (agent.api_url(), task.id),
                                        headers={"User-Agent": USERAGENT})
 
-            logger.info("Deleting task %s (job %s - \"%s\") from agent %s (id %s)",
-                        task.id, job.id, job.title, agent.hostname, agent.id)
+            logger.info("Deleting task %s (job %s - \"%s\") from agent %s "
+                        "(id %s)", task.id, job.id, job.title, agent.hostname,
+                        agent.id)
             if response.status_code not in [requests.codes.accepted,
                                             requests.codes.ok,
                                             requests.codes.no_content,
@@ -461,38 +510,16 @@ def delete_task(self, task_id):
                 raise ValueError("Unexpected return code on deleting task %s on "
                                  "agent %s: %s",
                                  task.id, agent.id, response.status_code)
-            else:
-                db.session.delete(task)
-                db.session.flush()
         # Catching ProtocolError here is a work around for
         # https://github.com/kennethreitz/requests/issues/2204
         except (ConnectionError, ProtocolError) as e:
             if self.request.retries < self.max_retries:
                 logger.warning("Caught ConnectionError trying to delete task %s "
-                               "from agent %s (id %s), retry %s of %s: %s",
+                               "from agent %s (id %s): %s",
                                task.id,
                                agent.hostname,
                                agent.id,
-                               self.request.retries,
-                               self.max_retries,
                                e)
-                self.retry(exc=e)
-            else:
-                logger.error("Could not contact agent %s, (id %s), for stopping "
-                             "task %s, just deleting it locally",
-                             agent.hostname, agent.id, task.id)
-                db.session.delete(task)
-                db.session.flush()
-
-    if job.to_be_deleted:
-        num_remaining_tasks = Task.query.filter_by(job=job).count()
-        if num_remaining_tasks == 0:
-            logger.info("Job %s (%s) is marked for deletion and has no tasks "
-                        "left, deleting it from the database now.",
-                        job.id, job.title)
-            db.session.delete(job)
-
-    db.session.commit()
 
 
 @celery_app.task(ignore_results=True, bind=True)
