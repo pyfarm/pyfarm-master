@@ -491,6 +491,31 @@ def delete_task(self, task_id):
                         "left, deleting it from the database now.",
                         job.id, job.title)
             db.session.delete(job)
+        else:
+            # Another workaround for insufficient transaction isolation
+            check_to_be_deleted_job.apply_async(args=[job.id], countdown=0.1)
+
+    db.session.commit()
+
+
+@celery_app.task(ignore_results=True)
+def check_to_be_deleted_job(job_id):
+    db.session.commit()
+
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return
+
+    if not job.to_be_deleted:
+        raise ValueError("Job %s (id %s) is not marked for deletion" %
+                         (job.title, job_id))
+
+    num_remaining_tasks = Task.query.filter_by(job=job).count()
+    if num_remaining_tasks == 0:
+        logger.info("Job %s (%s) is marked for deletion and has no tasks "
+                    "left, deleting it from the database now.",
+                    job.id, job.title)
+        db.session.delete(job)
 
     db.session.commit()
 
