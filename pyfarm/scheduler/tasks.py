@@ -85,7 +85,7 @@ LOGFILES_DIR = read_env(
 
 @celery_app.task(ignore_result=True, bind=True)
 def send_tasks_to_agent(self, agent_id):
-    db.session.commit()
+    db.session.rollback()
     agent = Agent.query.filter(Agent.id == agent_id).first()
     if not agent:
         raise KeyError("agent not found")
@@ -181,7 +181,7 @@ def send_tasks_to_agent(self, agent_id):
 
 @celery_app.task(ignore_result=True)
 def assign_tasks():
-    db.session.commit()
+    db.session.rollback()
     idle_agents = Agent.query.filter(Agent.state == AgentState.ONLINE,
                                      ~Agent.tasks.any(
                                         or_(
@@ -205,7 +205,7 @@ def assign_tasks_to_agent(agent_id):
             with open(lockfile_name, "w") as lockfile:
                 lockfile.write(str(time()))
 
-            db.session.commit()
+            db.session.rollback()
 
             agent = Agent.query.filter_by(id=agent_id).first()
             if not agent:
@@ -276,7 +276,7 @@ def assign_tasks_to_agent(agent_id):
 
 @celery_app.task(ignore_results=True, bind=True)
 def poll_agent(self, agent_id):
-    db.session.commit()
+    db.session.rollback()
     agent = Agent.query.filter(Agent.id == agent_id).first()
 
     running_tasks_count = Task.query.filter(
@@ -342,7 +342,7 @@ def poll_agent(self, agent_id):
 
 @celery_app.task(ignore_results=True)
 def poll_agents():
-    db.session.commit()
+    db.session.rollback()
     idle_agents_to_poll_query = Agent.query.filter(
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
@@ -370,7 +370,7 @@ def poll_agents():
 
 @celery_app.task(ignore_results=True)
 def send_job_completion_mail(job_id, successful=True):
-    db.session.commit()
+    db.session.rollback()
     job = Job.query.filter_by(id=job_id).one()
     message_text = ("Job %s (id %s) has completed %s on %s.\n\n" %
                     (job.title, job.id,
@@ -399,7 +399,7 @@ def send_job_completion_mail(job_id, successful=True):
 
 @celery_app.task(ignore_results=True, bind=True)
 def update_agent(self, agent_id):
-    db.session.commit()
+    db.session.rollback()
     agent = Agent.query.filter_by(id=agent_id).one()
     if agent.version == agent.upgrade_to:
         return True
@@ -436,7 +436,7 @@ def update_agent(self, agent_id):
 
 @celery_app.task(ignore_results=True, bind=True)
 def delete_task(self, task_id):
-    db.session.commit()
+    db.session.rollback()
     task = Task.query.filter_by(id=task_id).one()
     job = task.job
 
@@ -497,7 +497,7 @@ def delete_task(self, task_id):
 
 @celery_app.task(ignore_results=True, bind=True)
 def stop_task(self, task_id):
-    db.session.commit()
+    db.session.rollback()
     task = Task.query.filter_by(id=task_id).one()
     job = task.job
 
@@ -541,7 +541,7 @@ def stop_task(self, task_id):
 
 @celery_app.task(ignore_results=True)
 def delete_job(job_id):
-    db.session.commit()
+    db.session.rollback()
     job = Job.query.filter_by(id=job_id).one()
     if not job.to_be_deleted:
         logger.warning("Not deleting job %s, it is not marked for deletion.",
@@ -555,7 +555,7 @@ def delete_job(job_id):
 
 @celery_app.task(ignore_results=True)
 def clean_up_orphaned_task_logs():
-    db.session.commit()
+    db.session.rollback()
 
     orphaned_task_logs = TaskLog.query.filter(
         ~TaskLog.task_associations.any()).all()
