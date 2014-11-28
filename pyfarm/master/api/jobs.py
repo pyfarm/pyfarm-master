@@ -885,12 +885,19 @@ class SingleJobAPI(MethodView):
             return jsonify(error="Job not found"), NOT_FOUND
 
         job.to_be_deleted = True
+
+        child_job_ids = []
+        for child_job in job.children:
+            child_job.to_be_deleted = True
+            child_job_ids.append(child_job.id)
+            db.session.add(child_job)
+
         db.session.add(job)
         db.session.commit()
 
-        logger.info("Marking job %s for deletion", job.id)
-
-        delete_job.delay(job.id)
+        for id in child_job_ids + [job.id]:
+            logger.info("Marking job %s for deletion", id)
+            delete_job(id)
 
         return jsonify(None), NO_CONTENT
 
