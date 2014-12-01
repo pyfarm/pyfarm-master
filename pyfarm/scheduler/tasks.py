@@ -35,6 +35,7 @@ from os import remove, listdir
 from errno import ENOENT
 
 from sqlalchemy import or_, and_, func, distinct, desc, asc
+from sqlalchemy.exc import InvalidRequestError
 
 import requests
 from requests.exceptions import ConnectionError, RequestException
