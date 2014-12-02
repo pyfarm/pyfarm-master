@@ -31,12 +31,13 @@ except ImportError:  # pragma: no cover
 from textwrap import dedent
 from sys import maxsize
 
-from sqlalchemy import event, distinct, or_
+from sqlalchemy import event, distinct, or_, and_
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 
+from pyfarm.core.logger import getLogger
 from pyfarm.core.config import read_env, read_env_int
-from pyfarm.core.enums import WorkState, DBWorkState, AgentState
+from pyfarm.core.enums import WorkState, DBWorkState, _WorkState, AgentState
 from pyfarm.master.application import db
 from pyfarm.models.core.functions import work_columns
 from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
@@ -52,6 +53,8 @@ from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 
 __all__ = ("Job", )
+
+logger = getLogger("models.job")
 
 
 JobTagAssociation = db.Table(
@@ -321,6 +324,35 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     def paused(self):
         return self.state == WorkState.PAUSED
 
+    def update_state(self):
+        # Import here instead of at the top of the file to avoid a circular
+        # import
+        from pyfarm.scheduler.tasks import send_job_completion_mail
+
+        num_active_tasks = db.session.query(Task).\
+            filter(Task.job == self,
+                   or_(Task.state == None, and_(
+                            Task.state != WorkState.DONE,
+                            Task.state != WorkState.FAILED))).count()
+        if num_active_tasks == 0:
+            num_failed_tasks = db.session.query(Task).filter(
+                Task.job == self,
+                Task.state == WorkState.FAILED).count()
+            if num_failed_tasks == 0:
+                if self.state != _WorkState.DONE:
+                    logger.info("Job %r: state transition %r -> 'done'",
+                                self.title, self.state)
+                    self.state = WorkState.DONE
+                    send_job_completion_mail.delay(self.id, True)
+            else:
+                if self.state != _WorkState.FAILED:
+                    logger.info("Job %r: state transition %r -> 'failed'",
+                                self.title, self.state)
+                    self.state = WorkState.FAILED
+                    send_job_completion_mail.delay(self.id, False)
+            db.session.add(self)
+
+    # Methods used by the scheduler
     def num_assigned_agents(self):
         try:
             return self.assigned_agents_count

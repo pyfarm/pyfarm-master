@@ -1063,9 +1063,11 @@ class JobSingleTaskAPI(MethodView):
             return jsonify(error="`frame` cannot be changed"), BAD_REQUEST
 
         new_state = g.json.pop("state", None)
+        state_transition = False
         if new_state is not None and new_state != task.state:
             logger.info("Task %s of job %s: state transition \"%s\" -> \"%s\"",
                         task_id, task.job.title, task.state, new_state)
+            state_transition = True
             if new_state != "queued":
                 task.state = new_state
             else:
@@ -1113,6 +1115,13 @@ class JobSingleTaskAPI(MethodView):
                         order_by(Task.job_id, Task.frame).count()
             if task_count == 0:
                 assign_tasks_to_agent.delay(agent.id)
+
+        # This needs to be done after the transaction in which the task state
+        # was set has committed, so that the new transaction will see the results
+        # of other threads that were running concurrently but finished earlier.
+        if task.job and state_transition:
+            task.job.update_state()
+            db.session.commit()
 
         return jsonify(task_data), OK
 
