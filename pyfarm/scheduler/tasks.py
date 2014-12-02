@@ -550,8 +550,21 @@ def delete_job(job_id):
         return
 
     tasks_query = Task.query.filter_by(job=job)
+    async_deletes = 0
     for task in tasks_query:
-        delete_task.delay(task.id)
+        if task.agent and task.state not in [_WorkState.DONE, _WorkState.FAILED]:
+            delete_task.delay(task.id)
+            async_deletes += 1
+        else:
+            db.session.delete(task)
+
+    if async_deletes == 0:
+        logger.info("Job %s (%s) is marked for deletion and has no tasks "
+                    "that require asynchronous deletion. Deleting it now.",
+                    job.id, job.title)
+        db.session.delete(job)
+
+    db.session.commit()
 
 
 @celery_app.task(ignore_results=True)
