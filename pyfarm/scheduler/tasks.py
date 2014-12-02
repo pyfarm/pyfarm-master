@@ -83,6 +83,7 @@ SCHEDULER_LOCKFILE_BASE = read_env(
     "PYFARM_SCHEDULER_LOCKFILE_BASE", "/tmp/pyfarm_scheduler_lock")
 LOGFILES_DIR = read_env(
     "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
+TRANSACTION_RETRIES = read_env_int("PYFARM_TRANSACTION_RETRIES", 10)
 
 @celery_app.task(ignore_result=True, bind=True)
 def send_tasks_to_agent(self, agent_id):
@@ -444,7 +445,7 @@ def delete_task(self, task_id):
     agent = None
     job = None
 
-    retries = 10
+    retries = TRANSACTION_RETRIES
     deleted = False
     while not deleted and retries > 0:
         try:
@@ -466,10 +467,11 @@ def delete_task(self, task_id):
                 db.session.rollback()
             else:
                 logger.error("While trying to delete task %s, caught an "
-                             "InvalidRequestError 10 times, giving up", task_id)
+                             "InvalidRequestError %s times, giving up",
+                             task_id, TRANSACTION_RETRIES)
                 raise
 
-    retries = 10
+    retries = TRANSACTION_RETRIES
     done = False
     while not done and retries > 0:
         try:
@@ -491,7 +493,8 @@ def delete_task(self, task_id):
                 db.session.rollback()
             else:
                 logger.error("While trying to delete job %s, caught an "
-                             "InvalidRequestError 10 times, giving up", job_id)
+                             "InvalidRequestError %s times, giving up",
+                             job_id, TRANSACTION_RETRIES)
                 raise
 
     if (agent is not None and
