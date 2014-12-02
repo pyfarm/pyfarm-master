@@ -53,7 +53,7 @@ from pyfarm.models.software import (
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task, TaskDependencies
 from pyfarm.models.tasklog import TaskLog
-from pyfarm.models.job import Job, JobDependencies
+from pyfarm.models.job import Job
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.agent import Agent, AgentTagAssociation
@@ -385,6 +385,7 @@ def send_job_completion_mail(job_id, successful=True):
     message["Subject"] = ("Job %s completed %ssuccessfully" %
                             (job.title, "" if successful else "un"))
     message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
+    message["To"] = ",".join([x.email for x in job.notified_users if x.email])
 
     to = [x.email for x in job.notified_users if x.email]
 
