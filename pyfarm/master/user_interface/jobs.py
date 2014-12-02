@@ -263,9 +263,9 @@ def delete_single_job(job_id):
 
     db.session.commit()
 
-    for id in child_job_ids + [job_id]:
-        logger.info("Marking job %s for deletion", id)
-        delete_job.delay(id)
+    for id_ in child_job_ids + [job_id]:
+        logger.info("Marking job %s for deletion", id_)
+        delete_job.delay(id_)
 
     flash("Job %s will be deleted." % job.title)
 

@@ -895,9 +895,9 @@ class SingleJobAPI(MethodView):
         db.session.add(job)
         db.session.commit()
 
-        for id in child_job_ids + [job.id]:
-            logger.info("Marking job %s for deletion", id)
-            delete_job(id)
+        for id_ in child_job_ids + [job.id]:
+            logger.info("Marking job %s for deletion", id_)
+            delete_job(id_)
 
         return jsonify(None), NO_CONTENT
 
