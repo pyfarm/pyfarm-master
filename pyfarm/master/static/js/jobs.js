@@ -34,8 +34,8 @@ $(document).ready(function() {
         }
         else {
             $(this).data("open", "false");
-            $(this).removeClass("icon-collapse-up")
-            $(this).addClass("icon-collapse-down")
+            $(this).removeClass("icon-circle-arrow-up")
+            $(this).addClass("icon-circle-arrow-down")
             $(this).closest("tr").find("table.subjob-table").remove();
         }
     });

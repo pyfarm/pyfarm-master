@@ -285,7 +285,7 @@
         {{ job[0].title }}
       </a>
       {% if job["child_count"] %}
-      <i class="icon-collapse-down clickable-icon subjob_toggle" data-jobid="{{ job[0].id }}" data-open=false></i>
+      <i class="icon-circle-arrow-down clickable-icon subjob_toggle" data-jobid="{{ job[0].id }}" data-open=false></i>
       {%endif%}
       {% for tag in (tags_by_job_id[job[0].id] or []) %}
       {% if tag in filters.tags %}
