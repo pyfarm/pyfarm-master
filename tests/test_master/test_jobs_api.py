@@ -988,8 +988,10 @@ class TestJobAPI(BaseTestCase):
         self.assert_no_content(response3)
 
         response4 = self.client.get("/api/v1/jobs/%s" % id)
-        self.assert_ok(response4)
-        self.assertTrue(response4.json["to_be_deleted"])
+        if response4.status_code == 200:
+            self.assertTrue(response4.json["to_be_deleted"])
+        else:
+            self.assert_not_found(response4)
 
     def test_job_get_tasks(self):
         response1 = self.client.post(
