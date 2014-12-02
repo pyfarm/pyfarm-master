@@ -134,8 +134,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             return new_value
 
         if (new_value == WorkState.FAILED and
-            (target.attempts is None or
-             target.attempts <= target.job.requeue)):
+            target.failures <= target.job.requeue):
             logger.info("Failed task %s will be retried", target.id)
             target.agent_id = None
             return None
