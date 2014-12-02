@@ -157,7 +157,15 @@
   <tr>
     <th></th>
     <th>
-      <a href="{{ url_for('jobs_index_ui', order_by='title', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+      <a href="{{ url_for('jobs_index_ui', order_by='state', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        State
+        {% if order_by == 'state' and order_dir == 'desc' %}
+        <i class="icon-chevron-down"></i>
+        {% elif order_by == 'state' %}
+        <i class="icon-chevron-up"></i>
+        {% endif %}
+     </a> /
+     <a href="{{ url_for('jobs_index_ui', order_by='title', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
         Title
         {% if order_by == 'title' and order_dir == 'desc' %}
         <i class="icon-chevron-down"></i>
@@ -234,16 +242,6 @@
         {% endif %}
       </a>
     </th>
-    <th>
-      <a href="{{ url_for('jobs_index_ui', order_by='state', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
-        State
-        {% if order_by == 'state' and order_dir == 'desc' %}
-        <i class="icon-chevron-down"></i>
-        {% elif order_by == 'state' %}
-        <i class="icon-chevron-up"></i>
-        {% endif %}
-      </a>
-    </th>
   </tr>
   {% for job in jobs %}
   <tr>
@@ -265,11 +263,29 @@
       {% endif %}
     </td>
     <td>
+      {% if not job[0].state %}
+      <i class="icon-time" title="queued"></i>
+      {% endif %}
+      {% if job[0].state == "running" %}
+      <i class="icon-play" title="running"></i>
+      {% endif %}
+      {% if job[0].state == "done" %}
+      <i class="icon-ok" title="done"></i>
+      {% endif %}
+      {% if job[0].state == "failed" %}
+      <i class="icon-remove" title="failed"></i>
+      {% endif %}
+      {% if job[0].state == "paused" %}
+      <i class="icon-pause" title="paused"></i>
+      {% endif %}
+      {% if job[0].to_be_deleted %}
+      <i class="icon-trash" title="deleting"></i>
+      {% endif %}
       <a href="{{ url_for('single_job_ui', job_id=job[0].id) }}">
         {{ job[0].title }}
       </a>
       {% if job["child_count"] %}
-      <i class="icon-circle-arrow-down clickable-icon subjob_toggle" data-jobid="{{ job[0].id }}" data-open=false></i>
+      <i class="icon-collapse-down clickable-icon subjob_toggle" data-jobid="{{ job[0].id }}" data-open=false></i>
       {%endif%}
       {% for tag in (tags_by_job_id[job[0].id] or []) %}
       {% if tag in filters.tags %}
@@ -300,7 +316,6 @@
       {{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }}
     </td>
     <td class="timestamp">{{ job[0].time_submitted.isoformat() }}</td>
-    <td>{{ 'deleting' if job[0].to_be_deleted else (job[0].state or "queued") }}</td>
   </tr>
   {% endfor %}
 </table>
