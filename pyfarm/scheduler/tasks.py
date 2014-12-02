@@ -35,6 +35,7 @@ from os import remove, listdir
 from errno import ENOENT
 
 from sqlalchemy import or_, and_, func, distinct, desc, asc
+from sqlalchemy.exc import InvalidRequestError
 
 import requests
 from requests.exceptions import ConnectionError, RequestException
@@ -82,10 +83,11 @@ SCHEDULER_LOCKFILE_BASE = read_env(
     "PYFARM_SCHEDULER_LOCKFILE_BASE", "/tmp/pyfarm_scheduler_lock")
 LOGFILES_DIR = read_env(
     "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
+TRANSACTION_RETRIES = read_env_int("PYFARM_TRANSACTION_RETRIES", 10)
 
 @celery_app.task(ignore_result=True, bind=True)
 def send_tasks_to_agent(self, agent_id):
-    db.session.commit()
+    db.session.rollback()
     agent = Agent.query.filter(Agent.id == agent_id).first()
     if not agent:
         raise KeyError("agent not found")
@@ -181,7 +183,7 @@ def send_tasks_to_agent(self, agent_id):
 
 @celery_app.task(ignore_result=True)
 def assign_tasks():
-    db.session.commit()
+    db.session.rollback()
     idle_agents = Agent.query.filter(Agent.state == AgentState.ONLINE,
                                      ~Agent.tasks.any(
                                         or_(
@@ -205,7 +207,7 @@ def assign_tasks_to_agent(agent_id):
             with open(lockfile_name, "w") as lockfile:
                 lockfile.write(str(time()))
 
-            db.session.commit()
+            db.session.rollback()
 
             agent = Agent.query.filter_by(id=agent_id).first()
             if not agent:
@@ -276,7 +278,7 @@ def assign_tasks_to_agent(agent_id):
 
 @celery_app.task(ignore_results=True, bind=True)
 def poll_agent(self, agent_id):
-    db.session.commit()
+    db.session.rollback()
     agent = Agent.query.filter(Agent.id == agent_id).first()
 
     running_tasks_count = Task.query.filter(
@@ -342,7 +344,7 @@ def poll_agent(self, agent_id):
 
 @celery_app.task(ignore_results=True)
 def poll_agents():
-    db.session.commit()
+    db.session.rollback()
     idle_agents_to_poll_query = Agent.query.filter(
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
@@ -370,7 +372,7 @@ def poll_agents():
 
 @celery_app.task(ignore_results=True)
 def send_job_completion_mail(job_id, successful=True):
-    db.session.commit()
+    db.session.rollback()
     job = Job.query.filter_by(id=job_id).one()
     message_text = ("Job %s (id %s) has completed %s on %s.\n\n" %
                     (job.title, job.id,
@@ -400,7 +402,7 @@ def send_job_completion_mail(job_id, successful=True):
 
 @celery_app.task(ignore_results=True, bind=True)
 def update_agent(self, agent_id):
-    db.session.commit()
+    db.session.rollback()
     agent = Agent.query.filter_by(id=agent_id).one()
     if agent.version == agent.upgrade_to:
         return True
@@ -437,23 +439,73 @@ def update_agent(self, agent_id):
 
 @celery_app.task(ignore_results=True, bind=True)
 def delete_task(self, task_id):
-    db.session.commit()
-    task = Task.query.filter_by(id=task_id).one()
-    job = task.job
+    db.session.rollback()
 
-    if task.agent is None or task.state in [WorkState.DONE, WorkState.FAILED]:
-        logger.info("Deleting task %s (job %s - \"%s\")",
-                    task.id, job.id, job.title)
-        db.session.delete(task)
-        db.session.flush()
-    else:
-        agent = task.agent
+    job_id = None
+    task = None
+    agent = None
+    job = None
+
+    retries = TRANSACTION_RETRIES
+    deleted = False
+    while not deleted and retries > 0:
+        try:
+            task = Task.query.filter_by(id=task_id).one()
+            job = task.job
+            job_id = task.job_id
+            agent = task.agent
+
+            logger.info("Deleting task %s (job %s - \"%s\")",task.id, job.id,
+                        job.title)
+            db.session.delete(task)
+            db.session.commit()
+            deleted = True
+        except InvalidRequestError:
+            if retries > 0:
+                logger.debug("Caught an InvalidRequestError trying to delete "
+                             "task %s, retrying transaction", task_id)
+                retries -= 1
+                db.session.rollback()
+            else:
+                logger.error("While trying to delete task %s, caught an "
+                             "InvalidRequestError %s times, giving up",
+                             task_id, TRANSACTION_RETRIES)
+                raise
+
+    retries = TRANSACTION_RETRIES
+    done = False
+    while not done and retries > 0:
+        try:
+            job = Job.query.filter_by(id=job_id).one()
+            if job.to_be_deleted:
+                num_remaining_tasks = Task.query.filter_by(job=job).count()
+                if num_remaining_tasks == 0:
+                    logger.info("Job %s (%s) is marked for deletion and has no "
+                                "tasks left, deleting it from the database now.",
+                                job.id, job.title)
+                    db.session.delete(job)
+                db.session.commit()
+                done = True
+        except InvalidRequestError:
+            if retries > 0:
+                logger.debug("Caught an InvalidRequestError trying to delete "
+                             "job %s, retrying transaction", job_id)
+                retries -= 1
+                db.session.rollback()
+            else:
+                logger.error("While trying to delete job %s, caught an "
+                             "InvalidRequestError %s times, giving up",
+                             job_id, TRANSACTION_RETRIES)
+                raise
+
+    if (agent is not None and
+        task.state not in [WorkState.DONE, WorkState.FAILED]):
         try:
             response = requests.delete("%s/tasks/%s" %
                                             (agent.api_url(), task.id),
                                        headers={"User-Agent": USERAGENT})
 
-            logger.info("Deleting task %s (job %s - \"%s\") from agent %s (id %s)",
+            logger.info("Deleting task %s (job %s - %r) from agent %s (id %s)",
                         task.id, job.id, job.title, agent.hostname, agent.id)
             if response.status_code not in [requests.codes.accepted,
                                             requests.codes.ok,
@@ -462,43 +514,21 @@ def delete_task(self, task_id):
                 raise ValueError("Unexpected return code on deleting task %s on "
                                  "agent %s: %s",
                                  task.id, agent.id, response.status_code)
-            else:
-                db.session.delete(task)
-                db.session.flush()
         # Catching ProtocolError here is a work around for
         # https://github.com/kennethreitz/requests/issues/2204
         except (ConnectionError, ProtocolError) as e:
             if self.request.retries < self.max_retries:
                 logger.warning("Caught ConnectionError trying to delete task %s "
-                               "from agent %s (id %s), retry %s of %s: %s",
+                               "from agent %s (id %s): %s",
                                task.id,
                                agent.hostname,
                                agent.id,
-                               self.request.retries,
-                               self.max_retries,
                                e)
-                self.retry(exc=e)
-            else:
-                logger.error("Could not contact agent %s, (id %s), for stopping "
-                             "task %s, just deleting it locally",
-                             agent.hostname, agent.id, task.id)
-                db.session.delete(task)
-                db.session.flush()
-
-    if job.to_be_deleted:
-        num_remaining_tasks = Task.query.filter_by(job=job).count()
-        if num_remaining_tasks == 0:
-            logger.info("Job %s (%s) is marked for deletion and has no tasks "
-                        "left, deleting it from the database now.",
-                        job.id, job.title)
-            db.session.delete(job)
-
-    db.session.commit()
 
 
 @celery_app.task(ignore_results=True, bind=True)
 def stop_task(self, task_id):
-    db.session.commit()
+    db.session.rollback()
     task = Task.query.filter_by(id=task_id).one()
     job = task.job
 
@@ -542,7 +572,7 @@ def stop_task(self, task_id):
 
 @celery_app.task(ignore_results=True)
 def delete_job(job_id):
-    db.session.commit()
+    db.session.rollback()
     job = Job.query.filter_by(id=job_id).one()
     if not job.to_be_deleted:
         logger.warning("Not deleting job %s, it is not marked for deletion.",
@@ -569,7 +599,7 @@ def delete_job(job_id):
 
 @celery_app.task(ignore_results=True)
 def clean_up_orphaned_task_logs():
-    db.session.commit()
+    db.session.rollback()
 
     orphaned_task_logs = TaskLog.query.filter(
         ~TaskLog.task_associations.any()).all()
