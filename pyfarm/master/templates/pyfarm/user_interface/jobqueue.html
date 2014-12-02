@@ -17,7 +17,7 @@
         <label for="parent">Parent Queue</label>
       </div>
       <div class="control">
-        <input id="parent" type="text" value="{{ queue.parent.path() }}" disabled/>
+        <input id="parent" type="text" value="{{ queue.parent.path() if queue.parent else '' }}" disabled/>
       </div>
     </div>
     <div class="control-group">
