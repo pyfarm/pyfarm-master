@@ -81,6 +81,16 @@
         {{ agent.version }}
       </td>
     </tr>
+    <tr>
+      <td>
+        MAC Addresses
+      </td>
+      <td>
+        {% for mac_address in agent.mac_addresses %}
+        {{ mac_address.mac_address }} <br/>
+        {% endfor %}
+      </td>
+    </tr>
   </tbody>
 </table>
 

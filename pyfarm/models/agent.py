@@ -39,9 +39,9 @@ from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, UtilityMixins, ReprMixin, ValidateWorkStateMixin)
 from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, UseAgentAddressEnum,
-    OperatingSystemEnum, AgentStateEnum)
+    OperatingSystemEnum, AgentStateEnum, MACAddress)
 from pyfarm.models.core.cfg import (
-    TABLE_AGENT, TABLE_SOFTWARE_VERSION, TABLE_TAG,
+    TABLE_AGENT, TABLE_SOFTWARE_VERSION, TABLE_TAG, TABLE_AGENT_MAC_ADDRESS,
     TABLE_AGENT_TAG_ASSOC, MAX_HOSTNAME_LENGTH, MAX_CPUNAME_LENGTH,
     TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_PROJECT_AGENTS, TABLE_PROJECT,
     MAX_OSNAME_LENGTH)
@@ -97,6 +97,15 @@ class AgentTaggingMixin(object):
             raise ValueError("expected a string for `%s`" % key)
 
         return value
+
+
+class AgentMacAddress(db.Model):
+    __tablename__ = TABLE_AGENT_MAC_ADDRESS
+    __table_args__ = (UniqueConstraint("agent_id", "mac_address"), )
+
+    agent_id = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
+                         primary_key=True, nullable=False)
+    mac_address = db.Column(MACAddress, primary_key=True, nullable=False)
 
 
 class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
@@ -258,6 +267,9 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                    "associated with.  By default an agent "
                                    "which is not associated with any projects "
                                    "will be a member of all projects.")
+    mac_addresses = db.relationship("AgentMacAddress", backref="agent",
+                                    lazy="dynamic",
+                                    doc="The MAC addresses this agent has")
 
     def get_supported_types(self):
         try:
