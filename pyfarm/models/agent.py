@@ -105,7 +105,8 @@ class AgentMacAddress(db.Model):
 
     agent_id = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
                          primary_key=True, nullable=False)
-    mac_address = db.Column(MACAddress, primary_key=True, nullable=False)
+    mac_address = db.Column(MACAddress, primary_key=True, nullable=False,
+                            autoincrement=False)
 
 
 class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
