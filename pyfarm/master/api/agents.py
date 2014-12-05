@@ -214,7 +214,7 @@ class AgentIndexAPI(MethodView):
 
         current_assignments = g.json.pop("current_assignments", None)
         mac_addresses = g.json.pop("mac_addresses", None)
-        if mac_addresses:
+        if mac_addresses is not None:
             mac_addresses = [x.lower() for x in mac_addresses]
 
         agent = Agent.query.filter_by(
@@ -229,7 +229,7 @@ class AgentIndexAPI(MethodView):
             except ValueError as e:
                 return jsonify(error=str(e)), BAD_REQUEST
 
-            if mac_addresses:
+            if mac_addresses is not None:
                 for address in mac_addresses:
                     mac_address = AgentMacAddress(agent=agent,
                                                   mac_addresses=address)
@@ -573,7 +573,7 @@ class SingleAgentAPI(MethodView):
 
         current_assignments = g.json.pop("current_assignments", None)
         mac_addresses = g.json.pop("mac_addresses", None)
-        if mac_addresses:
+        if mac_addresses is not None:
             mac_addresses = list(map(str.lower, mac_addresses))
 
         try:
@@ -605,7 +605,7 @@ class SingleAgentAPI(MethodView):
             model.state != AgentState.OFFLINE):
             fail_missing_assignments(model, current_assignments)
 
-        if mac_addresses:
+        if mac_addresses is not None:
             updated = True
             for existing_address in model.mac_addresses:
                 if existing_address.mac_address.lower() not in mac_addresses:
