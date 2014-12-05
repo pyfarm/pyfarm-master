@@ -160,7 +160,7 @@ class MACAddress(TypeDecorator):
             return self.checkInteger(value)
 
         elif isinstance(value, STRING_TYPES):
-            return int("0x" + value.replace(":", ""), 0)
+            return int("0" + value.replace(":", ""), 16)
 
         elif value is None:
             return value
