@@ -343,13 +343,15 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                     logger.info("Job %r: state transition %r -> 'done'",
                                 self.title, self.state)
                     self.state = WorkState.DONE
-                    send_job_completion_mail.delay(self.id, True)
+                    send_job_completion_mail.apply_async(args=[self.id, True],
+                                                         countdown=5)
             else:
                 if self.state != _WorkState.FAILED:
                     logger.info("Job %r: state transition %r -> 'failed'",
                                 self.title, self.state)
                     self.state = WorkState.FAILED
-                    send_job_completion_mail.delay(self.id, False)
+                    send_job_completion_mail.apply_async(args=[self.id, False],
+                                                         countdown=5)
             db.session.add(self)
 
     # Methods used by the scheduler
