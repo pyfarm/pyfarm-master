@@ -148,16 +148,12 @@ class MACAddress(TypeDecorator):
     MAX_INT = 0xFFFFFFFFFFFF
     json_types = JSON_CUSTOM_COLUMN_TYPES
 
-    def checkInteger(self, value):
-        if value < 0 or value > self.MAX_INT:
-            args = (value, self.__class__.__name__)
-            raise ValueError("invalid integer '%s' for %s" % args)
-
-        return value
-
     def process_bind_param(self, value, dialect):
         if isinstance(value, int):
-            return self.checkInteger(value)
+            if value < 0 or value > self.MAX_INT:
+                args = (value, self.__class__.__name__)
+                raise ValueError("invalid integer '%s' for %s" % args)
+            return value
 
         elif isinstance(value, STRING_TYPES):
             return int("0" + value.replace(":", ""), 16)
