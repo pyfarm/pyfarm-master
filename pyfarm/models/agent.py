@@ -39,11 +39,12 @@ from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, UtilityMixins, ReprMixin, ValidateWorkStateMixin)
 from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, UseAgentAddressEnum,
-    AgentStateEnum)
+    OperatingSystemEnum, AgentStateEnum)
 from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_SOFTWARE_VERSION, TABLE_TAG,
     TABLE_AGENT_TAG_ASSOC, MAX_HOSTNAME_LENGTH,
-    TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_PROJECT_AGENTS, TABLE_PROJECT)
+    TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_PROJECT_AGENTS, TABLE_PROJECT,
+    MAX_OSNAME_LENGTH)
 from pyfarm.models.jobtype import JobTypeVersion
 from pyfarm.models.job import Job
 
@@ -163,6 +164,13 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                             default=UseAgentAddress.REMOTE,
                             doc="The address we should use when communicating "
                                 "with the agent")
+    # TODO Make non-nullable later
+    os_class = db.Column(OperatingSystemEnum,
+                         doc="The type of operating system running on the "
+                             "agent; \"linux\", \"windows\", or \"mac\".")
+    os_fullname = db.Column(db.String(MAX_OSNAME_LENGTH),
+                            doc="The full human-readable name of the agent's "
+                                "OS, as returned by platform.platform()")
     ram = db.Column(db.Integer, nullable=False,
                     doc="The amount of ram installed on the agent in megabytes")
     free_ram = db.Column(db.Integer, nullable=False,
