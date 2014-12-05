@@ -574,7 +574,7 @@ class SingleAgentAPI(MethodView):
         current_assignments = g.json.pop("current_assignments", None)
         mac_addresses = g.json.pop("mac_addresses", None)
         if mac_addresses:
-            mac_addresses = [x.lower() for x in mac_addresses]
+            mac_addresses = list(map(str.lower, mac_addresses))
 
         try:
             items = g.json.iteritems
