@@ -42,7 +42,7 @@ from pyfarm.models.core.types import (
     OperatingSystemEnum, AgentStateEnum)
 from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_SOFTWARE_VERSION, TABLE_TAG,
-    TABLE_AGENT_TAG_ASSOC, MAX_HOSTNAME_LENGTH,
+    TABLE_AGENT_TAG_ASSOC, MAX_HOSTNAME_LENGTH, MAX_CPUNAME_LENGTH,
     TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_PROJECT_AGENTS, TABLE_PROJECT,
     MAX_OSNAME_LENGTH)
 from pyfarm.models.jobtype import JobTypeVersion
@@ -176,7 +176,10 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     free_ram = db.Column(db.Integer, nullable=False,
                          doc="The amount of ram which was last considered free")
     cpus = db.Column(db.Integer, nullable=False,
-                     doc="The number of cpus installed on the agent")
+                     doc="The number of logical CPU cores installed on the "
+                         "agent")
+    cpu_name = db.Column(db.String(MAX_CPUNAME_LENGTH),
+                         doc="The make and model of CPUs in this agents")
     port = db.Column(db.Integer, nullable=False,
                      doc="The port the agent is currently running on")
     time_offset = db.Column(db.Integer, nullable=False, default=0,
