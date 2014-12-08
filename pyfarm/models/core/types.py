@@ -25,7 +25,7 @@ import re
 from json import dumps, loads
 from textwrap import dedent
 
-try:
+try: # pragma: no cover
     from UserDict import UserDict
     from UserList import UserList
 except ImportError:

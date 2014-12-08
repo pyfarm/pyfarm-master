@@ -25,11 +25,11 @@ from sqlalchemy.exc import StatementError
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.core.enums import AgentState, DBAgentState
+from pyfarm.core.enums import AgentState, DBAgentState, STRING_TYPES
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.types import (
-    IPv4Address, UseAgentAddressEnum, JSONDict, JSONList,
+    IPv4Address, MACAddress, UseAgentAddressEnum, JSONDict, JSONList,
     JSONSerializable, id_column, AgentStateEnum,
     IDTypeWork, IDTypeAgent, IDTypeTag, IPAddress, WorkStateEnum)
 
@@ -38,6 +38,7 @@ class TypeModel(db.Model):
     __tablename__ = "%s_test_types" % TABLE_PREFIX
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     ipv4 = db.Column(IPv4Address)
+    mac = db.Column(MACAddress)
     json_dict = db.Column(JSONDict)
     json_list = db.Column(JSONList)
     agent_addr = db.Column(UseAgentAddressEnum)
@@ -179,6 +180,31 @@ class TestIPAddressType(BaseTestCase):
         with self.assertRaises(StatementError):
             db.session.commit()
 
+
+class TestMACAddressType(BaseTestCase):
+    def test_insert_int(self):
+        value = 0x0050561000aa
+        model = TypeModel(mac=value)
+        db.session.add(model)
+        db.session.commit()
+        insert_id = model.id
+        db.session.remove()
+        result = TypeModel.query.filter_by(id=insert_id).first()
+        self.assertIsInstance(result.mac, STRING_TYPES)
+        self.assertEqual(result.mac, "00:50:56:10:00:aa")
+
+
+    def test_insert_string(self):
+        value = "00:50:56:10:00:ab"
+        model = TypeModel(mac=value)
+        self.assertEqual(model.mac, value)
+        db.session.add(model)
+        db.session.commit()
+        insert_id = model.id
+        db.session.remove()
+        result = TypeModel.query.filter_by(id=insert_id).first()
+        self.assertIsInstance(result.mac, STRING_TYPES)
+        self.assertEqual(result.mac, value)
 
 class TestIDColumn(BaseTestCase):
     def test_integer(self):
