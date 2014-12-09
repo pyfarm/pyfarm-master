@@ -620,7 +620,7 @@ class SingleAgentAPI(MethodView):
                     logger.debug("Existing address %s is not in supplied "
                                  "mac addresses, for agent %s, removing it.",
                                  existing_address.mac_address,
-                                 agent.hostname)
+                                 model.hostname)
                     model.mac_addresses.remove(existing_address)
                 else:
                     mac_addresses.remove(
