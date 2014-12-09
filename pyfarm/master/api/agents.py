@@ -288,6 +288,10 @@ class AgentIndexAPI(MethodView):
                 updated = True
                 for existing_address in agent.mac_addresses:
                     if existing_address.mac_address.lower() not in mac_addresses:
+                        logger.debug("Existing address %s is not in supplied "
+                                     "mac addresses, for agent %s, removing it.",
+                                     existing_address.mac_address,
+                                     agent.hostname)
                         agent.mac_addresses.remove(existing_address)
                     else:
                         mac_addresses.remove(
@@ -613,6 +617,10 @@ class SingleAgentAPI(MethodView):
             updated = True
             for existing_address in model.mac_addresses:
                 if existing_address.mac_address.lower() not in mac_addresses:
+                    logger.debug("Existing address %s is not in supplied "
+                                 "mac addresses, for agent %s, removing it.",
+                                 existing_address.mac_address,
+                                 agent.hostname)
                     model.mac_addresses.remove(existing_address)
                 else:
                     mac_addresses.remove(
