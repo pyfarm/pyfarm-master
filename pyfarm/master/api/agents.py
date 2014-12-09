@@ -284,7 +284,7 @@ class AgentIndexAPI(MethodView):
                     else:
                         updated = True
 
-            if mac_addresses:
+            if mac_addresses is not None:
                 updated = True
                 for existing_address in agent.mac_addresses:
                     if existing_address.mac_address.lower() not in mac_addresses:
