@@ -270,7 +270,9 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                    "will be a member of all projects.")
     mac_addresses = db.relationship("AgentMacAddress", backref="agent",
                                     lazy="dynamic",
-                                    doc="The MAC addresses this agent has")
+                                    doc="The MAC addresses this agent has",
+                                    cascade="save-update, merge, delete, "
+                                            "delete-orphan")
 
     def get_supported_types(self):
         try:
