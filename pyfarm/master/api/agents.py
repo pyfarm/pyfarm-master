@@ -51,7 +51,7 @@ from pyfarm.master.utility import (
 
 logger = getLogger("api.agents")
 
-MAC_RE = re.compile(r"([0-9a-fA-F]:){5}:[0-9a-fA-F]")
+MAC_RE = re.compile("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
 
 def fail_missing_assignments(agent, current_assignments):
     # FIXME Possible race condition:
