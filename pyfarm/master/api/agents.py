@@ -32,6 +32,7 @@ except ImportError:  # pragma: no cover
         INTERNAL_SERVER_ERROR)
 
 from datetime import datetime
+import re
 
 from flask import request, g
 from flask.views import MethodView
@@ -50,6 +51,7 @@ from pyfarm.master.utility import (
 
 logger = getLogger("api.agents")
 
+MAC_RE = re.compile(r"([0-9a-fA-F]:){5}:[0-9a-fA-F]")
 
 def fail_missing_assignments(agent, current_assignments):
     # FIXME Possible race condition:
@@ -214,8 +216,9 @@ class AgentIndexAPI(MethodView):
 
         current_assignments = g.json.pop("current_assignments", None)
         mac_addresses = g.json.pop("mac_addresses", None)
+        # TODO return BAD_REQUEST on bad mac addresses
         if mac_addresses is not None:
-            mac_addresses = [x.lower() for x in mac_addresses]
+            mac_addresses = [x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
         agent = Agent.query.filter_by(
             port=g.json["port"], systemid=g.json["systemid"]).first()
@@ -573,8 +576,9 @@ class SingleAgentAPI(MethodView):
 
         current_assignments = g.json.pop("current_assignments", None)
         mac_addresses = g.json.pop("mac_addresses", None)
+        # TODO return BAD_REQUEST on bad mac addresses
         if mac_addresses is not None:
-            mac_addresses = list(map(str.lower, mac_addresses))
+            mac_addresses = [x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
         try:
             items = g.json.iteritems
