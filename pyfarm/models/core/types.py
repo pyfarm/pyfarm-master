@@ -25,7 +25,7 @@ import re
 from json import dumps, loads
 from textwrap import dedent
 
-try:
+try: # pragma: no cover
     from UserDict import UserDict
     from UserList import UserList
 except ImportError:
@@ -137,6 +137,47 @@ class JSONDict(JSONSerializable):
     """Column type for storing dictionary objects as json"""
     serialize_types = (dict, UserDict)
     json_types = dict
+
+
+class MACAddress(TypeDecorator):
+    """
+    Column type which can store and retrieve MAC addresses in a more
+    efficient manner
+    """
+    impl = BigInteger
+    MAX_INT = 0xFFFFFFFFFFFF
+    json_types = JSON_CUSTOM_COLUMN_TYPES
+
+    def process_bind_param(self, value, dialect):
+        if isinstance(value, int):
+            if value < 0 or value > self.MAX_INT:
+                args = (value, self.__class__.__name__)
+                raise ValueError("invalid integer '%s' for %s" % args)
+            return value
+
+        elif isinstance(value, STRING_TYPES):
+            return int("0" + value.replace(":", ""), 16)
+
+        elif value is None:
+            return value
+
+        else:
+            raise ValueError("unexpected type %s for value" % type(value))
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            out = format((value >> 40) & 0xFF, "02x")
+            out += ":"
+            out += format((value >> 32) & 0xFF, "02x")
+            out += ":"
+            out += format((value >> 24) & 0xFF, "02x")
+            out += ":"
+            out += format((value >> 16) & 0xFF, "02x")
+            out += ":"
+            out += format((value >> 8) & 0xFF, "02x")
+            out += ":"
+            out += format(value & 0xFF, "02x")
+            return out
 
 
 class IPAddress(_IPAddress):

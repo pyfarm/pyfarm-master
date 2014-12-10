@@ -32,6 +32,7 @@ except ImportError:  # pragma: no cover
         INTERNAL_SERVER_ERROR)
 
 from datetime import datetime
+import re
 
 from flask import request, g
 from flask.views import MethodView
@@ -41,7 +42,7 @@ from sqlalchemy import or_, not_
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState, AgentState
 from pyfarm.scheduler.tasks import assign_tasks, update_agent
-from pyfarm.models.agent import Agent
+from pyfarm.models.agent import Agent, AgentMacAddress
 from pyfarm.models.task import Task
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
@@ -50,6 +51,7 @@ from pyfarm.master.utility import (
 
 logger = getLogger("api.agents")
 
+MAC_RE = re.compile("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
 
 def fail_missing_assignments(agent, current_assignments):
     # FIXME Possible race condition:
@@ -213,6 +215,10 @@ class AgentIndexAPI(MethodView):
         g.json.setdefault("remote_ip", request.remote_addr)
 
         current_assignments = g.json.pop("current_assignments", None)
+        mac_addresses = g.json.pop("mac_addresses", None)
+        # TODO return BAD_REQUEST on bad mac addresses
+        if mac_addresses is not None:
+            mac_addresses = [x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
         agent = Agent.query.filter_by(
             port=g.json["port"], systemid=g.json["systemid"]).first()
@@ -225,6 +231,12 @@ class AgentIndexAPI(MethodView):
             # that's causing our sqlalchemy model raise a ValueError.
             except ValueError as e:
                 return jsonify(error=str(e)), BAD_REQUEST
+
+            if mac_addresses is not None:
+                for address in mac_addresses:
+                    mac_address = AgentMacAddress(agent=agent,
+                                                  mac_addresses=address)
+                    db.session.add(mac_address)
 
             db.session.add(agent)
 
@@ -271,6 +283,24 @@ class AgentIndexAPI(MethodView):
                                BAD_REQUEST
                     else:
                         updated = True
+
+            if mac_addresses is not None:
+                updated = True
+                for existing_address in agent.mac_addresses:
+                    if existing_address.mac_address.lower() not in mac_addresses:
+                        logger.debug("Existing address %s is not in supplied "
+                                     "mac addresses, for agent %s, removing it.",
+                                     existing_address.mac_address,
+                                     agent.hostname)
+                        agent.mac_addresses.remove(existing_address)
+                    else:
+                        mac_addresses.remove(
+                            existing_address.mac_address.lower())
+
+                for new_address in mac_addresses:
+                    mac_address = AgentMacAddress(
+                        agent=agent, mac_address=new_address)
+                    db.session.add(mac_address)
 
             # TODO Only do that if this is really the agent speaking to us.
             if (current_assignments is not None and
@@ -549,6 +579,10 @@ class SingleAgentAPI(MethodView):
             g.json["remote_ip"] = request.remote_addr
 
         current_assignments = g.json.pop("current_assignments", None)
+        mac_addresses = g.json.pop("mac_addresses", None)
+        # TODO return BAD_REQUEST on bad mac addresses
+        if mac_addresses is not None:
+            mac_addresses = [x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
         try:
             items = g.json.iteritems
@@ -578,6 +612,24 @@ class SingleAgentAPI(MethodView):
         if (current_assignments is not None and
             model.state != AgentState.OFFLINE):
             fail_missing_assignments(model, current_assignments)
+
+        if mac_addresses is not None:
+            updated = True
+            for existing_address in model.mac_addresses:
+                if existing_address.mac_address.lower() not in mac_addresses:
+                    logger.debug("Existing address %s is not in supplied "
+                                 "mac addresses, for agent %s, removing it.",
+                                 existing_address.mac_address,
+                                 model.hostname)
+                    model.mac_addresses.remove(existing_address)
+                else:
+                    mac_addresses.remove(
+                        existing_address.mac_address.lower())
+
+            for new_address in mac_addresses:
+                mac_address = AgentMacAddress(
+                    agent=model, mac_address=new_address)
+                db.session.add(mac_address)
 
         logger.debug(
             "Updated agent %r: %r", model.id, modified)
