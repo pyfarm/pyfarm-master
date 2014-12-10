@@ -69,7 +69,8 @@ def agents():
             if order_dir not in ["asc", "desc"]:
                 return (render_template(
                 "pyfarm/error.html", error="unknown order dir"), BAD_REQUEST)
-        agents_query = agents_query.order_by("%s %s" % (order_by, order_dir))
+
+    agents_query = agents_query.order_by("%s %s" % (order_by, order_dir))
 
     agents = agents_query.all()
     return render_template("pyfarm/user_interface/agents.html",
