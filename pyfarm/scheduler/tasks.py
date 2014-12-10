@@ -38,7 +38,7 @@ from sqlalchemy import or_, and_, func, distinct, desc, asc
 from sqlalchemy.exc import InvalidRequestError
 
 import requests
-from requests.exceptions import ConnectionError, RequestException
+from requests.exceptions import ConnectionError, Timeout, RequestException
 # Workaround for https://github.com/kennethreitz/requests/issues/2204
 from requests.packages.urllib3.exceptions import ProtocolError
 
@@ -84,6 +84,7 @@ SCHEDULER_LOCKFILE_BASE = read_env(
 LOGFILES_DIR = read_env(
     "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
 TRANSACTION_RETRIES = read_env_int("PYFARM_TRANSACTION_RETRIES", 10)
+AGENT_REQUEST_TIMEOUT = read_env_int("PYFARM_AGENT_REQUEST_TIMEOUT", 10)
 
 @celery_app.task(ignore_result=True, bind=True)
 def send_tasks_to_agent(self, agent_id):
@@ -142,7 +143,8 @@ def send_tasks_to_agent(self, agent_id):
                                                 default=default_json_encoder),
                                      headers={
                                          "Content-Type": "application/json",
-                                         "User-Agent": USERAGENT})
+                                         "User-Agent": USERAGENT},
+                                     timeout=AGENT_REQUEST_TIMEOUT)
 
             logger.debug("Return code after sending batch to agent: %s",
                          response.status_code)
@@ -162,10 +164,11 @@ def send_tasks_to_agent(self, agent_id):
                 raise ValueError("Unexpected return code on sending batch to "
                                  "agent: %s", response.status_code)
 
-        except ConnectionError as e:
+        except (ConnectionError, Timeout) as e:
             if self.request.retries < self.max_retries:
-                logger.warning("Caught ConnectionError trying to contact agent "
+                logger.warning("Caught %s trying to contact agent "
                                "%s (id %s), retry %s of %s: %s",
+                               type(e).__name__,
                                agent.hostname,
                                agent.id,
                                self.request.retries,
@@ -300,7 +303,8 @@ def poll_agent(self, agent_id):
     try:
         response = requests.get(
             agent.api_url() + "/tasks/",
-            headers={"User-Agent": USERAGENT})
+            headers={"User-Agent": USERAGENT},
+            timeout=AGENT_REQUEST_TIMEOUT)
 
         if response.status_code != requests.codes.ok:
             raise ValueError(
@@ -310,10 +314,11 @@ def poll_agent(self, agent_id):
         json_data = response.json()
     # Catching ProtocolError here is a work around for
     # https://github.com/kennethreitz/requests/issues/2204
-    except (ConnectionError, ProtocolError) as e:
+    except (ConnectionError, Timeout, ProtocolError) as e:
         if self.request.retries < self.max_retries:
-            logger.warning("Caught ConnectionError trying to contact agent "
+            logger.warning("Caught %s trying to contact agent "
                            "%s (id %s), retry %s of %s: %s",
+                           type(e).__name__,
                            agent.hostname,
                            agent.id,
                            self.request.retries,
