@@ -415,7 +415,8 @@ def update_agent(self, agent_id):
     try:
         response = requests.post(agent.api_url() + "/update",
                                  dumps({"version": agent.upgrade_to}),
-                                 headers={"User-Agent": USERAGENT})
+                                 headers={"User-Agent": USERAGENT},
+                                 timeout=AGENT_REQUEST_TIMEOUT)
 
         logger.debug("Return code after sending update request for %s "
                      "to agent: %s", agent.upgrade_to, response.status_code)
@@ -424,10 +425,11 @@ def update_agent(self, agent_id):
             raise ValueError("Unexpected return code on sending update request "
                              "for %s to agent %s: %s", agent.upgrade_to,
                              agent.hostname, response.status_code)
-    except ConnectionError as e:
+    except (ConnectionError, Timeout) as e:
         if self.request.retries < self.max_retries:
-            logger.warning("Caught ConnectionError trying to contact agent "
+            logger.warning("Caught %s trying to contact agent "
                             "%s (id %s), retry %s of %s: %s",
+                            type(e).__name__,
                             agent.hostname,
                             agent.id,
                             self.request.retries,
@@ -508,7 +510,8 @@ def delete_task(self, task_id):
         try:
             response = requests.delete("%s/tasks/%s" %
                                             (agent.api_url(), task.id),
-                                       headers={"User-Agent": USERAGENT})
+                                       headers={"User-Agent": USERAGENT},
+                                       timeout=AGENT_REQUEST_TIMEOUT)
 
             logger.info("Deleting task %s (job %s - %r) from agent %s (id %s)",
                         task.id, job.id, job.title, agent.hostname, agent.id)
@@ -521,10 +524,11 @@ def delete_task(self, task_id):
                                  task.id, agent.id, response.status_code)
         # Catching ProtocolError here is a work around for
         # https://github.com/kennethreitz/requests/issues/2204
-        except (ConnectionError, ProtocolError) as e:
+        except (ConnectionError, ProtocolError, Timeout) as e:
             if self.request.retries < self.max_retries:
-                logger.warning("Caught ConnectionError trying to delete task %s "
+                logger.warning("Caught %s while trying to delete task %s "
                                "from agent %s (id %s): %s",
+                               type(e).__name__,
                                task.id,
                                agent.hostname,
                                agent.id,
@@ -543,7 +547,8 @@ def stop_task(self, task_id):
         try:
             response = requests.delete("%s/tasks/%s" %
                                             (agent.api_url(), task.id),
-                                       headers={"User-Agent": USERAGENT})
+                                       headers={"User-Agent": USERAGENT},
+                                       timeout=AGENT_REQUEST_TIMEOUT)
 
             logger.info("Stopping task %s (job %s - \"%s\") on agent %s (id %s)",
                         task.id, job.id, job.title, agent.hostname, agent.id)
@@ -560,10 +565,11 @@ def stop_task(self, task_id):
                 db.session.add(task)
         # Catching ProtocolError here is a work around for
         # https://github.com/kennethreitz/requests/issues/2204
-        except (ConnectionError, ProtocolError) as e:
+        except (ConnectionError, ProtocolError, Timeout) as e:
             if self.request.retries < self.max_retries:
-                logger.warning("Caught ConnectionError trying to delete task %s "
+                logger.warning("Caught %s while trying to delete task %s "
                                "from agent %s (id %s), retry %s of %s: %s",
+                               type(e).__name__,
                                task.id,
                                agent.hostname,
                                agent.id,
