@@ -571,8 +571,8 @@ class SingleAgentAPI(MethodView):
         :statuscode 400: something within the request is invalid
         :statuscode 404: no agent could be found using the given id
         """
-        model = Agent.query.filter_by(id=agent_id).first()
-        if model is None:
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if agent is None:
             return jsonify(error="Agent %s not found" % agent_id), NOT_FOUND
 
         if "remote_ip" not in g.json:
@@ -589,55 +589,54 @@ class SingleAgentAPI(MethodView):
         except AttributeError:
             items = g.json.items
 
-        # update the model we found
         modified = {}
         for key, value in items():
-            if value != getattr(model, key):
+            if value != getattr(agent, key):
                 try:
-                    setattr(model, key, value)
+                    setattr(agent, key, value)
 
                 # There may be something wrong with one of the fields
-                # that's causing our sqlalchemy model raise a ValueError.
+                # that's causing our sqlalchemy model to raise a ValueError.
                 except ValueError as e:
                     return jsonify(error=str(e)), BAD_REQUEST
 
                 modified[key] = value
 
-        model.last_heard_from = datetime.utcnow()
+        agent.last_heard_from = datetime.utcnow()
 
         if "upgrade_to" in modified:
-            update_agent.delay(model.id)
+            update_agent.delay(agent.id)
 
         # TODO Only do that if this is really the agent speaking to us.
         if (current_assignments is not None and
-            model.state != AgentState.OFFLINE):
-            fail_missing_assignments(model, current_assignments)
+            agent.state != AgentState.OFFLINE):
+            fail_missing_assignments(agent, current_assignments)
 
         if mac_addresses is not None:
             updated = True
-            for existing_address in model.mac_addresses:
+            for existing_address in agent.mac_addresses:
                 if existing_address.mac_address.lower() not in mac_addresses:
                     logger.debug("Existing address %s is not in supplied "
                                  "mac addresses, for agent %s, removing it.",
                                  existing_address.mac_address,
-                                 model.hostname)
-                    model.mac_addresses.remove(existing_address)
+                                 agent.hostname)
+                    agent.mac_addresses.remove(existing_address)
                 else:
                     mac_addresses.remove(
                         existing_address.mac_address.lower())
 
             for new_address in mac_addresses:
                 mac_address = AgentMacAddress(
-                    agent=model, mac_address=new_address)
+                    agent=agent, mac_address=new_address)
                 db.session.add(mac_address)
 
         logger.debug(
-            "Updated agent %r: %r", model.id, modified)
-        db.session.add(model)
+            "Updated agent %r: %r", agent.id, modified)
+        db.session.add(agent)
         db.session.commit()
         assign_tasks.delay()
 
-        return jsonify(model.to_dict(unpack_relationships=False)), OK
+        return jsonify(agent.to_dict(unpack_relationships=False)), OK
 
     def delete(self, agent_id):
         """
