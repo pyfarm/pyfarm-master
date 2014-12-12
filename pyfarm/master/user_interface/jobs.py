@@ -240,10 +240,15 @@ def single_job(job_id):
 
     users_query = User.query.filter(User.email != None)
 
+    latest_jobtype_version = db.session.query(JobTypeVersion.version).filter_by(
+            jobtype=job.jobtype_version.jobtype).\
+                order_by(desc(JobTypeVersion.version)).first()
+
     return render_template("pyfarm/user_interface/job.html", job=job,
                            tasks=tasks, first_task=first_task,
                            last_task=last_task, queues=jobqueues,
-                           users=users_query)
+                           users=users_query,
+                           latest_jobtype_version=latest_jobtype_version[0])
 
 def delete_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
@@ -463,6 +468,32 @@ def remove_notified_user_from_job(job_id, user_id):
 
     flash("User %s has been removed from notified users for job %s." %
           (user.username, job.title))
+
+    return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
+
+def upgrade_job_to_latest_jobtype_version(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    latest_version = JobTypeVersion.query.filter_by(
+            jobtype=job.jobtype_version.jobtype).\
+                order_by(desc(JobTypeVersion.version)).first()
+    if not latest_version:
+        return (render_template(
+            "pyfarm/error.html", error="Jobtype %s has no versions" %
+            job.jobtype_id), INTERNAL_SERVER_ERROR)
+
+    job.jobtype_version = latest_version
+
+    db.session.add(job)
+    db.session.commit()
+
+    flash("Job %s has been upgraded to jobtype %s, version %s." %
+          (job.title, job.jobtype_version.jobtype.name,
+           job.jobtype_version.version))
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
 
