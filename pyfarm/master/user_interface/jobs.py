@@ -17,9 +17,11 @@
 from decimal import Decimal
 
 try:
-    from httplib import BAD_REQUEST, NOT_FOUND, SEE_OTHER
+    from httplib import (
+        BAD_REQUEST, NOT_FOUND, SEE_OTHER, INTERNAL_SERVER_ERROR)
 except ImportError:  # pragma: no cover
-    from http.client import BAD_REQUEST, NOT_FOUND, SEE_OTHER
+    from http.client import (
+        BAD_REQUEST, NOT_FOUND, SEE_OTHER, INTERNAL_SERVER_ERROR)
 
 from flask import render_template, request, redirect, url_for, flash
 from sqlalchemy.orm import aliased
