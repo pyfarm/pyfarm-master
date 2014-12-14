@@ -298,6 +298,13 @@ class EnumType(TypeDecorator):
         return value
 
 
+class UUIDType(TypeDecorator):
+    """
+    Custom column type which handles UUIDs in the appropriate
+    manner for various databases.
+    """
+
+
 class OperatingSystemEnum(EnumType):
     """custom column type for working with :class:`.AgentState`"""
     enum = _OperatingSystem
