@@ -263,6 +263,9 @@
       {% endif %}
     </td>
     <td>
+      {% if job.blocker_count > 0%}
+      <i class="icon-ban-circle" title="blocked by {{ job.blocker_count }} parent {{ 'jobs' if job.blocker_count > 1 else 'job' }}"></i>
+      {% endif %}
       {% if not job[0].state %}
       <i class="icon-time" title="queued"></i>
       {% endif %}

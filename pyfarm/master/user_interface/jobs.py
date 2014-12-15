@@ -57,6 +57,11 @@ def jobs():
     child_count_query = db.session.query(
         JobDependencies.c.parentid, func.count('*').label('child_count')).\
                 group_by(JobDependencies.c.parentid).subquery()
+    blocker_count_query = db.session.query(
+        JobDependencies.c.childid, func.count('*').label('blocker_count')).\
+            join(Job, Job.id == JobDependencies.c.parentid).\
+                filter(or_(Job.state == None, Job.state != WorkState.DONE)).\
+                    group_by(JobDependencies.c.childid).subquery()
 
     jobs_query = db.session.query(Job,
                                   func.coalesce(
@@ -76,7 +81,10 @@ def jobs():
                                   JobType.id.label('jobtype_id'),
                                   func.coalesce(
                                       child_count_query.c.child_count,
-                                      0).label('child_count')).\
+                                      0).label('child_count'),
+                                  func.coalesce(
+                                      blocker_count_query.c.blocker_count,
+                                      0).label('blocker_count')).\
         join(JobTypeVersion, Job.jobtype_version_id == JobTypeVersion.id).\
         join(JobType, JobTypeVersion.jobtype_id == JobType.id).\
         outerjoin(queued_count_query, Job.id == queued_count_query.c.job_id).\
@@ -84,7 +92,8 @@ def jobs():
         outerjoin(done_count_query, Job.id == done_count_query.c.job_id).\
         outerjoin(failed_count_query, Job.id == failed_count_query.c.job_id).\
         outerjoin(User, Job.user_id == User.id).\
-        outerjoin(child_count_query, Job.id == child_count_query.c.parentid)
+        outerjoin(child_count_query, Job.id == child_count_query.c.parentid).\
+        outerjoin(blocker_count_query, Job.id == blocker_count_query.c.childid)
 
     filters = {}
     if "tags" in request.args:
