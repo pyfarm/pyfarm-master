@@ -53,11 +53,12 @@ from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task, TaskDependencies
 from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobtype import JobType
-from pyfarm.models.agent import Agent, AgentTagAssociation
+from pyfarm.models.agent import Agent, AgentTagAssociation, GPUInAgent
 from pyfarm.models.user import User, Role
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.pathmap import PathMap
 from pyfarm.models.tasklog import TaskLog
+from pyfarm.models.gpu import GPU
 
 logger = getLogger("master.entrypoints")
 

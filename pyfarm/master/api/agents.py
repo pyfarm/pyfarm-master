@@ -43,6 +43,7 @@ from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState, AgentState
 from pyfarm.scheduler.tasks import assign_tasks, update_agent
 from pyfarm.models.agent import Agent, AgentMacAddress
+from pyfarm.models.gpu import GPU
 from pyfarm.models.task import Task
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
@@ -220,6 +221,8 @@ class AgentIndexAPI(MethodView):
         if mac_addresses is not None:
             mac_addresses = [x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
+        gpus = g.json.pop("gpus", None)
+
         agent = Agent.query.filter_by(
             port=g.json["port"], systemid=g.json["systemid"]).first()
 
@@ -237,6 +240,15 @@ class AgentIndexAPI(MethodView):
                     mac_address = AgentMacAddress(agent=agent,
                                                   mac_addresses=address)
                     db.session.add(mac_address)
+
+            if gpus is not None:
+                for gpu_name in gpus:
+                    gpu = GPU.query.filter_by(
+                        fullname=gpu_name).first()
+                    if not gpu:
+                        gpu = GPU(fullname=gpu_name)
+                        db.session.add(gpu)
+                    agent.gpus.append(gpu)
 
             db.session.add(agent)
 
@@ -301,6 +313,25 @@ class AgentIndexAPI(MethodView):
                     mac_address = AgentMacAddress(
                         agent=agent, mac_address=new_address)
                     db.session.add(mac_address)
+
+            if gpus is not None:
+                updated = True
+                for existing_gpu in agent.gpus:
+                    if existing_gpu.fullname not in gpus:
+                        logger.debug("Existing gpu %s is not in supplied "
+                                     "gpus, for agent %s, removing it.",
+                                     existing_address.mac_address,
+                                     agent.hostname)
+                        agent.gpus.remove(existing_gpu)
+                    else:
+                        gpus.remove(existing_gpu.fullname)
+
+                for gpu_name in gpus:
+                    gpu = GPU.query.filter_by(fullname=gpu_name).first()
+                    if not gpu:
+                        gpu = GPU(fullname=gpu_name)
+                        db.session.add(gpu)
+                    agent.gpus.append(gpu)
 
             # TODO Only do that if this is really the agent speaking to us.
             if (current_assignments is not None and
@@ -507,7 +538,7 @@ class SingleAgentAPI(MethodView):
                 HTTP/1.1 404 NOT FOUND
                 Content-Type: application/json
 
-                [4, "no agent found for `1234`"]
+                {"error": "Agent 1234 not found"}
 
         :statuscode 200: no error
         :statuscode 404: no agent could be found using the given id
@@ -584,6 +615,8 @@ class SingleAgentAPI(MethodView):
         if mac_addresses is not None:
             mac_addresses = [x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
+        gpus = g.json.pop("gpus", None)
+
         try:
             items = g.json.iteritems
         except AttributeError:
@@ -613,7 +646,7 @@ class SingleAgentAPI(MethodView):
             fail_missing_assignments(agent, current_assignments)
 
         if mac_addresses is not None:
-            updated = True
+            modified["mac_addresses"] = mac_addresses
             for existing_address in agent.mac_addresses:
                 if existing_address.mac_address.lower() not in mac_addresses:
                     logger.debug("Existing address %s is not in supplied "
@@ -629,6 +662,25 @@ class SingleAgentAPI(MethodView):
                 mac_address = AgentMacAddress(
                     agent=agent, mac_address=new_address)
                 db.session.add(mac_address)
+
+        if gpus is not None:
+            modified["gpus"] = gpus
+            for existing_gpu in agent.gpus:
+                if existing_gpu.fullname not in gpus:
+                    logger.debug("Existing gpu %s is not in supplied "
+                                    "gpus, for agent %s, removing it.",
+                                    existing_address.mac_address,
+                                    agent.hostname)
+                    agent.gpus.remove(existing_gpu)
+                else:
+                    gpus.remove(existing_gpu.fullname)
+
+            for gpu_name in gpus:
+                gpu = GPU.query.filter_by(fullname=gpu_name).first()
+                if not gpu:
+                    gpu = GPU(fullname=gpu_name)
+                    db.session.add(gpu)
+                agent.gpus.append(gpu)
 
         logger.debug(
             "Updated agent %r: %r", agent.id, modified)
