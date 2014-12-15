@@ -22,16 +22,20 @@ Special column types used by PyFarm's models.
 """
 
 import re
+import uuid
 from json import dumps, loads
 from textwrap import dedent
 
-try: # pragma: no cover
+try:  # pragma: no cover
     from UserDict import UserDict
     from UserList import UserList
 except ImportError:
     from collections import UserDict, UserList
 
-from sqlalchemy.types import TypeDecorator, BigInteger, Integer, UnicodeText
+from sqlalchemy.types import (
+    TypeDecorator, BigInteger, Integer, UnicodeText, TypeEngine, VARBINARY,
+    VARCHAR)
+from sqlalchemy.dialects.postgresql import UUID as POSTGRES_UUID
 from netaddr import AddrFormatError, IPAddress as _IPAddress
 
 from pyfarm.master.application import db
@@ -59,6 +63,10 @@ if db.engine.name == "sqlite":
     IDTypeWork = Integer
 else:
     IDTypeWork = BigInteger
+
+if db.engine.name == "postgresql":
+    import psycopg2.extras
+    psycopg2.extras.register_uuid()
 
 IDTypeAgent = Integer
 IDTypeTag = Integer
@@ -303,6 +311,32 @@ class UUIDType(TypeDecorator):
     Custom column type which handles UUIDs in the appropriate
     manner for various databases.
     """
+    impl = TypeEngine
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(POSTGRES_UUID)
+
+        elif dialect.name == "sqlite":
+            return dialect.type_descriptor(VARCHAR)
+
+        # FIXME: Possibly wrong `impl` or bad input, this results in an error:
+        #    return "VARBINARY(%d)" % type_.length
+        # TypeError: %d format: a number is required, not NoneType
+        # Perhaps lookup VARBINARY usage
+        return dialect.type_descriptor(VARBINARY)
+
+    def process_bind_param(self, value, dialect):
+        if dialect.name == "postgresql" or value is None:
+            return value
+
+        return str(value)
+
+    def process_result_value(self, value, dialect):
+        if dialect.name == "postgresql" or value is None:
+            return value
+
+        return uuid.UUID(value)
 
 
 class OperatingSystemEnum(EnumType):
