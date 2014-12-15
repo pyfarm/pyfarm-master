@@ -493,7 +493,8 @@ def delete_task(self, task_id):
                                 job.id, job.title)
                     db.session.delete(job)
                 db.session.commit()
-                done = True
+            done = True
+
         except InvalidRequestError:
             if retries > 0:
                 logger.debug("Caught an InvalidRequestError trying to delete "
