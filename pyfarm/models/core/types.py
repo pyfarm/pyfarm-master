@@ -40,7 +40,7 @@ from netaddr import AddrFormatError, IPAddress as _IPAddress
 from pyfarm.master.application import db
 from pyfarm.core.enums import (
     STRING_TYPES, INTEGER_TYPES, _AgentState, _UseAgentAddress, _WorkState,
-    _OperatingSystem, Values)
+    _OperatingSystem, Values, PY3)
 
 ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should
                          never be directly relied upon and it's intended for use
@@ -312,6 +312,27 @@ class UUIDType(TypeDecorator):
     """
     impl = TypeEngine
 
+    def _to_uuid(self, value):
+        if isinstance(value, uuid.UUID):
+            return value
+
+        elif isinstance(value, INTEGER_TYPES):
+            return uuid.UUID(int=value)
+
+        elif PY3 and isinstance(value, bytes):
+            return uuid.UUID(bytes=value)
+
+        elif isinstance(value, STRING_TYPES):
+            try:
+                return uuid.UUID(value)
+            except ValueError:
+                if PY3:  # We handle bytes above
+                    raise
+                return uuid.UUID(bytes=value)
+
+        else:
+            raise TypeError("Don't know how to handle %s" % type(value))
+
     def load_dialect_impl(self, dialect):
         if dialect.name == "postgresql":
             return dialect.type_descriptor(POSTGRES_UUID())
@@ -322,20 +343,12 @@ class UUIDType(TypeDecorator):
         if value is None:
             return value
 
-        elif dialect.name == "postgresql":
+        value = self._to_uuid(value)
+
+        if dialect.name == "postgresql":
             return value
 
-        elif isinstance(value, uuid.UUID):
-            return value.bytes
-
-        elif isinstance(value, INTEGER_TYPES):
-            return uuid.UUID(int=value).bytes
-
-        elif isinstance(value, STRING_TYPES):
-            return uuid.UUID(value).bytes
-
-        else:
-            raise TypeError("Don't know how to handle %s" % type(value))
+        return value.bytes
 
     def process_result_value(self, value, dialect):
         if value is None:
