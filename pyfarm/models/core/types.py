@@ -325,7 +325,7 @@ class UUIDType(TypeDecorator):
         elif isinstance(value, STRING_TYPES):
             try:
                 return uuid.UUID(value)
-            except ValueError:
+            except ValueError:  # pragma: no cover
                 if PY3:  # We handle bytes above
                     raise
                 return uuid.UUID(bytes=value)
@@ -353,10 +353,8 @@ class UUIDType(TypeDecorator):
     def process_result_value(self, value, dialect):
         if value is None:
             return value
-        elif dialect.name == "postgresql":
-            return value
-        else:
-            return uuid.UUID(bytes=value)
+
+        return self._to_uuid(value)
 
 
 class OperatingSystemEnum(EnumType):
