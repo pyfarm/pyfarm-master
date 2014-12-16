@@ -191,7 +191,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                             object.num_assigned_agents() + 1 <
                                 (object.maximum_agents or maxsize)):
                             return object
-                    elif (selected_job is not None or
+                    elif (selected_job is None or
                           selected_job.time_submitted > object.time_submitted):
                         # If this job is not running yet, remember it, but keep
                         # looking for already running or queued but older jobs
