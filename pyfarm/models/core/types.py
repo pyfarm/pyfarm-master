@@ -34,7 +34,7 @@ except ImportError:
 
 from sqlalchemy.types import (
     TypeDecorator, BigInteger, Integer, UnicodeText, TypeEngine, VARBINARY,
-    VARCHAR)
+    VARCHAR, BINARY)
 from sqlalchemy.dialects.postgresql import UUID as POSTGRES_UUID
 from netaddr import AddrFormatError, IPAddress as _IPAddress
 
@@ -315,28 +315,24 @@ class UUIDType(TypeDecorator):
 
     def load_dialect_impl(self, dialect):
         if dialect.name == "postgresql":
-            return dialect.type_descriptor(POSTGRES_UUID)
+            return dialect.type_descriptor(POSTGRES_UUID())
 
-        elif dialect.name == "sqlite":
-            return dialect.type_descriptor(VARCHAR)
+        if dialect.name == "sqlite":
+            return dialect.type_descriptor(VARCHAR(16))
 
-        # FIXME: Possibly wrong `impl` or bad input, this results in an error:
-        #    return "VARBINARY(%d)" % type_.length
-        # TypeError: %d format: a number is required, not NoneType
-        # Perhaps lookup VARBINARY usage
-        return dialect.type_descriptor(VARBINARY)
+        return dialect.type_descriptor(VARBINARY(16))
 
     def process_bind_param(self, value, dialect):
         if dialect.name == "postgresql" or value is None:
             return value
 
-        return str(value)
+        return value.bytes
 
     def process_result_value(self, value, dialect):
         if dialect.name == "postgresql" or value is None:
             return value
 
-        return uuid.UUID(value)
+        return uuid.UUID(bytes=value)
 
 
 class OperatingSystemEnum(EnumType):
