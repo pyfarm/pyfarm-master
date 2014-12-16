@@ -34,7 +34,7 @@ except ImportError:
 
 from sqlalchemy.types import (
     TypeDecorator, BigInteger, Integer, UnicodeText, TypeEngine, VARBINARY,
-    VARCHAR, BINARY)
+    VARCHAR)
 from sqlalchemy.dialects.postgresql import UUID as POSTGRES_UUID
 from netaddr import AddrFormatError, IPAddress as _IPAddress
 
