@@ -33,15 +33,14 @@ except ImportError:
     from collections import UserDict, UserList
 
 from sqlalchemy.types import (
-    TypeDecorator, BigInteger, Integer, UnicodeText, TypeEngine, VARBINARY,
-    VARCHAR)
+    TypeDecorator, BigInteger, Integer, UnicodeText, TypeEngine, VARBINARY)
 from sqlalchemy.dialects.postgresql import UUID as POSTGRES_UUID
 from netaddr import AddrFormatError, IPAddress as _IPAddress
 
 from pyfarm.master.application import db
 from pyfarm.core.enums import (
-    STRING_TYPES, _AgentState, _UseAgentAddress, _WorkState, _OperatingSystem,
-    Values)
+    STRING_TYPES, INTEGER_TYPES, _AgentState, _UseAgentAddress, _WorkState,
+    _OperatingSystem, Values)
 
 ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should
                          never be directly relied upon and it's intended for use
@@ -317,25 +316,34 @@ class UUIDType(TypeDecorator):
         if dialect.name == "postgresql":
             return dialect.type_descriptor(POSTGRES_UUID())
 
-        if dialect.name == "sqlite":
-            return dialect.type_descriptor(VARCHAR(16))
-
         return dialect.type_descriptor(VARBINARY(16))
 
     def process_bind_param(self, value, dialect):
-        if dialect.name == "postgresql" or value is None:
+        if value is None:
             return value
 
-        if isinstance(value, STRING_TYPES):
-            value = uuid.UUID(value)
+        elif dialect.name == "postgresql":
+            return value
 
-        return value.bytes
+        elif isinstance(value, uuid.UUID):
+            return value.bytes
+
+        elif isinstance(value, INTEGER_TYPES):
+            return uuid.UUID(int=value).bytes
+
+        elif isinstance(value, STRING_TYPES):
+            return uuid.UUID(value).bytes
+
+        else:
+            raise TypeError("Don't know how to handle %s" % type(value))
 
     def process_result_value(self, value, dialect):
-        if dialect.name == "postgresql" or value is None:
+        if value is None:
             return value
-
-        return uuid.UUID(bytes=value)
+        elif dialect.name == "postgresql":
+            return value
+        else:
+            return uuid.UUID(bytes=value)
 
 
 class OperatingSystemEnum(EnumType):
