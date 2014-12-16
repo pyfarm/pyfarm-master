@@ -326,6 +326,9 @@ class UUIDType(TypeDecorator):
         if dialect.name == "postgresql" or value is None:
             return value
 
+        if isinstance(value, STRING_TYPES):
+            value = uuid.UUID(value)
+
         return value.bytes
 
     def process_result_value(self, value, dialect):
