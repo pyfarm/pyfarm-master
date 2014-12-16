@@ -32,7 +32,7 @@ from sqlalchemy.schema import UniqueConstraint
 from pyfarm.core.config import read_env_int, read_env_bool
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState
+from pyfarm.core.enums import WorkState, _WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_JOB_QUEUE, MAX_JOBQUEUE_NAME_LENGTH
 from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
@@ -128,18 +128,23 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
         if not supported_types:
             return None
 
-        # Before anything else, enforce minimums
-        child_jobs = Job.query.filter(Job.state == WorkState.RUNNING,
+        child_jobs = Job.query.filter(or_(Job.state == WorkState.RUNNING,
+                                          Job.state == None),
                                       Job.job_queue_id == self.id,
                                       Job.jobtype_version_id.in_(
                                             supported_types)).all()
         child_queues = JobQueue.query.filter(
             JobQueue.parent_jobqueue_id == self.id).all()
 
+        # Before anything else, enforce minimums
         for job in child_jobs:
-            if (job.num_assigned_agents() < (job.minimum_agents or 0) and
-                job.num_assigned_agents()+1 < (job.maximum_agents or maxsize) and
-                job.can_use_more_agents()):
+            if job.state == _WorkState.RUNNING:
+                if (job.num_assigned_agents() < (job.minimum_agents or 0) and
+                    job.num_assigned_agents()+1 <
+                        (job.maximum_agents or maxsize) and
+                    job.can_use_more_agents()):
+                    return job
+            elif job.minimum_agents and job.minimum_agents > 0:
                 return job
 
         for queue in child_queues:
@@ -178,28 +183,28 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                                     total_assigned else 0),
                          reverse=True)
 
+            selected_job = None
             for object in objects:
                 if isinstance(object, Job):
-                    if (object.can_use_more_agents() and
-                        object.num_assigned_agents() + 1 <
-                            (object.maximum_agents or maxsize)):
-                        return object
+                    if object.state == _WorkState.RUNNING:
+                        if (object.can_use_more_agents() and
+                            object.num_assigned_agents() + 1 <
+                                (object.maximum_agents or maxsize)):
+                            return object
+                    elif (selected_job is not None or
+                          selected_job.time_submitted > object.time_submitted):
+                        # If this job is not running yet, remember it, but keep
+                        # looking for already running or queued but older jobs
+                        selected_job = object
                 if isinstance(object, JobQueue):
                     if (object.num_assigned_agents() + 1 <
                             (object.maximum_agents or maxsize)):
                         job = object.get_job_for_agent(agent)
                         if job:
                             return job
+            if selected_job:
+                return selected_job
 
-        logger.debug("Ran out of running jobs for agent %s, trying to start a "
-                     "new one", agent.hostname)
-        job = Job.query.filter(Job.job_queue_id == self.id, Job.state == None,
-                               Job.jobtype_version_id.in_(supported_types),
-                               ~Job.parents.any(or_(
-                                   Job.state == None,
-                                   Job.state != WorkState.DONE))).\
-                                       order_by(desc(Job.priority),
-                                                asc(Job.time_submitted)).first()
         if job:
             return job
         else:
