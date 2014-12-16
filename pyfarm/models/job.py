@@ -356,6 +356,11 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     # Methods used by the scheduler
     def num_assigned_agents(self):
+        # Optimization: Blindly assume that we have no agents assigned if not
+        # running
+        if self.state != _WorkState.RUNNING:
+            return 0
+
         try:
             return self.assigned_agents_count
         except AttributeError:
