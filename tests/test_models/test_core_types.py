@@ -15,15 +15,8 @@
 # limitations under the License.
 
 import uuid
-import os
 from random import randint, choice
 from unittest import skipUnless
-
-os.environ["PYFARM_DATABASE_URI"] = \
-    "postgresql://pyfarm:pyfarm@127.0.0.1/pyfarm"
-
-# os.environ["PYFARM_DATABASE_URI"] = \
-#     "mysql+mysqlconnector://pyfarm:pyfarm@127.0.0.1/pyfarm"
 
 from sqlalchemy.types import BigInteger, VARBINARY
 from sqlalchemy.exc import StatementError
@@ -297,6 +290,10 @@ class TestUUIDType(BaseTestCase):
     def test_to_uuid_hex(self):
         value = uuid.uuid4()
         self.assert_uuid_equal(UUIDType()._to_uuid(value.hex), value)
+
+    def test_to_uuid_typeerror(self):
+        with self.assertRaises(TypeError):
+            UUIDType()._to_uuid(None)
 
     def test_insert_uuid_hex(self):
         value = uuid.uuid4()
