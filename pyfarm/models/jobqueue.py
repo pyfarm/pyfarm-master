@@ -125,9 +125,12 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
         from pyfarm.models.job import Job
 
         supported_types = agent.get_supported_types()
+        if not supported_types:
+            return None
 
         # Before anything else, enforce minimums
         child_jobs = Job.query.filter(Job.state == WorkState.RUNNING,
+                                      Job.job_queue_id == self.id,
                                       Job.jobtype_version_id.in_(
                                             supported_types)).all()
         child_queues = JobQueue.query.filter(
