@@ -205,10 +205,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
             if selected_job:
                 return selected_job
 
-        if job:
-            return job
-        else:
-            return None
+        return None
 
     @staticmethod
     def top_level_unique_check(mapper, connection, target):
