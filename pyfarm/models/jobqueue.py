@@ -131,6 +131,9 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
         child_jobs = Job.query.filter(or_(Job.state == WorkState.RUNNING,
                                           Job.state == None),
                                       Job.job_queue_id == self.id,
+                                      ~Job.parents.any(or_(
+                                          Job.state == None,
+                                          Job.state != WorkState.DONE)),
                                       Job.jobtype_version_id.in_(
                                             supported_types)).all()
         child_queues = JobQueue.query.filter(
