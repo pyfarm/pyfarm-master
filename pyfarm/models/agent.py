@@ -22,6 +22,7 @@ Models and interface classes related to the agent.
 """
 
 import re
+import uuid
 from textwrap import dedent
 from datetime import datetime
 
@@ -159,7 +160,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     assert MAX_RAM >= 1, "$PYFARM_AGENT_MAX_RAM must be > 0"
     assert MAX_RAM >= MIN_RAM, "MIN_RAM must be <= MAX_RAM"
 
-    id = id_column(IDTypeAgent)
+    id = id_column(IDTypeAgent, default=uuid.uuid4)
 
     # basic host attribute information
     hostname = db.Column(db.String(MAX_HOSTNAME_LENGTH), nullable=False,
