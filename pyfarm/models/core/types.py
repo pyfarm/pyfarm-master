@@ -67,7 +67,6 @@ if db.engine.name == "postgresql":
     import psycopg2.extras
     psycopg2.extras.register_uuid()
 
-IDTypeAgent = Integer
 IDTypeTag = Integer
 
 
@@ -311,6 +310,7 @@ class UUIDType(TypeDecorator):
     manner for various databases.
     """
     impl = TypeEngine
+    json_types = uuid.UUID
 
     def _to_uuid(self, value):
         if isinstance(value, uuid.UUID):
@@ -376,8 +376,10 @@ class WorkStateEnum(EnumType):
     """custom column type for working with :class:`.WorkState`"""
     enum = _WorkState
 
+IDTypeAgent = UUIDType
 
-def id_column(column_type=None):
+
+def id_column(column_type=None, **kwargs):
     """
     Produces a column used for `id` on each table.  Typically this is done
     using a class in :mod:`pyfarm.models.mixins` however because of the ORM
@@ -386,4 +388,6 @@ def id_column(column_type=None):
     """
     return db.Column(
         column_type or Integer,
-        primary_key=True, autoincrement=True, doc=ID_DOCSTRING, nullable=False)
+        primary_key=True, autoincrement=True, doc=ID_DOCSTRING, nullable=False,
+        **kwargs)
+
