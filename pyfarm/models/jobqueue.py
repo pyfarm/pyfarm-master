@@ -177,7 +177,9 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
         # Work through the priorities in descending order
         for priority in available_priorities:
             objects = objects_by_priority[priority]
-            weight_sum = reduce(lambda a, b: a + b.weight, objects, 0)
+            active_objects = [x for x in objects if
+                              (type(x) != Job or x.state == _WorkState.RUNNING)]
+            weight_sum = reduce(lambda a, b: a + b.weight, active_objects, 0)
             total_assigned = reduce(lambda a, b: a + b.num_assigned_agents(),
                                     objects, 0)
             objects.sort(key=(lambda x:
