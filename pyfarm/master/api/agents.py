@@ -238,7 +238,7 @@ class AgentIndexAPI(MethodView):
             if mac_addresses is not None:
                 for address in mac_addresses:
                     mac_address = AgentMacAddress(agent=agent,
-                                                  mac_addresses=address)
+                                                  mac_address=address)
                     db.session.add(mac_address)
 
             if gpus is not None:
