@@ -181,9 +181,9 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
             total_assigned = reduce(lambda a, b: a + b.num_assigned_agents(),
                                     objects, 0)
             objects.sort(key=(lambda x:
-                               (x.weight / weight_sum) if weight_sum else 0 -
-                               (x.num_assigned_agents() / total_assigned) if
-                                    total_assigned else 0),
+                               ((x.weight / weight_sum) if weight_sum else 0) -
+                               ((x.num_assigned_agents() / total_assigned) if
+                                    total_assigned else 0)),
                          reverse=True)
 
             selected_job = None
