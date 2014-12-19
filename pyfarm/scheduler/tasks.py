@@ -391,7 +391,7 @@ def send_job_completion_mail(job_id, successful=True):
     message_text += "Sincerely,\n\tThe PyFarm render manager"
 
     message = MIMEText(message_text)
-    message["Subject"] = ("Job %s %" %
+    message["Subject"] = ("Job %s %s" %
                             (job.title,
                              "completed successfully" if successful else
                              "failed"))
