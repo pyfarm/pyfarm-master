@@ -79,7 +79,7 @@
                 </button>
               </form>
               <form class="icon" method="POST" action="{{ url_for('rerun_failed_in_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
-                <button onclick="return confirm('Are you sure you want to rerun the failed tasks in this job?');" title="Rerun job">
+                <button onclick="return confirm('Are you sure you want to rerun the failed tasks in this job?');" title="Rerun failed tasks">
                   <i class="icon-repeat"></i> Rerun Failed
                 </button>
               </form>
