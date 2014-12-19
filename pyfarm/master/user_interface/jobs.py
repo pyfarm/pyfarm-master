@@ -28,7 +28,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy import func, desc, asc, or_
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState
+from pyfarm.core.enums import WorkState, _WorkState
 from pyfarm.scheduler.tasks import delete_job, stop_task, assign_tasks
 from pyfarm.models.job import Job, JobDependencies, JobTagAssociation
 from pyfarm.models.tag import Tag
@@ -311,6 +311,33 @@ def rerun_single_job(job_id):
     assign_tasks.delay()
 
     flash("Job %s will be run again." % job.title)
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
+def rerun_failed_in_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    for task in job.tasks:
+        if task.state == _WorkState.FAILED:
+            task.state = None
+            task.agent = None
+            task.failures = 0
+            db.session.add(task)
+
+    job.state = None
+    db.session.add(job)
+    db.session.commit()
+
+    assign_tasks.delay()
+
+    flash("Failed tasks in job %s will be run again." % job.title)
 
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)

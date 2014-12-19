@@ -136,7 +136,8 @@ def load_user_interface(app_instance):
         unpause_single_job, alter_frames_in_single_job,
         alter_scheduling_parameters_for_job, update_notes_for_job,
         update_tags_in_job, rerun_single_task, add_notified_user_to_job,
-        remove_notified_user_from_job, upgrade_job_to_latest_jobtype_version)
+        remove_notified_user_from_job, upgrade_job_to_latest_jobtype_version,
+        rerun_failed_in_job)
     from pyfarm.master.user_interface.jobqueues import (
         jobqueues, jobqueue_create, jobqueue, delete_jobqueue)
     from pyfarm.master.user_interface.jobtypes import (
@@ -165,6 +166,9 @@ def load_user_interface(app_instance):
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/rerun",
                               "rerun_single_job_ui", rerun_single_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/rerun_failed_tasks",
+                              "rerun_failed_in_job_ui", rerun_failed_in_job,
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/pause",
                               "pause_single_job_ui", pause_single_job,
