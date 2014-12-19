@@ -233,6 +233,16 @@
       </a>)
     </th>
     <th>
+      <a href="{{ url_for('jobs_index_ui', order_by='agent_count', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        Agents
+        {% if order_by == 'agent_count' and order_dir == 'desc' %}
+        <i class="icon-chevron-down"></i>
+        {% elif order_by == 'agent_count' %}
+        <i class="icon-chevron-up"></i>
+        {% endif %}
+      </a>
+    </th>
+    <th>
       <a href="{{ url_for('jobs_index_ui', order_by='time_submitted', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
         Submitted
         {% if order_by == 'time_submitted' and order_dir == 'desc' %}
@@ -318,6 +328,7 @@
       </div>
       {{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }}
     </td>
+    <td>{{ job.agent_count }}</td>
     <td class="timestamp">{{ job[0].time_submitted.isoformat() }}</td>
   </tr>
   {% endfor %}
