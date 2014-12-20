@@ -25,7 +25,7 @@ except ImportError:  # pragma: no cover
 
 from flask import render_template, request, redirect, url_for, flash
 from sqlalchemy.orm import aliased
-from sqlalchemy import func, desc, asc, or_
+from sqlalchemy import func, desc, asc, or_, distinct
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
@@ -64,6 +64,11 @@ def jobs():
             join(Job, Job.id == JobDependencies.c.parentid).\
                 filter(or_(Job.state == None, Job.state != WorkState.DONE)).\
                     group_by(JobDependencies.c.childid).subquery()
+    agent_count_query = db.session.query(
+        Task.job_id, func.count(distinct(Task.agent_id)).label('agent_count')).\
+            filter(Task.agent_id != None, or_(Task.state == None,
+                                              Task.state == WorkState.RUNNING)).\
+                group_by(Task.job_id).subquery()
 
     jobs_query = db.session.query(Job,
                                   func.coalesce(
@@ -86,7 +91,10 @@ def jobs():
                                       0).label('child_count'),
                                   func.coalesce(
                                       blocker_count_query.c.blocker_count,
-                                      0).label('blocker_count')).\
+                                      0).label('blocker_count'),
+                                  func.coalesce(
+                                      agent_count_query.c.agent_count,
+                                      0).label('agent_count')).\
         join(JobTypeVersion, Job.jobtype_version_id == JobTypeVersion.id).\
         join(JobType, JobTypeVersion.jobtype_id == JobType.id).\
         outerjoin(queued_count_query, Job.id == queued_count_query.c.job_id).\
@@ -95,7 +103,8 @@ def jobs():
         outerjoin(failed_count_query, Job.id == failed_count_query.c.job_id).\
         outerjoin(User, Job.user_id == User.id).\
         outerjoin(child_count_query, Job.id == child_count_query.c.parentid).\
-        outerjoin(blocker_count_query, Job.id == blocker_count_query.c.childid)
+        outerjoin(blocker_count_query, Job.id == blocker_count_query.c.childid).\
+        outerjoin(agent_count_query, Job.id == agent_count_query.c.job_id)
 
     filters = {}
     if "tags" in request.args:
@@ -185,12 +194,13 @@ def jobs():
         order_by = request.args.get("order_by")
     if order_by not in ["title", "state", "time_submitted", "t_queued",
                         "t_running", "t_failed", "t_done", "username",
-                        "jobtype_name"]:
+                        "jobtype_name", "agent_count"]:
         return (render_template(
             "pyfarm/error.html",
             error="Unknown order key %r. Options are 'title', 'state', "
                   "'time_submitted', 't_queued', 't_running', 't_failed', "
-                  "'t_done', or 'username'" % order_by), BAD_REQUEST)
+                  "'t_done', 'username', or 'agent_count'" %
+                  order_by), BAD_REQUEST)
     if "order_dir" in request.args:
         order_dir = request.args.get("order_dir")
         if order_dir not in ["asc", "desc"]:
