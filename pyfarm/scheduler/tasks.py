@@ -380,18 +380,21 @@ def poll_agents():
 def send_job_completion_mail(job_id, successful=True):
     db.session.rollback()
     job = Job.query.filter_by(id=job_id).one()
-    message_text = ("Job %s (id %s) has completed %s on %s.\n\n" %
-                    (job.title, job.id,
-                     "successfully" if successful else "unsuccessfully",
-                     job.time_finished))
+    message_text = ("%s job %s (id %s) has %s on %s.\n\n" %
+                    (job.jobtype_version.jobtype.name, job.title, job.id,
+                     ("completed successfully" if successful
+                         else "failed"),
+                     job.time_finished.isoformat()))
     if job.output_link:
         message_text += "See:\n"
         message_text += job.output_link + "\n\n"
     message_text += "Sincerely,\n\tThe PyFarm render manager"
 
     message = MIMEText(message_text)
-    message["Subject"] = ("Job %s completed %ssuccessfully" %
-                            (job.title, "" if successful else "un"))
+    message["Subject"] = ("Job %s %s" %
+                            (job.title,
+                             "completed successfully" if successful else
+                             "failed"))
     message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
     message["To"] = ",".join([x.email for x in job.notified_users if x.email])
 
