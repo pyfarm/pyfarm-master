@@ -127,27 +127,21 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     """
     __tablename__ = TABLE_AGENT
-    __table_args__ = (UniqueConstraint("hostname", "port", "systemid"), )
+    __table_args__ = (UniqueConstraint("hostname", "port", "id"), )
     STATE_ENUM = AgentState
     STATE_DEFAULT = "online"
     REPR_COLUMNS = (
-        "id", "systemid", "hostname", "port", "state", "remote_ip",
+        "id", "hostname", "port", "state", "remote_ip",
         "cpus", "ram", "free_ram")
     REPR_CONVERT_COLUMN = {
         "remote_ip": repr_ip}
+
     MIN_PORT = read_env_int("PYFARM_AGENT_MIN_PORT", 1024)
     MAX_PORT = read_env_int("PYFARM_AGENT_MAX_PORT", 65535)
     MIN_CPUS = read_env_int("PYFARM_AGENT_MIN_CPUS", 1)
     MAX_CPUS = read_env_int("PYFARM_AGENT_MAX_CPUS", 256)
     MIN_RAM = read_env_int("PYFARM_AGENT_MIN_RAM", 16)
     MAX_RAM = read_env_int("PYFARM_AGENT_MAX_RAM", 262144)
-
-    # Static values for the systemid column.  These should not
-    # be changed unless the agent is updated too because this
-    # is the range the agent should be producing for this
-    # column.
-    MIN_SYSTEMID = 0
-    MAX_SYSTEMID = 281474976710655
 
     # quick check of the configured data
     assert MIN_PORT >= 1, "$PYFARM_AGENT_MIN_PORT must be > 0"
@@ -196,11 +190,6 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     time_offset = db.Column(db.Integer, nullable=False, default=0,
                             doc="The offset in seconds the agent is from "
                                 "an official time server")
-    systemid = db.Column(
-        db.BigInteger, nullable=False,
-        doc="An integer provided by the agent which identifies the system "
-            "itself.  Unlike the id column this field helps to keep track of "
-            "an agent's uniqueness based on some hardware information.")
 
     version = db.Column(db.String(16), nullable=True,
                         doc="The pyfarm version number this agent is running.")
@@ -404,7 +393,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         """Validates the hostname column"""
         return self.validate_hostname(key, value)
 
-    @validates("ram", "cpus", "port", "systemid")
+    @validates("ram", "cpus", "port")
     def validate_numeric_column(self, key, value):
         """
         Validates several numerical columns.  Columns such as ram, cpus,
