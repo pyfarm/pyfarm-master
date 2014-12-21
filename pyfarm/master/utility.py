@@ -23,8 +23,9 @@ General utility which are not view or tool specific
 
 import json
 from functools import wraps, partial
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
+from uuid import UUID
 
 try:
     from httplib import (
@@ -56,6 +57,26 @@ def default_json_encoder(obj):
         return obj.isoformat()
     elif isinstance(obj, IPv4Address):
         return str(obj)
+    elif isinstance(obj, UUID):
+        return obj.hex
+
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        result = default_json_encoder(o)
+        if o is not None and result is not None:
+            return result
+        return super(JSONEncoder, self).encode(o)
+
+
+def dumps(obj, **kwargs):
+    """
+    Wrapper for :func:`json.dumps` that ensures :class:`JSONEncoder`
+    is passed in.
+    """
+    kwargs.setdefault("cls", JSONEncoder)
+    kwargs.setdefault("default", default_json_encoder)
+    return json.dumps(obj, **kwargs)
 
 
 def jsonify(*args, **kwargs):
