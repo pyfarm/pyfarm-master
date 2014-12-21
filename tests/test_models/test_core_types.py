@@ -216,14 +216,17 @@ class TestIDColumn(BaseTestCase):
         self.assertFalse(column.nullable)
         self.assertTrue(column.autoincrement)
 
-    def test_id_types(self):
+    def test_tag_id(self):
+        self.assertIs(IDTypeTag, db.Integer)
+
+    def test_work_id(self):
         if db.engine.name == "sqlite":
             self.assertIs(IDTypeWork, db.Integer)
         else:
             self.assertIs(IDTypeWork, db.BigInteger)
 
-        self.assertIs(IDTypeAgent, db.Integer)
-        self.assertIs(IDTypeTag, db.Integer)
+    def test_agent_id(self):
+        self.assertIs(IDTypeAgent, UUIDType)
 
 
 class TestAgentStateEnumTypes(BaseTestCase):
