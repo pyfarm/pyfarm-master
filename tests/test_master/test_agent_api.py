@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from json import dumps
+import uuid
 
 try:
     from httplib import CREATED, NO_CONTENT
@@ -26,6 +26,7 @@ except ImportError:
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
+from pyfarm.master.utility import default_json_encoder, dumps
 from pyfarm.master.application import get_api_blueprint
 from pyfarm.master.entrypoints import load_api
 from pyfarm.models.agent import Agent
@@ -44,11 +45,12 @@ class TestAgentAPI(BaseTestCase):
         self.assertEqual(response.json, Agent.to_schema())
 
     def test_agent_read_write(self):
+        id_ = uuid.uuid4()
         response1 = self.client.post(
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
-                "systemid": 42,
+                "id": id_,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "os_class": "windows",
@@ -205,11 +207,12 @@ class TestAgentAPI(BaseTestCase):
             "last_heard_from": last_heard_from})
 
     def test_agent_delete(self):
+        agent_id = uuid.uuid4()
         response1 = self.client.post(
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
-                "systemid": 42,
+                "id": agent_id,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
