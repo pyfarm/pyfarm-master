@@ -55,10 +55,8 @@ def default_json_encoder(obj):
         return float(obj)
     elif isinstance(obj, datetime):
         return obj.isoformat()
-    elif isinstance(obj, IPv4Address):
+    elif isinstance(obj, (IPv4Address, UUID)):
         return str(obj)
-    elif isinstance(obj, UUID):
-        return obj.hex
 
 
 class JSONEncoder(json.JSONEncoder):
