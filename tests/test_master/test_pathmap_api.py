@@ -15,13 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from json import dumps
-
+import uuid
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
+from pyfarm.master.utility import dumps
 from pyfarm.master.application import get_api_blueprint
 from pyfarm.master.entrypoints import load_api
 from pyfarm.models.pathmap import PathMap
@@ -101,11 +101,13 @@ class TestPathMapAPI(BaseTestCase):
         self.assert_created(response3)
         id3 = response3.json['id']
 
+        agent_id = uuid.uuid4()
+
         response4 = self.client.post(
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
-                "systemid": 42,
+                "id": agent_id,
                 "cpus": 16,
                 "free_ram": 133,
                 "hostname": "testagent1",
@@ -113,7 +115,6 @@ class TestPathMapAPI(BaseTestCase):
                 "port": 64994,
                 "ram": 2048}))
         self.assert_created(response4)
-        agent_id = response4.json["id"]
 
         response5 = self.client.post(
             "/api/v1/tags/testtag1/agents/",

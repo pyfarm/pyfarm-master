@@ -459,7 +459,7 @@ class AgentsInTagIndexAPI(MethodView):
                 Accept: application/json
 
                 {
-                    "agent_id": 1
+                    "agent_id": "dd0c6da2-0c91-42cf-a82f-6d503aae43d3"
                 }
 
             **Response (agent newly tagged)**
@@ -482,7 +482,7 @@ class AgentsInTagIndexAPI(MethodView):
                 Accept: application/json
 
                 {
-                    "agent_id": 1
+                    "agent_id": "dd0c6da2-0c91-42cf-a82f-6d503aae43d3"
                 }
 
             **Response (agent already had that tag)**
@@ -524,9 +524,9 @@ class AgentsInTagIndexAPI(MethodView):
         if "agent_id" not in request_fields:
             return jsonify(error="field `agent_id` is missing"), BAD_REQUEST
 
-        if not isinstance(g.json["agent_id"], int):
+        if not isinstance(g.json["agent_id"], STRING_TYPES):
             return jsonify(
-                error="expected an integer for `agent_id`"), BAD_REQUEST
+                error="Expected a string for `agent_id`"), BAD_REQUEST
 
         agent = Agent.query.filter_by(id=g.json["agent_id"]).first()
         if agent is None:
