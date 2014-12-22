@@ -386,8 +386,9 @@ def id_column(column_type=None, **kwargs):
     and the table relationships it's cleaner to have a function produce
     the column.
     """
-    return db.Column(
-        column_type or Integer,
-        primary_key=True, autoincrement=True, doc=ID_DOCSTRING, nullable=False,
-        **kwargs)
+    kwargs.setdefault("primary_key", True)
+    kwargs.setdefault("autoincrement", True)
+    kwargs.setdefault("doc", ID_DOCSTRING)
+    kwargs.setdefault("nullable", False)
+    return db.Column(column_type or Integer, **kwargs)
 
