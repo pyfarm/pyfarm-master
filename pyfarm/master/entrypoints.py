@@ -39,7 +39,7 @@ from flask.ext.admin.base import MenuLink
 
 from pyfarm.core.config import read_env_bool
 from pyfarm.core.logger import getLogger
-from pyfarm.master.application import db, app
+from pyfarm.master.application import db
 from pyfarm.master.utility import error_handler
 
 # Any table that needs to be created by db.create_all() should
