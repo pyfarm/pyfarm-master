@@ -154,7 +154,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     assert MAX_RAM >= 1, "$PYFARM_AGENT_MAX_RAM must be > 0"
     assert MAX_RAM >= MIN_RAM, "MIN_RAM must be <= MAX_RAM"
 
-    id = id_column(IDTypeAgent, default=uuid.uuid4)
+    id = id_column(IDTypeAgent, default=uuid.uuid4, autoincrement=False)
 
     # basic host attribute information
     hostname = db.Column(db.String(MAX_HOSTNAME_LENGTH), nullable=False,
