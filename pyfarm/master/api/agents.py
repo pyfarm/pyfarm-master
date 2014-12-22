@@ -42,7 +42,7 @@ from flask.views import MethodView
 from sqlalchemy import or_, not_
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState, AgentState
+from pyfarm.core.enums import STRING_TYPES, WorkState, AgentState
 from pyfarm.scheduler.tasks import assign_tasks, update_agent
 from pyfarm.models.agent import Agent, AgentMacAddress
 from pyfarm.models.task import Task
@@ -284,7 +284,7 @@ class AgentIndexAPI(MethodView):
 
                 if not hasattr(agent, key):
                     return jsonify(
-                        error="Agent has no such column `%s`" % key), \
+                        error="Agent has no such column %r" % key), \
                            BAD_REQUEST
 
                 if getattr(agent, key) != value:
@@ -293,7 +293,7 @@ class AgentIndexAPI(MethodView):
 
                     except Exception as e:
                         return jsonify(
-                            error="Error while setting `%s`: %s" % (key, e)), \
+                            error="Error while setting %r: %s" % (key, e)), \
                                BAD_REQUEST
                     else:
                         updated = True
@@ -361,15 +361,15 @@ class AgentIndexAPI(MethodView):
                 [
                     {
                         "hostname": "agent1",
-                        "id": 1
+                        "id": "dd0c6da2-0c91-42cf-a82f-6d503aae43d3"
                     },
                     {
                         "hostname": "agent2",
-                        "id": 2
+                        "id": "8326779e-90b5-447c-8da8-1eaa154771d9"
                     },
                     {
                         "hostname": "agent3.local",
-                        "id": 3
+                        "id": "14b28230-64a1-4b62-803e-5fd1baa209e4"
                     }
                 ]
 
@@ -391,7 +391,7 @@ class AgentIndexAPI(MethodView):
                     "hostname": "foobar",
                     "port": 50000,
                     "remote_ip": "127.0.0.1",
-                    "id": 1
+                    "id": "e20bae92-6472-442e-98a8-0ea4c9ee41cd"
                   }
                 ]
 
@@ -475,13 +475,13 @@ class SingleAgentAPI(MethodView):
         """
         Return basic information about a single agent
 
-        .. http:get:: /api/v1/agents/(int:agent_id) HTTP/1.1
+        .. http:get:: /api/v1/agents/(str:agent_id) HTTP/1.1
 
             **Request (agent exists)**
 
             .. sourcecode:: http
 
-                GET /api/v1/agents/1 HTTP/1.1
+                GET /api/v1/agents/4eefca76-1127-4c17-a3df-c1a7de685541 HTTP/1.1
                 Accept: application/json
 
             **Response**
@@ -498,7 +498,7 @@ class SingleAgentAPI(MethodView):
                     "free_ram": 133,
                     "time_offset": 0,
                     "hostname": "agent1",
-                    "id": 1,
+                    "id": "322360ad-976f-4103-9acc-a811d43fd24d",
                     "ip": "10.196.200.115",
                     "port": 64994,
                     "ram": 2157,
@@ -511,7 +511,7 @@ class SingleAgentAPI(MethodView):
 
             .. sourcecode:: http
 
-                GET /api/v1/agents/1234 HTTP/1.1
+                GET /api/v1/agents/4eefca76-1127-4c17-a3df-c1a7de685541 HTTP/1.1
                 Accept: application/json
 
             **Response**
@@ -521,14 +521,16 @@ class SingleAgentAPI(MethodView):
                 HTTP/1.1 404 NOT FOUND
                 Content-Type: application/json
 
-                [4, "no agent found for `1234`"]
+                {"error": "Agent `4eefca76-1127-4c17-a3df-c1a7de685541` not "
+                          "found"}
 
         :statuscode 200: no error
+        :statuscode 400: something within the request is invalid
         :statuscode 404: no agent could be found using the given id
         """
-        if not isinstance(agent_id, int):
+        if not isinstance(agent_id, STRING_TYPES):
             return jsonify(
-                error="Expected `agent_id` to be an integer"), BAD_REQUEST
+                error="Expected `agent_id` to be an string"), BAD_REQUEST
 
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is not None:
@@ -540,19 +542,19 @@ class SingleAgentAPI(MethodView):
         Agent, disallow=("id", ),
         ignore=("current_assignments", ),
         ignore_missing=(
-                "ram", "cpus", "port", "free_ram", "hostname", "systemid"))
+            "ram", "cpus", "port", "free_ram", "hostname", "systemid"))
     def post(self, agent_id):
         """
         Update an agent's columns with new information by merging the provided
         data with the agent's current definition in the database.
 
-        .. http:post:: /api/v1/agents/(int:agent_id) HTTP/1.1
+        .. http:post:: /api/v1/agents/(str:agent_id) HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                POST /api/v1/agents/1 HTTP/1.1
+                POST /api/v1/agents/29d466a5-34f8-408a-b613-e6c2715077a0 HTTP/1.1
                 Accept: application/json
 
                 {"ram": 1234}
@@ -572,7 +574,7 @@ class SingleAgentAPI(MethodView):
                     "free_ram": 133,
                     "time_offset": 0,
                     "hostname": "agent1",
-                    "id": 1,
+                    "id": "29d466a5-34f8-408a-b613-e6c2715077a0",
                     "ip": "10.196.200.115",
                     "port": 64994,
                     "ram": 1234,
@@ -594,9 +596,11 @@ class SingleAgentAPI(MethodView):
 
         current_assignments = g.json.pop("current_assignments", None)
         mac_addresses = g.json.pop("mac_addresses", None)
+
         # TODO return BAD_REQUEST on bad mac addresses
         if mac_addresses is not None:
-            mac_addresses = [x.lower() for x in mac_addresses if MAC_RE.match(x)]
+            mac_addresses = [
+                x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
         try:
             items = g.json.iteritems
@@ -656,28 +660,13 @@ class SingleAgentAPI(MethodView):
         """
         Delete a single agent
 
-        .. http:delete:: /api/v1/agents/(int:agent_id) HTTP/1.1
+        .. http:delete:: /api/v1/agents/(str:agent_id) HTTP/1.1
 
             **Request (agent exists)**
 
             .. sourcecode:: http
 
-                DELETE /api/v1/agents/1 HTTP/1.1
-                Accept: application/json
-
-            **Response**
-
-            .. sourcecode:: http
-
-                HTTP/1.1 200 OK
-                Content-Type: application/json
-
-
-            **Request (agent does not exist)**
-
-            .. sourcecode:: http
-
-                DELETE /api/v1/agents/1 HTTP/1.1
+                DELETE /api/v1/agents/b25ee7eb-9586-439a-b131-f5d022e0d403 HTTP/1.1
                 Accept: application/json
 
             **Response**
@@ -705,13 +694,13 @@ class TasksInAgentAPI(MethodView):
         A ``GET`` to this endpoint will return a list of all tasks assigned to
         this agent.
 
-        .. http:get:: /api/v1/agents/<int:agent_id>/tasks/ HTTP/1.1
+        .. http:get:: /api/v1/agents/<str:agent_id>/tasks/ HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                GET /api/v1/agents/1/tasks/ HTTP/1.1
+                GET /api/v1/agents/bbf55143-f2b1-4c15-9d41-139bd8057931/tasks/ HTTP/1.1
                 Accept: application/json
 
             **Response**
@@ -731,12 +720,12 @@ class TasksInAgentAPI(MethodView):
                             "title": "Test Job",
                             "jobtype_version": 1,
                             "jobtype_id": 1
-                            },
+                        },
                         "hidden": false,
                         "time_started": null,
                         "project_id": null,
                         "frame": 2.0
-                        "agent_id": 1,
+                        "agent_id": "bbf55143-f2b1-4c15-9d41-139bd8057931",
                         "id": 2,
                         "attempts": 2,
                         "project": null,
@@ -751,7 +740,7 @@ class TasksInAgentAPI(MethodView):
         """
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is None:
-            return jsonify(error="agent not found"), NOT_FOUND
+            return jsonify(error="Agent %r not found" % agent_id), NOT_FOUND
 
         out = []
         for task in agent.tasks:
@@ -770,13 +759,13 @@ class TasksInAgentAPI(MethodView):
         """
         A ``POST`` to this endpoint will assign am existing task to the agent.
 
-        .. http:post:: /api/v1/agents/<int:agent_id>/tasks/ HTTP/1.1
+        .. http:post:: /api/v1/agents/<str:agent_id>/tasks/ HTTP/1.1
 
             **Request**
 
             .. sourcecode:: http
 
-                POST /api/v1/agents/1/tasks/ HTTP/1.1
+                POST /api/v1/agents/238d7334-8ca5-4469-9f54-e76c66614a43/tasks/ HTTP/1.1
                 Accept: application/json
 
                 {
@@ -804,7 +793,7 @@ class TasksInAgentAPI(MethodView):
                         "ip": null,
                         "hostname": "agent1",
                         "port": 50000,
-                        "id": 1
+                        "id": "238d7334-8ca5-4469-9f54-e76c66614a43"
                     },
                     "hidden": false,
                     "job_id": 1,
@@ -829,7 +818,7 @@ class TasksInAgentAPI(MethodView):
 
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is None:
-            return jsonify(error="agent not found"), NOT_FOUND
+            return jsonify(error="Agent %r not found" % agent_id), NOT_FOUND
 
         task = Task.query.filter_by(id=g.json["id"]).first()
         if not task:
