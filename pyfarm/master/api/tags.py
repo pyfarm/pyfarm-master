@@ -223,16 +223,16 @@ class SingleTagAPI(MethodView):
                 Content-Type: application/json
 
                 {
-                "agents": [
-                    {
-                    "hostname": "agent3", 
-                    "href": "/api/v1/agents/1", 
-                    "id": 1
-                    }
-                ], 
-                "id": 1, 
-                "jobs": [], 
-                "tag": "interesting"
+                    "agents": [
+                        {
+                        "hostname": "agent3",
+                        "href": "/api/v1/agents/1",
+                        "id": 1
+                        }
+                    ],
+                    "id": 1,
+                    "jobs": [],
+                    "tag": "interesting"
                 }
 
         :statuscode 200: no error
