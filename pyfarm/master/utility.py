@@ -536,3 +536,4 @@ get_hostname_argument = partial(
 get_ipaddr_argument = partial(
     get_request_argument,
     types=lambda value: Agent.validate_ipv4_address("remote_addr",  value))
+get_uuid_argument = partial(get_request_argument, types=UUID)
