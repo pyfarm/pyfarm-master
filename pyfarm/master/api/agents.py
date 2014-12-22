@@ -22,6 +22,10 @@ Contained within this module are an API handling functions which can
 manage or query agents using JSON.
 """
 
+import re
+import uuid
+from datetime import datetime
+
 try:
     from httplib import (
         NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, CONFLICT,
@@ -31,8 +35,6 @@ except ImportError:  # pragma: no cover
         NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, CONFLICT,
         INTERNAL_SERVER_ERROR)
 
-from datetime import datetime
-import re
 
 from flask import request, g
 from flask.views import MethodView
@@ -78,6 +80,7 @@ def fail_missing_assignments(agent, current_assignments):
                        task.id, task.frame, task.job.title,
                        task.job_id, agent.hostname, agent.id)
 
+
 def schema():
     """
     Returns the basic schema of :class:`.Agent`
@@ -109,7 +112,7 @@ def schema():
                 "state": "INTEGER",
                 "ram_allocation": "FLOAT",
                 "cpu_allocation": "FLOAT",
-                "id": "INTEGER",
+                "id": "UUIDType",
                 "remote_ip": "IPv4Address"
             }
 
@@ -119,19 +122,18 @@ def schema():
 
 
 class AgentIndexAPI(MethodView):
-    @validate_with_model(
-        Agent, disallow=("id", ), ignore=("current_assignments", ))
+    @validate_with_model(Agent, ignore=("current_assignments", "id"))
     def post(self):
         """
         A ``POST`` to this endpoint will either create or update an existing
-        agent.  The ``port`` and ``systemid`` columns will determine if an
+        agent.  The ``port`` and ``id`` columns will determine if an
         agent already exists.
 
-            * If an agent is found matching the ``port`` and ``systemid``
+            * If an agent is found matching the ``port`` and ``id``
               columns from the request the existing model will be updated and
               the resulting data and the ``OK`` code will be returned.
 
-            * If we don't find an agent matching the ``port`` and ``systemid``
+            * If we don't find an agent matching the ``port`` and ``id``
               however a new agent will be created and the resulting data and the
               ``CREATED`` code will be returned.
 
@@ -156,6 +158,7 @@ class AgentIndexAPI(MethodView):
                     "cpus": 14,
                     "free_ram": 133,
                     "hostname": "agent1",
+                    "id": "6a0c11df-660f-4c1e-9fb4-5fe2b8cd2437",
                     "remote_ip": "10.196.200.115",
                     "port": 64994,
                     "ram": 2157,
@@ -177,7 +180,7 @@ class AgentIndexAPI(MethodView):
                     "free_ram": 133,
                     "time_offset": 0,
                     "hostname": "agent1",
-                    "id": 1,
+                    "id": "6a0c11df-660f-4c1e-9fb4-5fe2b8cd2437",
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
@@ -199,7 +202,7 @@ class AgentIndexAPI(MethodView):
                     "free_ram": 133,
                     "time_offset": 0,
                     "hostname": "agent1",
-                    "id": 1,
+                    "id": "6a0c11df-660f-4c1e-9fb4-5fe2b8cd2437",
                     "port": 64994,
                     "ram": 2157,
                     "ram_allocation": 0.8,
@@ -211,6 +214,17 @@ class AgentIndexAPI(MethodView):
         :statuscode 400: there was something wrong with the request (such as
                          invalid columns being included)
         """
+        # Read in and convert the id field
+        try:
+            g.json["id"] = uuid.UUID(g.json["id"])
+        except KeyError:
+            return jsonify(error="`id` not provided"), BAD_REQUEST
+
+        except Exception as e:
+            return jsonify(
+                error="Failed to convert %r to a UUID: %s" % (g.json["id"], e)
+            ), BAD_REQUEST
+
         # Set remote_ip if it did not come in with the request
         g.json.setdefault("remote_ip", request.remote_addr)
 
@@ -221,7 +235,7 @@ class AgentIndexAPI(MethodView):
             mac_addresses = [x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
         agent = Agent.query.filter_by(
-            port=g.json["port"], systemid=g.json["systemid"]).first()
+            port=g.json["port"], id=g.json["id"]).first()
 
         if agent is None:
             try:
