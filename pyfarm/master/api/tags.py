@@ -223,13 +223,11 @@ class SingleTagAPI(MethodView):
                 Content-Type: application/json
 
                 {
-                    "agents": [
-                        {
+                    "agents": [{
                         "hostname": "agent3",
-                        "href": "/api/v1/agents/1",
+                        "href": "/api/v1/agents/94522b7e-817b-4358-95da-670b31aad624",
                         "id": 1
-                        }
-                    ],
+                    }],
                     "id": 1,
                     "jobs": [],
                     "tag": "interesting"
