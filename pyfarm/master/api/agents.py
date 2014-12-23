@@ -41,7 +41,8 @@ from sqlalchemy import or_, not_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState, AgentState
-from pyfarm.scheduler.tasks import assign_tasks, update_agent
+from pyfarm.scheduler.tasks import (
+    assign_tasks, update_agent, assign_tasks_to_agent)
 from pyfarm.models.agent import Agent, AgentMacAddress
 from pyfarm.models.gpu import GPU
 from pyfarm.models.task import Task
@@ -70,14 +71,18 @@ def fail_missing_assignments(agent, current_assignments):
     if known_task_ids:
         tasks_query = tasks_query.filter(not_(Task.id.in_(known_task_ids)))
 
+    failed_tasks = []
     for task in tasks_query:
         task.state = WorkState.FAILED
         db.session.add(task)
+        failed_tasks.append(task)
         logger.warning("Task %s (frame %s from job %r (%s)) was not in the "
                        "current assignments of agent %r (id %s) when it should "
                        "be.  Marking it as failed.",
                        task.id, task.frame, task.job.title,
                        task.job_id, agent.hostname, agent.id)
+
+    return failed_tasks
 
 def schema():
     """
@@ -334,11 +339,12 @@ class AgentIndexAPI(MethodView):
                     agent.gpus.append(gpu)
 
             # TODO Only do that if this is really the agent speaking to us.
+            failed_tasks = []
             if (current_assignments is not None and
                 agent.state != AgentState.OFFLINE):
                     fail_missing_assignments(agent, current_assignments)
 
-            if updated:
+            if updated or failed_tasks:
                 db.session.add(agent)
 
                 try:
@@ -351,6 +357,9 @@ class AgentIndexAPI(MethodView):
                 else:
                     agent_data = agent.to_dict(unpack_relationships=False)
                     logger.info("Updated agent %r: %r", agent.id, agent_data)
+                    for task in failed_tasks:
+                        task.job.update_state()
+                    db.session.commit()
                     assign_tasks.delay()
                     return jsonify(agent_data), OK
 
@@ -640,11 +649,6 @@ class SingleAgentAPI(MethodView):
         if "upgrade_to" in modified:
             update_agent.delay(agent.id)
 
-        # TODO Only do that if this is really the agent speaking to us.
-        if (current_assignments is not None and
-            agent.state != AgentState.OFFLINE):
-            fail_missing_assignments(agent, current_assignments)
-
         if mac_addresses is not None:
             modified["mac_addresses"] = mac_addresses
             for existing_address in agent.mac_addresses:
@@ -682,11 +686,22 @@ class SingleAgentAPI(MethodView):
                     db.session.add(gpu)
                 agent.gpus.append(gpu)
 
+        # TODO Only do that if this is really the agent speaking to us.
+        failed_tasks = []
+        if (current_assignments is not None and
+            agent.state != AgentState.OFFLINE):
+            failed_tasks = fail_missing_assignments(agent, current_assignments)
+
         logger.debug(
             "Updated agent %r: %r", agent.id, modified)
         db.session.add(agent)
         db.session.commit()
-        assign_tasks.delay()
+
+        for task in failed_tasks:
+            task.job.update_state()
+        db.session.commit()
+
+        assign_tasks_to_agent.delay(agent_id)
 
         return jsonify(agent.to_dict(unpack_relationships=False)), OK
 
