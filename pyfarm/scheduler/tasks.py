@@ -80,6 +80,8 @@ POLL_BUSY_AGENTS_INTERVAL = read_env_int(
     "PYFARM_POLL_BUSY_AGENTS_INTERVAL", 600)
 POLL_IDLE_AGENTS_INTERVAL = read_env_int(
     "PYFARM_POLL_IDLE_AGENTS_INTERVAL", 3600)
+POLL_OFFLINE_AGENTS_INTERVAL = read_env_int(
+    "PYFARM_POLL_OFFLINE_AGENTS_INTERVAL", 7200)
 SCHEDULER_LOCKFILE_BASE = read_env(
     "PYFARM_SCHEDULER_LOCKFILE_BASE", "/tmp/pyfarm_scheduler_lock")
 LOGFILES_DIR = read_env(
@@ -398,6 +400,7 @@ def poll_agent(self, agent_id):
 def poll_agents():
     db.session.rollback()
     idle_agents_to_poll_query = Agent.query.filter(
+        Agent.state != AgentState.OFFLINE,
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
                 timedelta(
@@ -407,9 +410,10 @@ def poll_agents():
         Agent.use_address != UseAgentAddress.PASSIVE)
 
     for agent in idle_agents_to_poll_query:
-        poll_agent.delay(agent.id)
+        logger.debug("Polling idle agent %s", agent.hostname)
 
     busy_agents_to_poll_query = Agent.query.filter(
+        Agent.state != AgentState.OFFLINE,
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
                 timedelta(
@@ -419,6 +423,15 @@ def poll_agents():
         Agent.use_address != UseAgentAddress.PASSIVE)
 
     for agent in busy_agents_to_poll_query:
+        logger.debug("Polling busy agent %s", agent.hostname)
+
+    offline_agents_to_poll_query = Agent.query.filter(
+        Agent.state == AgentState.OFFLINE,
+        Agent.last_polled + timedelta(
+            seconds=POLL_OFFLINE_AGENTS_INTERVAL) < datetime.utcnow(),
+        Agent.use_address != UseAgentAddress.PASSIVE)
+
+    for agent in offline_agents_to_poll_query:
         poll_agent.delay(agent.id)
 
 

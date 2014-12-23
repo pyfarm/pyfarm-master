@@ -227,6 +227,9 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                 default=datetime.utcnow,
                                 doc="Time we last had contact with this agent")
 
+    last_polled = db.Column(db.DateTime,
+                            doc="Time we last tried to contact the agent")
+
     # Max allocation of the two primary resources which `1.0` is 100%
     # allocation.  For `cpu_allocation` 100% allocation typically means
     # one task per cpu.
