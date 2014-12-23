@@ -96,6 +96,11 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                "won't run a given task.  This column will "
                                "be cleared whenever the task's state is "
                                "returned to a non-error state.")
+    percent_done = db.Column(db.Integer, nullable=True,
+                             doc="How far this task has progressed, from 0 to "
+                                 "100.  This column is purely informational, "
+                                 "the authoritative source for a tasks state is "
+                                 "the state column.")
 
     # relationships
     parents = db.relationship("Task",
