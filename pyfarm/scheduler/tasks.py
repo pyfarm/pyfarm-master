@@ -202,13 +202,13 @@ def assign_tasks():
 
 @celery_app.task(ignore_result=True)
 def assign_tasks_to_agent(agent_id):
-    lockfile_name = SCHEDULER_LOCKFILE_BASE + "-" + str(agent_id)
-    lock = LockFile(lockfile_name)
+    agent_lockfile_name = SCHEDULER_LOCKFILE_BASE + "-" + str(agent_id)
+    agent_lock = LockFile(agent_lockfile_name)
 
     try:
-        lock.acquire(timeout=-1)
-        with lock:
-            with open(lockfile_name, "w") as lockfile:
+        agent_lock.acquire(timeout=-1)
+        with agent_lock:
+            with open(agent_lockfile_name, "w") as lockfile:
                 lockfile.write(str(time()))
 
             db.session.rollback()
@@ -230,21 +230,67 @@ def assign_tasks_to_agent(agent_id):
 
             queue = JobQueue()
             job = queue.get_job_for_agent(agent)
+            db.session.commit()
+
             if job:
-                batch = job.get_batch()
-                for task in batch:
-                    task.agent = agent
-                    logger.info("Assigned agent %s (id %s) to task %s "
-                                "(frame %s) from job %s (id %s)", agent.hostname,
-                                agent.id, task.id, task.frame, job.title, job.id)
-                    db.session.add(task)
+                job_lockfile_name = SCHEDULER_LOCKFILE_BASE + "-job-" +\
+                    str(job.id)
+                job_lock = LockFile(job_lockfile_name)
+                try:
+                    job_lock.acquire(timeout=-1)
+                    with job_lock:
+                        with open(job_lockfile_name, "w") as lockfile:
+                             lockfile.write(str(time()))
 
-                if job.state != _WorkState.RUNNING:
-                    job.state = WorkState.RUNNING
-                    db.session.add(job)
-                db.session.commit()
+                        batch = job.get_batch()
+                        for task in batch:
+                            task.agent = agent
+                            logger.info("Assigned agent %s (id %s) to task %s "
+                                        "(frame %s) from job %s (id %s)",
+                                        agent.hostname, agent.id, task.id,
+                                        task.frame, job.title, job.id)
+                            db.session.add(task)
 
-                send_tasks_to_agent.delay(agent.id)
+                        if job.state != _WorkState.RUNNING:
+                            job.state = WorkState.RUNNING
+                            db.session.add(job)
+                        db.session.commit()
+
+                        send_tasks_to_agent.delay(agent.id)
+                except AlreadyLocked:
+                    logger.debug("The lockfile for job %s is locked", job.id)
+                    try:
+                        with open(job_lockfile_name, "r") as lockfile:
+                            locktime = float(lockfile.read())
+                            if locktime < time() - 60:
+                                logger.error("The old lock on job %s was held "
+                                             "for more than 60 seconds. "
+                                             "Breaking the lock.", job.id)
+                                job_lock.break_lock()
+                            assign_tasks_to_agent.apply_async(args=[agent_id],
+                                                              countdown=1)
+                    except (IOError, OSError, ValueError) as e:
+                        logger.warning("Could not read a time value from the "
+                                       "lockfile for job %s. Waiting 1 second "
+                                       "before trying again. Error: %s",
+                                       job.id, e)
+                        sleep(1)
+                    try:
+                        with open(job_lockfile_name, "r") as lockfile:
+                            locktime = float(lockfile.read())
+                            if locktime < time() - 60:
+                                logger.error("The old lock on job %s was held "
+                                             "for more than 60 seconds. "
+                                             "Breaking the lock.", job.id)
+                                agent_lock.break_lock()
+                            assign_tasks_to_agent.apply_async(args=[agent_id],
+                                                              countdown=1)
+                    except(IOError, OSError, ValueError):
+                        logger.error("Could not read a time value from the "
+                                     "lockfile even after waiting 1s. Breaking "
+                                     "the lock.")
+                        agent_lock.break_lock()
+                        assign_tasks_to_agent.delay(agent_id)
             else:
                 logger.debug("Did not find a job for agent %s", agent.hostname)
 
@@ -252,12 +298,12 @@ def assign_tasks_to_agent(agent_id):
         logger.debug("The scheduler lockfile is locked, the scheduler seems to "
                      "already be running for agent %s", agent_id)
         try:
-            with open(lockfile_name, "r") as lockfile:
+            with open(agent_lockfile_name, "r") as lockfile:
                 locktime = float(lockfile.read())
                 if locktime < time() - 60:
                     logger.error("The old lock was held for more than 60 "
                                  "seconds. Breaking the lock.")
-                    lock.break_lock()
+                    agent_lock.break_lock()
         except (IOError, OSError, ValueError) as e:
             # It is possible that we tried to read the file in the narrow window
             # between lock acquisition and actually writing the time
@@ -266,18 +312,18 @@ def assign_tasks_to_agent(agent_id):
                            "Error: %s", e)
             sleep(1)
         try:
-            with open(lockfile_name, "r") as lockfile:
+            with open(agent_lockfile_name, "r") as lockfile:
                 locktime = float(lockfile.read())
                 if locktime < time() - 60:
                     logger.error("The old lock was held for more than 60 "
                                  "seconds. Breaking the lock.")
-                    lock.break_lock()
+                    agent_lock.break_lock()
         except(IOError, OSError, ValueError):
             # If we still cannot read a time value from the file after 1s,
             # there was something wrong with the process holding the lock
             logger.error("Could not read a time value from the scheduler "
                          "lockfile even after waiting 1s. Breaking the lock")
-            lock.break_lock()
+            agent_lock.break_lock()
 
 
 @celery_app.task(ignore_results=True, bind=True)
