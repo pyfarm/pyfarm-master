@@ -660,7 +660,7 @@ class SingleAgentAPI(MethodView):
         """
         Delete a single agent
 
-        .. http:delete:: /api/v1/agents/(str:agent_id) HTTP/1.1
+        .. http:delete:: /api/v1/agents/(uuid:agent_id) HTTP/1.1
 
             **Request (agent exists)**
 
