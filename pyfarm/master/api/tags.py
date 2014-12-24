@@ -23,6 +23,8 @@ Contained within this module are an API handling functions which can
 manage or query tags using JSON.
 """
 
+from uuid import UUID
+
 try:
     from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 except ImportError:  # pragma: no cover
@@ -349,10 +351,10 @@ class SingleTagAPI(MethodView):
             if not isinstance(agent_ids, list):
                 return jsonify(error="agents must be a list"), BAD_REQUEST
 
-            # make sure all ids provided are ints
-            if not all(isinstance(agent_id, int) for agent_id in agent_ids):
-                return jsonify(
-                    error="all agent ids must be integers"), BAD_REQUEST
+            try:
+                agent_ids = list(map(UUID, agent_ids))
+            except ValueError:
+                return jsonify(error="All agent ids must be UUIDs"), BAD_REQUEST
 
             # find all models matching the request id(s)
             agents = Agent.query.filter(Agent.id.in_(agent_ids)).all()
