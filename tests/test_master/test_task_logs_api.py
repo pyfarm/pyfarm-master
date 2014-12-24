@@ -15,13 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from json import dumps
-
+import uuid
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
+from pyfarm.master.utility import dumps
 from pyfarm.master.application import get_api_blueprint
 from pyfarm.master.entrypoints import load_api
 
@@ -29,6 +29,7 @@ from pyfarm.master.entrypoints import load_api
 dummy_log = """1,test log entry
 2,another test log entry
 """
+
 
 class TestTaskLogsAPI(BaseTestCase):
     def setup_app(self):
@@ -42,7 +43,7 @@ class TestTaskLogsAPI(BaseTestCase):
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
-                "systemid": 42,
+                "id": uuid.uuid4(),
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
@@ -119,7 +120,7 @@ class TestTaskLogsAPI(BaseTestCase):
             content_type="application/json",
             data=dumps({
                 "identifier": "testlogidentifier",
-                "agent_id": 1}))
+                "agent_id": uuid.uuid4()}))
         self.assert_not_found(response1)
 
     def test_task_logs_register_logfile_twice(self):
