@@ -353,7 +353,7 @@ class SingleTagAPI(MethodView):
 
             try:
                 agent_ids = list(map(UUID, agent_ids))
-            except ValueError:
+            except (ValueError, AttributeError):
                 return jsonify(error="All agent ids must be UUIDs"), BAD_REQUEST
 
             # find all models matching the request id(s)
