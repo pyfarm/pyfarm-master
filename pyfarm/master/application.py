@@ -81,7 +81,6 @@ class UUIDConverter(BaseConverter):
             raise ValidationError
 
     def to_url(self, value):
-        value = None
         if isinstance(value, STRING_TYPES):
             try:
                 value = UUID(value)
