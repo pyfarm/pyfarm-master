@@ -119,7 +119,7 @@ class TestTagAPI(BaseTestCase):
             content_type="application/json",
             data=dumps({
                 "tag": "foo",
-                "agents": [1]}))
+                "agents": [uuid.uuid4()]}))
         self.assert_not_found(response1)
 
     def test_tag_put_with_agents(self):
