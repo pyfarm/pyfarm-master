@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from json import dumps
-
+import uuid
 
 try:
     from httplib import CREATED, NO_CONTENT
@@ -27,6 +26,7 @@ except ImportError:
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
+from pyfarm.master.utility import dumps
 from pyfarm.master.application import get_api_blueprint
 from pyfarm.master.entrypoints import load_api
 from pyfarm.models.tag import Tag
@@ -123,12 +123,14 @@ class TestTagAPI(BaseTestCase):
         self.assert_not_found(response1)
 
     def test_tag_put_with_agents(self):
+        agent_id = uuid.uuid4()
+
         # create an agent to link to
         response1 = self.client.post(
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
-                "systemid": 1,
+                "id": agent_id,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
@@ -150,12 +152,14 @@ class TestTagAPI(BaseTestCase):
         self.assert_created(response2)
 
     def test_tag_put_mismatch_with_agents(self):
+        agent_id = uuid.uuid4()
+
         # create an agent to link to
         response1 = self.client.post(
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
-                "systemid": 1,
+                "id": agent_id,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
@@ -198,12 +202,14 @@ class TestTagAPI(BaseTestCase):
         self.assert_not_found(response5)
 
     def test_tag_post_agent(self):
+        agent_id = uuid.uuid4()
+
         # create an agent to link to
         response1 = self.client.post(
             "/api/v1/agents/",
             content_type="application/json",
             data=dumps({
-                "systemid": 1,
+                "id": agent_id,
                 "cpu_allocation": 1.0,
                 "cpus": 16,
                 "free_ram": 133,
@@ -226,14 +232,15 @@ class TestTagAPI(BaseTestCase):
         response3 = self.client.post(
             "/api/v1/tags/foo/agents/",
             content_type="application/json",
-            data=dumps({
-                "agent_id": agent_id}))
+            data=dumps({"agent_id": agent_id}))
         self.assert_created(response3)
 
         response4 = self.client.get(
             "/api/v1/tags/foo/agents/",
             content_type="application/json")
         self.assert_ok(response4)
-        self.assertEqual(response4.json, [{"hostname": "testagent1",
-                                           "href": "/api/v1/agents/1",
-                                           "id": agent_id}])
+        self.assertEqual(
+            response4.json, [
+                {"hostname": "testagent1",
+                 "href": "/api/v1/agents/%s" % agent_id,
+                 "id": agent_id}])
