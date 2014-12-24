@@ -22,6 +22,8 @@ Task Logs
 This module defines an API for managing and querying logs belonging to tasks
 """
 
+from uuid import UUID
+
 try:
     from httplib import (
       OK, NOT_FOUND, CONFLICT, TEMPORARY_REDIRECT, CREATED, BAD_REQUEST,
@@ -33,7 +35,7 @@ except ImportError:  # pragma: no cover
 
 import tempfile
 from os import makedirs
-from os.path import join, realpath
+from os.path import join, abspath
 from errno import EEXIST
 
 from flask.views import MethodView
@@ -57,6 +59,14 @@ try:
 except OSError as e:  # pragma: no cover
     if e.errno != EEXIST:
         raise
+
+
+def agent_uuid(value):
+    try:
+        UUID(value)
+        return True
+    except Exception:
+        return False
 
 
 class LogsInTaskAttemptsIndexAPI(MethodView):
@@ -83,7 +93,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
 
                 [
                     {
-                        "agent_id": 1,
+                        "agent_id": "3087ada4-290a-45b0-8c1a-21db4cd284fc",
                         "created_on": "2014-09-03T10:58:59.754880",
                         "identifier": "2014-09-03_10-58-59_4_4ee02475335911e4a935c86000cbf5fb.csv"
                     }
@@ -106,11 +116,11 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
             log = item.log
             out.append({"identifier": log.identifier,
                         "created_on": log.created_on,
-                        "agent_id": log.agent_id})
+                        "agent_id": str(log.agent_id)})
 
         return jsonify(out), OK
 
-    @validate_with_model(TaskLog)
+    @validate_with_model(TaskLog, type_checks={"agent_id": agent_uuid})
     def post(self, job_id, task_id, attempt):
         """
         A ``POST`` to this endpoint will register a new logfile with the given
@@ -131,7 +141,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
 
                 {
                     "identifier": "2014-09-03_10-58-59_4_4ee02475335911e4a935c86000cbf5fb.csv",
-                    "agent_id": 1
+                    "agent_id": "2dc2cb5a-35da-41d6-8864-329c0d7d5391"
                 }
 
             **Response**
@@ -143,7 +153,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
 
                 {
                     "identifier": "2014-09-03_10-58-59_4_4ee02475335911e4a935c86000cbf5fb.csv",
-                    "agent_id": 1
+                    "agent_id": "2dc2cb5a-35da-41d6-8864-329c0d7d5391",
                     "created_on": "2014-09-03T10:59:05.103005",
                     "id": 148
                 }
@@ -163,7 +173,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
                            error="Specified task not found"), NOT_FOUND
 
         path = join(LOGFILES_DIR, g.json["identifier"])
-        if not realpath(path).startswith(LOGFILES_DIR):
+        if not abspath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
         task_log = TaskLog.query.filter_by(
             identifier=g.json["identifier"]).first()
@@ -218,7 +228,7 @@ class SingleLogInTaskAttempt(MethodView):
                     "id": 147,
                     "identifier": "2014-09-03_10-58-59_4_4ee02475335911e4a935c86000cbf5fb.csv",
                     "created_on": "2014-09-03T10:58:59.754880",
-                    "agent_id": 1
+                    "agent_id": "836ce137-6ad4-443f-abb9-94c4465ff87c"
                 }
 
         :statuscode 200: no error
@@ -295,7 +305,7 @@ class TaskLogfileAPI(MethodView):
                            error="Specified log not found in task"), NOT_FOUND
 
         path = join(LOGFILES_DIR, log_identifier)
-        if not realpath(path).startswith(LOGFILES_DIR):
+        if not abspath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
 
         try:
@@ -355,7 +365,7 @@ class TaskLogfileAPI(MethodView):
                            error="Specified log not found in task"), NOT_FOUND
 
         path = join(LOGFILES_DIR, log_identifier)
-        if not realpath(path).startswith(LOGFILES_DIR):
+        if not abspath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
 
         logger.info("Writing task log file for task %s, attempt %s to path %s",
