@@ -535,7 +535,9 @@ def isuuid(value):
         UUID(value)
         return True
     except Exception:
-        return False
+        pass
+
+    return False
 
 
 # preconstructed url argument parsers
