@@ -14,6 +14,7 @@ Submodules
    pyfarm.master.api.pathmaps
    pyfarm.master.api.software
    pyfarm.master.api.tags
+   pyfarm.master.api.tasklogs
 
 Module contents
 ---------------
