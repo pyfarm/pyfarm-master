@@ -22,8 +22,6 @@ Task Logs
 This module defines an API for managing and querying logs belonging to tasks
 """
 
-from uuid import UUID
-
 try:
     from httplib import (
       OK, NOT_FOUND, CONFLICT, TEMPORARY_REDIRECT, CREATED, BAD_REQUEST,
@@ -46,7 +44,7 @@ from pyfarm.core.config import read_env
 from pyfarm.models.tasklog import TaskLog, TaskTaskLogAssociation
 from pyfarm.models.task import Task
 from pyfarm.master.application import db
-from pyfarm.master.utility import jsonify, validate_with_model
+from pyfarm.master.utility import jsonify, validate_with_model, isuuid
 
 logger = getLogger("api.tasklogs")
 
@@ -59,14 +57,6 @@ try:
 except OSError as e:  # pragma: no cover
     if e.errno != EEXIST:
         raise
-
-
-def agent_uuid(value):
-    try:
-        UUID(value)
-        return True
-    except Exception:
-        return False
 
 
 class LogsInTaskAttemptsIndexAPI(MethodView):
@@ -120,7 +110,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
 
         return jsonify(out), OK
 
-    @validate_with_model(TaskLog, type_checks={"agent_id": agent_uuid})
+    @validate_with_model(TaskLog, type_checks={"agent_id": isuuid})
     def post(self, job_id, task_id, attempt):
         """
         A ``POST`` to this endpoint will register a new logfile with the given

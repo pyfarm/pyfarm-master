@@ -42,14 +42,14 @@ from flask.views import MethodView
 from sqlalchemy import or_, not_
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import STRING_TYPES, WorkState, AgentState
+from pyfarm.core.enums import WorkState, AgentState
 from pyfarm.scheduler.tasks import assign_tasks, update_agent
 from pyfarm.models.agent import Agent, AgentMacAddress
 from pyfarm.models.task import Task
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     jsonify, validate_with_model, get_ipaddr_argument, get_integer_argument,
-    get_hostname_argument, get_port_argument)
+    get_hostname_argument, get_port_argument, isuuid)
 
 logger = getLogger("api.agents")
 
@@ -531,10 +531,11 @@ class SingleAgentAPI(MethodView):
             return jsonify(error="Agent %s not found" % agent_id), NOT_FOUND
 
     @validate_with_model(
-        Agent, disallow=("id", ),
+        Agent,
+        type_checks={"id": isuuid},
         ignore=("current_assignments", ),
         ignore_missing=(
-            "ram", "cpus", "port", "free_ram", "hostname", "systemid"))
+            "ram", "cpus", "port", "free_ram", "hostname"))
     def post(self, agent_id):
         """
         Update an agent's columns with new information by merging the provided

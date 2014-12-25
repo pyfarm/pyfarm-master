@@ -523,6 +523,21 @@ def get_request_argument(argument, default=None, required=False, types=None):
         abort(BAD_REQUEST)
 
 
+def isuuid(value):
+    """
+    Returns True if ``value`` is a :class:`UUID` object
+    or can be converted to one
+    """
+    if isinstance(value, UUID):
+        return True
+
+    try:
+        UUID(value)
+        return True
+    except Exception:
+        return False
+
+
 # preconstructed url argument parsers
 get_integer_argument = partial(get_request_argument, types=int)
 get_port_argument = partial(
