@@ -39,9 +39,9 @@ before_script:
 
 script:
   - if [[ $PYLINT != "1" ]]; then pip freeze; fi
-  - if [[ $PYLINT != "1" ]]; then nosetests -s --verbose --with-coverage --cover-package=pyfarm.models tests/test_models; fi
+  - if [[ $PYLINT != "1" ]]; then nosetests --verbose --with-coverage --cover-package=pyfarm.models tests/test_models; fi
   - if [[ $PYLINT != "1" ]]; then mv -v .coverage .coverage.1; fi
-  - if [[ $PYLINT != "1" ]]; then nosetests -s --verbose --with-coverage --cover-package=pyfarm.master tests/test_master; fi
+  - if [[ $PYLINT != "1" ]]; then nosetests --verbose --with-coverage --cover-package=pyfarm.master tests/test_master; fi
   - if [[ $PYLINT != "1" ]]; then mv -v .coverage .coverage.2; fi
   - if [[ $PYLINT != "1" ]]; then coverage combine; fi
   - if [[ $PYLINT == "1" ]]; then pylint pyfarm --errors-only; fi
