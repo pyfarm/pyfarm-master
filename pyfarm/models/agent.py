@@ -131,7 +131,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
             * :attr:`hostname`
             * :attr:`port`
-            * :attr:`systemid`
+            * :attr:`id`
 
     """
     __tablename__ = TABLE_AGENT
@@ -413,8 +413,8 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     @validates("ram", "cpus", "port")
     def validate_numeric_column(self, key, value):
         """
-        Validates several numerical columns.  Columns such as ram, cpus,
-        port and systemid are validated with this method.
+        Validates several numerical columns.  Columns such as ram, cpus
+        and port a are validated with this method.
         """
         return self.validate_resource(key, value)
 
