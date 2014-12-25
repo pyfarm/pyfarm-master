@@ -55,6 +55,7 @@ logger = getLogger("api.agents")
 
 MAC_RE = re.compile("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
 
+
 def fail_missing_assignments(agent, current_assignments):
     # FIXME Possible race condition:
     # If an agent decides to reannounce itself just after we assigned a
@@ -219,11 +220,6 @@ class AgentIndexAPI(MethodView):
             g.json["id"] = uuid.UUID(g.json["id"])
         except KeyError:
             return jsonify(error="`id` not provided"), BAD_REQUEST
-
-        except Exception as e:
-            return jsonify(
-                error="Failed to convert %r to a UUID: %s" % (g.json["id"], e)
-            ), BAD_REQUEST
 
         # Set remote_ip if it did not come in with the request
         g.json.setdefault("remote_ip", request.remote_addr)
@@ -528,10 +524,6 @@ class SingleAgentAPI(MethodView):
         :statuscode 400: something within the request is invalid
         :statuscode 404: no agent could be found using the given id
         """
-        if not isinstance(agent_id, STRING_TYPES):
-            return jsonify(
-                error="Expected `agent_id` to be an string"), BAD_REQUEST
-
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is not None:
             return jsonify(agent.to_dict(unpack_relationships=False))
