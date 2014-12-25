@@ -60,7 +60,7 @@ def default_json_encoder(obj):
 
 
 class JSONEncoder(json.JSONEncoder):
-    def default(self, o):
+    def default(self, o):  # pylint: disable=method-hidden
         result = default_json_encoder(o)
         if o is not None and result is not None:
             return result

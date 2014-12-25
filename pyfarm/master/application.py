@@ -82,7 +82,7 @@ class UUIDConverter(BaseConverter):
             logger.error("Failed to convert %r to a UUID", e)
             raise ValidationError
 
-    def to_url(self, value):
+    def to_url(self, value):  # pylint: disable=super-on-old-class
         if PY3 and isinstance(value, bytes):
             try:
                 value = UUID(bytes=value)
