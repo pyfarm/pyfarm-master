@@ -91,12 +91,12 @@ class UUIDConverter(BaseConverter):
 
         if isinstance(value, STRING_TYPES):
             try:
+                value = UUID(value)
+            except Exception:
                 try:
-                    value = UUID(value)
-                except TypeError:
                     value = UUID(bytes=value)
-            except (AttributeError, ValueError):
-                value = None
+                except (AttributeError, ValueError):
+                    value = None
 
         if not isinstance(value, UUID):
             raise ValidationError
