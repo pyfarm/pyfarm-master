@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import os
+import uuid
 
 try:
     from httplib import BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE
@@ -26,6 +27,7 @@ from flask.ext.admin import Admin, AdminIndexView
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from itsdangerous import URLSafeTimedSerializer
+from werkzeug.routing import BaseConverter, ValidationError
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
@@ -34,8 +36,8 @@ BaseTestCase.build_environment()
 from pyfarm.master.utility import jsonify
 from pyfarm.master.admin.baseview import AdminIndex
 from pyfarm.master.application import (
-    get_application, get_api_blueprint, get_admin, get_sqlalchemy,
-    get_login_manager, get_login_serializer, before_request)
+    UUIDConverter, get_application, get_api_blueprint, get_admin,
+    get_sqlalchemy, get_login_manager, get_login_serializer)
 
 
 class TestApplicationFunctions(BaseTestCase):
@@ -93,3 +95,39 @@ class TestApplicationFunctions(BaseTestCase):
         self.assert_ok(response)
         self.assertEqual(response.json, {"success": True})
         self.assertIsNotNone(g.json)
+
+
+class TestUUIDConverter(BaseTestCase):
+    def test_instance(self):
+        instance = UUIDConverter(self.app.url_map)
+        self.assertIsInstance(instance, BaseConverter)
+
+    def test_to_python_uuid(self):
+        value = uuid.uuid4()
+        instance = UUIDConverter(self.app.url_map)
+        self.assertIs(instance.to_python(value), value)
+
+    def test_to_python_hex(self):
+        value = uuid.uuid4()
+        instance = UUIDConverter(self.app.url_map)
+        self.assertEqual(value, instance.to_python(value.hex))
+
+    def test_to_python_error(self):
+        instance = UUIDConverter(self.app.url_map)
+        with self.assertRaises(ValidationError):
+            instance.to_python("")
+
+    def test_to_url_string(self):
+        value = uuid.uuid4()
+        instance = UUIDConverter(self.app.url_map)
+        self.assertEqual(instance.to_url(value.hex), str(value))
+
+    def test_to_url_bytes(self):
+        value = uuid.uuid4()
+        instance = UUIDConverter(self.app.url_map)
+        self.assertEqual(instance.to_url(value.bytes), str(value))
+
+    def test_to_url_error(self):
+        instance = UUIDConverter(self.app.url_map)
+        with self.assertRaises(ValidationError):
+            instance.to_url("")

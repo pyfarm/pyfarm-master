@@ -42,7 +42,7 @@ from sqlalchemy import event
 from werkzeug.exceptions import BadRequest
 from werkzeug.routing import BaseConverter, ValidationError
 
-from pyfarm.core.enums import NOTSET, STRING_TYPES
+from pyfarm.core.enums import NOTSET, STRING_TYPES, PY3
 from pyfarm.core.config import Configuration, read_env, read_env_bool
 from pyfarm.core.logger import getLogger
 from pyfarm.master.admin.baseview import AdminIndex
@@ -74,6 +74,8 @@ class UUIDConverter(BaseConverter):
     which will then convert the string to an instance of :class:`UUID`.
     """
     def to_python(self, value):
+        if isinstance(value, UUID):
+            return value
         try:
             return UUID(value)
         except Exception as e:
@@ -81,11 +83,20 @@ class UUIDConverter(BaseConverter):
             raise ValidationError
 
     def to_url(self, value):
+        if PY3 and isinstance(value, bytes):
+            try:
+                value = UUID(bytes=value)
+            except (AttributeError, ValueError):
+                value = None
+
         if isinstance(value, STRING_TYPES):
             try:
-                value = UUID(value)
-            except TypeError:
-                value = UUID(bytes=value)
+                try:
+                    value = UUID(value)
+                except TypeError:
+                    value = UUID(bytes=value)
+            except (AttributeError, ValueError):
+                value = None
 
         if not isinstance(value, UUID):
             raise ValidationError
