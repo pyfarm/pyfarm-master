@@ -18,6 +18,13 @@
               <a href="{{ url_for('single_jobtype_ui', jobtype_id=job.jobtype_version.jobtype.id) }}">
                 {{ job.jobtype_version.jobtype.name }}
               </a> Version {{job.jobtype_version.version}}
+              {% if latest_jobtype_version > job.jobtype_version.version %}
+              <form class="icon" method="POST" action="{{ url_for('upgrade_jobtype_for_job', job_id=job.id) }}">
+                <button onclick="return confirm('Are you sure you want to upgrade the jobtype to version {{ latest_jobtype_version }}?');" title="Upgrade to latest version ({{ latest_jobtype_version }})">
+                  <i class="icon-arrow-up"></i>
+                </button>
+              </form>
+              {% endif %}
             </td>
           </tr>
           <tr>
@@ -69,6 +76,11 @@
               <form class="icon" method="POST" action="{{ url_for('rerun_single_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
                 <button onclick="return confirm('Are you sure you want to rerun this job? This will include all tasks, even those already done.');" title="Rerun job">
                   <i class="icon-repeat"></i> Rerun
+                </button>
+              </form>
+              <form class="icon" method="POST" action="{{ url_for('rerun_failed_in_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
+                <button onclick="return confirm('Are you sure you want to rerun the failed tasks in this job?');" title="Rerun failed tasks">
+                  <i class="icon-repeat"></i> Rerun Failed
                 </button>
               </form>
               {% if not job.paused() %}

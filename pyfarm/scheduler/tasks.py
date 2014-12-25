@@ -57,6 +57,7 @@ from pyfarm.models.tasklog import TaskLog
 from pyfarm.models.job import Job
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.jobtype import JobType, JobTypeVersion
+from pyfarm.models.gpu import GPU
 from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
 from pyfarm.master.application import db
@@ -79,6 +80,8 @@ POLL_BUSY_AGENTS_INTERVAL = read_env_int(
     "PYFARM_POLL_BUSY_AGENTS_INTERVAL", 600)
 POLL_IDLE_AGENTS_INTERVAL = read_env_int(
     "PYFARM_POLL_IDLE_AGENTS_INTERVAL", 3600)
+POLL_OFFLINE_AGENTS_INTERVAL = read_env_int(
+    "PYFARM_POLL_OFFLINE_AGENTS_INTERVAL", 7200)
 SCHEDULER_LOCKFILE_BASE = read_env(
     "PYFARM_SCHEDULER_LOCKFILE_BASE", "/tmp/pyfarm_scheduler_lock")
 LOGFILES_DIR = read_env(
@@ -201,13 +204,13 @@ def assign_tasks():
 
 @celery_app.task(ignore_result=True)
 def assign_tasks_to_agent(agent_id):
-    lockfile_name = SCHEDULER_LOCKFILE_BASE + "-" + str(agent_id)
-    lock = LockFile(lockfile_name)
+    agent_lockfile_name = SCHEDULER_LOCKFILE_BASE + "-" + str(agent_id)
+    agent_lock = LockFile(agent_lockfile_name)
 
     try:
-        lock.acquire(timeout=-1)
-        with lock:
-            with open(lockfile_name, "w") as lockfile:
+        agent_lock.acquire(timeout=-1)
+        with agent_lock:
+            with open(agent_lockfile_name, "w") as lockfile:
                 lockfile.write(str(time()))
 
             db.session.rollback()
@@ -229,21 +232,67 @@ def assign_tasks_to_agent(agent_id):
 
             queue = JobQueue()
             job = queue.get_job_for_agent(agent)
+            db.session.commit()
+
             if job:
-                batch = job.get_batch()
-                for task in batch:
-                    task.agent = agent
-                    logger.info("Assigned agent %s (id %s) to task %s "
-                                "(frame %s) from job %s (id %s)", agent.hostname,
-                                agent.id, task.id, task.frame, job.title, job.id)
-                    db.session.add(task)
+                job_lockfile_name = SCHEDULER_LOCKFILE_BASE + "-job-" +\
+                    str(job.id)
+                job_lock = LockFile(job_lockfile_name)
+                try:
+                    job_lock.acquire(timeout=-1)
+                    with job_lock:
+                        with open(job_lockfile_name, "w") as lockfile:
+                             lockfile.write(str(time()))
 
-                if job.state != _WorkState.RUNNING:
-                    job.state = WorkState.RUNNING
-                    db.session.add(job)
-                db.session.commit()
+                        batch = job.get_batch()
+                        for task in batch:
+                            task.agent = agent
+                            logger.info("Assigned agent %s (id %s) to task %s "
+                                        "(frame %s) from job %s (id %s)",
+                                        agent.hostname, agent.id, task.id,
+                                        task.frame, job.title, job.id)
+                            db.session.add(task)
 
-                send_tasks_to_agent.delay(agent.id)
+                        if job.state != _WorkState.RUNNING:
+                            job.state = WorkState.RUNNING
+                            db.session.add(job)
+                        db.session.commit()
+
+                        send_tasks_to_agent.delay(agent.id)
+                except AlreadyLocked:
+                    logger.debug("The lockfile for job %s is locked", job.id)
+                    try:
+                        with open(job_lockfile_name, "r") as lockfile:
+                            locktime = float(lockfile.read())
+                            if locktime < time() - 60:
+                                logger.error("The old lock on job %s was held "
+                                             "for more than 60 seconds. "
+                                             "Breaking the lock.", job.id)
+                                job_lock.break_lock()
+                            assign_tasks_to_agent.apply_async(args=[agent_id],
+                                                              countdown=1)
+                    except (IOError, OSError, ValueError) as e:
+                        logger.warning("Could not read a time value from the "
+                                       "lockfile for job %s. Waiting 1 second "
+                                       "before trying again. Error: %s",
+                                       job.id, e)
+                        sleep(1)
+                    try:
+                        with open(job_lockfile_name, "r") as lockfile:
+                            locktime = float(lockfile.read())
+                            if locktime < time() - 60:
+                                logger.error("The old lock on job %s was held "
+                                             "for more than 60 seconds. "
+                                             "Breaking the lock.", job.id)
+                                agent_lock.break_lock()
+                            assign_tasks_to_agent.apply_async(args=[agent_id],
+                                                              countdown=1)
+                    except(IOError, OSError, ValueError):
+                        logger.error("Could not read a time value from the "
+                                     "lockfile even after waiting 1s. Breaking "
+                                     "the lock.")
+                        agent_lock.break_lock()
+                        assign_tasks_to_agent.delay(agent_id)
             else:
                 logger.debug("Did not find a job for agent %s", agent.hostname)
 
@@ -251,12 +300,12 @@ def assign_tasks_to_agent(agent_id):
         logger.debug("The scheduler lockfile is locked, the scheduler seems to "
                      "already be running for agent %s", agent_id)
         try:
-            with open(lockfile_name, "r") as lockfile:
+            with open(agent_lockfile_name, "r") as lockfile:
                 locktime = float(lockfile.read())
                 if locktime < time() - 60:
                     logger.error("The old lock was held for more than 60 "
                                  "seconds. Breaking the lock.")
-                    lock.break_lock()
+                    agent_lock.break_lock()
         except (IOError, OSError, ValueError) as e:
             # It is possible that we tried to read the file in the narrow window
             # between lock acquisition and actually writing the time
@@ -265,18 +314,18 @@ def assign_tasks_to_agent(agent_id):
                            "Error: %s", e)
             sleep(1)
         try:
-            with open(lockfile_name, "r") as lockfile:
+            with open(agent_lockfile_name, "r") as lockfile:
                 locktime = float(lockfile.read())
                 if locktime < time() - 60:
                     logger.error("The old lock was held for more than 60 "
                                  "seconds. Breaking the lock.")
-                    lock.break_lock()
+                    agent_lock.break_lock()
         except(IOError, OSError, ValueError):
             # If we still cannot read a time value from the file after 1s,
             # there was something wrong with the process holding the lock
             logger.error("Could not read a time value from the scheduler "
                          "lockfile even after waiting 1s. Breaking the lock")
-            lock.break_lock()
+            agent_lock.break_lock()
 
 
 @celery_app.task(ignore_results=True, bind=True)
@@ -351,6 +400,7 @@ def poll_agent(self, agent_id):
 def poll_agents():
     db.session.rollback()
     idle_agents_to_poll_query = Agent.query.filter(
+        Agent.state != AgentState.OFFLINE,
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
                 timedelta(
@@ -360,9 +410,10 @@ def poll_agents():
         Agent.use_address != UseAgentAddress.PASSIVE)
 
     for agent in idle_agents_to_poll_query:
-        poll_agent.delay(agent.id)
+        logger.debug("Polling idle agent %s", agent.hostname)
 
     busy_agents_to_poll_query = Agent.query.filter(
+        Agent.state != AgentState.OFFLINE,
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
                 timedelta(
@@ -372,6 +423,15 @@ def poll_agents():
         Agent.use_address != UseAgentAddress.PASSIVE)
 
     for agent in busy_agents_to_poll_query:
+        logger.debug("Polling busy agent %s", agent.hostname)
+
+    offline_agents_to_poll_query = Agent.query.filter(
+        Agent.state == AgentState.OFFLINE,
+        Agent.last_polled + timedelta(
+            seconds=POLL_OFFLINE_AGENTS_INTERVAL) < datetime.utcnow(),
+        Agent.use_address != UseAgentAddress.PASSIVE)
+
+    for agent in offline_agents_to_poll_query:
         poll_agent.delay(agent.id)
 
 
@@ -379,18 +439,21 @@ def poll_agents():
 def send_job_completion_mail(job_id, successful=True):
     db.session.rollback()
     job = Job.query.filter_by(id=job_id).one()
-    message_text = ("Job %s (id %s) has completed %s on %s.\n\n" %
-                    (job.title, job.id,
-                     "successfully" if successful else "unsuccessfully",
-                     job.time_finished))
+    message_text = ("%s job %s (id %s) has %s on %s.\n\n" %
+                    (job.jobtype_version.jobtype.name, job.title, job.id,
+                     ("completed successfully" if successful
+                         else "failed"),
+                     job.time_finished.isoformat()))
     if job.output_link:
         message_text += "See:\n"
         message_text += job.output_link + "\n\n"
     message_text += "Sincerely,\n\tThe PyFarm render manager"
 
     message = MIMEText(message_text)
-    message["Subject"] = ("Job %s completed %ssuccessfully" %
-                            (job.title, "" if successful else "un"))
+    message["Subject"] = ("Job %s %s" %
+                            (job.title,
+                             "completed successfully" if successful else
+                             "failed"))
     message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
     message["To"] = ",".join([x.email for x in job.notified_users if x.email])
 
@@ -492,7 +555,8 @@ def delete_task(self, task_id):
                                 job.id, job.title)
                     db.session.delete(job)
                 db.session.commit()
-                done = True
+            done = True
+
         except InvalidRequestError:
             if retries > 0:
                 logger.debug("Caught an InvalidRequestError trying to delete "

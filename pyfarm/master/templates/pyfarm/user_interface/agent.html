@@ -75,6 +75,16 @@
     </tr>
     <tr>
       <td>
+        GPUs
+      </td>
+      <td>
+        {% for gpu in agent.gpus %}
+        {{ gpu.fullname }} <br/>
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <td>
         Agent version
       </td>
       <td>

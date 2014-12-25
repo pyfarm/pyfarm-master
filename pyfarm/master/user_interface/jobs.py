@@ -17,16 +17,18 @@
 from decimal import Decimal
 
 try:
-    from httplib import BAD_REQUEST, NOT_FOUND, SEE_OTHER
+    from httplib import (
+        BAD_REQUEST, NOT_FOUND, SEE_OTHER, INTERNAL_SERVER_ERROR)
 except ImportError:  # pragma: no cover
-    from http.client import BAD_REQUEST, NOT_FOUND, SEE_OTHER
+    from http.client import (
+        BAD_REQUEST, NOT_FOUND, SEE_OTHER, INTERNAL_SERVER_ERROR)
 
 from flask import render_template, request, redirect, url_for, flash
 from sqlalchemy.orm import aliased
-from sqlalchemy import func, desc, asc, or_
+from sqlalchemy import func, desc, asc, or_, distinct
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState
+from pyfarm.core.enums import WorkState, _WorkState
 from pyfarm.scheduler.tasks import delete_job, stop_task, assign_tasks
 from pyfarm.models.job import Job, JobDependencies, JobTagAssociation
 from pyfarm.models.tag import Tag
@@ -57,6 +59,16 @@ def jobs():
     child_count_query = db.session.query(
         JobDependencies.c.parentid, func.count('*').label('child_count')).\
                 group_by(JobDependencies.c.parentid).subquery()
+    blocker_count_query = db.session.query(
+        JobDependencies.c.childid, func.count('*').label('blocker_count')).\
+            join(Job, Job.id == JobDependencies.c.parentid).\
+                filter(or_(Job.state == None, Job.state != WorkState.DONE)).\
+                    group_by(JobDependencies.c.childid).subquery()
+    agent_count_query = db.session.query(
+        Task.job_id, func.count(distinct(Task.agent_id)).label('agent_count')).\
+            filter(Task.agent_id != None, or_(Task.state == None,
+                                              Task.state == WorkState.RUNNING)).\
+                group_by(Task.job_id).subquery()
 
     jobs_query = db.session.query(Job,
                                   func.coalesce(
@@ -76,7 +88,13 @@ def jobs():
                                   JobType.id.label('jobtype_id'),
                                   func.coalesce(
                                       child_count_query.c.child_count,
-                                      0).label('child_count')).\
+                                      0).label('child_count'),
+                                  func.coalesce(
+                                      blocker_count_query.c.blocker_count,
+                                      0).label('blocker_count'),
+                                  func.coalesce(
+                                      agent_count_query.c.agent_count,
+                                      0).label('agent_count')).\
         join(JobTypeVersion, Job.jobtype_version_id == JobTypeVersion.id).\
         join(JobType, JobTypeVersion.jobtype_id == JobType.id).\
         outerjoin(queued_count_query, Job.id == queued_count_query.c.job_id).\
@@ -84,7 +102,9 @@ def jobs():
         outerjoin(done_count_query, Job.id == done_count_query.c.job_id).\
         outerjoin(failed_count_query, Job.id == failed_count_query.c.job_id).\
         outerjoin(User, Job.user_id == User.id).\
-        outerjoin(child_count_query, Job.id == child_count_query.c.parentid)
+        outerjoin(child_count_query, Job.id == child_count_query.c.parentid).\
+        outerjoin(blocker_count_query, Job.id == blocker_count_query.c.childid).\
+        outerjoin(agent_count_query, Job.id == agent_count_query.c.job_id)
 
     filters = {}
     if "tags" in request.args:
@@ -174,12 +194,13 @@ def jobs():
         order_by = request.args.get("order_by")
     if order_by not in ["title", "state", "time_submitted", "t_queued",
                         "t_running", "t_failed", "t_done", "username",
-                        "jobtype_name"]:
+                        "jobtype_name", "agent_count"]:
         return (render_template(
             "pyfarm/error.html",
             error="Unknown order key %r. Options are 'title', 'state', "
                   "'time_submitted', 't_queued', 't_running', 't_failed', "
-                  "'t_done', or 'username'" % order_by), BAD_REQUEST)
+                  "'t_done', 'username', or 'agent_count'" %
+                  order_by), BAD_REQUEST)
     if "order_dir" in request.args:
         order_dir = request.args.get("order_dir")
         if order_dir not in ["asc", "desc"]:
@@ -240,10 +261,15 @@ def single_job(job_id):
 
     users_query = User.query.filter(User.email != None)
 
+    latest_jobtype_version = db.session.query(JobTypeVersion.version).filter_by(
+            jobtype=job.jobtype_version.jobtype).\
+                order_by(desc(JobTypeVersion.version)).first()
+
     return render_template("pyfarm/user_interface/job.html", job=job,
                            tasks=tasks, first_task=first_task,
                            last_task=last_task, queues=jobqueues,
-                           users=users_query)
+                           users=users_query,
+                           latest_jobtype_version=latest_jobtype_version[0])
 
 def delete_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
@@ -295,6 +321,33 @@ def rerun_single_job(job_id):
     assign_tasks.delay()
 
     flash("Job %s will be run again." % job.title)
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
+def rerun_failed_in_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    for task in job.tasks:
+        if task.state == _WorkState.FAILED:
+            task.state = None
+            task.agent = None
+            task.failures = 0
+            db.session.add(task)
+
+    job.state = None
+    db.session.add(job)
+    db.session.commit()
+
+    assign_tasks.delay()
+
+    flash("Failed tasks in job %s will be run again." % job.title)
 
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)
@@ -463,6 +516,32 @@ def remove_notified_user_from_job(job_id, user_id):
 
     flash("User %s has been removed from notified users for job %s." %
           (user.username, job.title))
+
+    return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
+
+def upgrade_job_to_latest_jobtype_version(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    latest_version = JobTypeVersion.query.filter_by(
+            jobtype=job.jobtype_version.jobtype).\
+                order_by(desc(JobTypeVersion.version)).first()
+    if not latest_version:
+        return (render_template(
+            "pyfarm/error.html", error="Jobtype %s has no versions" %
+            job.jobtype_id), INTERNAL_SERVER_ERROR)
+
+    job.jobtype_version = latest_version
+
+    db.session.add(job)
+    db.session.commit()
+
+    flash("Job %s has been upgraded to jobtype %s, version %s." %
+          (job.title, job.jobtype_version.jobtype.name,
+           job.jobtype_version.version))
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
 

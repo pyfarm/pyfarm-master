@@ -45,7 +45,7 @@ from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_SOFTWARE_VERSION, TABLE_TAG, TABLE_AGENT_MAC_ADDRESS,
     TABLE_AGENT_TAG_ASSOC, MAX_HOSTNAME_LENGTH, MAX_CPUNAME_LENGTH,
     TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_PROJECT_AGENTS, TABLE_PROJECT,
-    MAX_OSNAME_LENGTH)
+    MAX_OSNAME_LENGTH, TABLE_GPU_IN_AGENT, TABLE_GPU)
 from pyfarm.models.jobtype import JobTypeVersion
 from pyfarm.models.job import Job
 
@@ -79,6 +79,14 @@ AgentProjects = db.Table(
               db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
     db.Column("project_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_PROJECT), primary_key=True))
+
+
+GPUInAgent = db.Table(
+    TABLE_GPU_IN_AGENT, db.metadata,
+    db.Column("agent_id", IDTypeAgent,
+              db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
+    db.Column("gpu_id", db.Integer,
+              db.ForeignKey("%s.id" % TABLE_GPU), primary_key=True))
 
 
 class AgentTaggingMixin(object):
@@ -209,6 +217,9 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                 default=datetime.utcnow,
                                 doc="Time we last had contact with this agent")
 
+    last_polled = db.Column(db.DateTime,
+                            doc="Time we last tried to contact the agent")
+
     # Max allocation of the two primary resources which `1.0` is 100%
     # allocation.  For `cpu_allocation` 100% allocation typically means
     # one task per cpu.
@@ -263,6 +274,12 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                     doc="The MAC addresses this agent has",
                                     cascade="save-update, merge, delete, "
                                             "delete-orphan")
+    gpus = db.relationship("GPU",
+                           secondary=GPUInAgent,
+                           backref=db.backref("agents", lazy="dynamic"),
+                           lazy="dynamic",
+                           doc="The graphics cards that are installed in this "
+                               "agent")
 
     def get_supported_types(self):
         try:

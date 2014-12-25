@@ -43,8 +43,10 @@ from sqlalchemy import or_, not_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState, AgentState
-from pyfarm.scheduler.tasks import assign_tasks, update_agent
+from pyfarm.scheduler.tasks import (
+    assign_tasks, update_agent, assign_tasks_to_agent)
 from pyfarm.models.agent import Agent, AgentMacAddress
+from pyfarm.models.gpu import GPU
 from pyfarm.models.task import Task
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
@@ -72,15 +74,18 @@ def fail_missing_assignments(agent, current_assignments):
     if known_task_ids:
         tasks_query = tasks_query.filter(not_(Task.id.in_(known_task_ids)))
 
+    failed_tasks = []
     for task in tasks_query:
         task.state = WorkState.FAILED
         db.session.add(task)
+        failed_tasks.append(task)
         logger.warning("Task %s (frame %s from job %r (%s)) was not in the "
                        "current assignments of agent %r (id %s) when it should "
                        "be.  Marking it as failed.",
                        task.id, task.frame, task.job.title,
                        task.job_id, agent.hostname, agent.id)
 
+    return failed_tasks
 
 def schema():
     """
@@ -230,6 +235,8 @@ class AgentIndexAPI(MethodView):
         if mac_addresses is not None:
             mac_addresses = [x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
+        gpus = g.json.pop("gpus", None)
+
         agent = Agent.query.filter_by(
             port=g.json["port"], id=g.json["id"]).first()
 
@@ -245,8 +252,17 @@ class AgentIndexAPI(MethodView):
             if mac_addresses is not None:
                 for address in mac_addresses:
                     mac_address = AgentMacAddress(agent=agent,
-                                                  mac_addresses=address)
+                                                  mac_address=address)
                     db.session.add(mac_address)
+
+            if gpus is not None:
+                for gpu_name in gpus:
+                    gpu = GPU.query.filter_by(
+                        fullname=gpu_name).first()
+                    if not gpu:
+                        gpu = GPU(fullname=gpu_name)
+                        db.session.add(gpu)
+                    agent.gpus.append(gpu)
 
             db.session.add(agent)
 
@@ -312,12 +328,32 @@ class AgentIndexAPI(MethodView):
                         agent=agent, mac_address=new_address)
                     db.session.add(mac_address)
 
+            if gpus is not None:
+                updated = True
+                for existing_gpu in agent.gpus:
+                    if existing_gpu.fullname not in gpus:
+                        logger.debug("Existing gpu %s is not in supplied "
+                                     "gpus, for agent %s, removing it.",
+                                     existing_address.mac_address,
+                                     agent.hostname)
+                        agent.gpus.remove(existing_gpu)
+                    else:
+                        gpus.remove(existing_gpu.fullname)
+
+                for gpu_name in gpus:
+                    gpu = GPU.query.filter_by(fullname=gpu_name).first()
+                    if not gpu:
+                        gpu = GPU(fullname=gpu_name)
+                        db.session.add(gpu)
+                    agent.gpus.append(gpu)
+
             # TODO Only do that if this is really the agent speaking to us.
+            failed_tasks = []
             if (current_assignments is not None and
                 agent.state != AgentState.OFFLINE):
                     fail_missing_assignments(agent, current_assignments)
 
-            if updated:
+            if updated or failed_tasks:
                 db.session.add(agent)
 
                 try:
@@ -330,6 +366,9 @@ class AgentIndexAPI(MethodView):
                 else:
                     agent_data = agent.to_dict(unpack_relationships=False)
                     logger.info("Updated agent %r: %r", agent.id, agent_data)
+                    for task in failed_tasks:
+                        task.job.update_state()
+                    db.session.commit()
                     assign_tasks.delay()
                     return jsonify(agent_data), OK
 
@@ -517,8 +556,12 @@ class SingleAgentAPI(MethodView):
                 HTTP/1.1 404 NOT FOUND
                 Content-Type: application/json
 
+<<<<<<< HEAD
                 {"error": "Agent `4eefca76-1127-4c17-a3df-c1a7de685541` not "
                           "found"}
+=======
+                {"error": "Agent 1234 not found"}
+>>>>>>> b0911c70561ee45978af991cc16374e2ce806aea
 
         :statuscode 200: no error
         :statuscode 400: something within the request is invalid
@@ -595,6 +638,8 @@ class SingleAgentAPI(MethodView):
             mac_addresses = [
                 x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
+        gpus = g.json.pop("gpus", None)
+
         try:
             items = g.json.iteritems
         except AttributeError:
@@ -618,13 +663,8 @@ class SingleAgentAPI(MethodView):
         if "upgrade_to" in modified:
             update_agent.delay(agent.id)
 
-        # TODO Only do that if this is really the agent speaking to us.
-        if (current_assignments is not None and
-            agent.state != AgentState.OFFLINE):
-            fail_missing_assignments(agent, current_assignments)
-
         if mac_addresses is not None:
-            updated = True
+            modified["mac_addresses"] = mac_addresses
             for existing_address in agent.mac_addresses:
                 if existing_address.mac_address.lower() not in mac_addresses:
                     logger.debug("Existing address %s is not in supplied "
@@ -641,11 +681,41 @@ class SingleAgentAPI(MethodView):
                     agent=agent, mac_address=new_address)
                 db.session.add(mac_address)
 
+        if gpus is not None:
+            modified["gpus"] = gpus
+            for existing_gpu in agent.gpus:
+                if existing_gpu.fullname not in gpus:
+                    logger.debug("Existing gpu %s is not in supplied "
+                                    "gpus, for agent %s, removing it.",
+                                    existing_address.mac_address,
+                                    agent.hostname)
+                    agent.gpus.remove(existing_gpu)
+                else:
+                    gpus.remove(existing_gpu.fullname)
+
+            for gpu_name in gpus:
+                gpu = GPU.query.filter_by(fullname=gpu_name).first()
+                if not gpu:
+                    gpu = GPU(fullname=gpu_name)
+                    db.session.add(gpu)
+                agent.gpus.append(gpu)
+
+        # TODO Only do that if this is really the agent speaking to us.
+        failed_tasks = []
+        if (current_assignments is not None and
+            agent.state != AgentState.OFFLINE):
+            failed_tasks = fail_missing_assignments(agent, current_assignments)
+
         logger.debug(
             "Updated agent %r: %r", agent.id, modified)
         db.session.add(agent)
         db.session.commit()
-        assign_tasks.delay()
+
+        for task in failed_tasks:
+            task.job.update_state()
+        db.session.commit()
+
+        assign_tasks_to_agent.delay(agent_id)
 
         return jsonify(agent.to_dict(unpack_relationships=False)), OK
 

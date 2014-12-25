@@ -10,7 +10,7 @@
     <span>
       <i class="icon-minus-sign"></i>{{ queue.path() }}
       <p>
-        Agents min / max: {{ queue.minimum_agents or "-"}} / {{ queue.maximum_agents or "-" }}<br/>
+        Agents min / current / max: {{ queue.minimum_agents or "-"}} / {{ queue.num_assigned_agents() }} / {{ queue.maximum_agents or "-" }}<br/>
         Priority: {{ queue.priority }}<br/>
         Weight: {{ queue.weight }}
       </p>
@@ -32,8 +32,8 @@
         <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }} {{ 'badge-important' if job.state == WorkState.FAILED }}">
           <i class="icon-leaf"></i>
           {{ job.title }}<br/>
-          State: {{ job.state }}<br/>
-          Agents min / max: {{ job.minimum_agents or "-"}} / {{ job.maximum_agents or "-" }}<br/>
+          State: {{ job.state or "queued" }}<br/>
+          Agents min / current / max: {{ job.minimum_agents or "-"}} / {{ job.num_assigned_agents() }} / {{ job.maximum_agents or "-" }}<br/>
           Priority: {{ job.priority }}<br/>
           Weight: {{ job.weight }}
         </span>
@@ -52,8 +52,8 @@
     <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }}{{ 'badge-important' if job.state == WorkState.FAILED }}{{ 'badge-warning' if job.state == WorkState.RUNNING }}">
       <i class="icon-leaf"></i>
       {{ job.title }}<br/>
-      State: {{ job.state }}<br/>
-      Agents min / max: {{ job.minimum_agents or "-"}} / {{ job.maximum_agents or "-" }}<br/>
+      State: {{ job.state or "queued" }}<br/>
+      Agents min / current / max: {{ job.minimum_agents or "-"}} / {{ job.num_assigned_agents() }} / {{ job.maximum_agents or "-" }}<br/>
       Priority: {{ job.priority }}<br/>
       Weight: {{ job.weight }}
     </span>

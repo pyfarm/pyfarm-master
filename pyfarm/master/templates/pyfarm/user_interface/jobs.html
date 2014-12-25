@@ -233,6 +233,16 @@
       </a>)
     </th>
     <th>
+      <a href="{{ url_for('jobs_index_ui', order_by='agent_count', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        Agents
+        {% if order_by == 'agent_count' and order_dir == 'desc' %}
+        <i class="icon-chevron-down"></i>
+        {% elif order_by == 'agent_count' %}
+        <i class="icon-chevron-up"></i>
+        {% endif %}
+      </a>
+    </th>
+    <th>
       <a href="{{ url_for('jobs_index_ui', order_by='time_submitted', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
         Submitted
         {% if order_by == 'time_submitted' and order_dir == 'desc' %}
@@ -251,7 +261,7 @@
           <i class="icon-trash"></i>
         </button>
       </form>
-      <form class="icon" method="POST" action="{{ url_for('rerun_single_job_ui', job_id=job[0].id) }}">
+      <form class="icon" method="POST" action="{{ url_for('rerun_single_job_ui', job_id=job[0].id, next=url_for('jobs_index_ui', **filters_and_order)) }}">
         <button onclick="return confirm('Are you sure you want to rerun this job? This will include all tasks, even those already done.');" title="Rerun job">
           <i class="icon-repeat"></i>
         </button>
@@ -263,6 +273,9 @@
       {% endif %}
     </td>
     <td>
+      {% if job.blocker_count > 0%}
+      <i class="icon-ban-circle" title="blocked by {{ job.blocker_count }} parent {{ 'jobs' if job.blocker_count > 1 else 'job' }}"></i>
+      {% endif %}
       {% if not job[0].state %}
       <i class="icon-time" title="queued"></i>
       {% endif %}
@@ -315,6 +328,7 @@
       </div>
       {{ job.t_queued }}/{{ job.t_running }}/{{ job.t_failed }}/{{ job.t_done }}
     </td>
+    <td>{{ job.agent_count }}</td>
     <td class="timestamp">{{ job[0].time_submitted.isoformat() }}</td>
   </tr>
   {% endfor %}
