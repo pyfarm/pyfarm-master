@@ -1045,7 +1045,8 @@ class TestJobAPI(BaseTestCase):
                                 "project_id": None,
                                 "state": "queued",
                                 "agent_id": None,
-                                "last_error": None
+                                "last_error": None,
+                                "sent_to_agent": False
                              },
                              {
                                 "hidden": False,
@@ -1061,7 +1062,8 @@ class TestJobAPI(BaseTestCase):
                                 "project_id": None,
                                 "state": "queued",
                                 "agent_id": None,
-                                "last_error": None
+                                "last_error": None,
+                                "sent_to_agent": False
                              }
                          ])
 
@@ -1117,7 +1119,8 @@ class TestJobAPI(BaseTestCase):
                                 "project_id": None,
                                 "state": "queued",
                                 "agent_id": None,
-                                "last_error": None
+                                "last_error": None,
+                                "sent_to_agent": False
                              },
                              {
                                 "hidden": False,
@@ -1133,7 +1136,8 @@ class TestJobAPI(BaseTestCase):
                                 "project_id": None,
                                 "state": "queued",
                                 "agent_id": None,
-                                "last_error": None
+                                "last_error": None,
+                                "sent_to_agent": False
                              }
                          ])
 
@@ -1205,7 +1209,8 @@ class TestJobAPI(BaseTestCase):
                             "project_id": None,
                             "state": "done",
                             "agent_id": None,
-                            "last_error": None
+                            "last_error": None,
+                            "sent_to_agent": False
                          })
 
         response5 = self.client.post(
@@ -1348,7 +1353,8 @@ class TestJobAPI(BaseTestCase):
                             "project_id": None,
                             "state": "queued",
                             "agent_id": None,
-                            "last_error": None
+                            "last_error": None,
+                            "sent_to_agent": False
                          })
 
         response5 = self.client.get("/api/v1/jobs/%s/tasks/%s" %
@@ -1374,7 +1380,8 @@ class TestJobAPI(BaseTestCase):
                             "project_id": None,
                             "state": "queued",
                             "agent_id": None,
-                            "last_error": None
+                            "last_error": None,
+                            "sent_to_agent": False
                          })
 
     def test_job_get_unknown_single_task(self):
