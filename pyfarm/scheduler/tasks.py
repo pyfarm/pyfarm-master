@@ -166,6 +166,11 @@ def send_tasks_to_agent(self, agent_id):
                                               requests.codes.created]:
                 raise ValueError("Unexpected return code on sending batch to "
                                  "agent: %s", response.status_code)
+            else:
+                for task in tasks:
+                    task.sent_to_agent = True
+                    db.session.add(task)
+                db.session.commit()
 
         except (ConnectionError, Timeout) as e:
             if self.request.retries < self.max_retries:
@@ -247,6 +252,7 @@ def assign_tasks_to_agent(agent_id):
                         batch = job.get_batch()
                         for task in batch:
                             task.agent = agent
+                            task.sent_to_agent = False
                             logger.info("Assigned agent %s (id %s) to task %s "
                                         "(frame %s) from job %s (id %s)",
                                         agent.hostname, agent.id, task.id,
