@@ -296,7 +296,7 @@ class AgentIndexAPI(MethodView):
 
                 if not hasattr(agent, key):
                     return jsonify(
-                        error="Agent has no such column %r" % key), \
+                        error="Agent has no such column `%s`" % key), \
                            BAD_REQUEST
 
                 if getattr(agent, key) != value:
@@ -305,7 +305,7 @@ class AgentIndexAPI(MethodView):
 
                     except Exception as e:
                         return jsonify(
-                            error="Error while setting %r: %s" % (key, e)), \
+                            error="Error while setting `%s`: %s" % (key, e)), \
                                BAD_REQUEST
                     else:
                         updated = True
@@ -631,8 +631,7 @@ class SingleAgentAPI(MethodView):
 
         # TODO return BAD_REQUEST on bad mac addresses
         if mac_addresses is not None:
-            mac_addresses = [
-                x.lower() for x in mac_addresses if MAC_RE.match(x)]
+            mac_addresses = [x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
         gpus = g.json.pop("gpus", None)
 
