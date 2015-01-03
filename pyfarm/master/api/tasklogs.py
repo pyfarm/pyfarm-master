@@ -33,7 +33,7 @@ except ImportError:  # pragma: no cover
 
 import tempfile
 from os import makedirs
-from os.path import join, abspath
+from os.path import join, realpath
 from errno import EEXIST
 
 from flask.views import MethodView
@@ -163,7 +163,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
                            error="Specified task not found"), NOT_FOUND
 
         path = join(LOGFILES_DIR, g.json["identifier"])
-        if not abspath(path).startswith(LOGFILES_DIR):
+        if not realpath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
         task_log = TaskLog.query.filter_by(
             identifier=g.json["identifier"]).first()
@@ -295,7 +295,7 @@ class TaskLogfileAPI(MethodView):
                            error="Specified log not found in task"), NOT_FOUND
 
         path = join(LOGFILES_DIR, log_identifier)
-        if not abspath(path).startswith(LOGFILES_DIR):
+        if not realpath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
 
         try:
@@ -355,7 +355,7 @@ class TaskLogfileAPI(MethodView):
                            error="Specified log not found in task"), NOT_FOUND
 
         path = join(LOGFILES_DIR, log_identifier)
-        if not abspath(path).startswith(LOGFILES_DIR):
+        if not realpath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
 
         logger.info("Writing task log file for task %s, attempt %s to path %s",
