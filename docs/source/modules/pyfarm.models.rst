@@ -14,7 +14,6 @@ Submodules
 .. toctree::
 
    pyfarm.models.agent
-   pyfarm.models.gpu
    pyfarm.models.job
    pyfarm.models.jobqueue
    pyfarm.models.jobtype
@@ -23,7 +22,6 @@ Submodules
    pyfarm.models.software
    pyfarm.models.tag
    pyfarm.models.task
-   pyfarm.models.tasklog
    pyfarm.models.user
 
 Module contents

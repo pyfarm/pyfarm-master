@@ -8,7 +8,6 @@ Subpackages
 
     pyfarm.master.admin
     pyfarm.master.api
-    pyfarm.master.user_interface
 
 Submodules
 ----------
