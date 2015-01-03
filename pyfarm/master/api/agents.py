@@ -556,12 +556,8 @@ class SingleAgentAPI(MethodView):
                 HTTP/1.1 404 NOT FOUND
                 Content-Type: application/json
 
-<<<<<<< HEAD
                 {"error": "Agent `4eefca76-1127-4c17-a3df-c1a7de685541` not "
                           "found"}
-=======
-                {"error": "Agent 1234 not found"}
->>>>>>> b0911c70561ee45978af991cc16374e2ce806aea
 
         :statuscode 200: no error
         :statuscode 400: something within the request is invalid
