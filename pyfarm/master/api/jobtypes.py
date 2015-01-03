@@ -213,10 +213,15 @@ class JobTypeIndexAPI(MethodView):
                             "[0][\"frame\"])]\n",
                 }
 
-        :statuscode 201: a new jobtype item was created
-        :statuscode 400: there was something wrong with the request (such as
-                            invalid columns being included)
-        :statuscode 409: a conflicting jobtype already exists
+        :statuscode 201:
+            a new jobtype item was created
+
+        :statuscode 400:
+            there was something wrong with the request (such as
+            invalid columns being included)
+
+        :statuscode 409:
+            a conflicting jobtype already exists
         """
         if "name" not in g.json:
             return jsonify(error="Jobtype does not specify a name"), BAD_REQUEST
