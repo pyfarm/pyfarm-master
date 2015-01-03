@@ -212,10 +212,16 @@ class AgentIndexAPI(MethodView):
                     "state": "online",
                     "remote_ip": "10.196.200.115"
                  }
-        :statuscode 201: a new agent was created
-        :statuscode 200: an existing agent is updated with data from the request
-        :statuscode 400: there was something wrong with the request (such as
-                         invalid columns being included)
+ 
+        :statuscode 201:
+            a new agent was created
+
+        :statuscode 200:
+            an existing agent is updated with data from the request
+
+        :statuscode 400:
+            there was something wrong with the request (such as
+            invalid columns being included)
         """
         # Set remote_ip if it did not come in with the request
         g.json.setdefault("remote_ip", request.remote_addr)
@@ -422,7 +428,7 @@ class AgentIndexAPI(MethodView):
                 ]
 
         :qparam min_ram:
-            If set, list only agents with ``min_ram` ram or more
+            If set, list only agents with ``min_ram`` ram or more
 
         :qparam max_ram:
             If set, list only agents with ``max_ram`` ram or less
@@ -431,7 +437,7 @@ class AgentIndexAPI(MethodView):
             If set, list only agents with ``min_cpus`` cpus or more
 
         :qparam max_cpus:
-            If set, list only agents with ``max_cpus` cpus or less
+            If set, list only agents with ``max_cpus`` cpus or less
 
         :qparam hostname:
             If set, list only agents matching ``hostname``
@@ -442,7 +448,8 @@ class AgentIndexAPI(MethodView):
         :qparam port:
             If set, list only agents matching ``port``.
 
-        :statuscode 200: no error, host may or may not have been found
+        :statuscode 200:
+            no error, host may or may not have been found
         """
         query = db.session.query(
             Agent.id, Agent.hostname, Agent.port, Agent.remote_ip)
@@ -607,9 +614,14 @@ class SingleAgentAPI(MethodView):
                     "remote_ip": "10.196.200.115"
                 }
 
-        :statuscode 200: no error
-        :statuscode 400: something within the request is invalid
-        :statuscode 404: no agent could be found using the given id
+        :statuscode 200:
+            no error
+
+        :statuscode 400:
+            something within the request is invalid
+
+        :statuscode 404:
+            no agent could be found using the given id
         """
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is None:
@@ -871,8 +883,11 @@ class TasksInAgentAPI(MethodView):
                     "time_started": null
                 }
 
-        :statuscode 200: no error
-        :statuscode 404: agent not found
+        :statuscode 200:
+            no error
+
+        :statuscode 404:
+            agent not found
         """
         if "id" not in g.json:
             return jsonify(error="No id given for task"), BAD_REQUEST
