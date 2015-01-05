@@ -96,6 +96,9 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                "won't run a given task.  This column will "
                                "be cleared whenever the task's state is "
                                "returned to a non-error state.")
+    sent_to_agent = db.Column(db.Boolean, default=False, nullable=False,
+                              doc="Whether this task was already sent to the "
+                                  "assigned agent")
 
     # relationships
     parents = db.relationship("Task",
