@@ -162,7 +162,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
             return jsonify(task_id=task_id, job_id=job_id,
                            error="Specified task not found"), NOT_FOUND
 
-        path = join(LOGFILES_DIR, g.json["identifier"])
+        path = realpath(join(LOGFILES_DIR, g.json["identifier"]))
         if not realpath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
         task_log = TaskLog.query.filter_by(
@@ -294,7 +294,7 @@ class TaskLogfileAPI(MethodView):
             return jsonify(task_id=task.id, log=log.identifier,
                            error="Specified log not found in task"), NOT_FOUND
 
-        path = join(LOGFILES_DIR, log_identifier)
+        path = realpath(join(LOGFILES_DIR, log_identifier))
         if not realpath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
 
@@ -354,7 +354,7 @@ class TaskLogfileAPI(MethodView):
             return jsonify(task_id=task_id, log=log.identifier,
                            error="Specified log not found in task"), NOT_FOUND
 
-        path = join(LOGFILES_DIR, log_identifier)
+        path = realpath(join(LOGFILES_DIR, log_identifier))
         if not realpath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
 
