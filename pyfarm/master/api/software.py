@@ -17,7 +17,7 @@
 
 """
 Software
-------
+--------
 
 Contained within this module are an API handling functions which can
 manage or query software items using JSON.
@@ -46,11 +46,16 @@ from pyfarm.master.utility import jsonify, validate_with_model
 
 logger = getLogger("api.software")
 
+
 class VersionParseError(Exception):
-    pass
+    """
+    Raised by :func:`extract_version_dicts` when the
+    function is unable to parse a version.
+    """
 
 
 def extract_version_dicts(json_in):
+    """Extracts and returns a list of versions from ``json_in``."""
     out = []
     version_objects = json_in.pop("versions", [])
     if not isinstance(version_objects, list):

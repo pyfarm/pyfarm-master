@@ -150,7 +150,8 @@ def schema():
                 "name": "VARCHAR(64)"
             }
 
-    :statuscode 200: no error
+    :statuscode 200:
+        no error
     """
     schema_dict = JobTypeVersion.to_schema()
     schema_dict.update(JobType.to_schema())
@@ -173,17 +174,17 @@ class JobTypeIndexAPI(MethodView):
 
                 {
                     "name": "TestJobType",
+                    "classname": "TestJobType",
                     "description": "Jobtype for testing inserts and queries",
-                    "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
-                            "JobType\n\nclass TestJobType(JobType):\n"
-                            "    def get_command(self):\n"
-                            "        return \"/usr/bin/touch\"\n\n"
-                            "    def get_arguments(self):\n"
+                    "code": "\\nfrom pyfarm.jobtypes.core.jobtype import "
+                            "JobType\\n\\nclass TestJobType(JobType):\\n"
+                            "    def get_command(self):\\n"
+                            "        return \"/usr/bin/touch\"\\n\\n"
+                            "    def get_arguments(self):\\n"
                             "           return [os.path.join("
                             "self.assignment_data[\"job\"][\"data\"][\"path\"], "
                             "\"%04d\" % self.assignment_data[\"tasks\"]"
-                            "[0][\"frame\"])]\n"
-                    "classname": "TestJobType"
+                            "[0][\"frame\"])]\\n"
                 }
 
             **Response**
@@ -202,21 +203,26 @@ class JobTypeIndexAPI(MethodView):
                     "name": "TestJobType",
                     "classname": "TestJobType",
                     "description": "Jobtype for testing inserts and queries",
-                    "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
-                            "JobType\n\nclass TestJobType(JobType):\n"
-                            "    def get_command(self):\n"
-                            "        return \"/usr/bin/touch\"\n\n"
-                            "    def get_arguments(self):\n"
+                    "code": "\\nfrom pyfarm.jobtypes.core.jobtype import "
+                            "JobType\\n\\nclass TestJobType(JobType):\\n"
+                            "    def get_command(self):\\n"
+                            "        return \"/usr/bin/touch\"\\n\\n"
+                            "    def get_arguments(self):\\n"
                             "           return [os.path.join("
                             "self.assignment_data[\"job\"][\"data\"][\"path\"], "
                             "\"%04d\" % self.assignment_data[\"tasks\"]"
-                            "[0][\"frame\"])]\n",
+                            "[0][\"frame\"])]\\n"
                 }
 
-        :statuscode 201: a new jobtype item was created
-        :statuscode 400: there was something wrong with the request (such as
-                            invalid columns being included)
-        :statuscode 409: a conflicting jobtype already exists
+        :statuscode 201:
+            a new jobtype item was created
+
+        :statuscode 400:
+            there was something wrong with the request (such as
+            invalid columns being included)
+
+        :statuscode 409:
+            a conflicting jobtype already exists
         """
         if "name" not in g.json:
             return jsonify(error="Jobtype does not specify a name"), BAD_REQUEST
@@ -293,12 +299,13 @@ class JobTypeIndexAPI(MethodView):
 
                 [
                     {
-                    "id": 1,
-                    "name": "TestJobType"
+                        "id": 1,
+                        "name": "TestJobType"
                     }
                 ]
 
-        :statuscode 200: no error
+        :statuscode 200:
+            no error
         """
         out = []
         q = db.session.query(JobType.id, JobType.name)
@@ -334,33 +341,36 @@ class SingleJobTypeAPI(MethodView):
                 {
                     "batch_contiguous": true,
                     "classname": null,
-                    "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
-                            "JobType\n\nclass TestJobType(JobType):\n"
-                            "    def get_command(self):\n"
-                            "        return \"/usr/bin/touch\"\n\n"
-                            "    def get_arguments(self):\n"
+                    "code": "\\nfrom pyfarm.jobtypes.core.jobtype import "
+                            "JobType\\n\\nclass TestJobType(JobType):\\n"
+                            "    def get_command(self):\\n"
+                            "        return \"/usr/bin/touch\"\\n\\n"
+                            "    def get_arguments(self):\\n"
                             "           return [os.path.join("
                             "self.assignment_data[\"job\"][\"data\"][\"path\"], "
                             "\"%04d\" % self.assignment_data[\"tasks\"]"
-                            "[0][\"frame\"])]\n",
+                            "[0][\"frame\"])]\\n",
                     "id": 1,
                     "version": 1,
                     "max_batch": 1,
                     "name": "TestJobType",
                     "software_requirements": [
-                            {
+                        {
                             "max_version": null,
                             "max_version_id": null,
                             "min_version": "8.21",
                             "min_version_id": 1,
                             "software": "/bin/touch",
                             "software_id": 1
-                            }
-                        ]
+                        }
+                    ]
                 }
 
-        :statuscode 200: no error
-        :statuscode 404: jobtype or version not found
+        :statuscode 200:
+            no error
+
+        :statuscode 404:
+            jobtype or version not found
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
@@ -407,15 +417,15 @@ class SingleJobTypeAPI(MethodView):
                 {
                     "name": "TestJobType",
                     "description": "Jobtype for testing inserts and queries",
-                    "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
-                            "JobType\n\nclass TestJobType(JobType):\n"
-                            "    def get_command(self):\n"
-                            "        return \"/usr/bin/touch\"\n\n"
-                            "    def get_arguments(self):\n"
+                    "code": "\\nfrom pyfarm.jobtypes.core.jobtype import "
+                            "JobType\\n\\nclass TestJobType(JobType):\\n"
+                            "    def get_command(self):\\n"
+                            "        return \"/usr/bin/touch\"\\n\\n"
+                            "    def get_arguments(self):\\n"
                             "           return [os.path.join("
                             "self.assignment_data[\"job\"][\"data\"][\"path\"], "
                             "\"%04d\" % self.assignment_data[\"tasks\"]"
-                            "[0][\"frame\"])]\n"
+                            "[0][\"frame\"])]\\n"
                 }
 
             **Response**
@@ -428,15 +438,15 @@ class SingleJobTypeAPI(MethodView):
                 {
                     "batch_contiguous": true,
                     "classname": null,
-                    "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
-                            "JobType\n\nclass TestJobType(JobType):\n"
-                            "    def get_command(self):\n"
-                            "        return \"/usr/bin/touch\"\n\n"
-                            "    def get_arguments(self):\n"
+                    "code": "\\nfrom pyfarm.jobtypes.core.jobtype import "
+                            "JobType\\n\\nclass TestJobType(JobType):\\n"
+                            "    def get_command(self):\\n"
+                            "        return \"/usr/bin/touch\"\\n\\n"
+                            "    def get_arguments(self):\\n"
                             "           return [os.path.join("
                             "self.assignment_data[\"job\"][\"data\"][\"path\"], "
                             "\"%04d\" % self.assignment_data[\"tasks\"]"
-                            "[0][\"frame\"])]\n",
+                            "[0][\"frame\"])]\\n",
                     "id": 1,
                     "max_batch": 1,
                     "name": "TestJobType", 
@@ -444,9 +454,12 @@ class SingleJobTypeAPI(MethodView):
                     "software_requirements": []
                 }
 
-        :statuscode 201: a new jobtype was created
-        :statuscode 400: there was something wrong with the request (such as
-                            invalid columns being included)
+        :statuscode 201:
+            a new jobtype was created
+
+        :statuscode 400:
+            there was something wrong with the request (such as
+            invalid columns being included)
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
@@ -548,9 +561,10 @@ class SingleJobTypeAPI(MethodView):
 
             .. sourcecode:: http
 
-                HTTP/1.1 204 NO_CONTENT
+                HTTP/1.1 204 NO CONTENT
 
-        :statuscode 204: the jobtype was deleted or didn't exist
+        :statuscode 204:
+            the jobtype was deleted or didn't exist
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
@@ -590,8 +604,11 @@ class JobTypeVersionsIndexAPI(MethodView):
 
                 [1, 2]
 
-        :statuscode 200: no error
-        :statuscode 404: jobtype not found
+        :statuscode 200:
+            no error
+
+        :statuscode 404:
+            jobtype not found
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
@@ -631,33 +648,36 @@ class VersionedJobTypeAPI(MethodView):
                 {
                     "batch_contiguous": true,
                     "classname": null,
-                    "code": "\nfrom pyfarm.jobtypes.core.jobtype import "
-                            "JobType\n\nclass TestJobType(JobType):\n"
-                            "    def get_command(self):\n"
-                            "        return \"/usr/bin/touch\"\n\n"
-                            "    def get_arguments(self):\n"
+                    "name": "TestJobType",
+                    "code": "\\nfrom pyfarm.jobtypes.core.jobtype import "
+                            "JobType\\n\\nclass TestJobType(JobType):\\n"
+                            "    def get_command(self):\\n"
+                            "        return \"/usr/bin/touch\"\\n\\n"
+                            "    def get_arguments(self):\\n"
                             "           return [os.path.join("
                             "self.assignment_data[\"job\"][\"data\"][\"path\"], "
                             "\"%04d\" % self.assignment_data[\"tasks\"]"
-                            "[0][\"frame\"])]\n",
+                            "[0][\"frame\"])]\\n",
                     "id": 1,
                     "version": 1,
                     "max_batch": 1,
-                    "name": "TestJobType",
                     "software_requirements": [
-                            {
+                        {
                             "max_version": null,
                             "max_version_id": null,
                             "min_version": "8.21",
                             "min_version_id": 1,
                             "software": "/bin/touch",
                             "software_id": 1
-                            }
-                        ]
+                        }
+                    ]
                 }
 
-        :statuscode 200: no error
-        :statuscode 404: jobtype or version not found
+        :statuscode 200:
+            no error
+
+        :statuscode 404:
+            jobtype or version not found
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
@@ -700,9 +720,10 @@ class VersionedJobTypeAPI(MethodView):
 
             .. sourcecode:: http
 
-                HTTP/1.1 204 NO_CONTENT
+                HTTP/1.1 204 NO CONTENT
 
-        :statuscode 204: the version was deleted or didn't exist
+        :statuscode 204:
+            the version was deleted or didn't exist
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter(JobType.name == jobtype_name).first()
@@ -756,8 +777,11 @@ class JobTypeCodeAPI(MethodView):
                             self.assignment_data["job"]["data"]["path"], "%04d" %
                             self.assignment_data["tasks"][0]["frame"])]
 
-        :statuscode 200: no error
-        :statuscode 404: jobtype or version not found
+        :statuscode 200:
+            no error
+
+        :statuscode 404:
+            jobtype or version not found
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jt_tuple = db.session.query(
@@ -804,25 +828,28 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
                 Content-Type: application/json
 
                 [
-                {
-                    "software": {
-                        "software": "/bin/touch",
-                        "id": 1
+                    {
+                        "software": {
+                            "software": "/bin/touch",
+                            "id": 1
                         },
-                    "max_version": null,
-                    "min_version": {
-                        "version": "8.21",
-                        "id": 1
+                        "max_version": null,
+                        "min_version": {
+                            "version": "8.21",
+                            "id": 1
                         },
-                    "jobtype_version": {
-                        "version": 7,
-                        "jobtype": "TestJobType",
+                        "jobtype_version": {
+                            "version": 7,
+                            "jobtype": "TestJobType"
                         }
-                }
+                    }
                 ]
 
-        :statuscode 200: no error
-        :statuscode 404: jobtype or version not found
+        :statuscode 200:
+            no error
+
+        :statuscode 404:
+            jobtype or version not found
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter_by(name=jobtype_name).first()
@@ -883,27 +910,34 @@ class JobTypeSoftwareRequirementsIndexAPI(MethodView):
                 Content-Type: application/json
 
                 {
-                "jobtype_version": {
-                    "id": 8,
-                    "jobtype": "TestJobType",
-                    "version": 7
+                    "jobtype_version": {
+                        "id": 8,
+                        "jobtype": "TestJobType",
+                        "version": 7
                     },
-                "max_version": null,
-                "min_version": {
-                    "id": 2,
-                    "version": "1.69"
+                    "max_version": null,
+                    "min_version": {
+                        "id": 2,
+                        "version": "1.69"
                     },
-                "software": {
-                    "id": 2,
-                    "software": "blender"
+                    "software": {
+                        "id": 2,
+                        "software": "blender"
                     }
                 }
 
-        :statuscode 201: a new software requirement was created
-        :statuscode 400: there was something wrong with the request (such as
-                            invalid columns being included)
-        :statuscode 405: you tried calling this method on a specific version
-        :statuscode 409: a conflicting software requirement already exists
+        :statuscode 201:
+            a new software requirement was created
+
+        :statuscode 400:
+            there was something wrong with the request (such as
+            invalid columns being included)
+
+        :statuscode 405:
+            you tried calling this method on a specific version
+
+        :statuscode 409:
+            a conflicting software requirement already exists
         """
         if version is not None:
             return (jsonify(
@@ -1016,20 +1050,23 @@ class JobTypeSoftwareRequirementAPI(MethodView):
                     "software": {
                         "software": "/bin/touch",
                         "id": 1
-                        },
+                    },
                     "max_version": null,
                     "min_version": {
                         "version": "8.21",
                         "id": 1
-                        },
+                    },
                     "jobtype_version": {
                         "version": 7,
-                        "jobtype": "TestJobType",
-                        }
+                        "jobtype": "TestJobType"
+                    }
                 }
 
-        :statuscode 200: no error
-        :statuscode 404: jobtype or software requirement not found
+        :statuscode 200:
+            no error
+
+        :statuscode 404:
+            jobtype or software requirement not found
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter_by(name=jobtype_name).first()
@@ -1081,9 +1118,10 @@ class JobTypeSoftwareRequirementAPI(MethodView):
 
             .. sourcecode:: http
 
-                HTTP/1.1 204 NO_CONTENT
+                HTTP/1.1 204 NO CONTENT
 
-        :statuscode 204: the software requirement was deleted or didn't exist
+        :statuscode 204:
+            the software requirement was deleted or didn't exist
         """
         if isinstance(jobtype_name, STRING_TYPES):
             jobtype = JobType.query.filter_by(name=jobtype_name).first()
