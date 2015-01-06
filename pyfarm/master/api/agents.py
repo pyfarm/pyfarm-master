@@ -352,6 +352,7 @@ class AgentIndexAPI(MethodView):
                     fail_missing_assignments(agent, current_assignments)
 
             if updated or failed_tasks:
+                agent.last_heard_from = datetime.utcnow()
                 db.session.add(agent)
 
                 try:
