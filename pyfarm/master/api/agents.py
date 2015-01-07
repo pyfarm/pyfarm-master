@@ -42,7 +42,7 @@ from sqlalchemy import or_, not_
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState, AgentState
 from pyfarm.scheduler.tasks import (
-    assign_tasks, update_agent, assign_tasks_to_agent)
+    assign_tasks, update_agent, assign_tasks_to_agent, send_tasks_to_agent)
 from pyfarm.models.agent import Agent, AgentMacAddress
 from pyfarm.models.gpu import GPU
 from pyfarm.models.task import Task
@@ -56,10 +56,6 @@ logger = getLogger("api.agents")
 MAC_RE = re.compile("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
 
 def fail_missing_assignments(agent, current_assignments):
-    # FIXME Possible race condition:
-    # If an agent decides to reannounce itself just after we assigned a
-    # task to it but before we could send it to the agent, this will
-    # needlessly mark that task as failed.
     known_task_ids = []
     for assignment in current_assignments.values():
         for task in assignment["tasks"]:
@@ -72,6 +68,7 @@ def fail_missing_assignments(agent, current_assignments):
         tasks_query = tasks_query.filter(not_(Task.id.in_(known_task_ids)))
 
     failed_tasks = []
+    unsent_tasks = False
     for task in tasks_query:
         if task.sent_to_agent:
             task.state = WorkState.FAILED
@@ -82,6 +79,11 @@ def fail_missing_assignments(agent, current_assignments):
                            "should be.  Marking it as failed.",
                            task.id, task.frame, task.job.title,
                            task.job_id, agent.hostname, agent.id)
+        else:
+            unsent_tasks = True
+
+    if unsent_tasks:
+        send_tasks_to_agent.delay(agent.id)
 
     return failed_tasks
 
