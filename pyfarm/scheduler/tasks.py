@@ -423,6 +423,7 @@ def poll_agents():
 
     for agent in idle_agents_to_poll_query:
         logger.debug("Polling idle agent %s", agent.hostname)
+        poll_agent.delay(agent.id)
 
     busy_agents_to_poll_query = Agent.query.filter(
         Agent.state != AgentState.OFFLINE,
@@ -436,6 +437,7 @@ def poll_agents():
 
     for agent in busy_agents_to_poll_query:
         logger.debug("Polling busy agent %s", agent.hostname)
+        poll_agent.delay(agent.id)
 
     offline_agents_to_poll_query = Agent.query.filter(
         Agent.state == AgentState.OFFLINE,
@@ -444,6 +446,7 @@ def poll_agents():
         Agent.use_address != UseAgentAddress.PASSIVE)
 
     for agent in offline_agents_to_poll_query:
+        logger.debug("Polling offline agent %s", agent.hostname)
         poll_agent.delay(agent.id)
 
 
