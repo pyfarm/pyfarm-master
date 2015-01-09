@@ -15,10 +15,6 @@
 PyFarm Master
 =============
 
-.. image:: https://badge.waffle.io/pyfarm/pyfarm-master.png?label=ready
-    :target: https://waffle.io/pyfarm/pyfarm-master
-    :align: left
-
 .. image:: https://travis-ci.org/pyfarm/pyfarm-master.png?branch=master
     :target: https://travis-ci.org/pyfarm/pyfarm-master
     :align: left
