@@ -356,6 +356,9 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     # Methods used by the scheduler
     def num_assigned_agents(self):
+        # Import here instead of at the top of the file to avoid circular import
+        from pyfarm.models.agent import Agent
+
         # Optimization: Blindly assume that we have no agents assigned if not
         # running
         if self.state != _WorkState.RUNNING:
@@ -369,7 +372,9 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                     filter(Task.job == self,
                            Task.agent_id != None,
                            or_(Task.state == None,
-                               Task.state == WorkState.RUNNING)).count()
+                               Task.state == WorkState.RUNNING),
+                           Task.agent.has(Agent.state != AgentState.OFFLINE))\
+                               .count()
 
             return self.assigned_agents_count
 
