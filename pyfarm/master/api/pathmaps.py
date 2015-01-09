@@ -41,10 +41,11 @@ from pyfarm.models.tag import Tag
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
-    jsonify, validate_with_model, get_integer_argument)
+    jsonify, validate_with_model, get_uuid_argument)
 
 
 logger = getLogger("api.pathmaps")
+
 
 def schema():
     """
@@ -198,7 +199,7 @@ class PathMapIndexAPI(MethodView):
         """
         query = PathMap.query
 
-        for_agent = get_integer_argument("for_agent")
+        for_agent = get_uuid_argument("for_agent")
 
         if for_agent:
             query = query.filter(or_(PathMap.tag == None,

@@ -39,7 +39,7 @@ from flask.ext.admin.base import MenuLink
 
 from pyfarm.core.config import read_env_bool
 from pyfarm.core.logger import getLogger
-from pyfarm.master.application import db, app
+from pyfarm.master.application import db
 from pyfarm.master.utility import error_handler
 
 # Any table that needs to be created by db.create_all() should
@@ -147,17 +147,18 @@ def load_user_interface(app_instance):
 
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
-    app_instance.add_url_rule("/agents/<int:agent_id>/delete",
+    app_instance.add_url_rule("/agents/<uuid:agent_id>/delete",
                               "delete_single_agent_ui", delete_single_agent,
                               methods=("POST", ))
-    app_instance.add_url_rule("/agents/<int:agent_id>", "single_agent_ui",
+    app_instance.add_url_rule("/agents/<uuid:agent_id>", "single_agent_ui",
                               single_agent, methods=("GET", ))
-    app_instance.add_url_rule("/agents/<int:agent_id>/software/add",
+    app_instance.add_url_rule("/agents/<uuid:agent_id>/software/add",
                               "single_agent_add_software_ui",
                               agent_add_software, methods=("POST", ))
-    app_instance.add_url_rule("/agents/<int:agent_id>/software/<int:version_id>/"
-                              "delete", "single_agent_remove_software_ui",
-                              agent_delete_software, methods=("POST", ))
+    app_instance.add_url_rule(
+        "/agents/<uuid:agent_id>/software/<int:version_id>/delete",
+        "single_agent_remove_software_ui",
+        agent_delete_software, methods=("POST", ))
 
     app_instance.add_url_rule("/jobs/", "jobs_index_ui", jobs,
                               methods=("GET", ))
@@ -319,7 +320,7 @@ def load_api(app_instance, api_instance):
         "/tags/<int:tagname>",
         view_func=SingleTagAPI.as_view("single_tag_by_id_api"))
     api_instance.add_url_rule(
-        "/agents/<int:agent_id>",
+        "/agents/<uuid:agent_id>",
         view_func=SingleAgentAPI.as_view("single_agent_api"))
     api_instance.add_url_rule(
         "/software/<int:software_rq>",
@@ -457,7 +458,7 @@ def load_api(app_instance, api_instance):
 
     # Tasks in agents
     api_instance.add_url_rule(
-        "/agents/<int:agent_id>/tasks/",
+        "/agents/<uuid:agent_id>/tasks/",
         view_func=TasksInAgentAPI.as_view("tasks_in_agent_api"))
 
     # Agent updates

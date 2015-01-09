@@ -23,6 +23,8 @@ Contained within this module are an API handling functions which can
 manage or query tags using JSON.
 """
 
+from uuid import UUID
+
 try:
     from httplib import NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST
 except ImportError:  # pragma: no cover
@@ -223,16 +225,14 @@ class SingleTagAPI(MethodView):
                 Content-Type: application/json
 
                 {
-                "agents": [
-                    {
-                    "hostname": "agent3", 
-                    "href": "/api/v1/agents/1", 
-                    "id": 1
-                    }
-                ], 
-                "id": 1, 
-                "jobs": [], 
-                "tag": "interesting"
+                    "agents": [{
+                        "hostname": "agent3",
+                        "href": "/api/v1/agents/94522b7e-817b-4358-95da-670b31aad624",
+                        "id": 1
+                    }],
+                    "id": 1,
+                    "jobs": [],
+                    "tag": "interesting"
                 }
 
         :statuscode 200: no error
@@ -351,10 +351,10 @@ class SingleTagAPI(MethodView):
             if not isinstance(agent_ids, list):
                 return jsonify(error="agents must be a list"), BAD_REQUEST
 
-            # make sure all ids provided are ints
-            if not all(isinstance(agent_id, int) for agent_id in agent_ids):
-                return jsonify(
-                    error="all agent ids must be integers"), BAD_REQUEST
+            try:
+                agent_ids = list(map(UUID, agent_ids))
+            except (ValueError, AttributeError):
+                return jsonify(error="All agent ids must be UUIDs"), BAD_REQUEST
 
             # find all models matching the request id(s)
             agents = Agent.query.filter(Agent.id.in_(agent_ids)).all()
@@ -459,7 +459,7 @@ class AgentsInTagIndexAPI(MethodView):
                 Accept: application/json
 
                 {
-                    "agent_id": 1
+                    "agent_id": "dd0c6da2-0c91-42cf-a82f-6d503aae43d3"
                 }
 
             **Response (agent newly tagged)**
@@ -482,7 +482,7 @@ class AgentsInTagIndexAPI(MethodView):
                 Accept: application/json
 
                 {
-                    "agent_id": 1
+                    "agent_id": "dd0c6da2-0c91-42cf-a82f-6d503aae43d3"
                 }
 
             **Response (agent already had that tag)**
@@ -524,9 +524,9 @@ class AgentsInTagIndexAPI(MethodView):
         if "agent_id" not in request_fields:
             return jsonify(error="field `agent_id` is missing"), BAD_REQUEST
 
-        if not isinstance(g.json["agent_id"], int):
+        if not isinstance(g.json["agent_id"], STRING_TYPES):
             return jsonify(
-                error="expected an integer for `agent_id`"), BAD_REQUEST
+                error="Expected a string for `agent_id`"), BAD_REQUEST
 
         agent = Agent.query.filter_by(id=g.json["agent_id"]).first()
         if agent is None:

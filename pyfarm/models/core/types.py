@@ -22,22 +22,25 @@ Special column types used by PyFarm's models.
 """
 
 import re
+import uuid
 from json import dumps, loads
 from textwrap import dedent
 
-try: # pragma: no cover
+try:  # pragma: no cover
     from UserDict import UserDict
     from UserList import UserList
 except ImportError:
     from collections import UserDict, UserList
 
-from sqlalchemy.types import TypeDecorator, BigInteger, Integer, UnicodeText
+from sqlalchemy.types import (
+    TypeDecorator, BigInteger, Integer, UnicodeText, TypeEngine, VARBINARY)
+from sqlalchemy.dialects.postgresql import UUID as POSTGRES_UUID
 from netaddr import AddrFormatError, IPAddress as _IPAddress
 
 from pyfarm.master.application import db
 from pyfarm.core.enums import (
-    STRING_TYPES, _AgentState, _UseAgentAddress, _WorkState, _OperatingSystem,
-    Values)
+    STRING_TYPES, INTEGER_TYPES, _AgentState, _UseAgentAddress, _WorkState,
+    _OperatingSystem, Values, PY3)
 
 ID_DOCSTRING = dedent("""Provides an id for the current row.  This value should
                          never be directly relied upon and it's intended for use
@@ -60,7 +63,10 @@ if db.engine.name == "sqlite":
 else:
     IDTypeWork = BigInteger
 
-IDTypeAgent = Integer
+if db.engine.name == "postgresql":
+    import psycopg2.extras
+    psycopg2.extras.register_uuid()
+
 IDTypeTag = Integer
 
 
@@ -298,6 +304,59 @@ class EnumType(TypeDecorator):
         return value
 
 
+class UUIDType(TypeDecorator):
+    """
+    Custom column type which handles UUIDs in the appropriate
+    manner for various databases.
+    """
+    impl = TypeEngine
+    json_types = uuid.UUID
+
+    def _to_uuid(self, value):
+        if isinstance(value, uuid.UUID):
+            return value
+
+        elif isinstance(value, INTEGER_TYPES):
+            return uuid.UUID(int=value)
+
+        elif PY3 and isinstance(value, bytes):
+            return uuid.UUID(bytes=value)
+
+        elif isinstance(value, STRING_TYPES):
+            try:
+                return uuid.UUID(value)
+            except ValueError:  # pragma: no cover
+                if PY3:  # We handle bytes above
+                    raise
+                return uuid.UUID(bytes=value)
+
+        else:
+            raise TypeError("Don't know how to handle %s" % type(value))
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(POSTGRES_UUID())
+
+        return dialect.type_descriptor(VARBINARY(16))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+
+        value = self._to_uuid(value)
+
+        if dialect.name == "postgresql":
+            return value
+
+        return value.bytes
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+
+        return self._to_uuid(value)
+
+
 class OperatingSystemEnum(EnumType):
     """custom column type for working with :class:`.AgentState`"""
     enum = _OperatingSystem
@@ -317,14 +376,19 @@ class WorkStateEnum(EnumType):
     """custom column type for working with :class:`.WorkState`"""
     enum = _WorkState
 
+IDTypeAgent = UUIDType
 
-def id_column(column_type=None):
+
+def id_column(column_type=None, **kwargs):
     """
     Produces a column used for `id` on each table.  Typically this is done
     using a class in :mod:`pyfarm.models.mixins` however because of the ORM
     and the table relationships it's cleaner to have a function produce
     the column.
     """
-    return db.Column(
-        column_type or Integer,
-        primary_key=True, autoincrement=True, doc=ID_DOCSTRING, nullable=False)
+    kwargs.setdefault("primary_key", True)
+    kwargs.setdefault("autoincrement", True)
+    kwargs.setdefault("doc", ID_DOCSTRING)
+    kwargs.setdefault("nullable", False)
+    return db.Column(column_type or Integer, **kwargs)
+

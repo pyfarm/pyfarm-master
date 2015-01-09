@@ -16,10 +16,11 @@
 
 import uuid
 from random import randint, choice
+from unittest import skipUnless
 
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.types import BigInteger, CHAR
+from sqlalchemy.types import BigInteger, VARBINARY
 from sqlalchemy.exc import StatementError
+from sqlalchemy.dialects.postgresql import UUID
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
@@ -31,7 +32,7 @@ from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.models.core.types import (
     IPv4Address, MACAddress, UseAgentAddressEnum, JSONDict, JSONList,
     JSONSerializable, id_column, AgentStateEnum,
-    IDTypeWork, IDTypeAgent, IDTypeTag, IPAddress, WorkStateEnum)
+    IDTypeWork, IDTypeAgent, IDTypeTag, IPAddress, WorkStateEnum, UUIDType)
 
 
 class TypeModel(db.Model):
@@ -44,6 +45,7 @@ class TypeModel(db.Model):
     agent_addr = db.Column(UseAgentAddressEnum)
     agent_state = db.Column(AgentStateEnum)
     work_state = db.Column(WorkStateEnum)
+    uuid = db.Column(UUIDType)
 
 
 class TestJsonTypes(BaseTestCase):
@@ -193,7 +195,6 @@ class TestMACAddressType(BaseTestCase):
         self.assertIsInstance(result.mac, STRING_TYPES)
         self.assertEqual(result.mac, "00:50:56:10:00:aa")
 
-
     def test_insert_string(self):
         value = "00:50:56:10:00:ab"
         model = TypeModel(mac=value)
@@ -206,6 +207,7 @@ class TestMACAddressType(BaseTestCase):
         self.assertIsInstance(result.mac, STRING_TYPES)
         self.assertEqual(result.mac, value)
 
+
 class TestIDColumn(BaseTestCase):
     def test_integer(self):
         column = id_column(db.Integer)
@@ -214,14 +216,17 @@ class TestIDColumn(BaseTestCase):
         self.assertFalse(column.nullable)
         self.assertTrue(column.autoincrement)
 
-    def test_id_types(self):
+    def test_tag_id(self):
+        self.assertIs(IDTypeTag, db.Integer)
+
+    def test_work_id(self):
         if db.engine.name == "sqlite":
             self.assertIs(IDTypeWork, db.Integer)
         else:
             self.assertIs(IDTypeWork, db.BigInteger)
 
-        self.assertIs(IDTypeAgent, db.Integer)
-        self.assertIs(IDTypeTag, db.Integer)
+    def test_agent_id(self):
+        self.assertIs(IDTypeAgent, UUIDType)
 
 
 class TestAgentStateEnumTypes(BaseTestCase):
@@ -261,3 +266,102 @@ class TestAgentStateEnumTypes(BaseTestCase):
             db.session.remove()
             result = TypeModel.query.filter_by(id=model_id).first()
             self.assertEqual(result.agent_state, i)
+
+
+class TestUUIDType(BaseTestCase):
+    def assert_uuid_equal(self, first, second):
+        self.assertIsInstance(first, uuid.UUID)
+        self.assertIsInstance(second, uuid.UUID)
+        self.assertEqual(first.bytes, second.bytes)
+
+    def test_to_uuid_uuid(self):
+        value = uuid.uuid4()
+        self.assertIs(UUIDType()._to_uuid(value), value)
+
+    def test_to_uuid_integer(self):
+        value = uuid.uuid4()
+        self.assert_uuid_equal(UUIDType()._to_uuid(value.int), value)
+
+    def test_to_uuid_bytes(self):
+        value = uuid.uuid4()
+        self.assert_uuid_equal(UUIDType()._to_uuid(value.bytes), value)
+
+    def test_to_uuid_string(self):
+        value = uuid.uuid4()
+        self.assert_uuid_equal(UUIDType()._to_uuid(str(value)), value)
+
+    def test_to_uuid_hex(self):
+        value = uuid.uuid4()
+        self.assert_uuid_equal(UUIDType()._to_uuid(value.hex), value)
+
+    def test_to_uuid_typeerror(self):
+        with self.assertRaises(TypeError):
+            UUIDType()._to_uuid(None)
+
+    def test_insert_uuid_hex(self):
+        value = uuid.uuid4()
+        model = TypeModel(uuid=value.hex)
+        db.session.add(model)
+        db.session.commit()
+        model_id = model.id
+        self.assertIsInstance(model.uuid, uuid.UUID)
+        result = TypeModel.query.filter_by(id=model_id).first()
+        self.assert_uuid_equal(result.uuid, model.uuid)
+
+    def test_insert_uuid_bytes(self):
+        value = uuid.uuid4()
+        model = TypeModel(uuid=value.bytes)
+        db.session.add(model)
+        db.session.commit()
+        model_id = model.id
+        self.assertIsInstance(model.uuid, uuid.UUID)
+        result = TypeModel.query.filter_by(id=model_id).first()
+        self.assert_uuid_equal(result.uuid, model.uuid)
+
+    def test_insert_uuid(self):
+        value = uuid.uuid4()
+        model = TypeModel(uuid=value)
+        db.session.add(model)
+        db.session.commit()
+        model_id = model.id
+        self.assertIsInstance(model.uuid, uuid.UUID)
+        result = TypeModel.query.filter_by(id=model_id).first()
+        self.assert_uuid_equal(result.uuid, model.uuid)
+
+    def test_insert_integer(self):
+        value = uuid.uuid4()
+        model = TypeModel(uuid=value.int)
+        db.session.add(model)
+        db.session.commit()
+        model_id = model.id
+        self.assertIsInstance(model.uuid, uuid.UUID)
+        result = TypeModel.query.filter_by(id=model_id).first()
+        self.assert_uuid_equal(result.uuid, model.uuid)
+
+    def test_insert_string(self):
+        value = uuid.uuid4()
+        model = TypeModel(uuid=str(value))
+        db.session.add(model)
+        db.session.commit()
+        model_id = model.id
+        self.assertIsInstance(model.uuid, uuid.UUID)
+        result = TypeModel.query.filter_by(id=model_id).first()
+        self.assert_uuid_equal(result.uuid, model.uuid)
+
+    @skipUnless(db.engine.name == "sqlite", "Not SQLite")
+    def test_dialect_sqlite(self):
+        type_ = UUIDType()
+        self.assertIsInstance(
+            type_.load_dialect_impl(db.engine.dialect), VARBINARY)
+
+    @skipUnless(db.engine.name == "mysql", "Not MySql")
+    def test_dialect_mysql(self):
+        type_ = UUIDType()
+        self.assertIsInstance(
+            type_.load_dialect_impl(db.engine.dialect), VARBINARY)
+
+    @skipUnless(db.engine.name == "postgresql", "Not Postgres")
+    def test_dialect_postgres(self):
+        type_ = UUIDType()
+        self.assertIsInstance(
+            type_.load_dialect_impl(db.engine.dialect), UUID)

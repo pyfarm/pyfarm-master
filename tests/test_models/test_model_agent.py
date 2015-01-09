@@ -57,24 +57,19 @@ class AgentTestCase(BaseTestCase):
         "192.168.255.255")
 
     def modelArguments(self, limit=None):
-        if db.engine.name != "sqlite3":
-            system_ids = (Agent.MIN_SYSTEMID, Agent.MAX_SYSTEMID)
-        else:
-            system_ids = (Agent.MIN_SYSTEMID, 1)
-
         generator = product(
             self.addresses, self.ports, self.cpus, self.ram, self.states,
-            self.ram_allocation, self.cpu_allocation, system_ids)
+            self.ram_allocation, self.cpu_allocation)
 
         count = 0
         for (ip, port, cpus, ram, state,
-             ram_allocation, cpu_allocation, system_id) in generator:
+             ram_allocation, cpu_allocation) in generator:
             if limit is not None and count >= limit:
                 break
 
             yield (
                 "%s%02d" % (self.hostnamebase, count), ip, port,
-                cpus, ram, state, ram_allocation, cpu_allocation, system_id)
+                cpus, ram, state, ram_allocation, cpu_allocation)
             count += 1
 
     def models(self, limit=None):
@@ -84,7 +79,7 @@ class AgentTestCase(BaseTestCase):
         """
         generator = self.modelArguments(limit=limit)
         for (hostname, ip, port, cpus, ram, state,
-             ram_allocation, cpu_allocation, systemid) in generator:
+             ram_allocation, cpu_allocation) in generator:
             agent = Agent()
             agent.hostname = hostname
             agent.remote_ip = ip
@@ -92,7 +87,6 @@ class AgentTestCase(BaseTestCase):
             agent.cpus = cpus
             agent.free_ram = agent.ram = ram
             agent.state = state
-            agent.systemid = systemid
             agent.ram_allocation = ram_allocation
             agent.cpu_allocation = cpu_allocation
             yield agent
@@ -217,16 +211,17 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
 
     def test_basic_insert_nonunique(self):
         for (hostname, ip, port, cpus, ram, state,
-             ram_allocation, cpu_allocation, systemid) in \
+             ram_allocation, cpu_allocation) in \
                 self.modelArguments(limit=1):
+            model_id = uuid.uuid4()
             modelA = Agent()
             modelA.hostname = hostname
             modelA.port = port
-            modelA.systemid = systemid
+            modelA.id = model_id
             modelB = Agent()
             modelB.hostname = hostname
             modelB.port = port
-            modelB.systemid = systemid
+            modelB.id = model_id
             db.session.add(modelA)
             db.session.add(modelB)
 
@@ -238,7 +233,7 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
     def test_api_url(self):
         model = Agent(
             hostname="foo", port=12345, remote_ip="10.56.0.1",
-            ram=1024, free_ram=128, cpus=4, systemid=42)
+            ram=1024, free_ram=128, cpus=4)
 
         # Commit then retrieve the model so we get the
         # custom types applied to the columns.  Otherwise
@@ -268,7 +263,7 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
     def test_api_url_errors(self):
         model = Agent(
             hostname="foo", port=12345, remote_ip="10.56.0.1",
-            ram=1024, free_ram=128, cpus=4, systemid=42)
+            ram=1024, free_ram=128, cpus=4)
 
         # Shouldn't have access to api_url if we're operating under PASSIVE
         model.use_address = UseAgentAddress.PASSIVE

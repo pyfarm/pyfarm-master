@@ -23,8 +23,9 @@ General utility which are not view or tool specific
 
 import json
 from functools import wraps, partial
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
+from uuid import UUID
 
 try:
     from httplib import (
@@ -54,8 +55,26 @@ def default_json_encoder(obj):
         return float(obj)
     elif isinstance(obj, datetime):
         return obj.isoformat()
-    elif isinstance(obj, IPv4Address):
+    elif isinstance(obj, (IPv4Address, UUID)):
         return str(obj)
+
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):  # pylint: disable=method-hidden
+        result = default_json_encoder(o)
+        if o is not None and result is not None:
+            return result
+        return super(JSONEncoder, self).encode(o)
+
+
+def dumps(obj, **kwargs):
+    """
+    Wrapper for :func:`json.dumps` that ensures :class:`JSONEncoder`
+    is passed in.
+    """
+    kwargs.setdefault("cls", JSONEncoder)
+    kwargs.setdefault("default", default_json_encoder)
+    return json.dumps(obj, **kwargs)
 
 
 def jsonify(*args, **kwargs):
@@ -504,6 +523,23 @@ def get_request_argument(argument, default=None, required=False, types=None):
         abort(BAD_REQUEST)
 
 
+def isuuid(value):
+    """
+    Returns True if ``value`` is a :class:`UUID` object
+    or can be converted to one
+    """
+    if isinstance(value, UUID):
+        return True
+
+    try:
+        UUID(value)
+        return True
+    except Exception:
+        pass
+
+    return False
+
+
 # preconstructed url argument parsers
 get_integer_argument = partial(get_request_argument, types=int)
 get_port_argument = partial(
@@ -515,3 +551,4 @@ get_hostname_argument = partial(
 get_ipaddr_argument = partial(
     get_request_argument,
     types=lambda value: Agent.validate_ipv4_address("remote_addr",  value))
+get_uuid_argument = partial(get_request_argument, types=UUID)

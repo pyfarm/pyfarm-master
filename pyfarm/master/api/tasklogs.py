@@ -44,7 +44,7 @@ from pyfarm.core.config import read_env
 from pyfarm.models.tasklog import TaskLog, TaskTaskLogAssociation
 from pyfarm.models.task import Task
 from pyfarm.master.application import db
-from pyfarm.master.utility import jsonify, validate_with_model
+from pyfarm.master.utility import jsonify, validate_with_model, isuuid
 
 logger = getLogger("api.tasklogs")
 
@@ -83,7 +83,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
 
                 [
                     {
-                        "agent_id": 1,
+                        "agent_id": "3087ada4-290a-45b0-8c1a-21db4cd284fc",
                         "created_on": "2014-09-03T10:58:59.754880",
                         "identifier": "2014-09-03_10-58-59_4_4ee02475335911e4a935c86000cbf5fb.csv"
                     }
@@ -106,11 +106,11 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
             log = item.log
             out.append({"identifier": log.identifier,
                         "created_on": log.created_on,
-                        "agent_id": log.agent_id})
+                        "agent_id": str(log.agent_id)})
 
         return jsonify(out), OK
 
-    @validate_with_model(TaskLog)
+    @validate_with_model(TaskLog, type_checks={"agent_id": isuuid})
     def post(self, job_id, task_id, attempt):
         """
         A ``POST`` to this endpoint will register a new logfile with the given
@@ -131,7 +131,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
 
                 {
                     "identifier": "2014-09-03_10-58-59_4_4ee02475335911e4a935c86000cbf5fb.csv",
-                    "agent_id": 1
+                    "agent_id": "2dc2cb5a-35da-41d6-8864-329c0d7d5391"
                 }
 
             **Response**
@@ -143,7 +143,7 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
 
                 {
                     "identifier": "2014-09-03_10-58-59_4_4ee02475335911e4a935c86000cbf5fb.csv",
-                    "agent_id": 1
+                    "agent_id": "2dc2cb5a-35da-41d6-8864-329c0d7d5391",
                     "created_on": "2014-09-03T10:59:05.103005",
                     "id": 148
                 }
@@ -218,7 +218,7 @@ class SingleLogInTaskAttempt(MethodView):
                     "id": 147,
                     "identifier": "2014-09-03_10-58-59_4_4ee02475335911e4a935c86000cbf5fb.csv",
                     "created_on": "2014-09-03T10:58:59.754880",
-                    "agent_id": 1
+                    "agent_id": "836ce137-6ad4-443f-abb9-94c4465ff87c"
                 }
 
         :statuscode 200: no error

@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import uuid
 from json import dumps
 from functools import partial
 
@@ -36,7 +37,7 @@ from pyfarm.master.application import db, get_admin
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.master.utility import (
     validate_with_model, error_handler, assert_mimetypes, inside_request,
-    get_g, validate_json, jsonify, get_request_argument)
+    get_g, validate_json, jsonify, get_request_argument, isuuid)
 
 
 class ColumnSetTest(db.Model):
@@ -583,3 +584,16 @@ class TestRequestArgumentParser(UtilityTestCase):
         self.assertIn(
             "invalid literal for int() with base 10",
             response.json["error"])
+
+
+class TestIsUUID(BaseTestCase):
+    def test_uuid(self):
+        self.assertTrue(isuuid(uuid.uuid4()))
+
+    def test_hex(self):
+        u = uuid.uuid4()
+        self.assertTrue(isuuid(u.hex))
+
+    def test_not_uuid(self):
+        self.assertFalse(isuuid(""))
+        self.assertFalse(isuuid(None))

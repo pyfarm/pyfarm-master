@@ -25,6 +25,7 @@ necessary to run the master.
 import os
 from datetime import timedelta
 from multiprocessing.util import register_after_fork
+from uuid import UUID
 
 try:
     from httplib import BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE
@@ -39,9 +40,11 @@ from itsdangerous import URLSafeTimedSerializer
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
 from werkzeug.exceptions import BadRequest
+from werkzeug.routing import BaseConverter, ValidationError
 
-from pyfarm.core.enums import NOTSET
+from pyfarm.core.enums import NOTSET, STRING_TYPES, PY3
 from pyfarm.core.config import Configuration, read_env, read_env_bool
+from pyfarm.core.logger import getLogger
 from pyfarm.master.admin.baseview import AdminIndex
 
 POST_METHODS = set(("POST", "PUT"))
@@ -51,6 +54,54 @@ IGNORED_MIMETYPES = set((
 
 config = Configuration("pyfarm.master")
 config.load(environment=os.environ)
+
+logger = getLogger("app")
+
+
+class UUIDConverter(BaseConverter):
+    """
+    A URL converter for UUIDs.  This class is loaded as part of
+    the Flask application setup and may be used in url routing:
+
+    .. code-block:: python
+
+        @app.route('/foo/<uuid:value>')
+        def foobar(value):
+            pass
+
+    When a request such as ``GET /foo/F9A63B47-66BF-4E2B-A545-879986BB7CA9``
+    is made :class:`UUIDConverter` will receive ``value`` to :meth:`to_python`
+    which will then convert the string to an instance of :class:`UUID`.
+    """
+    def to_python(self, value):
+        if isinstance(value, UUID):
+            return value
+        try:
+            return UUID(value)
+        except Exception as e:
+            logger.error("Failed to convert %r to a UUID", e)
+            raise ValidationError
+
+    def to_url(self, value):  # pylint: disable=super-on-old-class
+        if PY3 and isinstance(value, bytes):
+            try:
+                value = UUID(bytes=value)
+            except (AttributeError, ValueError):
+                value = None
+
+        if isinstance(value, STRING_TYPES):
+            try:
+                value = UUID(value)
+            except Exception:
+                try:
+                    value = UUID(bytes=value)
+                except (AttributeError, ValueError):
+                    value = None
+
+        if not isinstance(value, UUID):
+            raise ValidationError
+
+        return super(UUIDConverter, self).to_url(value)
 
 
 def get_application(**configuration_keywords):
@@ -132,7 +183,7 @@ def get_application(**configuration_keywords):
     app = Flask("pyfarm.master", static_folder=static_folder)
     app.config.update(app_config)
     app.config.update(configuration_keywords)
-
+    app.url_map.converters["uuid"] = UUIDConverter
 
     @app.context_processor
     def template_context_processor():
