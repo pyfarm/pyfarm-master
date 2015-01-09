@@ -15,13 +15,13 @@
 PyFarm Master
 =============
 
-.. image:: https://travis-ci.org/pyfarm/pyfarm-master.png?branch=master
+.. image:: https://travis-ci.org/pyfarm/pyfarm-master.svg?branch=master
     :target: https://travis-ci.org/pyfarm/pyfarm-master
-    :align: left
+    :alt: build status (master)
 
-.. image:: https://coveralls.io/repos/pyfarm/pyfarm-master/badge.png?branch=master
+.. image:: https://coveralls.io/repos/pyfarm/pyfarm-master/badge?branch=master
     :target: https://coveralls.io/r/pyfarm/pyfarm-master?branch=master
-    :align: left
+    :alt: coverage
 
 Sub-library which contains the code necessary to run an instance of the master
 server.  Each master instance is intended to be able to serve:
