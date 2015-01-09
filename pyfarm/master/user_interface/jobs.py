@@ -28,11 +28,12 @@ from sqlalchemy.orm import aliased
 from sqlalchemy import func, desc, asc, or_, distinct
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState, _WorkState
+from pyfarm.core.enums import WorkState, _WorkState, AgentState
 from pyfarm.scheduler.tasks import delete_job, stop_task, assign_tasks
 from pyfarm.models.job import Job, JobDependencies, JobTagAssociation
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
+from pyfarm.models.agent import Agent
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.user import User
@@ -67,7 +68,8 @@ def jobs():
     agent_count_query = db.session.query(
         Task.job_id, func.count(distinct(Task.agent_id)).label('agent_count')).\
             filter(Task.agent_id != None, or_(Task.state == None,
-                                              Task.state == WorkState.RUNNING)).\
+                                              Task.state == WorkState.RUNNING),
+                   Task.agent.has(Agent.state != AgentState.OFFLINE)).\
                 group_by(Task.job_id).subquery()
 
     jobs_query = db.session.query(Job,
