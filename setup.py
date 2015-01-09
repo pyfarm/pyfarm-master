@@ -74,7 +74,7 @@ def get_package_data():
 
 setup(
     name="pyfarm.master",
-    version="0.8.0-dev",
+    version="0.8.0-dev0",
     packages=[
         "pyfarm",
         "pyfarm.master",
