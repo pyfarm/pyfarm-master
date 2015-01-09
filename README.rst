@@ -24,13 +24,8 @@ PyFarm Master
     :alt: coverage
 
 Sub-library which contains the code necessary to run an instance of the master
-server.  Each master instance is intended to be able to serve:
-    * the underlying REST api for PyFarm
-    * backend for the admin interface
-    * the database models
-    * a layer between requests and resources such as:
-        * agents
-        * queue management
-        * jobs and tasks
-        * progress information
-        * general metrics
+server.  The primary purposes of the master including serving a REST API,
+running the scheduler and serving the web interface.
+
+Testing
+-------
