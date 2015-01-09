@@ -15,26 +15,70 @@
 PyFarm Master
 =============
 
-.. image:: https://badge.waffle.io/pyfarm/pyfarm-master.png?label=ready
-    :target: https://waffle.io/pyfarm/pyfarm-master
-    :align: left
-
-.. image:: https://travis-ci.org/pyfarm/pyfarm-master.png?branch=master
+.. image:: https://travis-ci.org/pyfarm/pyfarm-master.svg?branch=master
     :target: https://travis-ci.org/pyfarm/pyfarm-master
-    :align: left
+    :alt: build status (master)
 
-.. image:: https://coveralls.io/repos/pyfarm/pyfarm-master/badge.png?branch=master
+.. image:: https://coveralls.io/repos/pyfarm/pyfarm-master/badge?branch=master
     :target: https://coveralls.io/r/pyfarm/pyfarm-master?branch=master
-    :align: left
+    :alt: coverage
 
 Sub-library which contains the code necessary to run an instance of the master
-server.  Each master instance is intended to be able to serve:
-    * the underlying REST api for PyFarm
-    * backend for the admin interface
-    * the database models
-    * a layer between requests and resources such as:
-        * agents
-        * queue management
-        * jobs and tasks
-        * progress information
-        * general metrics
+server.  The primary purposes of the master including serving a REST API,
+running the scheduler and serving the web interface.
+
+Python Version Support
+----------------------
+
+This library supports Python 2.7 and Python 3.3+ in one code base.  Python 2.6
+and lower are not supported due to syntax differences and support for 2.6 in
+external libraries.
+
+Documentation
+-------------
+
+The documentation for this this library is hosted on
+`Read The Docs <https://pyfarm.readthedocs.org/projects/pyfarm-master/en/latest/>`_.
+It's generated directly from this library using sphinx (setup may vary depending
+on platform)::
+
+    virtualenv env
+    . env/bin/activate
+    pip install sphinx sphinxcontrib-httpdomain
+    pip install -e . --egg
+    make -C docs html
+
+
+Testing
+-------
+
+.. note::
+
+    A broker is required for most of the tests due to pyfarm.master's dependency
+    on celery.  Redis is recommended because it's the default, least
+    persistent and easiest to setup.
+
+General Testing
++++++++++++++++
+
+Tests are run on `Travis <https://travis-ci.org/pyfarm/pyfarm-master>`_ for
+every commit.  They can also be run locally too (setup may vary depending
+on platform)::
+
+    virtualenv env
+    . env/bin/activate
+    pip install nose
+    pip install -e . --egg
+    nosetests tests/
+
+Testing Specific Databases
+++++++++++++++++++++++++++
+
+By default tests are run against sqlite.  While this is sufficient in many
+cases it's generally best to test against the database type you wish to use.
+Setup wise the only difference will be in the call to ``nosetests``::
+
+    PYFARM_DATABASE_URI="dialect+driver://username:password@host:port/database" nosetests tests/
+
+For more information on database URIs see `sqlalchemy's documentation <http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html#database-urls>`_
+or the `Travis configuration <https://github.com/pyfarm/pyfarm-master/blob/master/.travis.yml>`_.
