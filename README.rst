@@ -31,7 +31,7 @@ Python Version Support
 ----------------------
 
 This library supports Python 2.7 and Python 3.3+ in one code base.  Python 2.6
-and lower are not supported due to syntax differences and support for 2.6 in
+and lower is not supported due to syntax differences and support for 2.6 in
 external libraries.
 
 Documentation
