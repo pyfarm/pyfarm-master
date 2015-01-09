@@ -25,10 +25,12 @@ from os.path import isfile, join
 from setuptools import setup
 
 # Version requirements explanations:
+#   pyfarm.core: certain enums which are only present in later versions,
+#   configuration loader changes
 #   sqlalchemy: Bugfix for pymysql in Python 3
 #   flask-admin: New form helps that support async JavaScript requests
 install_requires = [
-    "pyfarm.core",
+    "pyfarm.core>=0.9.1",
     "sqlalchemy>=0.9.3",
     "flask",
     "flask-admin>=1.0.7",
