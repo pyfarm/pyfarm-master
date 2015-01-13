@@ -588,7 +588,7 @@ def rerun_single_task(job_id, task_id):
     if task.state == WorkState.RUNNING:
         return (render_template(
                     "pyfarm/error.html", error="Cannot rerun task while it is "
-                    "still running" % job_id),
+                    "still running"),
                 BAD_REQUEST)
 
     task.state = None
