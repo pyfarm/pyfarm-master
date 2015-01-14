@@ -90,6 +90,7 @@ class TestAgentAPI(BaseTestCase):
                 "free_ram": 133,
                 "id": id,
                 "last_polled": None,
+                "restart_requested": False,
                 "last_heard_from": last_heard_from})
 
     def test_create_agent(self):
@@ -115,19 +116,22 @@ class TestAgentAPI(BaseTestCase):
              "state": "running", "port": 64994, "cpus": 16, "cpu_name": None,
              "hostname": "testagent2", "version": None, "upgrade_to": None,
              "use_address": "remote", "remote_ip": "10.0.200.2",
-             "os_class": None, "os_fullname": None, "last_polled": None},
+             "os_class": None, "os_fullname": None, "last_polled": None,
+             "restart_requested": False},
             {"free_ram": 133, "ram_allocation": 0.8, "id": str(agent_id_2),
              "ram": 2048, "time_offset": 0, "cpu_allocation": 1.0,
              "state": "running", "port": 64995, "cpus": 16, "cpu_name": None,
              "hostname": "testagent2", "version": None, "upgrade_to": None,
              "use_address": "remote", "remote_ip": "10.0.200.2",
-             "os_class": None, "os_fullname": None, "last_polled": None},
+             "os_class": None, "os_fullname": None, "last_polled": None,
+             "restart_requested": False},
             {"free_ram": 133, "ram_allocation": 0.8, "id": str(agent_id_3),
              "ram": 2048, "time_offset": 0, "cpu_allocation": 1.0,
              "state": "running", "port": 64996, "cpus": 16, "cpu_name": None,
              "hostname": "testagent2", "version": None, "upgrade_to": None,
              "use_address": "remote", "remote_ip": "10.0.200.2",
-             "os_class": None, "os_fullname": None, "last_polled": None}]
+             "os_class": None, "os_fullname": None, "last_polled": None,
+             "restart_requested": False}]
 
 
         created_agents = []
@@ -212,6 +216,7 @@ class TestAgentAPI(BaseTestCase):
             "free_ram": 4096,
             "id": str(agent_id),
             "last_polled": None,
+            "restart_requested": False,
             "last_heard_from": last_heard_from})
 
     def test_agent_delete(self):
