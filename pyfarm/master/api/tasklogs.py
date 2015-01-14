@@ -32,12 +32,13 @@ except ImportError:  # pragma: no cover
       INTERNAL_SERVER_ERROR)
 
 import tempfile
+from gzip import GzipFile
 from os import makedirs
 from os.path import join, realpath
 from errno import EEXIST
 
 from flask.views import MethodView
-from flask import g, redirect, send_file, request
+from flask import g, redirect, send_file, request, Response
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.config import read_env
@@ -302,14 +303,18 @@ class TaskLogfileAPI(MethodView):
             logfile = open(path, "rb")
             return send_file(logfile)
         except IOError:
-            agent = log.agent
-            if not agent:
-                return (jsonify(
-                    path=path, log=log_identifier,
-                    error="Logfile is not available on master and agent is "
-                          "not known"), NOT_FOUND)
-            return redirect(agent.api_url() + "/task_logs/" + log_identifier,
-                            TEMPORARY_REDIRECT)
+            try:
+                compressed_logfile = GzipFile("%s.gz" % path, "rb")
+                return Response(compressed_logfile.read(), mimetype="text/csv")
+            except IOError:
+                agent = log.agent
+                if not agent:
+                    return (jsonify(
+                        path=path, log=log_identifier,
+                        error="Logfile is not available on master and agent "
+                              "is not known"), NOT_FOUND)
+                return redirect(agent.api_url() + "/task_logs/" +
+                                log_identifier, TEMPORARY_REDIRECT)
 
     def put(self, job_id, task_id, attempt, log_identifier):
         """
