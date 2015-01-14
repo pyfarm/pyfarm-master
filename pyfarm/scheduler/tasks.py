@@ -33,6 +33,7 @@ from sys import maxsize
 from os.path import join, isfile, join
 from os import remove, listdir
 from errno import ENOENT
+from gzip import GzipFile
 
 from sqlalchemy import or_, and_, func, distinct, desc, asc
 from sqlalchemy.exc import InvalidRequestError
@@ -813,3 +814,40 @@ def autodelete_old_jobs():
 
     for job_id in job_ids_to_delete:
         delete_job.delay(job_id)
+
+
+@celery_app.task(ignore_results=True)
+def compress_task_logs():
+    db.session.rollback()
+
+    try:
+        uncompressed_tasklogs = [f for f in listdir(LOGFILES_DIR)\
+                                 if (isfile(join(LOGFILES_DIR, f)) and
+                                     not f.endswith(".gz"))]
+
+        for tasklog in uncompressed_tasklogs:
+            compress_task_log.delay(tasklog)
+    except OSError as e:
+        if e.errno != ENOENT:
+            raise
+        logger.warning("Log directory %r does not exist", LOGFILES_DIR)
+
+@celery_app.task(ignore_results=True)
+def compress_task_log(tasklog_name):
+    db.session.rollback()
+
+    try:
+        path = join(LOGFILES_DIR, tasklog_name)
+        with open(path, "rb") as logfile:
+            logger.debug("Compressing tasklog file %s", path)
+            compressed_logfile = GzipFile("%s.gz" % path, "wb")
+            compressed_logfile.write(logfile.read())
+        try:
+            remove(join(LOGFILES_DIR, path))
+        except OSError as e:
+            if e.errno != ENOENT:
+                raise
+    except IOError as e:
+        logger.error("Could not compress tasklog file %s: %s: %s",
+                     tasklog_name, type(e).__name__, e)
+        raise
