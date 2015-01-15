@@ -23,6 +23,7 @@ from flask import render_template, request, url_for, redirect, flash
 from sqlalchemy import or_
 
 from pyfarm.core.enums import WorkState
+from pyfarm.scheduler.tasks import restart_agent
 from pyfarm.models.agent import Agent
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
@@ -92,6 +93,23 @@ def single_agent(agent_id):
 
     return render_template("pyfarm/user_interface/agent.html", agent=agent,
                            tasks=tasks, software_items=Software.query)
+
+def restart_single_agent(agent_id):
+    agent = Agent.query.filter_by(id=agent_id).first()
+    if not agent:
+        return (render_template(
+                    "pyfarm/error.html", error="Agent %s not found" % agent_id),
+                NOT_FOUND)
+
+    agent.restart_requested = True
+    db.session.add(agent)
+    db.session.commit()
+
+    restart_agent.delay(agent.id)
+
+    flash("Agent %s will be restarted" % agent.hostname)
+
+    return redirect(url_for("agents_index_ui"), SEE_OTHER)
 
 def delete_single_agent(agent_id):
     agent = Agent.query.filter_by(id=agent_id).first()

@@ -198,6 +198,65 @@ def send_tasks_to_agent(self, agent_id):
                 raise
 
 
+@celery_app.task(ignore_result=True, bind=True)
+def restart_agent(self, agent_id):
+    db.session.rollback()
+    agent = Agent.query.filter(Agent.id == agent_id).first()
+    if not agent:
+        raise KeyError("agent not found")
+
+    if agent.state in ["offline", "disabled"]:
+        raise ValueError("agent not available")
+
+    if agent.use_address == UseAgentAddress.PASSIVE:
+        logger.debug("Agent's use address mode is PASSIVE, cannot restart")
+        return
+
+    if not agent.restart_requested:
+        logger.error("Agent %s (id %s) is not marked for restart, not "
+                     "restarting it", agent.hostname, agent.id)
+        raise ValueError("agent not marked for restart")
+
+    logger.info("Restarting agent %s (id %s)", agent.hostname, agent.id)
+    try:
+        response = requests.post(agent.api_url() + "/restart",
+                                    data=dumps({}),
+                                    headers={
+                                        "User-Agent": USERAGENT},
+                                    timeout=AGENT_REQUEST_TIMEOUT)
+
+        logger.debug("Return code after sending restart to agent: %s",
+                        response.status_code)
+        if response.status_code not in [requests.codes.accepted,
+                                        requests.codes.ok]:
+            raise ValueError("Unexpected return code on sending restart to "
+                             "agent %s: %s", agent.hostname,
+                             response.status_code)
+        else:
+            agent.restart_requested = False
+            db.session.add(agent)
+            db.session.commit()
+
+    except (ConnectionError, Timeout) as e:
+        if self.request.retries < self.max_retries:
+            logger.warning("Caught %s trying to restart agent %s (id %s), "
+                            "retry %s of %s: %s",
+                            type(e).__name__,
+                            agent.hostname,
+                            agent.id,
+                            self.request.retries,
+                            self.max_retries,
+                            e)
+            self.retry(exc=e)
+        else:
+            logger.error("Could not contact agent %s, (id %s), marking as "
+                         "offline", agent.hostname, agent.id)
+            agent.state = AgentState.OFFLINE
+            db.session.add(agent)
+            db.session.commit()
+            raise
+
+
 @celery_app.task(ignore_result=True)
 def assign_tasks():
     db.session.rollback()

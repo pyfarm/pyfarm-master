@@ -205,6 +205,9 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     upgrade_to = db.Column(db.String(16), nullable=True,
                            doc="The version this agent should upgrade to.")
 
+    restart_requested = db.Column(db.Boolean, default=False, nullable=False,
+                                  doc="If True, the agent will be restarted")
+
     # host state
     state = db.Column(AgentStateEnum, default=AgentState.ONLINE,
                       nullable=False,
@@ -280,6 +283,9 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                            lazy="dynamic",
                            doc="The graphics cards that are installed in this "
                                "agent")
+
+    def is_offline(self):
+        return self.state == AgentState.OFFLINE
 
     def get_supported_types(self):
         try:
