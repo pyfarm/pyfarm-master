@@ -53,7 +53,8 @@ from pyfarm.models.software import (
 from pyfarm.models.tag import Tag
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.master.application import db
-from pyfarm.master.utility import jsonify, validate_with_model
+from pyfarm.master.utility import (
+    jsonify, validate_with_model, get_request_argument)
 
 RANGE_TYPES = NUMERIC_TYPES[:-1] + (Decimal, )
 
@@ -494,6 +495,10 @@ class JobIndexAPI(MethodView):
 
         :statuscode 200: no error
         """
+
+        jobtype_name = get_request_argument("jobtype")
+        user_name = get_request_argument("user")
+
         out = []
         subq = db.session.query(
             Task.job_id,
@@ -502,6 +507,22 @@ class JobIndexAPI(MethodView):
         q = db.session.query(Job.id, Job.title, Job.state,
                              subq.c.assigned_tasks_count).\
             outerjoin(subq, Job.id == subq.c.job_id)
+
+        if jobtype_name is not None:
+            jobtype = JobType.query.filter_by(name=jobtype_name).first()
+            if not jobtype:
+                return (jsonify(error="Jobtype %s not found" % jobtype_name),
+                        NOT_FOUND)
+            q = q.join(JobTypeVersion,
+                       Job.jobtype_version_id == JobTypeVersion.id)
+            q = q.filter(JobTypeVersion.jobtype == jobtype)
+
+        if user_name is not None:
+            user = User.query.filter_by(username=user_name).first()
+            if not user:
+                return (jsonify(error="User %s not found" % user_name),
+                        NOT_FOUND)
+            q = q.filter(Job.user == user)
 
         for id, title, state, assigned_tasks_count in q:
             data = {"id": id, "title": title}
