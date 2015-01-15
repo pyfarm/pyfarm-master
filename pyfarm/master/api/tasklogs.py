@@ -305,7 +305,13 @@ class TaskLogfileAPI(MethodView):
         except IOError:
             try:
                 compressed_logfile = GzipFile("%s.gz" % path, "rb")
-                return Response(compressed_logfile.read(), mimetype="text/csv")
+                def logfile_generator():
+                    eof = False
+                    while not eof:
+                        out = compressed_logfile.read(4096) # 4096 == mempage
+                        eof = len(out) == 0
+                        yield out
+                return Response(logfile_generator(), mimetype="text/csv")
             except IOError:
                 agent = log.agent
                 if not agent:
