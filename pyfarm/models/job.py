@@ -259,6 +259,11 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                               doc="If true, the master will stop all running "
                                   "tasks for this job and then delete it.")
 
+    autodelete_time = db.Column(db.Integer, nullable=True, default=None,
+                                doc="If not None, this job will be "
+                                    "automatically deleted this number of "
+                                    "seconds after it finishes.")
+
     project = db.relationship("Project",
                               backref=db.backref("jobs", lazy="dynamic"),
                               doc=dedent("""

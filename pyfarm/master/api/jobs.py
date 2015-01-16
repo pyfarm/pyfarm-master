@@ -37,7 +37,7 @@ from flask import g, request
 
 from sqlalchemy.sql import func, or_, and_
 
-from pyfarm.core.config import read_env_bool
+from pyfarm.core.config import read_env_bool, read_env
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES, WorkState
 from pyfarm.scheduler.tasks import (
@@ -64,6 +64,9 @@ logger = getLogger("api.jobs")
 TASK_MODEL_MAPPINGS = Task.types().mappings
 
 AUTOCREATE_USERS = read_env_bool("PYFARM_AUTOCREATE_USERS", True)
+DEFAULT_JOB_DELETE_TIME = read_env("PYFARM_DEFAULT_JOB_DELETE_TIME", None)
+if DEFAULT_JOB_DELETE_TIME is not None:
+    DEFAULT_JOB_DELETE_TIME = int(DEFAULT_JOB_DELETE_TIME)
 
 class ObjectNotFound(Exception):
     pass
@@ -398,6 +401,8 @@ class JobIndexAPI(MethodView):
         job.tags = tags
         job.user = user
         job.queue = jobqueue
+        job.autodelete_time = g.json.get("autodelete_time",
+                                         DEFAULT_JOB_DELETE_TIME)
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
         if "end" in custom_json and "start" not in custom_json:

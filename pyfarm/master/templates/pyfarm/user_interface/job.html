@@ -361,6 +361,29 @@
         </select>
         <input type="submit" class="btn" value="Add"/>
       </form>
+
+      <h4>Auto Deletion</h4>
+      <form method="POST" action="{{ url_for('alter_autodelete_parameters_in_job_ui', job_id=job.id) }}">
+        <table class="table">
+          <tbody>
+            <tr>
+              <td title="In seconds, leave blank to disable autodelete">
+                Autodelete After Seconds
+              </td>
+              <td>
+                <input type="text" name="autodelete_time" value="{{ job.autodelete_time if job.autodelete_time else '' }}"/>
+              </td>
+            </tr>
+            <tr>
+              <td></td>
+              <td>
+                <input type="submit" class="btn" value="Alter Autodeletion Settings"/>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </form>
+
     </div>
 
     <div class="span8 well">
