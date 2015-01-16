@@ -53,4 +53,14 @@ $(document).ready(function() {
         $("body").append(rerun_form);
         rerun_form.submit();
     });
+
+    $('#selected-rerun-failed').click(function() {
+        var rerun_form = $("#rerun_failed_multiple_form");
+        $("input.job-selector:checked").each(function() {
+            var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+            rerun_form.append(job_input);
+        });
+        $("body").append(rerun_form);
+        rerun_form.submit();
+    });
 });
