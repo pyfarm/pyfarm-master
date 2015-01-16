@@ -329,6 +329,37 @@ def rerun_single_job(job_id):
     else:
         return redirect(url_for("jobs_index_ui"), SEE_OTHER)
 
+def rerun_multiple_jobs():
+    job_ids = request.form.getlist("job_id")
+
+    for job_id in job_ids:
+        job = Job.query.filter_by(id=job_id).first()
+        if not job:
+            return (render_template(
+                        "pyfarm/error.html", error="Job %s not found" % job_id),
+                    NOT_FOUND)
+
+        for task in job.tasks:
+            if task.state != WorkState.RUNNING:
+                task.state = None
+                task.agent = None
+                task.failures = 0
+                db.session.add(task)
+
+        job.state = None
+        db.session.add(job)
+
+    db.session.commit()
+
+    assign_tasks.delay()
+
+    flash("Selected jobs will be run again.")
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
 def rerun_failed_in_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
     if not job:
