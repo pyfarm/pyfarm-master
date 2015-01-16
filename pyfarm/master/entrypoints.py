@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2013 Oliver Palmer
+# Copyright 2014, 2015 Ambient Entertainment GmbH & Co. KG
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
