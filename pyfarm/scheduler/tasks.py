@@ -169,7 +169,8 @@ def send_tasks_to_agent(self, agent_id):
                 db.session.commit()
             elif response.status_code not in [requests.codes.accepted,
                                               requests.codes.ok,
-                                              requests.codes.created]:
+                                              requests.codes.created,
+                                              requests.codes.conflict]:
                 raise ValueError("Unexpected return code on sending batch to "
                                  "agent: %s", response.status_code)
             else:
