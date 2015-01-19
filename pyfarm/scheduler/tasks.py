@@ -783,7 +783,7 @@ def autodelete_old_jobs():
 
     finished_jobs_query = Job.query.filter(
         Job.state != None,
-        Job.state.in_([WorkState.DONE, WorkState.FAILED]),
+        Job.state == WorkState.DONE,
         Job.time_finished != None,
         Job.autodelete_time != None)
 
