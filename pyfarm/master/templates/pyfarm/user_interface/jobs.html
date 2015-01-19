@@ -20,6 +20,7 @@
       <li role="presentation"><a href="#" id="selected-rerun-failed">Rerun Failed Tasks</a></li>
       <li role="presentation"><a href="#" id="selected-pause">Pause</a></li>
       <li role="presentation"><a href="#" id="selected-resume">Resume</a></li>
+      <li role="presentation"><a href="#" id="selected-delete">Delete</a></li>
     </ul>
   </li>
 </ul>
@@ -358,4 +359,6 @@
 <form method="post" action="{{ url_for('pause_multiple_jobs_ui', next=url_for('jobs_index_ui', **filters_and_order)) }}" id="pause_multiple_form"></form>
 
 <form method="post" action="{{ url_for('unpause_multiple_jobs_ui', next=url_for('jobs_index_ui', **filters_and_order)) }}" id="resume_multiple_form"></form>
+
+<form method="post" action="{{ url_for('delete_multiple_jobs_ui', next=url_for('jobs_index_ui', **filters_and_order)) }}" id="delete_multiple_form"></form>
 {% endblock %}
