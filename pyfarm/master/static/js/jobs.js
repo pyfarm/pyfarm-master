@@ -45,22 +45,26 @@ $(document).ready(function() {
     });
 
     $('#selected-rerun').click(function() {
-        var rerun_form = $("#rerun_multiple_form");
-        $("input.job-selector:checked").each(function() {
-            var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
-            rerun_form.append(job_input);
-        });
-        $("body").append(rerun_form);
-        rerun_form.submit();
+        if(confirm('Are you sure you want to rerun those jobs? This will include all tasks, even those already done.')) {
+            var rerun_form = $("#rerun_multiple_form");
+            $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                rerun_form.append(job_input);
+            });
+            $("body").append(rerun_form);
+            rerun_form.submit();
+        }
     });
 
     $('#selected-rerun-failed').click(function() {
-        var rerun_form = $("#rerun_failed_multiple_form");
-        $("input.job-selector:checked").each(function() {
-            var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
-            rerun_form.append(job_input);
-        });
-        $("body").append(rerun_form);
-        rerun_form.submit();
+        if(confirm('Are you sure you want to rerun those jobs? Only the tasks that are failed will be rerun.')) {
+            var rerun_form = $("#rerun_failed_multiple_form");
+            $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                rerun_form.append(job_input);
+            });
+            $("body").append(rerun_form);
+            rerun_form.submit();
+        }
     });
 });
