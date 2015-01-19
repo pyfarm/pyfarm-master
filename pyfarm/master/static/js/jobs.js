@@ -76,4 +76,15 @@ $(document).ready(function() {
             pause_form.submit();
         }
     });
+
+    $('#selected-resume').click(function() {
+        if(confirm('Are you sure you want to resume those jobs?')) {
+            var resume_form = $("#resume_multiple_form");
+            $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                resume_form.append(job_input);
+            });
+            resume_form.submit();
+        }
+    });
 });
