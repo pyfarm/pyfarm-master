@@ -18,6 +18,7 @@
     <ul class="dropdown-menu" role="menu">
       <li role="presentation"><a href="#" id="selected-rerun">Rerun</a></li>
       <li role="presentation"><a href="#" id="selected-rerun-failed">Rerun Failed Tasks</a></li>
+      <li role="presentation"><a href="#" id="selected-pause">Pause</a></li>
     </ul>
   </li>
 </ul>
@@ -352,4 +353,6 @@
 <form method="post" action="{{ url_for('rerun_multiple_jobs_ui', next=url_for('jobs_index_ui', **filters_and_order)) }}" id="rerun_multiple_form"></form>
 
 <form method="post" action="{{ url_for('rerun_failed_multiple_jobs_ui', next=url_for('jobs_index_ui', **filters_and_order)) }}" id="rerun_failed_multiple_form"></form>
+
+<form method="post" action="{{ url_for('pause_multiple_jobs_ui', next=url_for('jobs_index_ui', **filters_and_order)) }}" id="pause_multiple_form"></form>
 {% endblock %}

@@ -65,4 +65,15 @@ $(document).ready(function() {
             rerun_form.submit();
         }
     });
+
+    $('#selected-pause').click(function() {
+        if(confirm('Are you sure you want to pause those jobs?')) {
+            var pause_form = $("#pause_multiple_form");
+            $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                pause_form.append(job_input);
+            });
+            pause_form.submit();
+        }
+    });
 });
