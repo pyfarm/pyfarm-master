@@ -51,7 +51,6 @@ $(document).ready(function() {
                 var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
                 rerun_form.append(job_input);
             });
-            $("body").append(rerun_form);
             rerun_form.submit();
         }
     });
@@ -63,7 +62,6 @@ $(document).ready(function() {
                 var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
                 rerun_form.append(job_input);
             });
-            $("body").append(rerun_form);
             rerun_form.submit();
         }
     });
