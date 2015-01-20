@@ -32,8 +32,8 @@ BaseTestCase.build_environment()
 
 from pyfarm.core.enums import PY3, NOTSET
 from pyfarm.models.core.mixins import UtilityMixins
-from pyfarm.master.entrypoints import load_error_handlers, load_admin
-from pyfarm.master.application import db, get_admin
+from pyfarm.master.entrypoints import load_error_handlers
+from pyfarm.master.application import db
 from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.master.utility import (
     validate_with_model, error_handler, assert_mimetypes, inside_request,
@@ -70,8 +70,6 @@ class UtilityTestCase(BaseTestCase):
     def setup_app(self):
         super(UtilityTestCase, self).setup_app()
         load_error_handlers(self.app)
-        admin = get_admin(app=self.app)
-        load_admin(admin)
 
     def setUp(self):
         super(UtilityTestCase, self).setUp()
@@ -264,8 +262,6 @@ class TestValidateWithModel(UtilityTestCase):
 class TestErrorHandler(BaseTestCase):
     def setup_app(self):
         super(TestErrorHandler, self).setup_app()
-        admin = get_admin(app=self.app)
-        load_admin(admin)
 
         if hasattr(request, "_parsed_content_type"):
             self.original_content_type = request._parsed_content_type

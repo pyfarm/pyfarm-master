@@ -17,36 +17,21 @@
 import uuid
 from json import dumps
 
-from flask.ext.admin import BaseView, expose
-
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
 from pyfarm.master.entrypoints import (
     load_authentication, load_index, load_user_interface)
-from pyfarm.master.admin.baseview import AuthMixins
 from pyfarm.master.login import load_token, load_user
 from pyfarm.master.application import (
-    db, get_login_manager, get_admin)
+    db, get_login_manager)
 from pyfarm.models.user import User, Role
-
-
-class AdminRequiredView(AuthMixins, BaseView):
-    access_roles = set(["admin"])
-
-    @expose("/")
-    def index(self):
-        return self.render("pyfarm/tests/admin_required.html")
 
 
 class TestLogin(BaseTestCase):
     def setup_app(self):
         super(TestLogin, self).setup_app()
-        admin = get_admin(app=self.app)
-        admin.add_view(
-            AdminRequiredView(
-                name="AdminRequired", endpoint="admin_required_test/"))
 
         # setup the login manager and the callbacks
         # necessary to load hte user
@@ -97,13 +82,6 @@ class TestLogin(BaseTestCase):
             response.data.decode("utf-8"))
 
     def test_post_login(self):
-        # ensure admin page redirects to the login page
-        response = self.client.get(
-            "/admin/admin_required_test/", follow_redirects=True)
-        self.assert_ok(response)
-        self.assertIn("<title>PyFarm - Login</title>",
-                      response.data.decode("utf-8"))
-        
         # login as a normal user
         response = self.client.post(
             "/login/", data={
@@ -115,11 +93,6 @@ class TestLogin(BaseTestCase):
         self.assertIn("text/html", response.headers["Content-Type"])
         self.assertIn("HttpOnly", response.headers["Set-Cookie"])
 
-        # attempt to access protected page
-        response = self.client.get(
-            "/admin/admin_required_test/", follow_redirects=True)
-        self.assert_forbidden(response)
-        
         # login as admin
         response = self.client.post(
             "/login/", data={
@@ -130,12 +103,6 @@ class TestLogin(BaseTestCase):
         self.assertIn("Set-Cookie", response.headers)
         self.assertIn("text/html", response.headers["Content-Type"])
         self.assertIn("HttpOnly", response.headers["Set-Cookie"])
-
-        # since we've posted as admin, this should work now
-        response = self.client.get(
-            "/admin/admin_required_test/", follow_redirects=True)
-        self.assert_ok(response)
-        self.assertIn("Hello world!", response.data.decode("utf-8"))
 
     def test_post_login_json(self):
         response = self.client.post(
