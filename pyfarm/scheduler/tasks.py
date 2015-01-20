@@ -422,6 +422,7 @@ def poll_agent(self, agent_id):
         return
 
     try:
+        logger.info("Polling agent %s", agent.hostname)
         response = requests.get(
             agent.api_url() + "/tasks/",
             headers={"User-Agent": USERAGENT},
@@ -458,9 +459,12 @@ def poll_agent(self, agent_id):
         assigned_task_ids = db.session.query(Task.id).filter(
             Task.agent == agent,
             or_(Task.state == None,
-                Task.state == WorkState.RUNNING))
+                Task.state == WorkState.RUNNING)).all()
+        assigned_task_ids = [x[0] for x in assigned_task_ids]
 
-        if set(present_task_ids) - set(assigned_task_ids):
+        if set(assigned_task_ids) - set(present_task_ids):
+            logger.debug("Agent %s does not have all the tasks it is supposed "
+                         "to have. Registering task pusher", agent.hostname)
             send_tasks_to_agent.delay(agent_id)
 
         agent.last_heard_from = datetime.utcnow()
