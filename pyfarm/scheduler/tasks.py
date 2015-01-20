@@ -775,3 +775,32 @@ def clean_up_orphaned_task_logs():
         if e.errno != ENOENT:
             raise
         logger.warning("Log directory %r does not exist", LOGFILES_DIR)
+
+
+@celery_app.task(ignore_results=True)
+def autodelete_old_jobs():
+    db.session.rollback()
+
+    finished_jobs_query = Job.query.filter(
+        Job.state != None,
+        Job.state == WorkState.DONE,
+        Job.time_finished != None,
+        Job.autodelete_time != None)
+
+    job_ids_to_delete = []
+    for job in finished_jobs_query:
+        # I haven't figured out yet how to do this test as part of the filter
+        if (job.time_finished + timedelta(seconds=job.autodelete_time) <
+            datetime.utcnow()):
+            logger.info("Deleting job %s (id %s). It was finished on %s UTC, "
+                        "which is more than %s ago", job.title, job.id,
+                        job.time_finished,
+                        timedelta(seconds=job.autodelete_time))
+            job.to_be_deleted = True
+            db.session.add(job)
+            job_ids_to_delete.append(job.id)
+
+    db.session.commit()
+
+    for job_id in job_ids_to_delete:
+        delete_job.delay(job_id)

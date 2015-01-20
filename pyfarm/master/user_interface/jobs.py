@@ -458,6 +458,23 @@ def alter_scheduling_parameters_for_job(job_id):
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
 
+def alter_autodeletion_for_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    if request.form['autodelete_time']:
+        job.autodelete_time = int(request.form['autodelete_time'])
+
+    db.session.add(job)
+    db.session.commit()
+
+    flash("Scheduling parameters for job %s have been changed." % job.title)
+
+    return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
+
 def update_notes_for_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
     if not job:
