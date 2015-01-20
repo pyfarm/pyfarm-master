@@ -39,4 +39,63 @@ $(document).ready(function() {
             $(this).closest("tr").find("table.subjob-table").remove();
         }
     });
+
+    $('.all-jobs-selector').change(function() {
+        $('input.job-selector').prop('checked', this.checked);
+    });
+
+    $('#selected-rerun').click(function() {
+        if(confirm('Are you sure you want to rerun those jobs? This will include all tasks, even those already done.')) {
+            var rerun_form = $("#rerun_multiple_form");
+            $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                rerun_form.append(job_input);
+            });
+            rerun_form.submit();
+        }
+    });
+
+    $('#selected-rerun-failed').click(function() {
+        if(confirm('Are you sure you want to rerun those jobs? Only the tasks that are failed will be rerun.')) {
+            var rerun_form = $("#rerun_failed_multiple_form");
+            $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                rerun_form.append(job_input);
+            });
+            rerun_form.submit();
+        }
+    });
+
+    $('#selected-pause').click(function() {
+        if(confirm('Are you sure you want to pause those jobs?')) {
+            var pause_form = $("#pause_multiple_form");
+            $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                pause_form.append(job_input);
+            });
+            pause_form.submit();
+        }
+    });
+
+    $('#selected-resume').click(function() {
+        if(confirm('Are you sure you want to resume those jobs?')) {
+            var resume_form = $("#resume_multiple_form");
+            $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                resume_form.append(job_input);
+            });
+            resume_form.submit();
+        }
+    });
+
+    $('#selected-delete').click(function() {
+        if(confirm('Are you sure you want to delete those jobs?')) {
+            var delete_form = $("#delete_multiple_form");
+            $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                delete_form.append(job_input);
+            });
+            delete_form.submit();
+        }
+    });
 });

@@ -302,6 +302,40 @@ def delete_single_job(job_id):
     else:
         return redirect(url_for("jobs_index_ui"), SEE_OTHER)
 
+
+def delete_multiple_jobs():
+    job_ids = request.form.getlist("job_id")
+
+    job_ids_to_delete = []
+    for job_id in job_ids:
+        job = Job.query.filter_by(id=job_id).first()
+        if not job:
+            return (render_template(
+                        "pyfarm/error.html", error="Job %s not found" % job_id),
+                    NOT_FOUND)
+
+        job.to_be_deleted = True
+        db.session.add(job)
+        job_ids_to_delete.append(job.id)
+
+        for child in job.children:
+            child.to_be_deleted = True
+            job_ids_to_delete.append(child.id)
+            db.session.add(child)
+
+    db.session.commit()
+
+    for id_ in job_ids_to_delete:
+        logger.info("Marking job %s for deletion", id_)
+        delete_job.delay(id_)
+
+    flash("Selected jobs will be deleted.")
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
 def rerun_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
     if not job:
@@ -323,6 +357,37 @@ def rerun_single_job(job_id):
     assign_tasks.delay()
 
     flash("Job %s will be run again." % job.title)
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
+def rerun_multiple_jobs():
+    job_ids = request.form.getlist("job_id")
+
+    for job_id in job_ids:
+        job = Job.query.filter_by(id=job_id).first()
+        if not job:
+            return (render_template(
+                        "pyfarm/error.html", error="Job %s not found" % job_id),
+                    NOT_FOUND)
+
+        for task in job.tasks:
+            if task.state != WorkState.RUNNING:
+                task.state = None
+                task.agent = None
+                task.failures = 0
+                db.session.add(task)
+
+        job.state = None
+        db.session.add(job)
+
+    db.session.commit()
+
+    assign_tasks.delay()
+
+    flash("Selected jobs will be run again.")
 
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)
@@ -356,6 +421,36 @@ def rerun_failed_in_job(job_id):
     else:
         return redirect(url_for("jobs_index_ui"), SEE_OTHER)
 
+def rerun_failed_in_multiple_jobs():
+    job_ids = request.form.getlist("job_id")
+
+    for job_id in job_ids:
+        job = Job.query.filter_by(id=job_id).first()
+        if not job:
+            return (render_template(
+                        "pyfarm/error.html", error="Job %s not found" % job_id),
+                    NOT_FOUND)
+
+        for task in job.tasks:
+            if task.state == _WorkState.FAILED:
+                task.state = None
+                task.agent = None
+                task.failures = 0
+                db.session.add(task)
+
+        job.state = None
+        db.session.add(job)
+        db.session.commit()
+
+    assign_tasks.delay()
+
+    flash("Failed tasks in selected jobs will be run again.")
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
 def pause_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
     if not job:
@@ -380,6 +475,34 @@ def pause_single_job(job_id):
     else:
         return redirect(url_for("jobs_index_ui"), SEE_OTHER)
 
+def pause_multiple_jobs():
+    job_ids = request.form.getlist("job_id")
+
+    for job_id in job_ids:
+        job = Job.query.filter_by(id=job_id).first()
+        if not job:
+            return (render_template(
+                        "pyfarm/error.html", error="Job %s not found" % job_id),
+                    NOT_FOUND)
+
+        for task in job.tasks:
+            if task.state == WorkState.RUNNING:
+                stop_task.delay(task.id)
+
+        job.state = WorkState.PAUSED
+        db.session.add(job)
+
+    db.session.commit()
+
+    assign_tasks.delay()
+
+    flash("Selected jobs will be paused.")
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
 def unpause_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
     if not job:
@@ -392,6 +515,28 @@ def unpause_single_job(job_id):
     db.session.commit()
 
     flash("Job %s is unpaused." % job.title)
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
+def unpause_multiple_jobs():
+    job_ids = request.form.getlist("job_id")
+
+    for job_id in job_ids:
+        job = Job.query.filter_by(id=job_id).first()
+        if not job:
+            return (render_template(
+                        "pyfarm/error.html", error="Job %s not found" % job_id),
+                    NOT_FOUND)
+
+        job.state = None
+        db.session.add(job)
+
+    db.session.commit()
+
+    flash("Selected jobs are unpaused")
 
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)

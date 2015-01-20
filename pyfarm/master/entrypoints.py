@@ -138,7 +138,9 @@ def load_user_interface(app_instance):
         alter_scheduling_parameters_for_job, update_notes_for_job,
         update_tags_in_job, rerun_single_task, add_notified_user_to_job,
         remove_notified_user_from_job, upgrade_job_to_latest_jobtype_version,
-        rerun_failed_in_job, alter_autodeletion_for_job)
+        rerun_failed_in_job, alter_autodeletion_for_job, rerun_multiple_jobs,
+        rerun_failed_in_multiple_jobs, pause_multiple_jobs,
+        unpause_multiple_jobs, delete_multiple_jobs)
     from pyfarm.master.user_interface.jobqueues import (
         jobqueues, jobqueue_create, jobqueue, delete_jobqueue)
     from pyfarm.master.user_interface.jobtypes import (
@@ -169,17 +171,33 @@ def load_user_interface(app_instance):
     app_instance.add_url_rule("/jobs/<int:job_id>/delete",
                               "delete_single_job_ui", delete_single_job,
                               methods=("POST", ))
+    app_instance.add_url_rule("/jobs/delete_multiple",
+                              "delete_multiple_jobs_ui", delete_multiple_jobs,
+                              methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/rerun",
                               "rerun_single_job_ui", rerun_single_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/rerun_multiple",
+                              "rerun_multiple_jobs_ui", rerun_multiple_jobs,
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/rerun_failed_tasks",
                               "rerun_failed_in_job_ui", rerun_failed_in_job,
                               methods=("POST", ))
+    app_instance.add_url_rule("/jobs/rerun_failed_multiple",
+                              "rerun_failed_multiple_jobs_ui",
+                              rerun_failed_in_multiple_jobs,
+                              methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/pause",
                               "pause_single_job_ui", pause_single_job,
                               methods=("POST", ))
+    app_instance.add_url_rule("/jobs//pause_multiple",
+                              "pause_multiple_jobs_ui", pause_multiple_jobs,
+                              methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/unpause",
                               "unpause_single_job_ui", unpause_single_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/unpause_multiple",
+                              "unpause_multiple_jobs_ui", unpause_multiple_jobs,
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/alter_frame_selection",
                               "alter_frames_in_job_ui",
