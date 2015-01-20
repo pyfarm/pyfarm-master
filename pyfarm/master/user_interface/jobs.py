@@ -222,6 +222,20 @@ def jobs():
     else:
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
+    jobs_count = jobs_query.count()
+
+    per_page = int(request.args.get("per_page", 100))
+    page = int(request.args.get("page", 1))
+    filters["per_page"] = per_page
+    filters["page"] = page
+    all_pages = []
+    if per_page > 0:
+        jobs_query = jobs_query.offset((page - 1) * per_page).limit(per_page)
+        num_pages = int(jobs_count / per_page)
+        if jobs_count % per_page > 0:
+            num_pages = num_pages + 1
+        all_pages = range(0, num_pages)
+
     jobs = jobs_query.all()
     users_query = User.query
 
@@ -238,6 +252,9 @@ def jobs():
 
     filters_and_order = filters.copy()
     filters_and_order.update({"order_by": order_by, "order_dir": order_dir})
+    filters_and_order_wo_pagination = filters_and_order.copy()
+    del filters_and_order_wo_pagination["per_page"]
+    del filters_and_order_wo_pagination["page"]
     return render_template("pyfarm/user_interface/jobs.html",
                            jobs=jobs, filters=filters, order_by=order_by,
                            order_dir=order_dir,
@@ -245,7 +262,10 @@ def jobs():
                            no_state_filters=no_state_filters, users=users_query,
                            filters_and_order=filters_and_order,
                            jobtypes=jobtypes_query,
-                           tags_by_job_id=tags_by_job_id)
+                           tags_by_job_id=tags_by_job_id, jobs_count=jobs_count,
+                           all_pages=all_pages,
+                           filters_and_order_wo_pagination=\
+                               filters_and_order_wo_pagination)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
