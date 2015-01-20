@@ -463,7 +463,7 @@ def poll_agent(self, agent_id):
 
         if set(assigned_task_ids) - set(present_task_ids):
             logger.debug("Agent %s does not have all the tasks it is supposed "
-                         "to have. Registering task pusher")
+                         "to have. Registering task pusher", agent.hostname)
             send_tasks_to_agent.delay(agent_id)
 
         agent.last_heard_from = datetime.utcnow()
