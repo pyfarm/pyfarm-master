@@ -23,7 +23,7 @@ from flask import render_template, request, url_for, redirect, flash
 from sqlalchemy import or_
 
 from pyfarm.core.enums import WorkState
-from pyfarm.scheduler.tasks import restart_agent
+from pyfarm.scheduler.tasks import restart_agent, assign_tasks_to_agent
 from pyfarm.models.agent import Agent
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
@@ -149,6 +149,8 @@ def agent_add_software(agent_id):
     db.session.add(agent)
     db.session.add(version)
     db.session.commit()
+
+    assign_tasks_to_agent.delay(agent.id)
 
     flash("Software %s %s has been added to agent %s" %
           (software.software, version.version, agent.hostname))
