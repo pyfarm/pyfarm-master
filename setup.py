@@ -42,7 +42,8 @@ install_requires = [
     "redis",
     "requests!=2.4.0",
     "netaddr",
-    "lockfile"]
+    "lockfile",
+    "wtforms"]
 
 if "READTHEDOCS" in os.environ:
     install_requires += ["sphinxcontrib-httpdomain", "sphinx"]
