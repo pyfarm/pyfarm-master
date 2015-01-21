@@ -19,10 +19,9 @@
                 {{ job.jobtype_version.jobtype.name }}
               </a> Version {{job.jobtype_version.version}}
               {% if latest_jobtype_version > job.jobtype_version.version %}
-              <form class="icon" method="POST" action="{{ url_for('upgrade_jobtype_for_job', job_id=job.id) }}">
-                <button onclick="return confirm('Are you sure you want to upgrade the jobtype to version {{ latest_jobtype_version }}?');" title="Upgrade to latest version ({{ latest_jobtype_version }})">
-                  <i class="icon-arrow-up"></i>
-                </button>
+              <form style="display: inline;" role="form" method="POST" action="{{ url_for('upgrade_jobtype_for_job', job_id=job.id) }}">
+                <label for="upgrade-job-submit" class="clickable-icon" title="Upgrade to latest version ({{ latest_jobtype_version }})"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></label>
+                <input id="upgrade-job-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to upgrade the jobtype to version {{ latest_jobtype_version }}?');"/>
               </form>
               {% endif %}
             </td>
