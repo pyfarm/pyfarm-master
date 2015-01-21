@@ -166,8 +166,27 @@
       {% endfor %}
     </ul>
   </div>
+  <label for="per_page" title="Zero or negative values for no pagination">Per page</label>
+  <input type="text" id="per_page" name="per_page" value="{{ filters.per_page }}" placeholder="Number" size="4" style="width: 3em;"/>
+
   <input type="submit" class="btn" value="Filter">
 </form>
+
+<div>Jobs: {{ jobs_count }}</div>
+
+<div class="pagination">
+  <ul>
+  {% for page in all_pages %}
+  {% if filters.page == page + 1 %}
+  <li class="active">
+  {% else %}
+  <li>
+  {% endif %}
+    <a href="{{ url_for('jobs_index_ui', per_page=filters.per_page, page=page + 1, **filters_and_order_wo_pagination) }}">{{ page + 1 }}</a>
+  </li>
+  {% endfor %}
+  </ul>
+</div>
 
 <table class="table table-striped table-bordered model-list">
   <tr>
@@ -351,6 +370,20 @@
   </tr>
   {% endfor %}
 </table>
+
+<div class="pagination">
+  <ul>
+  {% for page in all_pages %}
+  {% if filters.page == page + 1 %}
+  <li class="active">
+  {% else %}
+  <li>
+  {% endif %}
+    <a href="{{ url_for('jobs_index_ui', per_page=filters.per_page, page=page + 1, **filters_and_order_wo_pagination) }}">{{ page + 1 }}</a>
+  </li>
+  {% endfor %}
+  </ul>
+</div>
 
 <form method="post" action="{{ url_for('rerun_multiple_jobs_ui', next=url_for('jobs_index_ui', **filters_and_order)) }}" id="rerun_multiple_form"></form>
 
