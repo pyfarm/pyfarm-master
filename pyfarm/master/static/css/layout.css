@@ -14,3 +14,7 @@
 .clickable-icon {
     cursor: pointer;
 }
+
+label {
+    font-weight: normal !important;
+}
