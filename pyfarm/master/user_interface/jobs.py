@@ -228,6 +228,7 @@ def jobs():
     page = int(request.args.get("page", 1))
     filters["per_page"] = per_page
     filters["page"] = page
+    num_pages = 1
     all_pages = []
     if per_page > 0:
         jobs_query = jobs_query.offset((page - 1) * per_page).limit(per_page)
@@ -263,7 +264,7 @@ def jobs():
                            filters_and_order=filters_and_order,
                            jobtypes=jobtypes_query,
                            tags_by_job_id=tags_by_job_id, jobs_count=jobs_count,
-                           all_pages=all_pages,
+                           all_pages=all_pages, num_pages=num_pages,
                            filters_and_order_wo_pagination=\
                                filters_and_order_wo_pagination)
 
