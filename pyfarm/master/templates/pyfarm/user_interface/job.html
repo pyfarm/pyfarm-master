@@ -334,10 +334,9 @@
           {% for user in job.notified_users %}
           <tr>
             <td>
-              <form class="icon" method="POST" action="{{ url_for('remove_notified_user_ui', job_id=job.id, user_id=user.id) }}">
-                <button onclick="return confirm('Are you sure you want to remove this users from the notified users list?');" title="Remove user from list">
-                  <i class="icon-trash"></i>
-                </button>
+              <form style="display: inline;" role="form" method="POST" action="{{ url_for('remove_notified_user_ui', job_id=job.id, user_id=user.id) }}">
+                <label for="remove-notified-user-{{user.id}}-submit" class="clickable-icon" title="Remove notified user"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></label>
+                <input id="remove-notified-user-{{user.id}}-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to remove this user from the notified users list?');"/>
               </form>
             </td>
             <td>{{ user.username }}</td>
