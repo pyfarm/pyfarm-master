@@ -116,10 +116,9 @@
     {% for software_version in agent.software_versions %}
     <tr>
       <td>
-        <form class="icon" method="POST" action="{{ url_for('single_agent_remove_software_ui', agent_id=agent.id, version_id=software_version.id) }}">
-          <button onclick="return confirm('Are you sure you want to remove this software version from this agent?');" title="Delete Software Version">
-            <i class="icon-trash"></i>
-          </button>
+        <form style="display: inline;" role="form" method="POST" action="{{ url_for('single_agent_remove_software_ui', agent_id=agent.id, version_id=software_version.id) }}">
+          <label for="remove-software-{{software_version.id}}-submit" class="clickable-icon" title="Delete Software Version"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></label>
+          <input id="remove-software-{{software_version.id}}-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to delete this software version?');"/>
         </form>
       </td>
       <td>{{ software_version.software.software }}</td>
@@ -131,7 +130,7 @@
       <form method="POST" action="{{ url_for('single_agent_add_software_ui', agent_id=agent.id) }}">
         <td></td>
         <td>
-          <select id="add_software_sw" name="software">
+          <select class="form-control" id="add_software_sw" name="software">
             <option></option>
             {% for software in software_items %}
             <option value="{{ software.id }}">{{ software.software }}</option>
@@ -139,7 +138,7 @@
           </select>
         </td>
         <td>
-          <select id="add_software_version" name="version">
+          <select class="form-control" id="add_software_version" name="version">
           </select>
         </td>
         <td>
