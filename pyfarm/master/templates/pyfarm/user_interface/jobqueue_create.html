@@ -3,69 +3,55 @@
 {% block jobqueues_nb_class %}active{% endblock %}
 {% block content %}
 <form method="POST" action="{{ url_for('jobqueue_create_ui') }}" class="form-horizontal">
-  <fieldset>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="name">Name</label>
-      </div>
-      <div class="control">
-        <input id="name" name="name" type="text"/>
-      </div>
+  <div class="form-group">
+    <label for="name" class="col-sm-2 control-label">Name</label>
+    <div class="col-sm-10">
+      <input id="name" class="form-control" name="name" type="text"/>
     </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="parent">Parent Queue</label>
-      </div>
-      <div class="control">
-        <select id="parent" name="parent">
-          <option value="">-</option>
-          {% for queue in jobqueues %}
-          {% if queue.id == parent %}
-          <option value="{{ queue.id }}" selected>{{ queue.path() }}</option>
-          {% else %}
-          <option value="{{ queue.id }}">{{ queue.path() }}</option>
-          {% endif %}
-          {% endfor %}
-        </select>
-      </div>
+  </div>
+  <div class="form-group">
+    <label for="parent" class="col-sm-2 control-label">Parent Queue</label>
+    <div class="col-sm-10">
+      <select class="form-control" id="parent" name="parent">
+        <option value="">-</option>
+        {% for queue in jobqueues %}
+        {% if queue.id == parent %}
+        <option value="{{ queue.id }}" selected>{{ queue.path() }}</option>
+        {% else %}
+        <option value="{{ queue.id }}">{{ queue.path() }}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
     </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="minimum_agents">Minimum Agents</label>
-      </div>
-      <div class="control">
-        <input id="minimum_agents" name="minimum_agents" type="text"/>
-      </div>
+  </div>
+  <div class="form-group">
+    <label for="minimum_agents" class="col-sm-2 control-label">Minimum Agents</label>
+    <div class="col-sm-10">
+      <input id="minimum_agents" class="form-control" name="minimum_agents" type="text"/>
     </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="maximum_agents">Maximum Agents</label>
-      </div>
-      <div class="control">
-        <input id="maximum_agents" name="maximum_agents" type="text"/>
-      </div>
+  </div>
+  <div class="form-group">
+    <label for="maximum_agents" class="col-sm-2 control-label">Maximum Agents</label>
+    <div class="col-sm-10">
+      <input id="maximum_agents" class="form-control" name="maximum_agents" type="text"/>
     </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="priority">Priority</label>
-      </div>
-      <div class="control">
-        <input id="priority" name="priority" type="text"/>
-      </div>
+  </div>
+  <div class="form-group">
+    <label for="priority" class="col-sm-2 control-label">Priority</label>
+    <div class="col-sm-10">
+      <input id="priority" class="form-control" name="priority" type="text"/>
     </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="weight">Weight</label>
-      </div>
-      <div class="control">
-        <input id="weight" name="weight" type="text"/>
-      </div>
+  </div>
+  <div class="form-group">
+    <label for="weight" class="col-sm-2 control-label">Weight</label>
+    <div class="col-sm-10">
+      <input id="weight" class="form-control" name="weight" type="text"/>
     </div>
-    <div class="control-group">
-      <div class="control">
-        <input type="submit" class="btn btn-primary btn-large" value="Create"/>
-      </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-10">
+      <input type="submit" class="btn btn-primary btn-large" value="Create"/>
     </div>
-  </fieldset>
+  </div>
 </form>
 {% endblock %}
