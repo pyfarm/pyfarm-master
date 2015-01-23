@@ -64,6 +64,7 @@ logger = getLogger("api.jobs")
 TASK_MODEL_MAPPINGS = Task.types().mappings
 
 AUTOCREATE_USERS = read_env_bool("PYFARM_AUTOCREATE_USERS", True)
+AUTO_USERS_DEFAULT_DOMAIN = read_env("PYFARM_AUTO_USERS_DEFAULT_DOMAIN", None)
 DEFAULT_JOB_DELETE_TIME = read_env("PYFARM_DEFAULT_JOB_DELETE_TIME", None)
 if DEFAULT_JOB_DELETE_TIME is not None:
     DEFAULT_JOB_DELETE_TIME = int(DEFAULT_JOB_DELETE_TIME)
@@ -352,7 +353,16 @@ class JobIndexAPI(MethodView):
         if notified_usernames:
             for entry in notified_usernames:
                 user = User.query.filter_by(username=entry["username"]).first()
-                if not user:
+                if not user and AUTOCREATE_USERS:
+                    username = entry["username"]
+                    user = User(username=username)
+                    if AUTO_USERS_DEFAULT_DOMAIN:
+                        user.email = username+"@"+AUTO_USERS_DEFAULT_DOMAIN
+                    db.session.add(user)
+                    db.session.flush()
+                    logger.warning("User %s was autocreated on job submit",
+                                   username)
+                elif not user:
                     return (jsonify(
                                 error="User %s not found" % entry["username"]),
                             NOT_FOUND)
@@ -373,6 +383,8 @@ class JobIndexAPI(MethodView):
             user = User.query.filter_by(username=username).first()
             if not user and AUTOCREATE_USERS:
                 user = User(username=username)
+                if AUTO_USERS_DEFAULT_DOMAIN:
+                    user.email = username+"@"+AUTO_USERS_DEFAULT_DOMAIN
                 db.session.add(user)
                 logger.warning("User %s was autocreated on job submit", username)
             elif not user:
