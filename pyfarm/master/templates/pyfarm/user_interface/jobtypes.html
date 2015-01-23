@@ -11,10 +11,9 @@
   {% for jobtype in jobtypes %}
   <tr>
     <td>
-      <form class="icon" method="POST" action="{{ url_for('remove_single_jobtype_ui', jobtype_id=jobtype.id) }}">
-        <button onclick="return confirm('Are you sure you want to delete this jobtype?');" title="Delete Jobtype">
-          <i class="icon-trash"></i>
-        </button>
+      <form style="display: inline;" role="form" method="POST" action="{{ url_for('remove_single_jobtype_ui', jobtype_id=jobtype.id) }}">
+        <label for="remove-jobtype-{{jobtype.id}}-submit" class="clickable-icon" title="Remove jobtype"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></label>
+        <input id="remove-jobtpye-{{jobtype.id}}-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to remove this jobtype?');"/>
       </form>
     </td>
     <td>
@@ -24,5 +23,5 @@
   {% endfor %}
 </table>
 
-<a href="{{ url_for('jobtype_create_ui') }}" class="btn">Create</a>
+<a href="{{ url_for('jobtype_create_ui') }}" class="btn btn-default" role="button">Create</a>
 {% endblock %}

@@ -17,16 +17,16 @@ $(document).ready(function() {
         $.getJSON("/api/v1/software/", function(r) {
             var new_row = $("<tr>"+
                               "<td>"+
-                                "<i class='icon-remove clickable-icon' title='Remove'></i>"+
+                                "<i class='glyphicon glyphicon-remove clickable-icon' title='Remove'></i>"+
                               "</td>"+
                               "<td>"+
-                                "<select class='software' name='software'></select>"+
+                                "<select class='software form-control' name='software'></select>"+
                               "</td>"+
                               "<td>"+
-                                "&gt;= <select class='min_version' name='min_version'></select>"+
+                                "<nobr>&gt;= <select class='min_version form-control' style='display: inline;' name='min_version'></select></nobr>"+
                               "</td>"+
                               "<td>"+
-                                "&lt;= <select class='max_version' name='max_version'></select>"+
+                                "<nobr>&lt;= <select class='max_version form-control' style='display: inline;' name='max_version'></select></nobr>"+
                               "</td>"+
                             "</tr>");
 
