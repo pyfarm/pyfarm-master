@@ -4,8 +4,8 @@
 {% block content %}
 <h1 style="margin-bottom:20px">{{ job.title }}</h1>
 <div class="container-fluid">
-  <div class="row-fluid">
-    <div class="span4">
+  <div class="row">
+    <div class="col-md-4">
 
       <h4>Job</h4>
       <table class="table">
@@ -19,10 +19,9 @@
                 {{ job.jobtype_version.jobtype.name }}
               </a> Version {{job.jobtype_version.version}}
               {% if latest_jobtype_version > job.jobtype_version.version %}
-              <form class="icon" method="POST" action="{{ url_for('upgrade_jobtype_for_job', job_id=job.id) }}">
-                <button onclick="return confirm('Are you sure you want to upgrade the jobtype to version {{ latest_jobtype_version }}?');" title="Upgrade to latest version ({{ latest_jobtype_version }})">
-                  <i class="icon-arrow-up"></i>
-                </button>
+              <form style="display: inline;" role="form" method="POST" action="{{ url_for('upgrade_jobtype_for_job', job_id=job.id) }}">
+                <label for="upgrade-job-submit" class="clickable-icon" title="Upgrade to latest version ({{ latest_jobtype_version }})"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></label>
+                <input id="upgrade-job-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to upgrade the jobtype to version {{ latest_jobtype_version }}?');"/>
               </form>
               {% endif %}
             </td>
@@ -68,32 +67,27 @@
               Actions
             </td>
             <td>
-              <form class="icon" method="POST" action="{{ url_for('delete_single_job_ui', job_id=job.id) }}">
-                <button onclick="return confirm('Are you sure you want to delete this job?');" title="Delete job">
-                  <i class="icon-trash"></i> Delete
-                </button>
+              <form style="display: inline;" role="form" method="POST" action="{{ url_for('delete_single_job_ui', job_id=job.id) }}">
+                <label for="delete-job-submit" class="clickable-icon" title="Delete job"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete</label>
+                <input id="delete-job-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to delete this job?');"/>
               </form>
-              <form class="icon" method="POST" action="{{ url_for('rerun_single_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
-                <button onclick="return confirm('Are you sure you want to rerun this job? This will include all tasks, even those already done.');" title="Rerun job">
-                  <i class="icon-repeat"></i> Rerun
-                </button>
+              <form style="display: inline;" role="form" method="POST" action="{{ url_for('rerun_single_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
+                <label for="rerun-job-submit" class="clickable-icon" title="Rerun job"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Rerun</label>
+                <input id="rerun-job-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to rerun this job? This will include all tasks, even those already done.');"/>
               </form>
-              <form class="icon" method="POST" action="{{ url_for('rerun_failed_in_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
-                <button onclick="return confirm('Are you sure you want to rerun the failed tasks in this job?');" title="Rerun failed tasks">
-                  <i class="icon-repeat"></i> Rerun Failed
-                </button>
+              <form style="display: inline;" role="form" method="POST" action="{{ url_for('rerun_failed_in_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
+                <label for="rerun-failed-submit" class="clickable-icon" title="Rerun failed tasks"><span class="glyphicon glyphicon-repeat"></span> Rerun Failed</label>
+                <input id="rerun-failed-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to rerun the failed tasks in this job?');"/>
               </form>
               {% if not job.paused() %}
-              <form class="icon" method="POST" action="{{ url_for('pause_single_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
-                <button onclick="return confirm('Are you sure you want to pause this job?');" title="Pause job">
-                  <i class="icon-pause"></i> Pause
-                </button>
+              <form style="display: inline;" role="form" method="POST" action="{{ url_for('pause_single_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
+                <label for="pause-job-submit" class="clickable-icon" title="Pause job"><span class="glyphicon glyphicon-pause"></span> Pause</label>
+                <input id="pause-job-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to pause this job?');"/>
               </form>
               {% else %}
-              <form class="icon" method="POST" action="{{ url_for('unpause_single_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
-                <button onclick="return confirm('Are you sure you want to unpause this job?');" title="Unpause job">
-                  <i class="icon-play"></i> Unpause
-                </button>
+              <form style="display: inline;" method="POST" action="{{ url_for('unpause_single_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
+                <label for="unpause-job-submit" class="clickable-icon" title="Unpause job"><span class="glyphicon glyphicon-play"></span> Unpause</label>
+                <input id="unpause-job-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to unpause this job?');" title="Unpause job">
               </form>
               {% endif %}
             </td>
@@ -226,7 +220,7 @@
               Start
             </td>
             <td>
-              <input type="text" name="start" value="{{ first_task.frame }}"/>
+              <input type="text" class="form-control" name="start" value="{{ first_task.frame }}"/>
             </td>
           </tr>
           <tr>
@@ -234,7 +228,7 @@
               End
             </td>
             <td>
-              <input type="text" name="end" value="{{ last_task.frame }}"/>
+              <input type="text" class="form-control" name="end" value="{{ last_task.frame }}"/>
             </td>
           </tr>
           <tr>
@@ -242,14 +236,14 @@
               By
             </td>
             <td>
-              <input type="text" name="by" value="{{ job.by }}"/>
+              <input type="text" class="form-control" name="by" value="{{ job.by }}"/>
             </td>
           </tr>
           <tr>
             <td>
             </td>
             <td>
-              <input type=submit class="btn" value="Alter Frame Selection"/>
+              <input type="submit" class="btn" value="Alter Frame Selection"/>
             </td>
           </tr>
         </tbody>
@@ -265,7 +259,7 @@
               Jobqueue
             </td>
             <td>
-              <select name="queue">
+              <select class="form-control" name="queue">
                 <option value=""></option>
                 {% for queue in queues %}
                 {% if queue == job.queue %}
@@ -282,7 +276,7 @@
               Priority
             </td>
             <td>
-              <input type="text" name="priority" value="{{ job.priority }}"/>
+              <input type="text" class="form-control" name="priority" value="{{ job.priority }}"/>
             </td>
           </tr>
           <tr>
@@ -290,7 +284,7 @@
               Weight
             </td>
             <td>
-              <input type="text" name="weight" value="{{ job.weight }}"/>
+              <input type="text" class="form-control" name="weight" value="{{ job.weight }}"/>
             </td>
           </tr>
           <tr>
@@ -298,7 +292,7 @@
               Minimum Agents
             </td>
             <td>
-              <input type="text" name="minimum_agents" value="{{ job.minimum_agents if job.minimum_agents }}"/>
+              <input type="text" class="form-control" name="minimum_agents" value="{{ job.minimum_agents if job.minimum_agents }}"/>
             </td>
           </tr>
           <tr>
@@ -306,7 +300,7 @@
               Maximum Agents
             </td>
             <td>
-              <input type="text" name="maximum_agents" value="{{ job.maximum_agents if job.maximum_agents }}"/>
+              <input type="text" class="form-control" name="maximum_agents" value="{{ job.maximum_agents if job.maximum_agents }}"/>
             </td>
           </tr>
           <tr>
@@ -314,7 +308,7 @@
               Batch Size
             </td>
             <td>
-              <input type="text" name="batch" value="{{ job.batch }}"/>
+              <input type="text" class="form-control" name="batch" value="{{ job.batch }}"/>
             </td>
           </tr>
           <tr>
@@ -339,10 +333,9 @@
           {% for user in job.notified_users %}
           <tr>
             <td>
-              <form class="icon" method="POST" action="{{ url_for('remove_notified_user_ui', job_id=job.id, user_id=user.id) }}">
-                <button onclick="return confirm('Are you sure you want to remove this users from the notified users list?');" title="Remove user from list">
-                  <i class="icon-trash"></i>
-                </button>
+              <form style="display: inline;" role="form" method="POST" action="{{ url_for('remove_notified_user_ui', job_id=job.id, user_id=user.id) }}">
+                <label for="remove-notified-user-{{user.id}}-submit" class="clickable-icon" title="Remove notified user"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></label>
+                <input id="remove-notified-user-{{user.id}}-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to remove this user from the notified users list?');"/>
               </form>
             </td>
             <td>{{ user.username }}</td>
@@ -352,8 +345,8 @@
         </tbody>
       </table>
 
-      <form method="POST" action="{{ url_for('add_notified_user_ui', job_id=job.id) }}" class="form-horizontal">
-        <select id="user" name="user">
+      <form method="POST" action="{{ url_for('add_notified_user_ui', job_id=job.id) }}" class="form-inline">
+        <select class="form-control" id="user" name="user">
           <option value=""></option>
           {% for user in users %}
           <option value="{{ user.id }}">{{ user.username }} ({{ user.email }})</option>
@@ -371,7 +364,7 @@
                 Autodelete After Seconds
               </td>
               <td>
-                <input type="text" name="autodelete_time" value="{{ job.autodelete_time if job.autodelete_time else '' }}"/>
+                <input class="form-control" type="text" name="autodelete_time" value="{{ job.autodelete_time if job.autodelete_time else '' }}"/>
               </td>
             </tr>
             <tr>
@@ -386,7 +379,7 @@
 
     </div>
 
-    <div class="span8 well">
+    <div class="col-md-8 well">
       <h4>Tasks</h4>
       <table class="table">
         <thead>
@@ -401,13 +394,12 @@
           {% for task in tasks %}
           <tr>
             <td>
-              <form class="icon" method="POST" action="{{ url_for('rerun_single_task_ui', job_id=job.id, task_id=task.id) }}">
-                <button onclick="return confirm('Are you sure you want to rerun this task?');" title="Rerun task">
-                  <i class="icon-repeat"></i>
-                </button>
+              <form style="display: inline;" role="form" method="POST" action="{{ url_for('rerun_single_task_ui', job_id=job.id, task_id=task.id) }}">
+                <label for="rerun-task-{{task.id}}-submit" class="clickable-icon" title="Rerun task"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span></label>
+                <input id="rerun-task-{{task.id}}-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to rerun this task?');"/>
               </form>
               <a href="{{ url_for('logs_in_task_ui', job_id=job.id, task_id=task.id) }}" title="Show logs">
-                <i class="icon-list"></i>
+                <span class="glyphicon glyphicon-list"></span>
               </a>
             </td>
             <td>{{ task.frame }}</td>

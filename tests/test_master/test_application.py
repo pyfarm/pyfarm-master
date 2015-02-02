@@ -23,7 +23,6 @@ except ImportError:
     from http.client import BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE
 
 from flask import Flask, Blueprint, g
-from flask.ext.admin import Admin, AdminIndexView
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from itsdangerous import URLSafeTimedSerializer
@@ -34,9 +33,8 @@ from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
 from pyfarm.master.utility import jsonify
-from pyfarm.master.admin.baseview import AdminIndex
 from pyfarm.master.application import (
-    UUIDConverter, get_application, get_api_blueprint, get_admin,
+    UUIDConverter, get_application, get_api_blueprint,
     get_sqlalchemy, get_login_manager, get_login_serializer)
 
 
@@ -57,17 +55,6 @@ class TestApplicationFunctions(BaseTestCase):
         self.assertEqual(api.url_prefix, "/foo")
         self.assertEqual(api.name, "api")
         self.assertEqual(api.import_name, "pyfarm.master.api")
-
-    def test_get_admin(self):
-        admin = get_admin()
-        self.assertIsInstance(admin, Admin)
-        self.assertIsInstance(admin.index_view, AdminIndex)
-
-        class NewAdminIndexView(AdminIndexView):
-            pass
-
-        admin = get_admin(index_view=NewAdminIndexView())
-        self.assertIsInstance(admin.index_view, NewAdminIndexView)
 
     def test_get_sqlalchemy(self):
         self.assertIsInstance(get_sqlalchemy(app=self.app), SQLAlchemy)

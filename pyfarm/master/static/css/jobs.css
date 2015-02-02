@@ -1,23 +1,6 @@
 ul.dropdown-menu-form {
     padding: 5px 10px 5px;
     max-height: 300px;
-    overflow-y: scroll;
-}
-
-.state_filter_dropdown {
-    display: inline;
-}
-
-.hidden_filter_dropdown {
-    display: inline;
-}
-
-.user_filter_dropdown {
-    display: inline;
-}
-
-.jobtype_filter_dropdown {
-    display: inline;
 }
 
 .job_progress {

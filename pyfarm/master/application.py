@@ -33,7 +33,6 @@ except ImportError:
     from http.client import BAD_REQUEST, UNSUPPORTED_MEDIA_TYPE
 
 from flask import Flask, Blueprint, request, g, abort
-from flask.ext.admin import Admin
 from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
 from itsdangerous import URLSafeTimedSerializer
@@ -45,7 +44,6 @@ from werkzeug.routing import BaseConverter, ValidationError
 from pyfarm.core.enums import NOTSET, STRING_TYPES, PY3
 from pyfarm.core.config import Configuration, read_env, read_env_bool
 from pyfarm.core.logger import getLogger
-from pyfarm.master.admin.baseview import AdminIndex
 
 POST_METHODS = set(("POST", "PUT"))
 IGNORED_MIMETYPES = set((
@@ -248,15 +246,6 @@ def get_api_blueprint(url_prefix=None):
     return Blueprint("api", "pyfarm.master.api", url_prefix=url_prefix)
 
 
-def get_admin(**kwargs):
-    """
-    Constructs and returns an instance of :class:`.Admin`.  Any keyword
-    arguments provided will be passed to the constructor of :class:`.Admin`
-    """
-    kwargs.setdefault("index_view", AdminIndex())
-    return Admin(**kwargs)
-
-
 def get_login_manager(**kwargs):
     """
     Constructs and returns an instance of :class:`.LoginManager`.  Any keyword
@@ -309,7 +298,6 @@ def before_request():
 # main object setup (app, api, etc)
 app = get_application()
 api = get_api_blueprint()
-admin = get_admin(app=app)
 db = get_sqlalchemy(app=app)
 login_manager = get_login_manager(app=app, login_view="/login/")
 login_serializer = get_login_serializer(app.secret_key)

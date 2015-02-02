@@ -36,7 +36,6 @@ except ImportError:
         INTERNAL_SERVER_ERROR, UNSUPPORTED_MEDIA_TYPE)
 
 from flask import request
-from flask.ext.admin.base import MenuLink
 
 from pyfarm.core.config import read_env_bool
 from pyfarm.core.logger import getLogger
@@ -527,56 +526,12 @@ def load_api(app_instance, api_instance):
     app_instance.register_blueprint(api_instance)
 
 
-def load_admin(admin_instance):
-    """serves the administrative interface endpoints"""
-    from pyfarm.master.admin.projects import ProjectView
-    from pyfarm.master.admin.users import UserView, RoleView
-    from pyfarm.master.admin.software import SoftwareView
-    from pyfarm.master.admin.tag import TagView
-    from pyfarm.master.admin.agents import AgentView
-    from pyfarm.master.admin.work import JobView, TaskView
-    from pyfarm.master.admin.jobtypes import JobTypeView, JobTypeVersionView
-    from pyfarm.master.admin.pathmaps import PathMapView
-
-    # admin links
-    admin_instance.add_link(MenuLink("Preferences", "/preferences"))
-    admin_instance.add_link(MenuLink("Log Out", "/logout"))
-
-    # admin database views
-    # TODO: need a better way to style this menu, would probably be even
-    # better to have the database admin stuff under a different admin interface
-    admin_instance.add_view(
-        UserView(name="Users: User", endpoint="users/user"))
-    admin_instance.add_view(
-        RoleView(name="Users: Role", endpoint="users/role"))
-    admin_instance.add_view(
-        TagView(name="Tags", endpoint="tag"))
-    admin_instance.add_view(
-        SoftwareView(name="Software", endpoint="software"))
-    admin_instance.add_view(
-        AgentView(name="Agents", endpoint="agents"))
-    admin_instance.add_view(
-        JobView(name="Jobs: Job", endpoint="jobs/job"))
-    admin_instance.add_view(
-        TaskView(name="Jobs: Task", endpoint="jobs/task"))
-    admin_instance.add_view(
-        ProjectView(name="Projects", endpoint="projects"))
-    admin_instance.add_view(
-        JobTypeView(name="Job Type", endpoint="jobtypes/jobtype"))
-    admin_instance.add_view(
-        JobTypeVersionView(
-            name="Job Type: Version", endpoint="jobtypes/version"))
-    admin_instance.add_view(
-        PathMapView(name="Path Maps", endpoint="pathmaps"))
-
-
-def load_master(app, admin, api):
+def load_master(app, api):
     """loads and attaches all endpoints needed to run the master"""
     load_error_handlers(app)
     load_index(app)
     load_user_interface(app)
     load_authentication(app)
-    load_admin(admin)
     load_api(app, api)
 
 
@@ -621,7 +576,7 @@ def tables():  # pragma: no cover
 
 def run_master():  # pragma: no cover
     """Runs :func:`load_master` then runs the application"""
-    from pyfarm.master.application import app, admin, api
+    from pyfarm.master.application import app, api
 
     parser = ArgumentParser()
     if app.debug:
@@ -644,7 +599,7 @@ def run_master():  # pragma: no cover
         db.create_all()
 
     load_setup(app)
-    load_master(app, admin, api)
+    load_master(app, api)
 
     if read_env_bool("PYFARM_DEV_LISTEN_ON_WILDCARD", False):
         app.run(host='0.0.0.0')
@@ -654,7 +609,7 @@ def run_master():  # pragma: no cover
 
 def create_app():
     """An entry point specifically for uWSGI or similar to use"""
-    from pyfarm.master.application import app, admin, api
+    from pyfarm.master.application import app, api
 
     if read_env_bool("PYFARM_DEV_APP_DB_DROP_ALL", False):
         db.drop_all()
@@ -663,7 +618,7 @@ def create_app():
         db.create_all()
 
     load_setup(app)
-    load_master(app, admin, api)
+    load_master(app, api)
     return app
 
 

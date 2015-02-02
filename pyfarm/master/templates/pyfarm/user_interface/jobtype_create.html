@@ -9,53 +9,40 @@
 {% endblock %}
 {% block content %}
 <form method="POST" action="{{ url_for('jobtype_create_ui') }}" class="form-horizontal">
-  <fieldset>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="name">Name</label>
-      </div>
-      <div class="control">
-        <input id="name" name="name" type="text"/>
+    <div class="form-group">
+      <label for="name" class="col-sm-2 control-label">Name</label>
+      <div class="col-sm-5">
+        <input id="name" class="form-control" name="name" type="text"/>
       </div>
     </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="description">Description</label>
-      </div>
-      <div class="control">
-        <textarea id="description" name="description"></textarea>
+    <div class="form-group">
+      <label for="description" class="col-sm-2 control-label">Description</label>
+      <div class="col-sm-5">
+        <textarea class="form-control" id="description" name="description"></textarea>
       </div>
     </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="max_batch">Max Batch</label>
-      </div>
-      <div class="control">
-        <input id="max_batch" name="max_batch" type="text"/>
+    <div class="form-group">
+      <label for="max_batch" class="col-sm-2 control-label">Max Batch</label>
+      <div class="col-sm-5">
+        <input id="max_batch" name="max_batch" type="text" class="form-control"/>
       </div>
     </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="batch_contiguous">Batch Contiguous</label>
-      </div>
-      <div class="control">
+    <div class="form-group">
+      <label for="batch_contiguous" class="col-sm-2 control-label">Batch Contiguous</label>
+      <div class="col-sm-5">
         <input id="batch_contiguous" name="batch_contiguous" type="checkbox" value="true" checked/>
       </div>
     </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="classname">Class Name</label>
-      </div>
-      <div class="control">
-        <input id="classname" name="classname" type="text"/>
+    <div class="form-group">
+      <label for="classname" class="col-sm-2 control-label">Class Name</label>
+      <div class="col-sm-5">
+        <input id="classname" name="classname" type="text" class="form-control"/>
       </div>
     </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label for="code">Code</label>
-      </div>
-      <div class="control">
-        <textarea id="code" name="code"></textarea>
+    <div class="form-group">
+      <label for="code" class="col-sm-2 control-label">Code</label>
+      <div class="col-sm-5">
+        <textarea id="code" name="code" class="form-control"></textarea>
       </div>
     </div>
     <h4>Software Requirements</h4>
@@ -63,16 +50,15 @@
       <tbody>
         <tr>
           <td colspan="4">
-            <i id="add_sw_req" class="icon-plus-sign clickable-icon" title="Add"></i>
+            <span id="add_sw_req" class="glyphicon glyphicon-plus-sign clickable-icon" title="Add"></span>
           </td>
         </tr>
       </tbody>
     </table>
-    <div class="control-group">
+    <div class="form-group">
       <div class="control">
         <input type="submit" class="btn btn-primary btn-large" value="Create"/>
       </div>
     </div>
-  </fieldset>
 </form>
 {% endblock %}

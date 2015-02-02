@@ -8,7 +8,7 @@
   {% for queue in jobqueues.order_by("priority desc") recursive %}
   <li>
     <span>
-      <i class="icon-minus-sign"></i>{{ queue.path() }}
+      <i class="glyphicon glyphicon-minus-sign"></i>{{ queue.path() }}
       <p>
         Agents min / current / max: {{ queue.minimum_agents or "-"}} / {{ queue.num_assigned_agents() }} / {{ queue.maximum_agents or "-" }}<br/>
         Priority: {{ queue.priority }}<br/>
@@ -16,21 +16,20 @@
       </p>
     </span>
     <a href="{{ url_for('single_jobqueue_ui', queue_id=queue.id) }}" title="Edit Queue">
-      <i class="icon-pencil"></i>
+      <i class="glyphicon glyphicon-pencil"></i>
     </a>
-    <form class="icon" method="POST" action="{{ url_for('delete_jobqueue_ui', queue_id=queue.id) }}">
-      <button onclick="return confirm('Are you sure you want to delete this jobqueue?');" title="Delete Jobqueue">
-        <i class="icon-trash"></i>
-      </button>
+    <form style="display: inline;" role="form" method="POST" action="{{ url_for('delete_jobqueue_ui', queue_id=queue.id) }}">
+      <label for="remove-queue-{{queue.id}}-submit" class="clickable-icon" title="Delete Jobqueue"><i class="glyphicon glyphicon-trash" aria-hidden="true"></i></label>
+      <input id="remove-queue-{{queue.id}}-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to delete this jobqueue?');"/>
     </form>
     {% if queue.children or queue.jobs.count() != 0 %}
     <ul>
       {{ loop(queue.children) }}
-      <li><a href="{{ url_for('jobqueue_create_ui', parent=queue.id) }}" class="btn">Create</a></li>
+      <li><a href="{{ url_for('jobqueue_create_ui', parent=queue.id) }}" class="btn btn-default" role="button">Create</a></li>
       {% for job in queue.jobs.order_by("state desc") %}
       <li>
         <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }} {{ 'badge-important' if job.state == WorkState.FAILED }}">
-          <i class="icon-leaf"></i>
+          <i class="glyphicon glyphicon-leaf"></i>
           {{ job.title }}<br/>
           State: {{ job.state or "queued" }}<br/>
           Agents min / current / max: {{ job.minimum_agents or "-"}} / {{ job.num_assigned_agents() }} / {{ job.maximum_agents or "-" }}<br/>
@@ -38,7 +37,7 @@
           Weight: {{ job.weight }}
         </span>
         <a href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
-          <i class="icon-eye-open"></i>
+          <i class="glyphicon glyphicon-eye-open"></i>
         </a>
       </li>
       {% endfor %}
@@ -46,7 +45,7 @@
     {% endif %}
   </li>
   {% endfor %}
-  <li><a href="{{ url_for('jobqueue_create_ui') }}" class="btn">Create</a></li>
+  <li><a href="{{ url_for('jobqueue_create_ui') }}" class="btn btn-default" role="button">Create</a></li>
   {% for job in top_level_jobs %}
   <li>
     <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }}{{ 'badge-important' if job.state == WorkState.FAILED }}{{ 'badge-warning' if job.state == WorkState.RUNNING }}">
@@ -58,7 +57,7 @@
       Weight: {{ job.weight }}
     </span>
     <a href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
-      <i class="icon-eye-open"></i>
+      <i class="glyphicon glyphicon-eye-open"></i>
     </a>
 
   </li>

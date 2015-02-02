@@ -33,7 +33,6 @@ install_requires = [
     "pyfarm.core>=0.9.1",
     "sqlalchemy>=0.9.3",
     "flask",
-    "flask-admin>=1.0.7",
     "flask-login",
     "flask-sqlalchemy",
     "itsdangerous",
@@ -43,7 +42,8 @@ install_requires = [
     "redis",
     "requests!=2.4.0",
     "netaddr",
-    "lockfile"]
+    "lockfile",
+    "wtforms"]
 
 if "READTHEDOCS" in os.environ:
     install_requires += ["sphinxcontrib-httpdomain", "sphinx"]
@@ -78,7 +78,6 @@ setup(
     packages=[
         "pyfarm",
         "pyfarm.master",
-        "pyfarm.master.admin",
         "pyfarm.master.api",
         "pyfarm.master.user_interface",
         "pyfarm.models",
