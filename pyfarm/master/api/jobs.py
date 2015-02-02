@@ -357,7 +357,7 @@ class JobIndexAPI(MethodView):
                     username = entry["username"]
                     user = User(username=username)
                     if AUTO_USERS_DEFAULT_DOMAIN:
-                        user.email = username+"@"+AUTO_USERS_DEFAULT_DOMAIN
+                        user.email = username + "@" + AUTO_USERS_DEFAULT_DOMAIN
                     db.session.add(user)
                     db.session.flush()
                     logger.warning("User %s was autocreated on job submit",
@@ -384,7 +384,7 @@ class JobIndexAPI(MethodView):
             if not user and AUTOCREATE_USERS:
                 user = User(username=username)
                 if AUTO_USERS_DEFAULT_DOMAIN:
-                    user.email = username+"@"+AUTO_USERS_DEFAULT_DOMAIN
+                    user.email = username + "@" + AUTO_USERS_DEFAULT_DOMAIN
                 db.session.add(user)
                 logger.warning("User %s was autocreated on job submit", username)
             elif not user:
