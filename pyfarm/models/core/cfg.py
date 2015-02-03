@@ -84,7 +84,7 @@ variables have defaults defined in the configuration under `PYFARM_DB_<value>`
 from pyfarm.core.config import read_env, read_env_int
 
 # table names
-TABLE_PREFIX = read_env("PYFARM_DB_PREFIX", "pyfarm_")
+TABLE_PREFIX = read_env("PYFARM_DB_PREFIX", "")
 TABLE_SOFTWARE = "%ssoftware" % TABLE_PREFIX
 TABLE_SOFTWARE_VERSION = "%s_version" % TABLE_SOFTWARE
 TABLE_TAG = "%stag" % TABLE_PREFIX
