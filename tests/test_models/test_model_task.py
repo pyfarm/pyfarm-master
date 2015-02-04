@@ -22,16 +22,35 @@ BaseTestCase.build_environment()
 
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
+from pyfarm.models.jobtype import JobType, JobTypeVersion
+from pyfarm.models.job import Job
 from pyfarm.models.task import Task
 
 
 class TestTask(BaseTestCase):
     def test_insert(self):
+        jobtype = JobType()
+        jobtype.name = "foo"
+        jobtype.description = "this is a job type"
+        jobtype_version = JobTypeVersion()
+        jobtype_version.jobtype = jobtype
+        jobtype_version.version = 1
+        jobtype_version.classname = "Foobar"
+        jobtype_version.code = ("""
+            class Foobar(JobType):
+                pass""").encode("utf-8")
+        db.session.add(jobtype_version)
+
+        job = Job()
+        job.title = "Test Job"
+        job.jobtype_version = jobtype_version
+
         task = Task(
             state=WorkState.DONE,
             priority=404,
             frame=1,
-            last_error="foobar")
+            last_error="foobar",
+            job=job)
         db.session.add(task)
         db.session.commit()
         task_id = task.id
@@ -44,7 +63,23 @@ class TestTask(BaseTestCase):
         self.assertEqual(searched.frame, 1)
 
     def test_clear_last_error(self):
-        task = Task(frame=1, last_error="foobar")
+        jobtype = JobType()
+        jobtype.name = "foo"
+        jobtype.description = "this is a job type"
+        jobtype_version = JobTypeVersion()
+        jobtype_version.jobtype = jobtype
+        jobtype_version.version = 1
+        jobtype_version.classname = "Foobar"
+        jobtype_version.code = ("""
+            class Foobar(JobType):
+                pass""").encode("utf-8")
+        db.session.add(jobtype_version)
+
+        job = Job()
+        job.title = "Test Job"
+        job.jobtype_version = jobtype_version
+
+        task = Task(frame=1, job=job, last_error="foobar")
         db.session.add(task)
         db.session.commit()
         db.session.add(task)
