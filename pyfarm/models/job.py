@@ -44,8 +44,8 @@ from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
-    MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCIES, TABLE_JOB_QUEUE,
-    TABLE_USER, TABLE_JOB_NOTIFIED_USERS)
+    MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCY, TABLE_JOB_QUEUE,
+    TABLE_USER, TABLE_JOB_NOTIFIED_USER)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin, UtilityMixins)
@@ -66,7 +66,7 @@ JobTagAssociation = db.Table(
 
 
 JobDependencies = db.Table(
-    TABLE_JOB_DEPENDENCIES, db.metadata,
+    TABLE_JOB_DEPENDENCY, db.metadata,
     db.Column("parentid", IDTypeWork,
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True),
     db.Column("childid", IDTypeWork,
@@ -74,7 +74,7 @@ JobDependencies = db.Table(
 
 
 JobNotifiedUsers = db.Table(
-    TABLE_JOB_NOTIFIED_USERS, db.metadata,
+    TABLE_JOB_NOTIFIED_USER, db.metadata,
     db.Column("user_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_USER), primary_key=True),
     db.Column("job_id", IDTypeWork,
