@@ -34,7 +34,7 @@ from pyfarm.models.core.functions import split_and_extend
 from pyfarm.models.core.cfg import (
     TABLE_USERS_USER, TABLE_USERS_ROLE, TABLE_USERS_USER_ROLES,
     MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
-    MAX_ROLE_LENGTH, TABLE_USERS_PROJECTS, TABLE_PROJECT)
+    MAX_ROLE_LENGTH)
 
 __all__ = ("User", )
 
@@ -45,14 +45,6 @@ UserRoles = db.Table(
               db.ForeignKey("%s.id" % TABLE_USERS_USER)),
     db.Column("role_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_USERS_ROLE)))
-
-# projects the user is a member of
-UserProjects = db.Table(
-    TABLE_USERS_PROJECTS,
-    db.Column("user_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_USERS_USER), primary_key=True),
-    db.Column("project_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_PROJECT), primary_key=True))
 
 
 class User(db.Model, UserMixin, ReprMixin):
@@ -98,15 +90,6 @@ class User(db.Model, UserMixin, ReprMixin):
 
     roles = db.relationship("Role", secondary=UserRoles,
                             backref=db.backref("users", lazy="dynamic"))
-
-    projects = db.relationship("Project",
-                               secondary=UserProjects,
-                               backref=db.backref("users", lazy="dynamic"),
-                               lazy="dynamic",
-                               doc="The project or projects this user is "
-                                   "associated with.  By default a user "
-                                   "which is not associated with any projects "
-                                   "will be a member of all projects.")
 
     @classmethod
     def create(cls, username, password, email=None, roles=None):

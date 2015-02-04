@@ -44,8 +44,8 @@ from pyfarm.models.core.types import (
 from pyfarm.models.core.cfg import (
     TABLE_AGENT, TABLE_SOFTWARE_VERSION, TABLE_TAG, TABLE_AGENT_MAC_ADDRESS,
     TABLE_AGENT_TAG_ASSOC, MAX_HOSTNAME_LENGTH, MAX_CPUNAME_LENGTH,
-    TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_PROJECT_AGENTS, TABLE_PROJECT,
-    MAX_OSNAME_LENGTH, TABLE_GPU_IN_AGENT, TABLE_GPU)
+    TABLE_AGENT_SOFTWARE_VERSION_ASSOC, MAX_OSNAME_LENGTH, TABLE_GPU_IN_AGENT,
+    TABLE_GPU)
 from pyfarm.models.jobtype import JobTypeVersion
 from pyfarm.models.job import Job
 
@@ -71,14 +71,6 @@ AgentTagAssociation = db.Table(
               db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
     db.Column("tag_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_TAG), primary_key=True))
-
-
-AgentProjects = db.Table(
-    TABLE_PROJECT_AGENTS, db.metadata,
-    db.Column("agent_id", IDTypeAgent,
-              db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
-    db.Column("project_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_PROJECT), primary_key=True))
 
 
 GPUInAgent = db.Table(
@@ -264,14 +256,6 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                        lazy="dynamic",
                                        doc="software this agent has installed "
                                            "or is configured for")
-    projects = db.relationship("Project",
-                               secondary=AgentProjects,
-                               backref=db.backref("agents", lazy="dynamic"),
-                               lazy="dynamic",
-                               doc="The project or projects this agent is "
-                                   "associated with.  By default an agent "
-                                   "which is not associated with any projects "
-                                   "will be a member of all projects.")
     mac_addresses = db.relationship("AgentMacAddress", backref="agent",
                                     lazy="dynamic",
                                     doc="The MAC addresses this agent has",

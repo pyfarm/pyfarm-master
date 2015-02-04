@@ -44,7 +44,7 @@ from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
-    MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT, TABLE_JOB_QUEUE,
+    MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCIES, TABLE_JOB_QUEUE,
     TABLE_USERS_USER, TABLE_JOB_NOTIFIED_USERS, TABLE_USERS_USER)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
@@ -111,8 +111,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
         work_columns(None, "job.priority")
-    project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
-                           doc="stores the project id")
     jobtype_version_id = db.Column(IDTypeWork,
                                     db.ForeignKey("%s.id"
                                         % TABLE_JOB_TYPE_VERSION),
@@ -263,12 +261,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                 doc="If not None, this job will be "
                                     "automatically deleted this number of "
                                     "seconds after it finishes.")
-
-    project = db.relationship("Project",
-                              backref=db.backref("jobs", lazy="dynamic"),
-                              doc=dedent("""
-                              relationship attribute which retrieves the
-                              associated project for the job"""))
 
     queue = db.relationship("JobQueue",
                             backref=db.backref("jobs", lazy="dynamic"),
