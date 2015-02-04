@@ -49,7 +49,7 @@ from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
     JobTypeSoftwareRequirement)
 from pyfarm.models.tag import Tag
-from pyfarm.models.task import Task, TaskDependencies
+from pyfarm.models.task import Task
 from pyfarm.models.job import Job, JobDependencies
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import Agent, AgentTagAssociation, GPUInAgent

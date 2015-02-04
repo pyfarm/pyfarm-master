@@ -52,7 +52,7 @@ from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
     JobTypeSoftwareRequirement)
 from pyfarm.models.tag import Tag
-from pyfarm.models.task import Task, TaskDependencies
+from pyfarm.models.task import Task
 from pyfarm.models.tasklog import TaskLog
 from pyfarm.models.job import Job
 from pyfarm.models.jobqueue import JobQueue
