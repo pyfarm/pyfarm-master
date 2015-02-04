@@ -172,7 +172,6 @@ class BaseTestCase(TestCase):
         from pyfarm.models.agent import Agent
         from pyfarm.models.job import Job
         from pyfarm.models.jobtype import JobType
-        from pyfarm.models.project import Project
         from pyfarm.models.software import (
             Software, SoftwareVersion, JobSoftwareRequirement,
             JobTypeSoftwareRequirement)
