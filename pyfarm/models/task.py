@@ -62,6 +62,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     agent_id = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
                          doc="Foreign key which stores :attr:`Job.id`")
     job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+                       nullable=False,
                        doc="Foreign key which stores :attr:`Job.id`")
     hidden = db.Column(db.Boolean, default=False,
                        doc=dedent("""
