@@ -45,7 +45,7 @@ from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
     MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCIES, TABLE_JOB_QUEUE,
-    TABLE_USERS_USER, TABLE_JOB_NOTIFIED_USERS, TABLE_USERS_USER)
+    TABLE_USER, TABLE_JOB_NOTIFIED_USERS)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin, UtilityMixins)
@@ -76,7 +76,7 @@ JobDependencies = db.Table(
 JobNotifiedUsers = db.Table(
     TABLE_JOB_NOTIFIED_USERS, db.metadata,
     db.Column("user_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_USERS_USER), primary_key=True),
+              db.ForeignKey("%s.id" % TABLE_USER), primary_key=True),
     db.Column("job_id", IDTypeWork,
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
 
@@ -124,7 +124,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                              doc=dedent("""
                                 The foreign key which stores
                                 :class:`JobQueue.id`"""))
-    user_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_USERS_USER),
+    user_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_USER),
                         doc="The id of the user who owns this job")
     minimum_agents = db.Column(db.Integer, nullable=True,
                           doc=dedent("""

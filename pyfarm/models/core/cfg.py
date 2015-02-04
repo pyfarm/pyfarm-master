@@ -45,7 +45,7 @@ variables have defaults defined in the configuration under `PYFARM_DB_<value>`
 :const string TABLE_TASK:
     Stores the name of the table for job tasks
 
-:const string TABLE_USERS_USER:
+:const string TABLE_USER:
     Stores the registered users (both human and api)
 
 :const string TABLE_USERS_ROLE:
@@ -102,10 +102,9 @@ TABLE_JOB_NOTIFIED_USERS = "%snotified_users" % TABLE_PREFIX
 TABLE_JOB_TYPE_SOFTWARE_REQ = "%sjobtype_software_req" % TABLE_PREFIX
 TABLE_TASK = "%stasks" % TABLE_PREFIX
 TABLE_TASK_DEPENDENCIES = "%s_dependencies" % TABLE_TASK
-TABLE_USERS = "%susers" % TABLE_PREFIX
-TABLE_USERS_USER = "%s_users" % TABLE_USERS
-TABLE_USERS_ROLE = "%s_roles" % TABLE_USERS
-TABLE_USERS_USER_ROLES = "%s_user_roles" % TABLE_USERS
+TABLE_USER = "%susers" % TABLE_PREFIX
+TABLE_USERS_ROLE = "%s_roles" % TABLE_USER
+TABLE_USERS_USER_ROLES = "%s_user_roles" % TABLE_USER
 TABLE_JOB_QUEUE = "%sjob_queues" % TABLE_PREFIX
 TABLE_PATH_MAP = "%spath_maps" % TABLE_PREFIX
 TABLE_TASK_LOG = "%s_logs" % TABLE_TASK
@@ -115,7 +114,7 @@ TABLE_GPU_IN_AGENT = "%s_in_agents" % TABLE_GPU
 
 TABLES = (TABLE_SOFTWARE, TABLE_SOFTWARE_VERSION, TABLE_TAG,
           TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_AGENT, TABLE_JOB_TYPE,
-          TABLE_AGENT_TAG_ASSOC, TABLE_USERS_USER, TABLE_USERS_ROLE,
+          TABLE_AGENT_TAG_ASSOC, TABLE_USER, TABLE_USERS_ROLE,
           TABLE_USERS_USER_ROLES, TABLE_TASK, TABLE_TASK_DEPENDENCIES,
           TABLE_JOB_DEPENDENCIES, TABLE_JOB_TAG_ASSOC, TABLE_JOB_SOFTWARE_REQ,
           TABLE_JOB_NOTIFIED_USERS, TABLE_JOB_TYPE_SOFTWARE_REQ, TABLE_JOB,

@@ -32,7 +32,7 @@ from pyfarm.master.application import app, db, login_serializer
 from pyfarm.models.core.mixins import ReprMixin
 from pyfarm.models.core.functions import split_and_extend
 from pyfarm.models.core.cfg import (
-    TABLE_USERS_USER, TABLE_USERS_ROLE, TABLE_USERS_USER_ROLES,
+    TABLE_USER, TABLE_USERS_ROLE, TABLE_USERS_USER_ROLES,
     MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
     MAX_ROLE_LENGTH)
 
@@ -42,7 +42,7 @@ __all__ = ("User", )
 UserRoles = db.Table(
     TABLE_USERS_USER_ROLES,
     db.Column("user_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_USERS_USER)),
+              db.ForeignKey("%s.id" % TABLE_USER)),
     db.Column("role_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_USERS_ROLE)))
 
@@ -51,7 +51,7 @@ class User(db.Model, UserMixin, ReprMixin):
     """
     Stores information about a user including the roles they belong to
     """
-    __tablename__ = TABLE_USERS_USER
+    __tablename__ = TABLE_USER
     REPR_COLUMNS = ("id", "username")
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
