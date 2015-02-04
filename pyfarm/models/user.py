@@ -32,7 +32,7 @@ from pyfarm.master.application import app, db, login_serializer
 from pyfarm.models.core.mixins import ReprMixin
 from pyfarm.models.core.functions import split_and_extend
 from pyfarm.models.core.cfg import (
-    TABLE_USER, TABLE_ROLE, TABLE_USERS_USER_ROLES,
+    TABLE_USER, TABLE_ROLE, TABLE_USER_ROLE,
     MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
     MAX_ROLE_LENGTH)
 
@@ -40,7 +40,7 @@ __all__ = ("User", )
 
 # roles the user is a member of
 UserRoles = db.Table(
-    TABLE_USERS_USER_ROLES,
+    TABLE_USER_ROLE,
     db.Column("user_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_USER)),
     db.Column("role_id", db.Integer,
