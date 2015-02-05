@@ -65,7 +65,7 @@ JobTagAssociation = db.Table(
               db.ForeignKey("%s.id" % TABLE_TAG), primary_key=True))
 
 
-JobDependencies = db.Table(
+JobDependency = db.Table(
     TABLE_JOB_DEPENDENCY, db.metadata,
     db.Column("parentid", IDTypeWork,
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True),
@@ -73,7 +73,7 @@ JobDependencies = db.Table(
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
 
 
-JobNotifiedUsers = db.Table(
+JobNotifiedUser = db.Table(
     TABLE_JOB_NOTIFIED_USER, db.metadata,
     db.Column("user_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_USER), primary_key=True),
@@ -272,13 +272,13 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     # self-referential many-to-many relationship
     parents = db.relationship("Job",
-                              secondary=JobDependencies,
-                              primaryjoin=id==JobDependencies.c.childid,
-                              secondaryjoin=id==JobDependencies.c.parentid,
+                              secondary=JobDependency,
+                              primaryjoin=id==JobDependency.c.childid,
+                              secondaryjoin=id==JobDependency.c.parentid,
                               backref="children")
 
     notified_users = db.relationship("User",
-                              secondary=JobNotifiedUsers,
+                              secondary=JobNotifiedUser,
                               lazy="dynamic",
                               backref=db.backref("subscribed_jobs",
                                                  lazy="dynamic"))

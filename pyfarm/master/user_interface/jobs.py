@@ -30,7 +30,7 @@ from sqlalchemy import func, desc, asc, or_, distinct
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState, _WorkState, AgentState
 from pyfarm.scheduler.tasks import delete_job, stop_task, assign_tasks
-from pyfarm.models.job import Job, JobDependencies, JobTagAssociation
+from pyfarm.models.job import Job, JobDependency, JobTagAssociation
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
 from pyfarm.models.agent import Agent
@@ -58,13 +58,13 @@ def jobs():
             filter(Task.state == WorkState.FAILED).\
                 group_by(Task.job_id).subquery()
     child_count_query = db.session.query(
-        JobDependencies.c.parentid, func.count('*').label('child_count')).\
-                group_by(JobDependencies.c.parentid).subquery()
+        JobDependency.c.parentid, func.count('*').label('child_count')).\
+                group_by(JobDependency.c.parentid).subquery()
     blocker_count_query = db.session.query(
-        JobDependencies.c.childid, func.count('*').label('blocker_count')).\
-            join(Job, Job.id == JobDependencies.c.parentid).\
+        JobDependency.c.childid, func.count('*').label('blocker_count')).\
+            join(Job, Job.id == JobDependency.c.parentid).\
                 filter(or_(Job.state == None, Job.state != WorkState.DONE)).\
-                    group_by(JobDependencies.c.childid).subquery()
+                    group_by(JobDependency.c.childid).subquery()
     agent_count_query = db.session.query(
         Task.job_id, func.count(distinct(Task.agent_id)).label('agent_count')).\
             filter(Task.agent_id != None, or_(Task.state == None,

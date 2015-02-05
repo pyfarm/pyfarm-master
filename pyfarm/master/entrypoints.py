@@ -50,7 +50,7 @@ from pyfarm.models.software import (
     JobTypeSoftwareRequirement)
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
-from pyfarm.models.job import Job, JobDependencies
+from pyfarm.models.job import Job, JobDependency
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import Agent, AgentTagAssociation, GPUInAgent
 from pyfarm.models.user import User, Role

@@ -39,7 +39,7 @@ from pyfarm.models.core.cfg import (
 __all__ = ("User", )
 
 # roles the user is a member of
-UserRoles = db.Table(
+UserRole = db.Table(
     TABLE_USER_ROLE,
     db.Column("user_id", db.Integer,
               db.ForeignKey("%s.id" % TABLE_USER)),
@@ -88,7 +88,7 @@ class User(db.Model, UserMixin, ReprMixin):
                            doc=dedent("""
                            The last date that this user was logged in."""))
 
-    roles = db.relationship("Role", secondary=UserRoles,
+    roles = db.relationship("Role", secondary=UserRole,
                             backref=db.backref("users", lazy="dynamic"))
 
     @classmethod
