@@ -25,6 +25,7 @@ manage or query agents using JSON.
 import re
 import uuid
 from datetime import datetime
+import json
 
 try:
     from httplib import (
@@ -43,11 +44,13 @@ from sqlalchemy import or_, not_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState, AgentState
+from pyfarm.core.config import read_env
 from pyfarm.scheduler.tasks import (
     assign_tasks, update_agent, assign_tasks_to_agent, send_tasks_to_agent)
 from pyfarm.models.agent import Agent, AgentMacAddress
 from pyfarm.models.gpu import GPU
 from pyfarm.models.task import Task
+from pyfarm.models.software import Software, SoftwareVersion
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     jsonify, validate_with_model, get_ipaddr_argument, get_integer_argument,
@@ -55,6 +58,8 @@ from pyfarm.master.utility import (
 
 logger = getLogger("api.agents")
 
+DEFAULT_AGENT_SOFTWARE = json.loads(
+    read_env("PYFARM_DEFAULT_AGENT_SOFTWARE", "{}"))
 MAC_RE = re.compile("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
 
 
@@ -257,6 +262,23 @@ class AgentIndexAPI(MethodView):
             # that's causing our sqlalchemy model raise a ValueError.
             except ValueError as e:
                 return jsonify(error=str(e)), BAD_REQUEST
+
+            for item in DEFAULT_AGENT_SOFTWARE:
+                software = Software.query.filter_by(
+                    software=item["software"]).first()
+                if not software:
+                    return (jsonify(
+                        error="Default agent software %r not found" %
+                            item["software"]),
+                        INTERNAL_SERVER_ERROR)
+                version = SoftwareVersion.query.filter_by(
+                    software=software, version=item["version"]).first()
+                if not version:
+                    return (jsonify(
+                        error="Default agent software %r version %s not found" %
+                            (item["software"], item["version"])),
+                        INTERNAL_SERVER_ERROR)
+                agent.software_versions.append(version)
 
             if mac_addresses is not None:
                 for address in mac_addresses:
