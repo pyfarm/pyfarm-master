@@ -44,8 +44,8 @@ from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
-    MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCIES, TABLE_PROJECT, TABLE_JOB_QUEUE,
-    TABLE_USERS_USER, TABLE_JOB_NOTIFIED_USERS, TABLE_USERS_USER)
+    MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCY, TABLE_JOB_QUEUE,
+    TABLE_USER, TABLE_JOB_NOTIFIED_USER)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin, UtilityMixins)
@@ -65,18 +65,18 @@ JobTagAssociation = db.Table(
               db.ForeignKey("%s.id" % TABLE_TAG), primary_key=True))
 
 
-JobDependencies = db.Table(
-    TABLE_JOB_DEPENDENCIES, db.metadata,
+JobDependency = db.Table(
+    TABLE_JOB_DEPENDENCY, db.metadata,
     db.Column("parentid", IDTypeWork,
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True),
     db.Column("childid", IDTypeWork,
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
 
 
-JobNotifiedUsers = db.Table(
-    TABLE_JOB_NOTIFIED_USERS, db.metadata,
+JobNotifiedUser = db.Table(
+    TABLE_JOB_NOTIFIED_USER, db.metadata,
     db.Column("user_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_USERS_USER), primary_key=True),
+              db.ForeignKey("%s.id" % TABLE_USER), primary_key=True),
     db.Column("job_id", IDTypeWork,
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
 
@@ -111,8 +111,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
         work_columns(None, "job.priority")
-    project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
-                           doc="stores the project id")
     jobtype_version_id = db.Column(IDTypeWork,
                                     db.ForeignKey("%s.id"
                                         % TABLE_JOB_TYPE_VERSION),
@@ -126,7 +124,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                              doc=dedent("""
                                 The foreign key which stores
                                 :class:`JobQueue.id`"""))
-    user_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_USERS_USER),
+    user_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_USER),
                         doc="The id of the user who owns this job")
     minimum_agents = db.Column(db.Integer, nullable=True,
                           doc=dedent("""
@@ -264,12 +262,6 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                     "automatically deleted this number of "
                                     "seconds after it finishes.")
 
-    project = db.relationship("Project",
-                              backref=db.backref("jobs", lazy="dynamic"),
-                              doc=dedent("""
-                              relationship attribute which retrieves the
-                              associated project for the job"""))
-
     queue = db.relationship("JobQueue",
                             backref=db.backref("jobs", lazy="dynamic"),
                             doc="The queue for this job")
@@ -280,13 +272,13 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     # self-referential many-to-many relationship
     parents = db.relationship("Job",
-                              secondary=JobDependencies,
-                              primaryjoin=id==JobDependencies.c.childid,
-                              secondaryjoin=id==JobDependencies.c.parentid,
+                              secondary=JobDependency,
+                              primaryjoin=id==JobDependency.c.childid,
+                              secondaryjoin=id==JobDependency.c.parentid,
                               backref="children")
 
     notified_users = db.relationship("User",
-                              secondary=JobNotifiedUsers,
+                              secondary=JobNotifiedUser,
                               lazy="dynamic",
                               backref=db.backref("subscribed_jobs",
                                                  lazy="dynamic"))

@@ -45,13 +45,12 @@ from pyfarm.master.utility import error_handler
 # Any table that needs to be created by db.create_all() should
 # be imported here even if they're not used directly within this
 # module.
-from pyfarm.models.project import Project
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
     JobTypeSoftwareRequirement)
 from pyfarm.models.tag import Tag
-from pyfarm.models.task import Task, TaskDependencies
-from pyfarm.models.job import Job, JobDependencies
+from pyfarm.models.task import Task
+from pyfarm.models.job import Job, JobDependency
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.agent import Agent, AgentTagAssociation, GPUInAgent
 from pyfarm.models.user import User, Role

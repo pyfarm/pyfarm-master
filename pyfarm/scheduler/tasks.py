@@ -48,12 +48,11 @@ from lockfile import LockFile, AlreadyLocked
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import AgentState, WorkState, _WorkState, UseAgentAddress
 from pyfarm.core.config import read_env, read_env_int
-from pyfarm.models.project import Project
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
     JobTypeSoftwareRequirement)
 from pyfarm.models.tag import Tag
-from pyfarm.models.task import Task, TaskDependencies
+from pyfarm.models.task import Task
 from pyfarm.models.tasklog import TaskLog
 from pyfarm.models.job import Job
 from pyfarm.models.jobqueue import JobQueue

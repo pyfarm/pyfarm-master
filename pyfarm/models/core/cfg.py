@@ -45,15 +45,15 @@ variables have defaults defined in the configuration under `PYFARM_DB_<value>`
 :const string TABLE_TASK:
     Stores the name of the table for job tasks
 
-:const string TABLE_USERS_USER:
+:const string TABLE_USER:
     Stores the registered users (both human and api)
 
-:const string TABLE_USERS_ROLE:
+:const string TABLE_ROLE:
     Stores roles in which a user can operate in
 
 :const string TABLE_USERS_USER_ROLE:
     Stores relationships between :const:`.TABLE_USERS_USER` and
-    :const:`.TABLE_USERS_ROLE`
+    :const:`.TABLE_ROLE`
 
 :const string TABLE_JOB_QUEUES:
     Stores the name of the table for job queues
@@ -84,45 +84,40 @@ variables have defaults defined in the configuration under `PYFARM_DB_<value>`
 from pyfarm.core.config import read_env, read_env_int
 
 # table names
-TABLE_PREFIX = read_env("PYFARM_DB_PREFIX", "pyfarm_")
+TABLE_PREFIX = read_env("PYFARM_DB_PREFIX", "")
 TABLE_SOFTWARE = "%ssoftware" % TABLE_PREFIX
-TABLE_SOFTWARE_VERSION = "%s_version" % TABLE_SOFTWARE
-TABLE_TAG = "%stag" % TABLE_PREFIX
+TABLE_SOFTWARE_VERSION = "%s_versions" % TABLE_SOFTWARE
+TABLE_TAG = "%stags" % TABLE_PREFIX
 TABLE_AGENT = "%sagents" % TABLE_PREFIX
-TABLE_AGENT_SOFTWARE_VERSION_ASSOC = "%s_software_version_assoc" % TABLE_AGENT
-TABLE_AGENT_TAG_ASSOC = "%s_tag_assoc" % TABLE_AGENT
-TABLE_AGENT_MAC_ADDRESS = "%s_mac_addresses" % TABLE_AGENT
+TABLE_AGENT_SOFTWARE_VERSION_ASSOC = (
+    "%sagent_software_version_associations" % TABLE_PREFIX)
+TABLE_AGENT_TAG_ASSOC = "%sagent_tag_associations" % TABLE_PREFIX
+TABLE_AGENT_MAC_ADDRESS = "%sagent_mac_addresses" % TABLE_PREFIX
 TABLE_JOB = "%sjobs" % TABLE_PREFIX
-TABLE_JOB_TYPE = "%s_jobtypes" % TABLE_JOB
-TABLE_JOB_TYPE_VERSION = "%s_versions" % TABLE_JOB_TYPE
-TABLE_JOB_TAG_ASSOC = "%s_tag_assoc" % TABLE_JOB
-TABLE_JOB_DEPENDENCIES = "%s_dependencies" % TABLE_JOB
-TABLE_JOB_SOFTWARE_REQ = "%s_software_req" % TABLE_JOB
-TABLE_JOB_NOTIFIED_USERS = "%snotified_users" % TABLE_PREFIX
-TABLE_JOB_TYPE_SOFTWARE_REQ = "%sjobtype_software_req" % TABLE_PREFIX
+TABLE_JOB_TYPE = "%sjobtypes" % TABLE_PREFIX
+TABLE_JOB_TYPE_VERSION = "%sjobtype_versions" % TABLE_PREFIX
+TABLE_JOB_TAG_ASSOC = "%sjob_tag_associations" % TABLE_PREFIX
+TABLE_JOB_DEPENDENCY = "%sjob_dependencies" % TABLE_PREFIX
+TABLE_JOB_SOFTWARE_REQ = "%sjob_software_requirements" % TABLE_PREFIX
+TABLE_JOB_NOTIFIED_USER = "%snotified_users" % TABLE_PREFIX
+TABLE_JOB_TYPE_SOFTWARE_REQ = "%sjobtype_software_requirements" % TABLE_PREFIX
 TABLE_TASK = "%stasks" % TABLE_PREFIX
-TABLE_TASK_DEPENDENCIES = "%s_dependencies" % TABLE_TASK
-TABLE_USERS = "%susers" % TABLE_PREFIX
-TABLE_USERS_PROJECTS = "%s_projects" % TABLE_USERS
-TABLE_USERS_USER = "%s_users" % TABLE_USERS
-TABLE_USERS_ROLE = "%s_roles" % TABLE_USERS
-TABLE_USERS_USER_ROLES = "%s_user_roles" % TABLE_USERS
-TABLE_PROJECT = "%sprojects" % TABLE_PREFIX
-TABLE_PROJECT_AGENTS = "%s_agents" % TABLE_PROJECT
+TABLE_USER = "%susers" % TABLE_PREFIX
+TABLE_ROLE = "%sroles" % TABLE_PREFIX
+TABLE_USER_ROLE = "%suser_roles" % TABLE_PREFIX
 TABLE_JOB_QUEUE = "%sjob_queues" % TABLE_PREFIX
 TABLE_PATH_MAP = "%spath_maps" % TABLE_PREFIX
-TABLE_TASK_LOG = "%s_logs" % TABLE_TASK
-TABLE_TASK_TASK_LOG_ASSOC = "%stask_log_assoc" % TABLE_PREFIX
+TABLE_TASK_LOG = "%stask_logs" % TABLE_PREFIX
+TABLE_TASK_TASK_LOG_ASSOC = "%stask_log_associations" % TABLE_PREFIX
 TABLE_GPU = "%sgpus" % TABLE_PREFIX
-TABLE_GPU_IN_AGENT = "%s_in_agents" % TABLE_GPU
+TABLE_GPU_IN_AGENT = "%sgpu_agent_associations" % TABLE_PREFIX
 
 TABLES = (TABLE_SOFTWARE, TABLE_SOFTWARE_VERSION, TABLE_TAG,
           TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_AGENT, TABLE_JOB_TYPE,
-          TABLE_AGENT_TAG_ASSOC, TABLE_USERS_USER, TABLE_USERS_ROLE,
-          TABLE_USERS_USER_ROLES, TABLE_TASK, TABLE_TASK_DEPENDENCIES,
-          TABLE_JOB_DEPENDENCIES, TABLE_JOB_TAG_ASSOC, TABLE_JOB_SOFTWARE_REQ,
-          TABLE_JOB_NOTIFIED_USERS, TABLE_JOB_TYPE_SOFTWARE_REQ, TABLE_JOB,
-          TABLE_PROJECT, TABLE_PROJECT_AGENTS, TABLE_USERS_PROJECTS,
+          TABLE_AGENT_TAG_ASSOC, TABLE_USER, TABLE_ROLE,
+          TABLE_USER_ROLE, TABLE_TASK,
+          TABLE_JOB_DEPENDENCY, TABLE_JOB_TAG_ASSOC, TABLE_JOB_SOFTWARE_REQ,
+          TABLE_JOB_NOTIFIED_USER, TABLE_JOB_TYPE_SOFTWARE_REQ, TABLE_JOB,
           TABLE_JOB_TYPE_VERSION, TABLE_JOB_QUEUE, TABLE_PATH_MAP,
           TABLE_TASK_LOG, TABLE_TASK_TASK_LOG_ASSOC, TABLE_AGENT_MAC_ADDRESS,
           TABLE_GPU, TABLE_GPU_IN_AGENT)
@@ -137,7 +132,6 @@ MAX_EMAILADDR_LENGTH = read_env_int("PYFARM_DB_MAX_EMAILADDR_LENGTH", 255)
 SHA256_ASCII_LENGTH = 64  # static length of a sha256 string
 MAX_ROLE_LENGTH = read_env_int("PYFARM_DB_MAX_ROLE_LENGTH", 128)
 MAX_TAG_LENGTH = read_env_int("PYFARM_DB_MAX_TAG_LENGTH", 64)
-MAX_PROJECT_NAME_LENGTH = read_env_int("PYFARM_DB_MAX_PROJECT_NAME_LENGTH", 32)
 MAX_JOBQUEUE_NAME_LENGTH = read_env_int("PYFARM_MAX_JOBQUEUE_NAME_LENGTH", 255)
 MAX_PATH_LENGTH = read_env_int("PYFARM_MAX_PATH_LENGTH", 512)
 MAX_OSNAME_LENGTH = read_env_int("PYFARM_MAX_OSNAME_LENGTH", 128)

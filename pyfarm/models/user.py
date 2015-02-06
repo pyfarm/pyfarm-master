@@ -32,34 +32,26 @@ from pyfarm.master.application import app, db, login_serializer
 from pyfarm.models.core.mixins import ReprMixin
 from pyfarm.models.core.functions import split_and_extend
 from pyfarm.models.core.cfg import (
-    TABLE_USERS_USER, TABLE_USERS_ROLE, TABLE_USERS_USER_ROLES,
+    TABLE_USER, TABLE_ROLE, TABLE_USER_ROLE,
     MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
-    MAX_ROLE_LENGTH, TABLE_USERS_PROJECTS, TABLE_PROJECT)
+    MAX_ROLE_LENGTH)
 
 __all__ = ("User", )
 
 # roles the user is a member of
-UserRoles = db.Table(
-    TABLE_USERS_USER_ROLES,
+UserRole = db.Table(
+    TABLE_USER_ROLE,
     db.Column("user_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_USERS_USER)),
+              db.ForeignKey("%s.id" % TABLE_USER)),
     db.Column("role_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_USERS_ROLE)))
-
-# projects the user is a member of
-UserProjects = db.Table(
-    TABLE_USERS_PROJECTS,
-    db.Column("user_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_USERS_USER), primary_key=True),
-    db.Column("project_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_PROJECT), primary_key=True))
+              db.ForeignKey("%s.id" % TABLE_ROLE)))
 
 
 class User(db.Model, UserMixin, ReprMixin):
     """
     Stores information about a user including the roles they belong to
     """
-    __tablename__ = TABLE_USERS_USER
+    __tablename__ = TABLE_USER
     REPR_COLUMNS = ("id", "username")
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -96,17 +88,8 @@ class User(db.Model, UserMixin, ReprMixin):
                            doc=dedent("""
                            The last date that this user was logged in."""))
 
-    roles = db.relationship("Role", secondary=UserRoles,
+    roles = db.relationship("Role", secondary=UserRole,
                             backref=db.backref("users", lazy="dynamic"))
-
-    projects = db.relationship("Project",
-                               secondary=UserProjects,
-                               backref=db.backref("users", lazy="dynamic"),
-                               lazy="dynamic",
-                               doc="The project or projects this user is "
-                                   "associated with.  By default a user "
-                                   "which is not associated with any projects "
-                                   "will be a member of all projects.")
 
     @classmethod
     def create(cls, username, password, email=None, roles=None):
@@ -212,7 +195,7 @@ class Role(db.Model):
     Stores role information that can be used to give a user access
     to individual resources.
     """
-    __tablename__ = TABLE_USERS_ROLE
+    __tablename__ = TABLE_ROLE
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 

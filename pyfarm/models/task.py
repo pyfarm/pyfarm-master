@@ -34,7 +34,7 @@ from pyfarm.master.application import db
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
 from pyfarm.models.core.functions import work_columns, repr_enum
 from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_TASK, TABLE_AGENT, TABLE_TASK_DEPENDENCIES, TABLE_PROJECT)
+    TABLE_JOB, TABLE_TASK, TABLE_AGENT)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, UtilityMixins, ReprMixin,
     ValidateWorkStateMixin)
@@ -42,14 +42,6 @@ from pyfarm.models.core.mixins import (
 __all__ = ("Task", )
 
 logger = getLogger("models.task")
-
-
-TaskDependencies = db.Table(
-    TABLE_TASK_DEPENDENCIES, db.metadata,
-    db.Column("parent_id", IDTypeWork,
-              db.ForeignKey("%s.id" % TABLE_TASK), primary_key=True),
-    db.Column("child_id", IDTypeWork,
-              db.ForeignKey("%s.id" % TABLE_TASK), primary_key=True))
 
 
 class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
@@ -67,11 +59,10 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
         work_columns(STATE_DEFAULT, "job.priority")
-    project_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_PROJECT),
-                           doc="stores the project id")
     agent_id = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
                          doc="Foreign key which stores :attr:`Job.id`")
     job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+                       nullable=False,
                        doc="Foreign key which stores :attr:`Job.id`")
     hidden = db.Column(db.Boolean, default=False,
                        doc=dedent("""
@@ -101,16 +92,6 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                   "assigned agent")
 
     # relationships
-    parents = db.relationship("Task",
-                              secondary=TaskDependencies,
-                              primaryjoin=id==TaskDependencies.c.parent_id,
-                              secondaryjoin=id==TaskDependencies.c.child_id,
-                              backref=db.backref("children", lazy="dynamic"))
-    project = db.relationship("Project",
-                              backref=db.backref("tasks", lazy="dynamic"),
-                              doc=dedent("""
-                              relationship attribute which retrieves the
-                              associated project for the task"""))
     job = db.relationship("Job",
                           backref=db.backref("tasks", lazy="dynamic"),
                           doc=dedent("""
