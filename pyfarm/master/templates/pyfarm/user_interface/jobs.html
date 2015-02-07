@@ -363,7 +363,7 @@
         <div class="progress-bar progress-bar-success" style="width:{{ (100 * job.t_done / (job.t_queued + job.t_running + job.t_failed + job.t_done)) if (job.t_queued + job.t_running + job.t_failed + job.t_done) > 0 else 0 }}%">
           <span class="sr-only">{{ (100 * job.t_done / (job.t_queued + job.t_running + job.t_failed + job.t_done))|round(1) if (job.t_queued + job.t_running + job.t_failed + job.t_done) > 0 else 0 }}%</span>
         </div>
-        <div class="progress-bar progress-bar-striped active" style="width:{{ (100 * job.t_running / (job.t_queued + job.t_running + job.t_failed + job.t_done)) if (job.t_queued + job.t_running + job.t_failed + job.t_done) > 0 else 0 }}%">
+        <div class="progress-bar progress-bar-striped" style="width:{{ (100 * job.t_running / (job.t_queued + job.t_running + job.t_failed + job.t_done)) if (job.t_queued + job.t_running + job.t_failed + job.t_done) > 0 else 0 }}%">
           <span class="sr-only">{{ (100 * job.t_running / (job.t_queued + job.t_running + job.t_failed + job.t_done))|round(1) if (job.t_queued + job.t_running + job.t_failed + job.t_done) > 0 else 0 }}%</span>
         </div>
         <div class="progress-bar progress-bar-danger" style="width:{{ (100 * job.t_failed / (job.t_queued + job.t_running + job.t_failed + job.t_done)) if (job.t_queued + job.t_running + job.t_failed + job.t_done) > 0 else 0 }}%">
