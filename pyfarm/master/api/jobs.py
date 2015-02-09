@@ -47,7 +47,7 @@ from pyfarm.models.core.cfg import (
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 from pyfarm.models.user import User
-from pyfarm.models.job import Job
+from pyfarm.models.job import Job, JobNotifiedUser
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement)
 from pyfarm.models.tag import Tag
@@ -366,7 +366,14 @@ class JobIndexAPI(MethodView):
                     return (jsonify(
                                 error="User %s not found" % entry["username"]),
                             NOT_FOUND)
-                notified_users.append(user)
+                notified_user = JobNotifiedUser(user=user)
+                if "on_success" in entry:
+                    notified_user.on_success = entry["on_success"]
+                if "on_failure" in entry:
+                    notified_user.on_failure = entry["on_failure"]
+                if "on_deletion" in entry:
+                    notified_user.on_deletion = entry["on_deletion"]
+                notified_users.append(notified_user)
 
         tag_names = g.json.pop("tags", None)
         tags = []
@@ -408,13 +415,16 @@ class JobIndexAPI(MethodView):
         job = Job(**g.json)
         job.jobtype_version = jobtype_version
         job.software_requirements = software_requirements
-        job.notified_users = notified_users
         job.parents = parents
         job.tags = tags
         job.user = user
         job.queue = jobqueue
         job.autodelete_time = g.json.get("autodelete_time",
                                          DEFAULT_JOB_DELETE_TIME)
+
+        for notified_user in notified_users:
+            notified_user.job = job
+            db.session.add(notified_user)
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
         if "end" in custom_json and "start" not in custom_json:
@@ -1271,11 +1281,14 @@ class JobNotifiedUsersIndexAPI(MethodView):
             return jsonify(error="Job not found"), NOT_FOUND
 
         out = []
-        for user in job.notified_users:
+        for notified_user in job.notified_users:
             out.append({
-                "id": user.id,
-                "username": user.username,
-                "email": user.email})
+                "id": notified_user.user_id,
+                "username": notified_user.user.username,
+                "email": notified_user.user.email,
+                "on_success": notified_user.on_success,
+                "on_failure": notified_user.on_failure,
+                "on_deletion": notified_user.on_deletion})
 
         return jsonify(out), OK
 
@@ -1295,6 +1308,9 @@ class JobNotifiedUsersIndexAPI(MethodView):
 
                 {
                     "username": "testuser"
+                    "on_success": true,
+                    "on_failure": true,
+                    "on_deletion": false
                 }
 
             **Response**
@@ -1327,15 +1343,22 @@ class JobNotifiedUsersIndexAPI(MethodView):
             return jsonify(error="No username specified"), BAD_REQUEST
 
         username = g.json.pop("username")
-        if g.json:
-            return jsonify(error="Unknown fields in request"), BAD_REQUEST
-
         user = User.query.filter_by(username=username).first()
         if not user:
             return jsonify("User %s not found" % username), NOT_FOUND
 
-        job.notified_users.append(user)
-        db.session.add(job)
+        notified_user = JobNotifiedUser(job=job, user=user)
+        if "on_success" in g.json:
+            notified_user.on_success = g.json.pop("on_success")
+        if "on_failure" in g.json:
+            notified_user.on_failure = g.json.pop("on_failure")
+        if "on_deletion" in g.json:
+            notified_user.on_deletion = g.json.pop("on_deletion")
+
+        if g.json:
+            return jsonify(error="Unknown fields in request"), BAD_REQUEST
+
+        db.session.add(notified_user)
         db.session.commit()
 
         logger.info("Added user %s (id %s) to notified users for job %s (%s)",
@@ -1347,7 +1370,10 @@ class JobNotifiedUsersIndexAPI(MethodView):
         return (jsonify({
                     "id": user.id,
                     "username": user.username,
-                    "email": user.email}),
+                    "email": user.email,
+                    "on_success": notified_user.on_success,
+                    "on_failure": notified_user.on_failure,
+                    "on_deletion": notified_user.on_deletion}),
                 CREATED)
 
 
@@ -1388,8 +1414,13 @@ class JobSingleNotifiedUserAPI(MethodView):
         if not user:
             return jsonify(error="User %s not found" % username), NOT_FOUND
 
-        job.notified_users.remove(user)
-        db.session.add(job)
+        notified_user = JobNotifiedUser.query.filter_by(
+            job=job, user=user).first()
+
+        if not notified_user:
+            return jsonify(), NO_CONTENT
+
+        db.session.delete(notified_user)
         db.session.commit()
 
         logger.info("Removed user %s (id %s) from notified users for "

@@ -54,7 +54,7 @@ from pyfarm.models.software import (
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
 from pyfarm.models.tasklog import TaskLog
-from pyfarm.models.job import Job
+from pyfarm.models.job import Job, JobNotifiedUser
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.gpu import GPU
@@ -518,6 +518,16 @@ def poll_agents():
 def send_job_completion_mail(job_id, successful=True):
     db.session.rollback()
     job = Job.query.filter_by(id=job_id).one()
+
+    notified_users_query = JobNotifiedUser.query.filter_by(job=job)
+    if successful:
+        notified_users_query = notified_users_query.filter_by(on_success=True)
+    else:
+        notified_users_query = notified_users_query.filter_by(on_failure=True)
+    notified_users = notified_users_query.all()
+    if not notified_users:
+        return
+
     message_text = ("%s job %s (id %s) has %s on %s.\n\n" %
                     (job.jobtype_version.jobtype.name, job.title, job.id,
                      ("completed successfully" if successful
@@ -534,9 +544,9 @@ def send_job_completion_mail(job_id, successful=True):
                              "completed successfully" if successful else
                              "failed"))
     message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
-    message["To"] = ",".join([x.email for x in job.notified_users if x.email])
 
-    to = [x.email for x in job.notified_users if x.email]
+    to = [x.user.email for x in notified_users if x.user.email]
+    message["To"] = ",".join(to)
 
     if to:
         smtp = SMTP(read_env("PYFARM_MAIL_SERVER", "localhost"))
