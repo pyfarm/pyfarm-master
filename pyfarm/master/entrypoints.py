@@ -188,7 +188,7 @@ def load_user_interface(app_instance):
     app_instance.add_url_rule("/jobs/<int:job_id>/pause",
                               "pause_single_job_ui", pause_single_job,
                               methods=("POST", ))
-    app_instance.add_url_rule("/jobs//pause_multiple",
+    app_instance.add_url_rule("/jobs/pause_multiple",
                               "pause_multiple_jobs_ui", pause_multiple_jobs,
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/unpause",
