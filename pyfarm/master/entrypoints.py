@@ -145,6 +145,9 @@ def load_user_interface(app_instance):
         jobtypes, jobtype, remove_jobtype_software_requirement,
         add_jobtype_software_requirement, remove_jobtype, create_jobtype)
     from pyfarm.master.user_interface.logs_in_task import logs_in_task
+    from pyfarm.master.user_interface.software import (
+        software, software_item, update_version_rank, remove_software_version,
+        add_software_version, add_software, remove_software)
 
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
@@ -265,6 +268,30 @@ def load_user_interface(app_instance):
                               methods=("POST", ))
     app_instance.add_url_rule("/jobtypes/create", "jobtype_create_ui",
                               create_jobtype, methods=("GET", "POST"))
+
+    app_instance.add_url_rule("/software/",
+                              "software_index_ui", software, methods=("GET", ))
+    app_instance.add_url_rule("/software/<int:software_id>",
+                              "single_software_ui", software_item,
+                              methods=("GET", ))
+    app_instance.add_url_rule("/software/<int:software_id>/versions/"
+                              "<int:version_id>/update_rank",
+                              "version_update_rank_ui", update_version_rank,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/software/<int:software_id>/versions/"
+                              "<int:version_id>/remove",
+                              "delete_single_version_ui",
+                              remove_software_version, methods=("POST", ))
+    app_instance.add_url_rule("/software/<int:software_id>/versions/create",
+                              "add_single_version_ui",
+                              add_software_version, methods=("POST", ))
+    app_instance.add_url_rule("/software/create",
+                              "add_single_software_ui",
+                              add_software, methods=("POST", ))
+    app_instance.add_url_rule("/software/<int:software_id>/delete",
+                              "delete_single_software_ui",
+                              remove_software, methods=("POST", ))
+
 
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
