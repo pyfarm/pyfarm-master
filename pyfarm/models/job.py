@@ -73,12 +73,18 @@ JobDependency = db.Table(
               db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
 
 
-JobNotifiedUser = db.Table(
-    TABLE_JOB_NOTIFIED_USER, db.metadata,
-    db.Column("user_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_USER), primary_key=True),
-    db.Column("job_id", IDTypeWork,
-              db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
+class JobNotifiedUser(db.Model):
+    __tablename__ = TABLE_JOB_NOTIFIED_USER
+    user_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_USER),
+                        primary_key=True)
+    job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+                       primary_key=True)
+    on_success = db.Column(db.Boolean, nullable=False, default=True)
+    on_failure = db.Column(db.Boolean, nullable=False, default=True)
+    on_deletion = db.Column(db.Boolean, nullable=False, default=False)
+    user = db.relationship("User", backref=db.backref("subscribed_jobs",
+                                                      lazy="dynamic"))
+
 
 
 class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
@@ -277,11 +283,8 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                               secondaryjoin=id==JobDependency.c.parentid,
                               backref="children")
 
-    notified_users = db.relationship("User",
-                              secondary=JobNotifiedUser,
-                              lazy="dynamic",
-                              backref=db.backref("subscribed_jobs",
-                                                 lazy="dynamic"))
+    notified_users = db.relationship("JobNotifiedUser", lazy="dynamic",
+                                     backref=db.backref("job"))
 
     tasks_queued = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == None) & "

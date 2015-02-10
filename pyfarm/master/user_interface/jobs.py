@@ -30,7 +30,8 @@ from sqlalchemy import func, desc, asc, or_, distinct
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState, _WorkState, AgentState
 from pyfarm.scheduler.tasks import delete_job, stop_task, assign_tasks
-from pyfarm.models.job import Job, JobDependency, JobTagAssociation
+from pyfarm.models.job import (
+    Job, JobDependency, JobTagAssociation, JobNotifiedUser)
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
 from pyfarm.models.agent import Agent
@@ -671,9 +672,15 @@ def add_notified_user_to_job(job_id):
                     "pyfarm/error.html", error="User %s not found" % user_id),
                 NOT_FOUND)
 
-    job.notified_users.append(user)
+    notified_user = JobNotifiedUser(user=user, job=job)
+    notified_user.on_success = ("on_success" in request.form and
+                                request.form["on_success"] == "true")
+    notified_user.on_failure = ("on_failure" in request.form and
+                                request.form["on_failure"] == "true")
+    notified_user.on_deletion = ("on_deletion" in request.form and
+                                 request.form["on_deletion"] == "true")
 
-    db.session.add(job)
+    db.session.add(notified_user)
     db.session.commit()
 
     flash("User %s has been added as notified user to job %s." %
@@ -694,9 +701,9 @@ def remove_notified_user_from_job(job_id, user_id):
                     "pyfarm/error.html", error="User %s not found" % user_id),
                 NOT_FOUND)
 
-    job.notified_users.remove(user)
-
-    db.session.add(job)
+    notified_user = JobNotifiedUser.query.filter_by(user=user, job=job).first()
+    if notified_user:
+        db.session.delete(notified_user)
     db.session.commit()
 
     flash("User %s has been removed from notified users for job %s." %

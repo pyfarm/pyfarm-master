@@ -247,7 +247,10 @@ class TestJobAPI(BaseTestCase):
                                     {
                                     "id": user1_id,
                                     "username": "testuser1",
-                                    "email": None
+                                    "email": None,
+                                    "on_deletion": False,
+                                    "on_failure": True,
+                                    "on_success": True
                                     }
                                 ],
                             "output_link": None,
@@ -1384,7 +1387,12 @@ class TestJobAPI(BaseTestCase):
         response1 = self.client.post(
             "/api/v1/jobs/%s/notified_users/" % job_name,
             content_type="application/json",
-            data=dumps({"username": "testuser1"}))
+            data=dumps({
+                "username": "testuser1",
+                "on_success": False,
+                "on_failure": False,
+                "on_deletion": True
+                }))
         self.assert_created(response1)
 
         response2 = self.client.post(
@@ -1400,12 +1408,18 @@ class TestJobAPI(BaseTestCase):
                             {
                                 "id": user1_id,
                                 "username": "testuser1",
-                                "email": None
+                                "email": None,
+                                "on_deletion": True,
+                                "on_success": False,
+                                "on_failure": False
                             },
                             {
                                 "id": user2_id,
                                 "username": "testuser2",
-                                "email": None
+                                "email": None,
+                                "on_deletion": False,
+                                "on_success": True,
+                                "on_failure": True
                             }
                          ])
 
@@ -1478,7 +1492,10 @@ class TestJobAPI(BaseTestCase):
                             {
                                 "id": user1_id,
                                 "username": "testuser1",
-                                "email": None
+                                "email": None,
+                                "on_deletion": False,
+                                "on_success": True,
+                                "on_failure": True
                             }
                          ])
 
@@ -1519,7 +1536,10 @@ class TestJobAPI(BaseTestCase):
                             {
                                 "id": user2_id,
                                 "username": "testuser2",
-                                "email": None
+                                "email": None,
+                                "on_success": True,
+                                "on_failure": True,
+                                "on_deletion": False
                             }
                          ])
 

@@ -189,9 +189,12 @@ class UtilityMixins(object):
                                 "frame": relationship.frame,
                                 "state": str(relationship.state)})
                 elif name == "notified_users":
-                    out.append({"id": relationship.id,
-                                "username": relationship.username,
-                                "email": relationship.email})
+                    out.append({"id": relationship.user_id,
+                                "username": relationship.user.username,
+                                "email": relationship.user.email,
+                                "on_success": relationship.on_success,
+                                "on_failure": relationship.on_failure,
+                                "on_deletion": relationship.on_deletion})
                 elif name == "parents":
                     out.append({"id": relationship.id,
                                 "title": relationship.title})
