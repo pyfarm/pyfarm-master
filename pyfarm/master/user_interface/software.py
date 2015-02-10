@@ -15,9 +15,9 @@
 # limitations under the License.
 
 try:
-    from httplib import NOT_FOUND, SEE_OTHER
+    from httplib import NOT_FOUND, SEE_OTHER, BAD_REQUEST
 except ImportError:  # pragma: no cover
-    from http.client import NOT_FOUND, SEE_OTHER
+    from http.client import NOT_FOUND, SEE_OTHER, BAD_REQUEST
 
 from flask import render_template, request, redirect, url_for, flash
 
