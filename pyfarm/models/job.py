@@ -284,7 +284,8 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                               backref="children")
 
     notified_users = db.relationship("JobNotifiedUser", lazy="dynamic",
-                                     backref=db.backref("job"))
+                                     backref=db.backref("job"),
+                                     cascade="all,delete")
 
     tasks_queued = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == None) & "
