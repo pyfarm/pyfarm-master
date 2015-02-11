@@ -89,6 +89,7 @@ def jobs():
                                   User.username,
                                   JobType.name.label('jobtype_name'),
                                   JobType.id.label('jobtype_id'),
+                                  JobQueue.fullpath.label('jobqueue_path'),
                                   func.coalesce(
                                       child_count_query.c.child_count,
                                       0).label('child_count'),
@@ -100,6 +101,7 @@ def jobs():
                                       0).label('agent_count')).\
         join(JobTypeVersion, Job.jobtype_version_id == JobTypeVersion.id).\
         join(JobType, JobTypeVersion.jobtype_id == JobType.id).\
+        outerjoin(JobQueue, Job.job_queue_id == JobQueue.id).\
         outerjoin(queued_count_query, Job.id == queued_count_query.c.job_id).\
         outerjoin(running_count_query, Job.id == running_count_query.c.job_id).\
         outerjoin(done_count_query, Job.id == done_count_query.c.job_id).\
@@ -197,13 +199,14 @@ def jobs():
         order_by = request.args.get("order_by")
     if order_by not in ["title", "state", "time_submitted", "t_queued",
                         "t_running", "t_failed", "t_done", "username",
-                        "jobtype_name", "agent_count", "priority", "weight"]:
+                        "jobtype_name", "agent_count", "priority", "weight",
+                        "jobqueue_path"]:
         return (render_template(
             "pyfarm/error.html",
             error="Unknown order key %r. Options are 'title', 'state', "
                   "'time_submitted', 't_queued', 't_running', 't_failed', "
-                  "'t_done', 'username', 'agent_count', 'priority' or 'weight'" %
-                  order_by), BAD_REQUEST)
+                  "'t_done', 'username', 'agent_count', 'priority', 'weight' "
+                  "or 'jobqueue_path'" % order_by), BAD_REQUEST)
     if "order_dir" in request.args:
         order_dir = request.args.get("order_dir")
         if order_dir not in ["asc", "desc"]:
