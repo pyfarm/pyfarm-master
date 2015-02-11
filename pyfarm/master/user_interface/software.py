@@ -51,6 +51,8 @@ def software_item(software_id):
     if not max_rank:
         max_rank = 0
 
+    # Next full hundred after max_rank, or the next full hundred after that if
+    # the difference would be <= 50
     next_rank = int((round((float(max_rank) + 100) / 100) * 100))
 
     return render_template("pyfarm/user_interface/software_item.html",
