@@ -606,6 +606,7 @@ def alter_scheduling_parameters_for_job(job_id):
     else:
         job.maximum_agents = None
     job.batch = int(request.form['batch'])
+    job.requeue = int(request.form['requeue'])
 
     if request.form['queue']:
         queue_id = int(request.form['queue'])
