@@ -34,7 +34,8 @@ from pyfarm.core.config import read_env_int, read_env_bool
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState, _WorkState
 from pyfarm.master.application import db
-from pyfarm.models.core.cfg import TABLE_JOB_QUEUE, MAX_JOBQUEUE_NAME_LENGTH
+from pyfarm.models.core.cfg import (
+    TABLE_JOB_QUEUE, MAX_JOBQUEUE_NAME_LENGTH, MAX_JOBQUEUE_PATH_LENGTH)
 from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
 from pyfarm.models.core.types import id_column, IDTypeWork
 
@@ -88,17 +89,31 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                             between jobs and job queues in the same queue
                             in proportion to their weights.
                             """))
+    fullpath = db.Column(db.String(MAX_JOBQUEUE_PATH_LENGTH),
+                         doc="The path of this jobqueue.  This column is a "
+                             "database denormalization.  It is technically "
+                             "redundant, but faster to access than recursively "
+                             "querying all parent queues.  If set to NULL, the "
+                             "path must be computed by recursively querying "
+                             "the parent queues.")
     parent = db.relationship("JobQueue",
                              remote_side=[id],
                              backref=db.backref("children", lazy="dynamic"),
                              doc="Relationship between this queue its parent")
 
     def path(self):
-        path = "/%s" % (self.name or "")
-        if self.parent:
-            return self.parent.path() + path
+        # Import here instead of at the top to break circular dependency
+        from pyfarm.scheduler.tasks import cache_jobqueue_path
+
+        if self.fullpath:
+            return self.fullpath
         else:
-            return path
+            cache_jobqueue_path.delay(self.id)
+            path = "/%s" % (self.name or "")
+            if self.parent:
+                return self.parent.path() + path
+            else:
+                return path
 
     def num_assigned_agents(self):
         try:

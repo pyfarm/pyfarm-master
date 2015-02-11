@@ -841,6 +841,7 @@ def compress_task_logs():
             raise
         logger.warning("Log directory %r does not exist", LOGFILES_DIR)
 
+
 @celery_app.task(ignore_results=True)
 def compress_task_log(tasklog_name):
     db.session.rollback()
@@ -860,3 +861,14 @@ def compress_task_log(tasklog_name):
         logger.error("Could not compress tasklog file %s: %s: %s",
                      tasklog_name, type(e).__name__, e)
         raise
+
+
+@celery_app.task(ignore_results=True)
+def cache_jobqueue_path(jobqueue_id):
+    db.session.rollback()
+
+    jobqueue = JobQueue.query.filter_by(id=jobqueue_id).one()
+    jobqueue.fullpath = jobqueue.path()
+
+    db.session.add(jobqueue)
+    db.session.commit()

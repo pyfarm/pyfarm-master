@@ -54,6 +54,10 @@ def jobqueue_create():
             jobqueue.weight = request.form["weight"]
 
         db.session.add(jobqueue)
+        db.session.flush()
+
+        jobqueue.fullpath = jobqueue.path()
+        db.session.add(jobqueue)
         db.session.commit()
 
         flash("Created new jobqueue \"%s\"." % jobqueue.name)
