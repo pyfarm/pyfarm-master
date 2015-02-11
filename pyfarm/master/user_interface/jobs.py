@@ -197,12 +197,12 @@ def jobs():
         order_by = request.args.get("order_by")
     if order_by not in ["title", "state", "time_submitted", "t_queued",
                         "t_running", "t_failed", "t_done", "username",
-                        "jobtype_name", "agent_count"]:
+                        "jobtype_name", "agent_count", "priority", "weight"]:
         return (render_template(
             "pyfarm/error.html",
             error="Unknown order key %r. Options are 'title', 'state', "
                   "'time_submitted', 't_queued', 't_running', 't_failed', "
-                  "'t_done', 'username', or 'agent_count'" %
+                  "'t_done', 'username', 'agent_count', 'priority' or 'weight'" %
                   order_by), BAD_REQUEST)
     if "order_dir" in request.args:
         order_dir = request.args.get("order_dir")
@@ -220,6 +220,10 @@ def jobs():
         jobs_query = jobs_query.order_by(desc(Job.state))
     elif order_by == "state" and order_dir == "asc":
         jobs_query = jobs_query.order_by(asc(Job.state))
+    elif order_by == "weight" and order_dir == "asc":
+        jobs_query = jobs_query.order_by(asc(Job.weight))
+    elif order_by == "weight" and order_dir == "desc":
+        jobs_query = jobs_query.order_by(desc(Job.weight))
     else:
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
