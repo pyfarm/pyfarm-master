@@ -152,18 +152,13 @@ def remove_software_version(software_id, version_id):
     if job_requirements or jobtype_requirements:
         error = ("This version cannot be deleted, it is still in use by the "
                  "following jobs or jobtypes: ")
-        first = True
+        dependencies = []
         for job_requirement in job_requirements:
-            if not first:
-                error.append(", ")
-            first = False
-            error.append("job %s" % job_requirement.job.title)
+            dependencies.append("job %s" % job_requirement.job.title)
         for jobtype_requirements in jobtype_requirements:
-            if not first:
-                error.append(", ")
-            first = False
-            error.append("jobtype %s" %
-                         jobtype_requirements.jobtype_version.jobtype.name)
+            dependencies.append(
+                "jobtype %s" % jobtype_requirements.jobtype_version.jobtype.name)
+        error.append(", ".join(dependencies))
         return render_template("pyfarm/error.html", error=error), BAD_REQUEST
 
     db.session.delete(version)
