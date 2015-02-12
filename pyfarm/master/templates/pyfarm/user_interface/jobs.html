@@ -237,16 +237,6 @@
       </a>
     </th>
     <th>
-      <a href="{{ url_for('jobs_index_ui', order_by='weight', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
-        Weight
-        {% if order_by == 'weight' and order_dir == 'desc' %}
-        <span class="glyphicon glyphicon-chevron-down"></span>
-        {% elif order_by == 'weight' %}
-        <span class="glyphicon glyphicon-chevron-up"></span>
-        {% endif %}
-      </a>
-    </th>
-    <th>
       <a href="{{ url_for('jobs_index_ui', order_by='jobqueue_path', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
         Queue
         {% if order_by == 'jobqueue_path' and order_dir == 'desc' %}
@@ -388,7 +378,6 @@
     </td>
     <td><a href="{{ url_for('single_jobtype_ui', jobtype_id=job['jobtype_id']) }}">{{ job["jobtype_name"] }}</a></td>
     <td>{{ job[0].priority }}</td>
-    <td>{{ job[0].weight }}</td>
     <td>
       <a href="{{ url_for('single_jobqueue_ui', queue_id=job[0].job_queue_id) }}">
         {{ job['jobqueue_path'] }}
