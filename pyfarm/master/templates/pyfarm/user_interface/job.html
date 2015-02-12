@@ -160,7 +160,7 @@
               State
             </td>
             <td>
-              {{ job.state }}
+              {{ job.state or "queued" }}
             </td>
           </tr>
           <tr>
@@ -312,6 +312,14 @@
             </td>
             <td>
               <input type="text" class="form-control" name="batch" value="{{ job.batch }}"/>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Max Requeues
+            </td>
+            <td>
+              <input type="text" class="form-control" name="requeue" value="{{ job.requeue }}"/>
             </td>
           </tr>
           <tr>
