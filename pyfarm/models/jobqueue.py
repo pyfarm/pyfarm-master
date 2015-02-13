@@ -206,27 +206,27 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                          reverse=True)
 
             selected_job = None
-            for object in objects:
-                if isinstance(object, Job):
-                    if object.state == _WorkState.RUNNING:
-                        if (object.can_use_more_agents() and
-                            object.num_assigned_agents() + 1 <
-                                (object.maximum_agents or maxsize)):
+            for item in objects:
+                if isinstance(item, Job):
+                    if item.state == _WorkState.RUNNING:
+                        if (item.can_use_more_agents() and
+                            item.num_assigned_agents() + 1 <
+                                (item.maximum_agents or maxsize)):
                             if PREFER_RUNNING_JOBS:
-                                return object
+                                return item
                             elif (selected_job is None or
                                   selected_job.time_submitted >
-                                    object.time_submitted):
-                                selected_job = object
+                                    item.time_submitted):
+                                selected_job = item
                     elif (selected_job is None or
-                          selected_job.time_submitted > object.time_submitted):
+                          selected_job.time_submitted > item.time_submitted):
                         # If this job is not running yet, remember it, but keep
                         # looking for already running or queued but older jobs
-                        selected_job = object
-                if isinstance(object, JobQueue):
-                    if (object.num_assigned_agents() + 1 <
-                            (object.maximum_agents or maxsize)):
-                        job = object.get_job_for_agent(agent)
+                        selected_job = item
+                if isinstance(item, JobQueue):
+                    if (item.num_assigned_agents() + 1 <
+                            (item.maximum_agents or maxsize)):
+                        job = item.get_job_for_agent(agent)
                         if job:
                             return job
             if selected_job:
