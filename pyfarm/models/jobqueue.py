@@ -38,6 +38,7 @@ from pyfarm.models.core.cfg import TABLE_JOB_QUEUE, MAX_JOBQUEUE_NAME_LENGTH
 from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
 from pyfarm.models.core.types import id_column, IDTypeWork
 
+PREFER_RUNNING_JOBS = read_env_bool("PYFARM_PREFER_RUNNING_JOBS", True)
 logger = getLogger("pf.models.jobqueue")
 if read_env_bool("PYFARM_JOBQUEUE_DEBUG", True):
     logger.setLevel(DEBUG)
@@ -196,7 +197,12 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                         if (object.can_use_more_agents() and
                             object.num_assigned_agents() + 1 <
                                 (object.maximum_agents or maxsize)):
-                            return object
+                            if PREFER_RUNNING_JOBS:
+                                return object
+                            elif (selected_job is None or
+                                  selected_job.time_submitted >
+                                    object.time_submitted):
+                                selected_job = object
                     elif (selected_job is None or
                           selected_job.time_submitted > object.time_submitted):
                         # If this job is not running yet, remember it, but keep
