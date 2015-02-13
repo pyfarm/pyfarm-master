@@ -61,7 +61,8 @@ class TestJobQueueAPI(BaseTestCase):
                 "priority": 0,
                 "weight": 10,
                 "jobs": [],
-                "children": []
+                "children": [],
+                "fullpath": "/Test JobQueue"
                 })
 
         response3 = self.client.get("/api/v1/jobqueues/%s" % id)
@@ -77,8 +78,9 @@ class TestJobQueueAPI(BaseTestCase):
                 "priority": 0,
                 "weight": 10,
                 "jobs": [],
-                "children": []
-                })
+                "children": [],
+                "fullpath": "/Test JobQueue"
+               })
 
     def test_jobqueue_post_conflict(self):
         response1 = self.client.post(
@@ -112,7 +114,8 @@ class TestJobQueueAPI(BaseTestCase):
                         "id": id,
                         "maximum_agents": None,
                         "minimum_agents": None,
-                        "name": "Test JobQueue"
+                        "name": "Test JobQueue",
+                        "fullpath": "/Test JobQueue"
                     }
                 ])
 
@@ -147,7 +150,8 @@ class TestJobQueueAPI(BaseTestCase):
                 "priority": 0,
                 "weight": 20,
                 "jobs": [],
-                "children": []
+                "children": [],
+                "fullpath": "/Test JobQueue"
                 })
 
         response3 = self.client.post(
@@ -168,7 +172,8 @@ class TestJobQueueAPI(BaseTestCase):
                 "priority": 1,
                 "weight": 20,
                 "jobs": [],
-                "children": []
+                "children": [],
+                "fullpath": "/Test JobQueue"
                 })
 
     def test_jobqueue_edit_unknown_key(self):

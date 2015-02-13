@@ -131,6 +131,10 @@ class JobQueueIndexAPI(MethodView):
 
         jobqueue = JobQueue(**g.json)
         db.session.add(jobqueue)
+        db.session.flush()
+
+        jobqueue.fullpath = jobqueue.path()
+        db.session.add(jobqueue)
         db.session.commit()
 
         jobqueue_data = jobqueue.to_dict()
@@ -305,6 +309,14 @@ class SingleJobQueueAPI(MethodView):
 
         if g.json:
             return jsonify(error="Unkown columns: %s" % g.json), BAD_REQUEST
+
+        # It is possible for a call to this to change a queue's name
+        db.session.add(jobqueue)
+        db.session.flush()
+        jobqueue.fullpath = jobqueue.path()
+        for childqueue in jobqueue.children:
+            childqueue.fullpath = childqueue.path()
+            db.session.add(childqueue)
 
         db.session.add(jobqueue)
         db.session.commit()
