@@ -557,6 +557,31 @@ def send_job_completion_mail(job_id, successful=True):
         logger.info("Job completion mail for job %s (id %s) sent to %s",
                     job.title, job.id, to)
 
+
+@celery_app.task(ignore_results=True)
+def send_job_deletion_mail(job_id, jobtype_name, job_title, to):
+    logger.debug("In send_job_deletion_mail(), job_id: %s, jobtype_name: %s, "
+                 "job_title: %s, to: %s", job_id, jobtype_name, job_title, to)
+    message_text = ("%s job %s (id %s) has been deleted.\n\n" %
+                    (jobtype_name, job_title, job_id))
+    message_text += "Sincerely,\n\tThe PyFarm render manager"
+
+    message = MIMEText(message_text)
+    message["Subject"] = ("Job %s deleted" % job_title)
+    message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
+
+    message["To"] = ",".join(to)
+
+    if to:
+        smtp = SMTP(read_env("PYFARM_MAIL_SERVER", "localhost"))
+        smtp.sendmail(read_env("PYFARM_FROM_ADDRESS",
+                               "pyfarm@localhost"), to, message.as_string())
+        smtp.quit()
+
+        logger.info("Job deletion mail for job %s (id %s) sent to %s",
+                    job_title, job_id, to)
+
+
 @celery_app.task(ignore_results=True, bind=True)
 def update_agent(self, agent_id):
     db.session.rollback()
@@ -642,6 +667,14 @@ def delete_task(self, task_id):
                     logger.info("Job %s (%s) is marked for deletion and has no "
                                 "tasks left, deleting it from the database now.",
                                 job.id, job.title)
+                    notified_users = JobNotifiedUser.query.filter(
+                        JobNotifiedUser.job == job,
+                        JobNotifiedUser.on_deletion == True).all()
+                    to = [x.user.email for x in notified_users if
+                          x.user.email]
+                    send_job_deletion_mail.delay(
+                        job.id, job.jobtype_version.jobtype.name,
+                        job.title, to)
                     db.session.delete(job)
                 db.session.commit()
             done = True
@@ -756,6 +789,13 @@ def delete_job(job_id):
         logger.info("Job %s (%s) is marked for deletion and has no tasks "
                     "that require asynchronous deletion. Deleting it now.",
                     job.id, job.title)
+        # Notify users about deletion
+        notified_users = JobNotifiedUser.query.filter(
+            JobNotifiedUser.job == job,
+            JobNotifiedUser.on_deletion == True).all()
+        to = [x.user.email for x in notified_users if x.user.email]
+        send_job_deletion_mail.delay(job.id, job.jobtype_version.jobtype.name,
+                                     job.title, to)
         db.session.delete(job)
 
     db.session.commit()
