@@ -25,20 +25,21 @@
     {% if queue.children or queue.jobs.count() != 0 %}
     <ul>
       {{ loop(queue.children) }}
-      <li><a href="{{ url_for('jobqueue_create_ui', parent=queue.id) }}" class="btn btn-default" role="button">Create</a></li>
+      <li><a href="{{ url_for('jobqueue_create_ui', parent=queue.id) }}" class="btn btn-default" role="button">Create Subqueue</a></li>
       {% for job in queue.jobs.order_by("state desc") %}
       <li>
-        <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }} {{ 'badge-important' if job.state == WorkState.FAILED }}">
-          <i class="glyphicon glyphicon-leaf"></i>
-          {{ job.title }}<br/>
-          State: {{ job.state or "queued" }}<br/>
-          Agents min / current / max: {{ job.minimum_agents or "-"}} / {{ job.num_assigned_agents() }} / {{ job.maximum_agents or "-" }}<br/>
-          Priority: {{ job.priority }}<br/>
-          Weight: {{ job.weight }}
-        </span>
-        <a href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
-          <i class="glyphicon glyphicon-eye-open"></i>
-        </a>
+        <div class="panel {{ 'panel-success' if job.state == WorkState.DONE }} {{ 'panel-danger' if job.state == WorkState.FAILED }} {{ 'panel-default' if job.state == None }} {{ 'panel-info' if job.state == WorkState.RUNNING }} {{ 'panel-warning' if job.state == WorkState.PAUSED }}" style="max-width:50%;margin-bottom:0">
+          <div class="panel-heading"><h3 class="panel-title">{{ job.title }}</h3></div>
+          <div class="panel-body">
+            <a style="float:right" href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
+              <i class="glyphicon glyphicon-eye-open"></i>
+            </a>
+            State: {{ job.state or "queued" }}<br/>
+            Agents min / current / max: {{ job.minimum_agents or "-"}} / {{ job.num_assigned_agents() }} / {{ job.maximum_agents or "-" }}<br/>
+            Priority: {{ job.priority }}<br/>
+            Weight: {{ job.weight }}<br/>
+          </div>
+        </div>
       </li>
       {% endfor %}
     </ul>
@@ -48,18 +49,18 @@
   <li><a href="{{ url_for('jobqueue_create_ui') }}" class="btn btn-default" role="button">Create</a></li>
   {% for job in top_level_jobs %}
   <li>
-    <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }}{{ 'badge-important' if job.state == WorkState.FAILED }}{{ 'badge-warning' if job.state == WorkState.RUNNING }}">
-      <i class="icon-leaf"></i>
-      {{ job.title }}<br/>
-      State: {{ job.state or "queued" }}<br/>
-      Agents min / current / max: {{ job.minimum_agents or "-"}} / {{ job.num_assigned_agents() }} / {{ job.maximum_agents or "-" }}<br/>
-      Priority: {{ job.priority }}<br/>
-      Weight: {{ job.weight }}
-    </span>
-    <a href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
-      <i class="glyphicon glyphicon-eye-open"></i>
-    </a>
-
+    <div class="panel {{ 'panel-success' if job.state == WorkState.DONE }} {{ 'panel-danger' if job.state == WorkState.FAILED }} {{ 'panel-default' if job.state == None }} {{ 'panel-info' if job.state == WorkState.RUNNING }} {{ 'panel-warning' if job.state == WorkState.PAUSED }}" style="max-width:50%;margin-bottom:0">
+      <div class="panel-heading"><h3 class="panel-title">{{ job.title }}</h3></div>
+      <div class="panel-body">
+        <a style="float:right" href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
+          <i class="glyphicon glyphicon-eye-open"></i>
+        </a>
+        State: {{ job.state or "queued" }}<br/>
+        Agents min / current / max: {{ job.minimum_agents or "-"}} / {{ job.num_assigned_agents() }} / {{ job.maximum_agents or "-" }}<br/>
+        Priority: {{ job.priority }}<br/>
+        Weight: {{ job.weight }}<br/>
+      </div>
+    </div>
   </li>
   {% endfor %}
 </ul>
