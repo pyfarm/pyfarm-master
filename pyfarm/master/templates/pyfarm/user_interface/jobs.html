@@ -21,6 +21,10 @@
       <li role="presentation"><a href="#" id="selected-pause">Pause</a></li>
       <li role="presentation"><a href="#" id="selected-resume">Resume</a></li>
       <li role="presentation"><a href="#" id="selected-delete">Delete</a></li>
+      <li role="presentation" class="divider"></li>
+      <li role="presentation">
+        <a href="#" id="selected-move">Move To Queue...</a>
+      </li>
     </ul>
   </li>
 </ul>
@@ -433,4 +437,32 @@
 <form method="post" action="{{ url_for('unpause_multiple_jobs_ui', next=url_for('jobs_index_ui', **filters_and_order)) }}" id="resume_multiple_form"></form>
 
 <form method="post" action="{{ url_for('delete_multiple_jobs_ui', next=url_for('jobs_index_ui', **filters_and_order)) }}" id="delete_multiple_form"></form>
+
+<div class="modal" id="selected-move-modal" role="dialog" aria-labelledby="selected-move-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="selected-move-label">Move Selected Jobs</h4>
+      </div>
+      <div class="modal-body">
+        <form method="post" id="move-multiple-form" action="{{ url_for('move_multiple_jobs_ui', next=url_for('jobs_index_ui', **filters_and_order)) }}">
+          <div class="form-group">
+            <label for="selected-move-target">Jobqueue</label>
+            <select class="form-control" id="selected-move-target" name="queue">
+              {% for jobqueue in jobqueues %}
+              <option value="{{jobqueue.id}}">{{jobqueue.path()}}</option>
+              {% endfor%}
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="move-multiple-submit">Move Jobs</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

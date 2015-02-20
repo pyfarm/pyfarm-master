@@ -138,7 +138,7 @@ def load_user_interface(app_instance):
         remove_notified_user_from_job, upgrade_job_to_latest_jobtype_version,
         rerun_failed_in_job, alter_autodeletion_for_job, rerun_multiple_jobs,
         rerun_failed_in_multiple_jobs, pause_multiple_jobs,
-        unpause_multiple_jobs, delete_multiple_jobs)
+        unpause_multiple_jobs, delete_multiple_jobs, move_multiple_jobs)
     from pyfarm.master.user_interface.jobqueues import (
         jobqueues, jobqueue_create, jobqueue, delete_jobqueue)
     from pyfarm.master.user_interface.jobtypes import (
@@ -206,6 +206,9 @@ def load_user_interface(app_instance):
     app_instance.add_url_rule("/jobs/<int:job_id>/alter_scheduling_parameters",
                               "alter_scheduling_parameters_in_job_ui",
                               alter_scheduling_parameters_for_job,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/move_multiple",
+                              "move_multiple_jobs_ui", move_multiple_jobs,
                               methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/alter_autodelete_parameters",
                               "alter_autodelete_parameters_in_job_ui",

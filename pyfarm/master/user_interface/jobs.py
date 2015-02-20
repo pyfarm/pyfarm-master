@@ -259,6 +259,8 @@ def jobs():
         else:
             tags_by_job_id[association[0]] += [association[1]]
 
+    jobqueues = JobQueue.query.all()
+
     filters_and_order = filters.copy()
     filters_and_order.update({"order_by": order_by, "order_dir": order_dir})
     filters_and_order_wo_pagination = filters_and_order.copy()
@@ -274,7 +276,8 @@ def jobs():
                            tags_by_job_id=tags_by_job_id, jobs_count=jobs_count,
                            all_pages=all_pages, num_pages=num_pages,
                            filters_and_order_wo_pagination=\
-                               filters_and_order_wo_pagination)
+                               filters_and_order_wo_pagination,
+                           jobqueues=jobqueues)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
@@ -632,6 +635,35 @@ def alter_scheduling_parameters_for_job(job_id):
     flash("Scheduling parameters for job %s have been changed." % job.title)
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
+
+def move_multiple_jobs():
+    job_ids = request.form.getlist("job_id")
+
+    queue_id = int(request.form['queue'])
+    queue = JobQueue.query.filter_by(id=queue_id).first()
+    if not queue:
+        return (render_template(
+            "pyfarm/error.html", error="Queue %s not found" % queue_id),
+        NOT_FOUND)
+
+    for job_id in job_ids:
+        job = Job.query.filter_by(id=job_id).first()
+        if not job:
+            return (render_template(
+                        "pyfarm/error.html", error="Job %s not found" % job_id),
+                    NOT_FOUND)
+
+        job.queue = queue
+        db.session.add(job)
+
+    db.session.commit()
+
+    flash("Selected jobs have been moved to queue %s" % queue.path())
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
 
 def alter_autodeletion_for_job(job_id):
     job = Job.query.filter_by(id=job_id).first()

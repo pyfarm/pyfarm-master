@@ -98,4 +98,17 @@ $(document).ready(function() {
             delete_form.submit();
         }
     });
+
+    $('#selected-move').click(function() {
+        var move_form = $("#move-multiple-form");
+        $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                move_form.append(job_input);
+        });
+        $('#selected-move-modal').modal('toggle');
+    });
+
+    $("#move-multiple-submit").click(function() {
+        $("#move-multiple-form").submit();
+    });
 });
