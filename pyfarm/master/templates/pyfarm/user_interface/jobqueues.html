@@ -66,7 +66,7 @@
 
 <div class="tree" style="margin-top:12px">
 <ul>
-  {% for queue in jobqueues.order_by("priority desc") recursive %}
+  {% for queue in jobqueues recursive %}
   <li>
     <span>
       <i class="glyphicon glyphicon-minus-sign"></i>{{ queue.path() }}
@@ -85,9 +85,9 @@
     </form>
     {% if queue.children or queue.jobs.count() != 0 %}
     <ul>
-      {{ loop(queue.children) }}
+      {{ loop(queue.child_queues_sorted()) }}
       <li><a href="{{ url_for('jobqueue_create_ui', parent=queue.id) }}" class="btn btn-default" role="button">Create Subqueue</a></li>
-      {% for job in queue.jobs.order_by("state desc") %}
+      {% for job in queue.child_jobs(filters=filters) %}
       <li>
         <div class="panel {{ 'panel-success' if job.state == WorkState.DONE }} {{ 'panel-danger' if job.state == WorkState.FAILED }} {{ 'panel-default' if job.state == None }} {{ 'panel-info' if job.state == WorkState.RUNNING }} {{ 'panel-warning' if job.state == WorkState.PAUSED }}" style="max-width:50%;margin-bottom:0">
           <div class="panel-heading"><h3 class="panel-title">{{ job.title }}</h3></div>

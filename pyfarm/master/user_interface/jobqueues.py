@@ -32,6 +32,8 @@ logger = getLogger("ui.jobqueues")
 
 def jobqueues():
     jobqueues = JobQueue.query.filter_by(parent_jobqueue_id=None).all()
+    jobqueues = sorted(jobqueues, key=lambda x: x.num_assigned_agents(),
+                       reverse=True)
 
     top_level_jobs_query = Job.query.filter_by(queue=None)
 
@@ -80,9 +82,11 @@ def jobqueues():
         top_level_jobs_query = top_level_jobs_query.filter(
             Job.state.in_(wanted_states))
 
+    top_level_jobs = sorted(top_level_jobs_query.all(),
+                            key=lambda x: x.num_assigned_agents(), reverse=True)
+
     return render_template("pyfarm/user_interface/jobqueues.html",
-                           jobqueues=jobqueues,
-                           top_level_jobs=top_level_jobs_query,
+                           jobqueues=jobqueues, top_level_jobs=top_level_jobs,
                            WorkState=WorkState, filters=filters)
 
 def jobqueue_create():

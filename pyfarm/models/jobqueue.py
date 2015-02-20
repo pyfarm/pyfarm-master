@@ -116,6 +116,44 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
             else:
                 return path
 
+    def child_queues_sorted(self):
+        """
+        Return child queues sorted by number of currently assigned agents with
+        priority as a secondary sort key.
+        """
+        queues = [x for x in self.children]
+        return sorted(queues, key=lambda x: x.num_assigned_agents(),
+                      reverse=True)
+
+    def child_jobs(self, filters):
+        # Import down here instead of at the top to avoid circular import
+        from pyfarm.models.job import Job
+
+        jobs_query = Job.query
+
+        if self.id:
+            jobs_query = jobs_query.filter_by(queue=self)
+
+        wanted_states = []
+        if filters["state_paused"]:
+            wanted_states.append(WorkState.PAUSED)
+        if filters["state_running"]:
+            wanted_states.append(WorkState.RUNNING)
+        if filters["state_done"]:
+            wanted_states.append(WorkState.DONE)
+        if filters["state_failed"]:
+            wanted_states.append(WorkState.FAILED)
+        if filters["state_queued"]:
+            jobs_query = jobs_query.filter(or_(
+                Job.state == None,
+                Job.state.in_(wanted_states)))
+        else:
+            jobs_query = jobs_query.filter(
+                Job.state.in_(wanted_states))
+
+        return sorted(jobs_query.all(), key=lambda x: x.num_assigned_agents(),
+                      reverse=True)
+
     def num_assigned_agents(self):
         try:
             return self.assigned_agents_count
