@@ -3,7 +3,68 @@
 {% block jobqueues_nb_class %}active{% endblock %}
 {% block content %}
 
-<div class="tree">
+<form method="GET" action="{{ url_for('jobqueues_index_ui') }}" class="form-inline" role="form" style="margin-top: 15px;">
+  <div class="btn-group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="state-dropdown-menu" aria-expanded="true">
+      Job States <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-form" role="menu" aria-labelledby="state-dropdown-menu">
+      <li>
+        <label class="checkbox">
+          {% if filters.state_paused %}
+          <input type="checkbox" name="state_paused" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_paused" value="true"/>
+          {% endif %}
+          Paused
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+          {% if filters.state_queued %}
+          <input type="checkbox" name="state_queued" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_queued" value="true"/>
+          {% endif %}
+          Queued
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+          {% if filters.state_running %}
+          <input type="checkbox" name="state_running" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_running" value="true"/>
+          {% endif %}
+          Running
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+          {% if filters.state_failed %}
+          <input type="checkbox" name="state_failed" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_failed" value="true"/>
+          {% endif %}
+          Failed
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+         {% if filters.state_done %}
+          <input type="checkbox" name="state_done" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_done" value="true"/>
+          {% endif %}
+          Done
+        </label>
+      </li>
+    </ul>
+  </div>
+  <input type="submit" class="btn" value="Filter">
+</form>
+
+<div class="tree" style="margin-top:12px">
 <ul>
   {% for queue in jobqueues.order_by("priority desc") recursive %}
   <li>

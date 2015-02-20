@@ -20,6 +20,7 @@ except ImportError:  # pragma: no cover
     from http.client import SEE_OTHER, NOT_FOUND
 
 from flask import render_template, request, redirect, url_for, flash
+from sqlalchemy import or_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
@@ -30,13 +31,59 @@ from pyfarm.models.job import Job
 logger = getLogger("ui.jobqueues")
 
 def jobqueues():
-    jobqueues = JobQueue.query.filter_by(parent_jobqueue_id=None)
+    jobqueues = JobQueue.query.filter_by(parent_jobqueue_id=None).all()
 
-    top_level_jobs = Job.query.filter_by(queue=None)
+    top_level_jobs_query = Job.query.filter_by(queue=None)
+
+    filters = {}
+    if ("state_paused" not in request.args and
+        "state_queued" not in request.args and
+        "state_running" not in request.args and
+        "state_done" not in request.args and
+        "state_failed" not in request.args):
+        filters["state_paused"] = False
+        filters["state_queued"] = False
+        filters["state_running"] = True
+        filters["state_done"] = False
+        filters["state_failed"] = False
+    else:
+        filters["state_paused"] = ("state_paused" in request.args and
+                                   request.args["state_paused"].lower() ==
+                                        "true")
+        filters["state_queued"] = ("state_queued" in request.args and
+                                   request.args["state_queued"].lower() ==
+                                        "true")
+        filters["state_running"] = ("state_running" in request.args and
+                                    request.args["state_running"].lower() ==
+                                        "true")
+        filters["state_done"] = ("state_done" in request.args and
+                                 request.args["state_done"].lower() ==
+                                        "true")
+        filters["state_failed"] = ("state_failed" in request.args and
+                                   request.args["state_failed"].lower() ==
+                                        "true")
+
+    wanted_states = []
+    if filters["state_paused"]:
+        wanted_states.append(WorkState.PAUSED)
+    if filters["state_running"]:
+        wanted_states.append(WorkState.RUNNING)
+    if filters["state_done"]:
+        wanted_states.append(WorkState.DONE)
+    if filters["state_failed"]:
+        wanted_states.append(WorkState.FAILED)
+    if filters["state_queued"]:
+        top_level_jobs_query = top_level_jobs_query.filter(or_(
+            Job.state == None,
+            Job.state.in_(wanted_states)))
+    else:
+        top_level_jobs_query = top_level_jobs_query.filter(
+            Job.state.in_(wanted_states))
 
     return render_template("pyfarm/user_interface/jobqueues.html",
-                           jobqueues=jobqueues, top_level_jobs=top_level_jobs,
-                           WorkState=WorkState)
+                           jobqueues=jobqueues,
+                           top_level_jobs=top_level_jobs_query,
+                           WorkState=WorkState, filters=filters)
 
 def jobqueue_create():
     if request.method == 'POST':
