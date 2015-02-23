@@ -111,4 +111,17 @@ $(document).ready(function() {
     $("#move-multiple-submit").click(function() {
         $("#move-multiple-form").submit();
     });
+
+    $('#selected-set-prio-weight').click(function() {
+        var form = $("#set-prio-weight-multiple-form");
+        $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                form.append(job_input);
+        });
+        $('#selected-set-prio-weight-modal').modal('toggle');
+    });
+
+    $("#set-prio-weight-submit").click(function() {
+        $("#set-prio-weight-multiple-form").submit();
+    });
 });

@@ -25,6 +25,9 @@
       <li role="presentation">
         <a href="#" id="selected-move">Move To Queue...</a>
       </li>
+      <li role="presentation">
+        <a href="#" id="selected-set-prio-weight">Set Priority and Weight...</a>
+      </li>
     </ul>
   </li>
 </ul>
@@ -460,6 +463,33 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" id="move-multiple-submit">Move Jobs</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="selected-set-prio-weight-modal" role="dialog" aria-labelledby="selected-set-prio-weight-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="selected-set-prio-weight-label">Set Priority And Weight On Selected Jobs</h4>
+      </div>
+      <div class="modal-body">
+        <form method="post" id="set-prio-weight-multiple-form" action="{{ url_for('set_prio_weight_on_jobs', next=url_for('jobs_index_ui', **filters_and_order)) }}">
+          <div class="form-group">
+            <label for="selected-prio">Prioriy</label>
+            <input type="text" class="form-control" id="selected-prio" name="prio" value="0"/>
+          </div>
+          <div class="form-group">
+            <label for="selected-weight">Weight</label>
+            <input type="text" class="form-control" id="selected-weight" name="weight" value="10"/>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="set-prio-weight-submit">Set Priority And Weight</button>
       </div>
     </div>
   </div>
