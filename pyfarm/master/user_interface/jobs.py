@@ -380,6 +380,7 @@ def rerun_single_job(job_id):
             db.session.add(task)
 
     job.state = None
+    job.completion_notify_sent = False
     db.session.add(job)
     db.session.commit()
 
@@ -410,6 +411,7 @@ def rerun_multiple_jobs():
                 db.session.add(task)
 
         job.state = None
+        job.completion_notify_sent = False
         db.session.add(job)
 
     db.session.commit()
@@ -438,6 +440,7 @@ def rerun_failed_in_job(job_id):
             db.session.add(task)
 
     job.state = None
+    job.completion_notify_sent = False
     db.session.add(job)
     db.session.commit()
 
@@ -468,6 +471,7 @@ def rerun_failed_in_multiple_jobs():
                 db.session.add(task)
 
         job.state = None
+        job.completion_notify_sent = False
         db.session.add(job)
         db.session.commit()
 

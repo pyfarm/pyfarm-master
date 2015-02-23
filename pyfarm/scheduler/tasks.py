@@ -516,46 +516,94 @@ def poll_agents():
 
 @celery_app.task(ignore_results=True)
 def send_job_completion_mail(job_id, successful=True):
-    db.session.rollback()
-    job = Job.query.filter_by(id=job_id).one()
+    job_lockfile_name = SCHEDULER_LOCKFILE_BASE + "-job-" + str(job_id)
+    job_lock = LockFile(job_lockfile_name)
 
-    notified_users_query = JobNotifiedUser.query.filter_by(job=job)
-    if successful:
-        notified_users_query = notified_users_query.filter_by(on_success=True)
-    else:
-        notified_users_query = notified_users_query.filter_by(on_failure=True)
-    notified_users = notified_users_query.all()
-    if not notified_users:
-        return
+    try:
+        job_lock.acquire(timeout=-1)
+        with job_lock:
+            with open(job_lockfile_name, "w") as lockfile:
+                lockfile.write(str(time()))
 
-    message_text = ("%s job %s (id %s) has %s on %s.\n\n" %
-                    (job.jobtype_version.jobtype.name, job.title, job.id,
-                     ("completed successfully" if successful
-                         else "failed"),
-                     job.time_finished.isoformat()))
-    if job.output_link:
-        message_text += "See:\n"
-        message_text += job.output_link + "\n\n"
-    message_text += "Sincerely,\n\tThe PyFarm render manager"
+            db.session.rollback()
+            job = Job.query.filter_by(id=job_id).one()
+            if job.completion_notify_sent:
+                return
 
-    message = MIMEText(message_text)
-    message["Subject"] = ("Job %s %s" %
-                            (job.title,
-                             "completed successfully" if successful else
-                             "failed"))
-    message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
+            notified_users_query = JobNotifiedUser.query.filter_by(job=job)
+            if successful:
+                notified_users_query = notified_users_query.filter_by(
+                    on_success=True)
+            else:
+                notified_users_query = notified_users_query.filter_by(
+                    on_failure=True)
+            notified_users = notified_users_query.all()
+            if not notified_users:
+                return
 
-    to = [x.user.email for x in notified_users if x.user.email]
-    message["To"] = ",".join(to)
+            message_text = ("%s job %s (id %s) has %s on %s.\n\n" %
+                            (job.jobtype_version.jobtype.name, job.title, job.id,
+                            ("completed successfully" if successful
+                                else "failed"),
+                            job.time_finished.isoformat()))
+            if job.output_link:
+                message_text += "See:\n"
+                message_text += job.output_link + "\n\n"
+            message_text += "Sincerely,\n\tThe PyFarm render manager"
 
-    if to:
-        smtp = SMTP(read_env("PYFARM_MAIL_SERVER", "localhost"))
-        smtp.sendmail(read_env("PYFARM_FROM_ADDRESS",
-                               "pyfarm@localhost"), to, message.as_string())
-        smtp.quit()
+            message = MIMEText(message_text)
+            message["Subject"] = ("Job %s %s" %
+                                    (job.title,
+                                    "completed successfully" if successful else
+                                    "failed"))
+            message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
 
-        logger.info("Job completion mail for job %s (id %s) sent to %s",
-                    job.title, job.id, to)
+            to = [x.user.email for x in notified_users if x.user.email]
+            message["To"] = ",".join(to)
+
+            if to:
+                smtp = SMTP(read_env("PYFARM_MAIL_SERVER", "localhost"))
+                smtp.sendmail(read_env("PYFARM_FROM_ADDRESS",
+                                    "pyfarm@localhost"), to, message.as_string())
+                smtp.quit()
+
+                logger.info("Job completion mail for job %s (id %s) sent to %s",
+                            job.title, job.id, to)
+
+            job.completion_notify_sent = True
+            db.session.add(job)
+            db.session.commit()
+
+    except AlreadyLocked:
+        logger.debug("The job lockfile is locked, something is already working "
+                     " on job %s", job_id)
+        try:
+            with open(job_lockfile_name, "r") as lockfile:
+                locktime = float(lockfile.read())
+                if locktime < time() - 60:
+                    logger.error("The old lock was held for more than 60 "
+                                 "seconds. Breaking the lock.")
+                    job_lock.break_lock()
+        except (IOError, OSError, ValueError) as e:
+            # It is possible that we tried to read the file in the narrow window
+            # between lock acquisition and actually writing the time
+            logger.warning("Could not read a time value from the scheduler "
+                           "lockfile. Waiting 1 second before trying again. "
+                           "Error: %s", e)
+            sleep(1)
+        try:
+            with open(job_lockfile_name, "r") as lockfile:
+                locktime = float(lockfile.read())
+                if locktime < time() - 60:
+                    logger.error("The old lock was held for more than 60 "
+                                 "seconds. Breaking the lock.")
+                    job_lock.break_lock()
+        except(IOError, OSError, ValueError):
+            # If we still cannot read a time value from the file after 1s,
+            # there was something wrong with the process holding the lock
+            logger.error("Could not read a time value from the scheduler "
+                         "lockfile even after waiting 1s. Breaking the lock")
+            job_lock.break_lock()
 
 
 @celery_app.task(ignore_results=True)
