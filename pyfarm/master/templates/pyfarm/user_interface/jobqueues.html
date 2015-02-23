@@ -3,9 +3,70 @@
 {% block jobqueues_nb_class %}active{% endblock %}
 {% block content %}
 
-<div class="tree">
+<form method="GET" action="{{ url_for('jobqueues_index_ui') }}" class="form-inline" role="form" style="margin-top: 15px;">
+  <div class="btn-group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="state-dropdown-menu" aria-expanded="true">
+      Job States <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-form" role="menu" aria-labelledby="state-dropdown-menu">
+      <li>
+        <label class="checkbox">
+          {% if filters.state_paused %}
+          <input type="checkbox" name="state_paused" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_paused" value="true"/>
+          {% endif %}
+          Paused
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+          {% if filters.state_queued %}
+          <input type="checkbox" name="state_queued" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_queued" value="true"/>
+          {% endif %}
+          Queued
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+          {% if filters.state_running %}
+          <input type="checkbox" name="state_running" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_running" value="true"/>
+          {% endif %}
+          Running
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+          {% if filters.state_failed %}
+          <input type="checkbox" name="state_failed" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_failed" value="true"/>
+          {% endif %}
+          Failed
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+         {% if filters.state_done %}
+          <input type="checkbox" name="state_done" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_done" value="true"/>
+          {% endif %}
+          Done
+        </label>
+      </li>
+    </ul>
+  </div>
+  <input type="submit" class="btn" value="Filter">
+</form>
+
+<div class="tree" style="margin-top:12px">
 <ul>
-  {% for queue in jobqueues.order_by("priority desc") recursive %}
+  {% for queue in jobqueues recursive %}
   <li>
     <span>
       <i class="glyphicon glyphicon-minus-sign"></i>{{ queue.path() }}
@@ -24,21 +85,22 @@
     </form>
     {% if queue.children or queue.jobs.count() != 0 %}
     <ul>
-      {{ loop(queue.children) }}
-      <li><a href="{{ url_for('jobqueue_create_ui', parent=queue.id) }}" class="btn btn-default" role="button">Create</a></li>
-      {% for job in queue.jobs.order_by("state desc") %}
+      {{ loop(queue.child_queues_sorted()) }}
+      <li><a href="{{ url_for('jobqueue_create_ui', parent=queue.id) }}" class="btn btn-default" role="button">Create Subqueue</a></li>
+      {% for job in queue.child_jobs(filters=filters) %}
       <li>
-        <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }} {{ 'badge-important' if job.state == WorkState.FAILED }}">
-          <i class="glyphicon glyphicon-leaf"></i>
-          {{ job.title }}<br/>
-          State: {{ job.state or "queued" }}<br/>
-          Agents min / current / max: {{ job.minimum_agents or "-"}} / {{ job.num_assigned_agents() }} / {{ job.maximum_agents or "-" }}<br/>
-          Priority: {{ job.priority }}<br/>
-          Weight: {{ job.weight }}
-        </span>
-        <a href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
-          <i class="glyphicon glyphicon-eye-open"></i>
-        </a>
+        <div class="panel {{ 'panel-success' if job.state == WorkState.DONE }} {{ 'panel-danger' if job.state == WorkState.FAILED }} {{ 'panel-default' if job.state == None }} {{ 'panel-info' if job.state == WorkState.RUNNING }} {{ 'panel-warning' if job.state == WorkState.PAUSED }}" style="max-width:50%;margin-bottom:0">
+          <div class="panel-heading"><h3 class="panel-title">{{ job.title }}</h3></div>
+          <div class="panel-body">
+            <a style="float:right" href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
+              <i class="glyphicon glyphicon-eye-open"></i>
+            </a>
+            State: {{ job.state or "queued" }}<br/>
+            Agents min / current / max: {{ job.minimum_agents or "-"}} / {{ job.num_assigned_agents() }} / {{ job.maximum_agents or "-" }}<br/>
+            Priority: {{ job.priority }}<br/>
+            Weight: {{ job.weight }}<br/>
+          </div>
+        </div>
       </li>
       {% endfor %}
     </ul>
@@ -48,18 +110,18 @@
   <li><a href="{{ url_for('jobqueue_create_ui') }}" class="btn btn-default" role="button">Create</a></li>
   {% for job in top_level_jobs %}
   <li>
-    <span class="badge {{ 'badge-success' if job.state == WorkState.DONE }}{{ 'badge-important' if job.state == WorkState.FAILED }}{{ 'badge-warning' if job.state == WorkState.RUNNING }}">
-      <i class="icon-leaf"></i>
-      {{ job.title }}<br/>
-      State: {{ job.state or "queued" }}<br/>
-      Agents min / current / max: {{ job.minimum_agents or "-"}} / {{ job.num_assigned_agents() }} / {{ job.maximum_agents or "-" }}<br/>
-      Priority: {{ job.priority }}<br/>
-      Weight: {{ job.weight }}
-    </span>
-    <a href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
-      <i class="glyphicon glyphicon-eye-open"></i>
-    </a>
-
+    <div class="panel {{ 'panel-success' if job.state == WorkState.DONE }} {{ 'panel-danger' if job.state == WorkState.FAILED }} {{ 'panel-default' if job.state == None }} {{ 'panel-info' if job.state == WorkState.RUNNING }} {{ 'panel-warning' if job.state == WorkState.PAUSED }}" style="max-width:50%;margin-bottom:0">
+      <div class="panel-heading"><h3 class="panel-title">{{ job.title }}</h3></div>
+      <div class="panel-body">
+        <a style="float:right" href="{{ url_for('single_job_ui', job_id=job.id) }}" title="View Job">
+          <i class="glyphicon glyphicon-eye-open"></i>
+        </a>
+        State: {{ job.state or "queued" }}<br/>
+        Agents min / current / max: {{ job.minimum_agents or "-"}} / {{ job.num_assigned_agents() }} / {{ job.maximum_agents or "-" }}<br/>
+        Priority: {{ job.priority }}<br/>
+        Weight: {{ job.weight }}<br/>
+      </div>
+    </div>
   </li>
   {% endfor %}
 </ul>
