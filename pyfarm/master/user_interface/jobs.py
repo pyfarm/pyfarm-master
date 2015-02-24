@@ -688,7 +688,7 @@ def set_prio_weight_on_jobs():
 
     db.session.commit()
 
-    flash("Priority and weight on selected jobs has been set")
+    flash("Priority and weight on selected jobs have been set")
 
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)
