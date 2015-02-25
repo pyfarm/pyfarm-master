@@ -227,6 +227,10 @@ def jobs():
         jobs_query = jobs_query.order_by(asc(Job.weight))
     elif order_by == "weight" and order_dir == "desc":
         jobs_query = jobs_query.order_by(desc(Job.weight))
+    elif order_by == "priority" and order_dir == "asc":
+        jobs_query = jobs_query.order_by(asc(Job.priority))
+    elif order_by == "priority" and order_dir == "desc":
+        jobs_query = jobs_query.order_by(desc(Job.priority))
     else:
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
