@@ -672,8 +672,8 @@ def move_multiple_jobs():
 def set_prio_weight_on_jobs():
     job_ids = request.form.getlist("job_id")
 
-    prio = int(request.form['prio'])
-    weight = int(request.form['weight'])
+    prio = int(request.form["prio"])
+    weight = int(request.form["weight"])
 
     for job_id in job_ids:
         job = Job.query.filter_by(id=job_id).first()
