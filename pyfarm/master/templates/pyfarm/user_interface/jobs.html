@@ -382,9 +382,11 @@
     </td>
     <td><a href="{{ url_for('single_jobtype_ui', jobtype_id=job['jobtype_id']) }}">{{ job["jobtype_name"] }}</a></td>
     <td>
+      {% if job[0].job_queue_id %}
       <a href="{{ url_for('single_jobqueue_ui', queue_id=job[0].job_queue_id) }}">
         {{ job['jobqueue_path'] }}
       </a>
+      {% endif %}
     </td>
     <td>{{ job[0].priority }}</td>
     <td>{{ job.username or '' }}</td>
