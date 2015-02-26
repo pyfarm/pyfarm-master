@@ -117,7 +117,7 @@ def remove_jobtype_software_requirement(jobtype_id, software_id):
                 jobtype_id), INTERNAL_SERVER_ERROR)
 
         new_version = JobTypeVersion(jobtype=jobtype)
-        new_version.max_batch = previous_version.max_batch
+        new_version.max_batch = previous_version.max_batch or sql.null()
         new_version.batch_contiguous = previous_version.batch_contiguous
         new_version.classname = previous_version.classname
         new_version.code = previous_version.code
@@ -156,7 +156,7 @@ def add_jobtype_software_requirement(jobtype_id):
                 jobtype_id), INTERNAL_SERVER_ERROR)
 
         new_version = JobTypeVersion(jobtype=jobtype)
-        new_version.max_batch = previous_version.max_batch
+        new_version.max_batch = previous_version.max_batch or sql.null()
         new_version.batch_contiguous = previous_version.batch_contiguous
         new_version.classname = previous_version.classname
         new_version.code = previous_version.code
