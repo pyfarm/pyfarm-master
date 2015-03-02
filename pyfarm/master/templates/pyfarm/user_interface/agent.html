@@ -168,4 +168,24 @@
     {% endfor %}
   </tbody>
 </table>
+
+<h4>Recent Tasklogs</h4>
+<table class="table">
+  <thead>
+    <th>Identifier</th>
+    <th>Created On</th>
+    <th>Job</th>
+    <th>Jobtype</th>
+  </thead>
+  <tbody>
+    {% for tasklog in tasklogs %}
+    <tr>
+      <td>{{ tasklog.identifier }}</td>
+      <td class="timestamp">{{ tasklog.created_on.isoformat() }}</td>
+      <td><a href="{{ url_for('single_job_ui', job_id=tasklog.task.job.id) }}">{{ tasklog.task.job.title }}</a></td>
+      <td><a href="{{ url_for('single_jobtype_ui', jobtype_id=tasklog.task.job.jobtype_version.jobtype.id) }}">{{ tasklog.task.job.jobtype_version.jobtype.name }}</a> Version {{ tasklog.task.job.jobtype_version.version }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}
