@@ -31,7 +31,7 @@ from pyfarm.models.software import Software, SoftwareVersion
 from pyfarm.master.application import db
 
 try:
-    range_ = xrange
+    range_ = xrange # pylint: disable=undefined-variable
 except NameError: # pragma: no cover
     range_ = range
 
