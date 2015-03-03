@@ -30,6 +30,11 @@ from pyfarm.models.task import Task
 from pyfarm.models.software import Software, SoftwareVersion
 from pyfarm.master.application import db
 
+try:
+    range_ = xrange
+except NameError: # pragma: no cover
+    range_ = range
+
 def agents():
     agents_query = Agent.query
 
@@ -86,7 +91,7 @@ def agents():
         num_pages = int(agents_count / per_page)
         if agents_count % per_page > 0:
             num_pages = num_pages + 1
-        all_pages = range(0, num_pages)
+        all_pages = range_(0, num_pages)
 
     filters_and_order_wo_pagination = filters.copy()
     filters_and_order_wo_pagination.update(
