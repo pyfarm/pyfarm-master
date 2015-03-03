@@ -20,13 +20,14 @@ except ImportError:  # pragma: no cover
     from http.client import BAD_REQUEST, NOT_FOUND, SEE_OTHER
 
 from flask import render_template, request, url_for, redirect, flash
-from sqlalchemy import or_
+from sqlalchemy import or_, desc
 
 from pyfarm.core.enums import WorkState
 from pyfarm.scheduler.tasks import restart_agent, assign_tasks_to_agent
 from pyfarm.models.agent import Agent
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
+from pyfarm.models.tasklog import TaskLog, TaskTaskLogAssociation
 from pyfarm.models.software import Software, SoftwareVersion
 from pyfarm.master.application import db
 
@@ -91,8 +92,16 @@ def single_agent(agent_id):
                                   Task.state == WorkState.RUNNING)).\
                                       order_by(Task.job_id, Task.frame)
 
+    tasklogs = TaskLog.query.filter_by(agent=agent).\
+        order_by(desc(TaskLog.created_on)).limit(10).all()
+    for tasklog in tasklogs:
+        assocation = TaskTaskLogAssociation.query.filter_by(log=tasklog).first()
+        if assocation:
+            tasklog.task = assocation.task
+
     return render_template("pyfarm/user_interface/agent.html", agent=agent,
-                           tasks=tasks, software_items=Software.query)
+                           tasks=tasks, software_items=Software.query,
+                           tasklogs=tasklogs)
 
 def restart_single_agent(agent_id):
     agent = Agent.query.filter_by(id=agent_id).first()
