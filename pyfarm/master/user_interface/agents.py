@@ -31,6 +31,11 @@ from pyfarm.models.tasklog import TaskLog, TaskTaskLogAssociation
 from pyfarm.models.software import Software, SoftwareVersion
 from pyfarm.master.application import db
 
+try:
+    range_ = xrange # pylint: disable=undefined-variable
+except NameError: # pragma: no cover
+    range_ = range
+
 def agents():
     agents_query = Agent.query
 
@@ -74,11 +79,35 @@ def agents():
 
     agents_query = agents_query.order_by("%s %s" % (order_by, order_dir))
 
+    agents_count = agents_query.count()
+
+    per_page = int(request.args.get("per_page", 100))
+    page = int(request.args.get("page", 1))
+    filters["per_page"] = per_page
+    filters["page"] = page
+    num_pages = 1
+    all_pages = []
+    if per_page > 0:
+        agents_query = agents_query.offset((page - 1) * per_page).limit(per_page)
+        num_pages = int(agents_count / per_page)
+        if agents_count % per_page > 0:
+            num_pages = num_pages + 1
+        all_pages = range_(0, num_pages)
+
+    filters_and_order_wo_pagination = filters.copy()
+    filters_and_order_wo_pagination.update(
+        {"order_by": order_by, "order_dir": order_dir})
+    del filters_and_order_wo_pagination["per_page"]
+    del filters_and_order_wo_pagination["page"]
     agents = agents_query.all()
     return render_template("pyfarm/user_interface/agents.html",
                            agents=agents, filters=filters, order_by=order_by,
                            order_dir=order_dir,
-                           order={"order_by": order_by, "order_dir": order_dir})
+                           order={"order_by": order_by, "order_dir": order_dir},
+                           per_page=per_page, page=page, num_pages=num_pages,
+                           all_pages=all_pages, agents_count=agents_count,
+                           filters_and_order_wo_pagination=
+                           filters_and_order_wo_pagination)
 
 def single_agent(agent_id):
     agent = Agent.query.filter_by(id=agent_id).first()
