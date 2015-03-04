@@ -22,7 +22,7 @@ except ImportError:  # pragma: no cover
 from flask import render_template, request, url_for, redirect, flash
 from sqlalchemy import or_, desc
 
-from pyfarm.core.enums import WorkState
+from pyfarm.core.enums import WorkState, AgentState
 from pyfarm.scheduler.tasks import restart_agent, assign_tasks_to_agent
 from pyfarm.models.agent import Agent
 from pyfarm.models.tag import Tag
@@ -47,15 +47,30 @@ def agents():
         if tags:
             agents_query = agents_query.filter(Agent.tags.any(Tag.tag.in_(tags)))
 
-    if "state" in request.args:
-        state = request.args.get("state")
-        filters["state"] = state
-        # TODO Use the actual AgentState enum here
-        if state not in ["online", "offline", "disabled", "running", ""]:
-            return (render_template(
-                "pyfarm/error.html", error="unknown state"), BAD_REQUEST)
-        if state != "":
-            agents_query = agents_query.filter(Agent.state == state)
+    filters["state_online"] = ("state_online" in request.args and
+                               request.args["state_online"].lower() == "true")
+    filters["state_offline"] = ("state_offline" in request.args and
+                               request.args["state_offline"].lower() == "true")
+    filters["state_running"] = ("state_running" in request.args and
+                                request.args["state_running"].lower() == "true")
+    filters["state_disabled"] = ("state_disabled" in request.args and
+                             request.args["state_disabled"].lower() == "true")
+    no_state_filters = True
+    if (filters["state_online"] or
+        filters["state_offline"] or
+        filters["state_running"] or
+        filters["state_disabled"]):
+        no_state_filters = False
+        wanted_states = []
+        if filters["state_online"]:
+            wanted_states.append(AgentState.ONLINE)
+        if filters["state_offline"]:
+            wanted_states.append(AgentState.OFFLINE)
+        if filters["state_running"]:
+            wanted_states.append(AgentState.RUNNING)
+        if filters["state_disabled"]:
+            wanted_states.append(AgentState.DISABLED)
+        agents_query = agents_query.filter(Agent.state.in_(wanted_states))
 
     if "hostname" in request.args:
         hostname = request.args.get("hostname")
@@ -107,7 +122,8 @@ def agents():
                            per_page=per_page, page=page, num_pages=num_pages,
                            all_pages=all_pages, agents_count=agents_count,
                            filters_and_order_wo_pagination=
-                           filters_and_order_wo_pagination)
+                           filters_and_order_wo_pagination,
+                           no_state_filters=no_state_filters)
 
 def single_agent(agent_id):
     agent = Agent.query.filter_by(id=agent_id).first()

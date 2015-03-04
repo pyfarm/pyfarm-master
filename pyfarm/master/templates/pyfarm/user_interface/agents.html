@@ -11,29 +11,53 @@
   <label for="hostname">Hostname</label>
   <input type="text" class="form-control" id="hostname" name="hostname" value="{{ filters.hostname }}" placeholder="Part of hostname"/>
   <label for="state">State</label>
-  <select class="form-control" id="state" name="state">
-    <option value="" selected ></option>
-    {% if filters.state == 'online' %}
-    <option value="online" selected >online</option>
-    {% else %}
-    <option value="online">online</option>
-    {% endif %}
-    {% if filters.state == 'offline' %}
-    <option value="offline" selected >offline</option>
-    {% else %}
-    <option value="offline">offline</option>
-    {% endif %}
-    {% if filters.state == 'running' %}
-    <option value="running" selected >running</option>
-    {% else %}
-    <option value="running">running</option>
-    {% endif %}
-    {% if filters.state == 'disabled' %}
-    <option value="disabled" selected >disabled</option>
-    {% else %}
-    <option value="disabled">disabled</option>
-    {% endif %}
-  </select>
+  <div class="btn-group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="state-dropdown-menu" aria-expanded="true">
+      State <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-form" role="menu" aria-labelledby="state-dropdown-menu">
+      <li>
+        <label class="checkbox">
+          {% if filters.state_online or no_state_filters %}
+          <input type="checkbox" name="state_online" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_online" value="true"/>
+          {% endif %}
+          Online
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+          {% if filters.state_offline or no_state_filters %}
+          <input type="checkbox" name="state_offline" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_offline" value="true"/>
+          {% endif %}
+          Offline
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+          {% if filters.state_running or no_state_filters %}
+          <input type="checkbox" name="state_running" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_running" value="true"/>
+          {% endif %}
+          Running
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+          {% if filters.state_disabled or no_state_filters %}
+          <input type="checkbox" name="state_disabled" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="state_disabled" value="true"/>
+          {% endif %}
+          Disabled
+        </label>
+      </li>
+    </ul>
+  </div>
   <label for="per_page" title="Zero or negative values for no pagination">Per page</label>
   <input type="text" class="form-control" id="per_page" name="per_page" value="{{ filters.per_page }}" placeholder="Number" size="4" style="width: 5em;"/>
   <input type="submit" class="btn" value="Filter">
