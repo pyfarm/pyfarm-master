@@ -12,7 +12,10 @@
     <th>
       Version
     </th>
-    <th>
+     <th>
+      Available On New Agents
+    </th>
+   <th>
       Rank
     </th>
   </tr>
@@ -26,6 +29,13 @@
     </td>
     <td>
       {{ version.version }}
+    </td>
+    <td>
+      <form method="post" action="/software/{{software.id}}/versions/{{version.id}}/default_status">
+        {{ version.default }}
+        <input type="hidden" name="default" value="{{ 'false' if version.default else 'true' }}"/>
+        <input type="submit" class="btn" value="Make{{' Not' if version.default }} Default"/>
+      </form>
     </td>
     <td>
       <form method="post" action="/software/{{software.id}}/versions/{{version.id}}/update_rank">

@@ -87,6 +87,9 @@ class SoftwareVersion(db.Model, UtilityMixins):
                         The rank of this version relative to other versions of
                         the same software. Used to determine whether a version
                         is higher or lower than another."""))
+    default = db.Column(db.Boolean, default=False, nullable=False,
+                        doc="If true, this software version will be registered"
+                            "on new nodes by default.")
 
 
 class JobSoftwareRequirement(db.Model, UtilityMixins):

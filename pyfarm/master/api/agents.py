@@ -58,8 +58,6 @@ from pyfarm.master.utility import (
 
 logger = getLogger("api.agents")
 
-DEFAULT_AGENT_SOFTWARE = json.loads(
-    read_env("PYFARM_DEFAULT_AGENT_SOFTWARE", "{}"))
 MAC_RE = re.compile("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
 
 
@@ -263,22 +261,9 @@ class AgentIndexAPI(MethodView):
             except ValueError as e:
                 return jsonify(error=str(e)), BAD_REQUEST
 
-            for item in DEFAULT_AGENT_SOFTWARE:
-                software = Software.query.filter_by(
-                    software=item["software"]).first()
-                if not software:
-                    return (jsonify(
-                        error="Default agent software %r not found" %
-                            item["software"]),
-                        INTERNAL_SERVER_ERROR)
-                version = SoftwareVersion.query.filter_by(
-                    software=software, version=item["version"]).first()
-                if not version:
-                    return (jsonify(
-                        error="Default agent software %r version %s not found" %
-                            (item["software"], item["version"])),
-                        INTERNAL_SERVER_ERROR)
-                agent.software_versions.append(version)
+            default_versions = SoftwareVersion.query.filter_by(default=True)
+            for version in default_versions:
+                 agent.software_versions.append(version)
 
             if mac_addresses is not None:
                 for address in mac_addresses:
