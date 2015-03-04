@@ -1,4 +1,10 @@
 $(document).ready(function() {
+    $('.dropdown-menu').on('click', function(e) {
+        if($(this).hasClass('dropdown-menu-form')) {
+            e.stopPropagation();
+        }
+    });
+
     $('.subjob_toggle').on('click', function(e) {
         var open = $(this).data("open") == "true";
         if(!open) {
