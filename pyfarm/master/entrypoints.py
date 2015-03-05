@@ -148,7 +148,8 @@ def load_user_interface(app_instance):
     from pyfarm.master.user_interface.logs_in_task import logs_in_task
     from pyfarm.master.user_interface.software import (
         software, software_item, update_version_rank, remove_software_version,
-        add_software_version, add_software, remove_software)
+        add_software_version, add_software, remove_software,
+        update_version_default_status)
 
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
@@ -284,6 +285,11 @@ def load_user_interface(app_instance):
     app_instance.add_url_rule("/software/<int:software_id>/versions/"
                               "<int:version_id>/update_rank",
                               "version_update_rank_ui", update_version_rank,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/software/<int:software_id>/versions/"
+                              "<int:version_id>/default_status",
+                              "version_update_default_ui",
+                              update_version_default_status,
                               methods=("POST", ))
     app_instance.add_url_rule("/software/<int:software_id>/versions/"
                               "<int:version_id>/remove",

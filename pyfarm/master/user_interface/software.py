@@ -186,3 +186,32 @@ def add_software_version(software_id):
 
     return redirect(url_for("single_software_ui", software_id=software.id),
                     SEE_OTHER)
+
+def update_version_default_status(software_id, version_id):
+    software = Software.query.filter_by(id=software_id).first()
+    if not software:
+        return (render_template("pyfarm/error.html",
+                                error="Software %s not found" % software_id),
+                NOT_FOUND)
+
+    version = SoftwareVersion.query.filter_by(
+        software=software, id=version_id).first()
+    if not version:
+        return redirect(url_for("single_software_ui", software_id=software.id),
+                    SEE_OTHER)
+
+    version.default = ("default" in request.form and
+                       request.form["default"] == "true")
+
+    db.session.add(version)
+    db.session.commit()
+
+    if version.default:
+        flash("Version %s has been added to the set of default software for new "
+              "agents." % version.version)
+    else:
+        flash("Version %s has been removed from the set of default software for "
+              "new agents." % version.version)
+
+    return redirect(url_for("single_software_ui", software_id=software.id),
+                    SEE_OTHER)
