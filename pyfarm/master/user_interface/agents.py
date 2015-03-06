@@ -109,9 +109,9 @@ def agents():
             num_pages = num_pages + 1
         all_pages = range_(0, num_pages)
 
-    filters_and_order_wo_pagination = filters.copy()
-    filters_and_order_wo_pagination.update(
-        {"order_by": order_by, "order_dir": order_dir})
+    filters_and_order = filters.copy()
+    filters_and_order.update({"order_by": order_by, "order_dir": order_dir})
+    filters_and_order_wo_pagination = filters_and_order.copy()
     del filters_and_order_wo_pagination["per_page"]
     del filters_and_order_wo_pagination["page"]
     agents = agents_query.all()
@@ -123,7 +123,8 @@ def agents():
                            all_pages=all_pages, agents_count=agents_count,
                            filters_and_order_wo_pagination=
                            filters_and_order_wo_pagination,
-                           no_state_filters=no_state_filters)
+                           no_state_filters=no_state_filters,
+                           filters_and_order=filters_and_order)
 
 def single_agent(agent_id):
     agent = Agent.query.filter_by(id=agent_id).first()
@@ -164,6 +165,34 @@ def restart_single_agent(agent_id):
     flash("Agent %s will be restarted" % agent.hostname)
 
     return redirect(url_for("agents_index_ui"), SEE_OTHER)
+
+def restart_multiple_agents():
+    agent_ids = request.form.getlist("agent_id")
+
+    agents = []
+    for agent_id in agent_ids:
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if not agent:
+            return (render_template(
+                        "pyfarm/error.html",
+                        error="Agent %s not found" % agent_id),
+                    NOT_FOUND)
+
+        agent.restart_requested = True
+        db.session.add(agent)
+        agents.append(agent)
+
+    db.session.commit()
+
+    for agent in agents:
+        restart_agent.delay(agent.id)
+
+    flash("Selected agents will be restarted.")
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("agents_index_ui"), SEE_OTHER)
 
 def delete_single_agent(agent_id):
     agent = Agent.query.filter_by(id=agent_id).first()
