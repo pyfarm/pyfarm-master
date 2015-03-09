@@ -37,7 +37,7 @@ except ImportError:
 
 from flask import request
 
-from pyfarm.core.config import read_env_bool
+from pyfarm.core.config import read_env_bool, read_env
 from pyfarm.core.logger import getLogger
 from pyfarm.master.application import db
 from pyfarm.master.utility import error_handler
@@ -150,6 +150,9 @@ def load_user_interface(app_instance):
         software, software_item, update_version_rank, remove_software_version,
         add_software_version, add_software, remove_software,
         update_version_default_status)
+
+    farm_name = read_env("PYFARM_FARM_NAME", "")
+    app_instance.jinja_env.globals.update({"farm_name": farm_name})
 
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
