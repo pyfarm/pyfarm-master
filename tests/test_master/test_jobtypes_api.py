@@ -76,7 +76,11 @@ class TestJobTypeAPI(BaseTestCase):
                 "max_batch": 1,
                 "name": "TestJobType",
                 "software_requirements": [],
-                "version": 1
+                "version": 1,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
         response3 = self.client.get("/api/v1/jobtypes/%s" % id)
@@ -91,7 +95,11 @@ class TestJobTypeAPI(BaseTestCase):
                 "max_batch": 1,
                 "name": "TestJobType",
                 "software_requirements": [],
-                "version": 1
+                "version": 1,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
     def test_jobtype_post_empty_max_batch(self):
@@ -119,7 +127,11 @@ class TestJobTypeAPI(BaseTestCase):
                 "max_batch": None,
                 "name": "TestJobType",
                 "software_requirements": [],
-                "version": 1
+                "version": 1,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
     def test_jobtype_post_with_requirements(self):
@@ -174,7 +186,11 @@ class TestJobTypeAPI(BaseTestCase):
                         'software': 'foo',
                         'software_id': software_id
                     }],
-                "version": 1
+                "version": 1,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
     def test_jobtype_post_with_bad_requirements(self):
@@ -312,7 +328,11 @@ class TestJobTypeAPI(BaseTestCase):
                 "max_batch": 1,
                 "name": "TestJobType",
                 "software_requirements": [],
-                "version": 1
+                "version": 1,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
     def test_jobtype_put_overwrite(self):
@@ -351,7 +371,11 @@ class TestJobTypeAPI(BaseTestCase):
                 "max_batch": 1,
                 "name": "TestJobType",
                 "software_requirements": [],
-                "version": 2
+                "version": 2,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
     def test_jobtype_put_unknown_keys(self):
@@ -435,7 +459,11 @@ class TestJobTypeAPI(BaseTestCase):
                         'software_id': software_id
                     }
                     ],
-                "version": 1
+                "version": 1,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
     def test_jobtype_put_with_requirements_not_list(self):
@@ -634,7 +662,11 @@ class TestJobTypeAPI(BaseTestCase):
                         'software_id': software_id
                     }
                     ],
-                "version": 2
+                "version": 2,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
     def test_jobtype_delete(self):
@@ -794,7 +826,11 @@ class TestJobTypeAPI(BaseTestCase):
                 "max_batch": 1,
                 "name": "TestJobType",
                 "software_requirements": [],
-                "version": 1
+                "version": 1,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
         response4 = self.client.get("/api/v1/jobtypes/%s/versions/1" % id)
@@ -809,7 +845,11 @@ class TestJobTypeAPI(BaseTestCase):
                 "max_batch": 1,
                 "name": "TestJobType",
                 "software_requirements": [],
-                "version": 1
+                "version": 1,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
         response5 = self.client.get("/api/v1/jobtypes/%s/versions/2" % id)
@@ -824,7 +864,11 @@ class TestJobTypeAPI(BaseTestCase):
                 "max_batch": 2,
                 "name": "TestJobType",
                 "software_requirements": [],
-                "version": 2
+                "version": 2,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
     def test_jobtype_get_unknown_version(self):
@@ -887,7 +931,11 @@ class TestJobTypeAPI(BaseTestCase):
                 "max_batch": 1,
                 "name": "TestJobType",
                 "software_requirements": [],
-                "version": 1
+                "version": 1,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
     def test_jobtype_by_id_delete_version(self):
@@ -934,7 +982,11 @@ class TestJobTypeAPI(BaseTestCase):
                 "max_batch": 1,
                 "name": "TestJobType",
                 "software_requirements": [],
-                "version": 1
+                "version": 1,
+                "fail_body": None,
+                "fail_subject": None,
+                "success_body": None,
+                "success_subject": None
                 })
 
     def test_jobtype_get_code(self):
