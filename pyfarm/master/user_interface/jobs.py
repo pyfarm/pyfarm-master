@@ -174,6 +174,24 @@ def jobs():
     if not filters["not_hidden"]:
         jobs_query = jobs_query.filter(Job.hidden != False)
 
+    filters["blocked_filter"] = ("blocked_filter" in request.args and
+                                 request.args["blocked_filter"].lower() ==
+                                    "true")
+    filters["blocked"] = True
+    filters["not_blocked"] = True
+
+    if filters["blocked_filter"]:
+        filters["blocked"] = ("blocked" in request.args and
+                              request.args["blocked"].lower() == "true")
+        filters["not_blocked"] = ("not_blocked" in request.args and
+                                  request.args["not_blocked"].lower() == "true")
+    if not filters["blocked"]:
+        jobs_query = jobs_query.filter(
+            blocker_count_query.c.blocker_count == None)
+    if not filters["not_blocked"]:
+        jobs_query = jobs_query.filter(
+            blocker_count_query.c.blocker_count != None)
+
     filters["no_user"] = ("no_user" in request.args and
                           request.args["no_user"].lower == "true")
     if "u" in request.args or filters["no_user"]:
