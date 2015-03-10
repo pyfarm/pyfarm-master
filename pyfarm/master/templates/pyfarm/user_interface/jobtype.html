@@ -143,4 +143,39 @@
     </div>
 </form>
 
+<h4>Notification Templates</h4>
+<h5>Success Notification</h5>
+<form method="POST" action="{{ url_for('single_jobtype_update_templates', jobtype_id=jobtype.id) }}" class="form">
+  <div class="form-group">
+    <label for="success_subject" class="control-label">Subject</label>
+    <input type="text" name="success_subject" class="form-control" id="success_subject" value="{{ jobtype.success_subject or ''}}"/>
+  </div>
+  <div class="form-group">
+    <label for="success_body" class="control-label">Body</label>
+    <textarea name="success_body" class="form-control" id="success_body">{{ jobtype.success_body or ''}}</textarea>
+  </div>
+  <div class="form-group">
+    <div class="control">
+      <input type="submit" class="btn" value="Update"/>
+    </div>
+  </div>
+</form>
+
+<h5>Failure Notification</h5>
+<form method="POST" action="{{ url_for('single_jobtype_update_templates', jobtype_id=jobtype.id) }}" class="form">
+  <div class="form-group">
+    <label for="failure_subject" class="control-label">Subject</label>
+    <input type="text" name="failure_subject" class="form-control" id="failure_subject" value="{{ jobtype.fail_subject or '' }}"/>
+  </div>
+  <div class="form-group">
+    <label for="failure_body" class="control-label">Body</label>
+    <textarea name="failure_body" class="form-control" id="failure_body">{{ jobtype.fail_body or '' }}</textarea>
+  </div>
+  <div class="form-group">
+    <div class="control">
+      <input type="submit" class="btn" value="Update"/>
+    </div>
+  </div>
+</form>
+
 {% endblock %}
