@@ -90,12 +90,14 @@ LOGFILES_DIR = read_env(
     "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
 TRANSACTION_RETRIES = read_env_int("PYFARM_TRANSACTION_RETRIES", 10)
 AGENT_REQUEST_TIMEOUT = read_env_int("PYFARM_AGENT_REQUEST_TIMEOUT", 10)
+BASE_URL = read_env("PYFARM_BASE_URL", "http://127.0.0.1:5000")
 
 DEFAULT_SUCCESS_SUBJECT = Template("Job {{ job.title }} completed successfully")
 DEFAULT_SUCCESS_BODY = Template(
     "{{ job.jobtype_version.jobtype.name }} job {{ job.title }} "
     "(id {{ job.id }}) has completed successfully on "
     "{{ job.time_finished.isoformat() }}.\n\n"
+    "Job: {{ job.url }}\n\n"
     "{% if job.output_link %}"
     "Output:\n"
     "{{ job.output_link }}\n\n"
@@ -552,6 +554,11 @@ def send_job_completion_mail(job_id, successful=True):
             job = Job.query.filter_by(id=job_id).one()
             if job.completion_notify_sent:
                 return
+
+            job.url = BASE_URL
+            if job.url[-1] != "/":
+                job.url += "/"
+            job.url+= "jobs/%s" % job.id
 
             notified_users_query = JobNotifiedUser.query.filter_by(job=job)
             if successful:
