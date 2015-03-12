@@ -879,6 +879,7 @@ def rerun_single_task(job_id, task_id):
 
     if Job.state != WorkState.RUNNING:
         job.state = None
+    job.completion_notify_sent = False
 
     db.session.add(job)
     db.session.add(task)
