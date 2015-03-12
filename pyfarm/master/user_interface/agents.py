@@ -144,6 +144,7 @@ def single_agent(agent_id):
         assocation = TaskTaskLogAssociation.query.filter_by(log=tasklog).first()
         if assocation:
             tasklog.task = assocation.task
+            tasklog.attempt = assocation.attempt
 
     return render_template("pyfarm/user_interface/agent.html", agent=agent,
                            tasks=tasks, software_items=Software.query,
