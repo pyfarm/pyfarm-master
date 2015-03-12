@@ -316,3 +316,40 @@ def create_jobtype():
         flash("Jobtype %s created" % jobtype.name)
 
         return redirect(url_for('jobtypes_index_ui'), SEE_OTHER)
+
+def update_jobtype_notification_templates(jobtype_id):
+    with db.session.no_autoflush:
+        jobtype = JobType.query.filter_by(id=jobtype_id).first()
+        if not jobtype:
+            return (render_template(
+                        "pyfarm/error.html", error="Jobtype %s not found" %
+                        jobtype_id), NOT_FOUND)
+
+        if "success_subject" in request.form:
+            if request.form["success_subject"].strip() != "":
+                jobtype.success_subject = request.form["success_subject"]
+            else:
+                jobtype.success_subject = sql.null()
+        if "success_body" in request.form:
+            if request.form["success_body"].strip() != "":
+                jobtype.success_body = request.form["success_body"]
+            else:
+                jobtype.success_body = sql.null()
+        if "failure_subject" in request.form:
+            if request.form["failure_subject"].strip() != "":
+                jobtype.fail_subject = request.form["failure_subject"]
+            else:
+                jobtype.fail_subject = sql.null()
+        if "failure_body" in request.form:
+            if request.form["failure_body"].strip() != "":
+                jobtype.fail_body = request.form["failure_body"]
+            else:
+                jobtype.fail_body = sql.null()
+
+        db.session.add(jobtype)
+        db.session.commit()
+
+    flash("Notification templates for jobtype %s updated" % jobtype.name)
+
+    return redirect(url_for("single_jobtype_ui", jobtype_id=jobtype.id),
+                            SEE_OTHER)

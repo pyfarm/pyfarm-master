@@ -43,6 +43,8 @@ from requests.exceptions import ConnectionError, Timeout, RequestException
 # Workaround for https://github.com/kennethreitz/requests/issues/2204
 from requests.packages.urllib3.exceptions import ProtocolError
 
+from jinja2 import Template
+
 from lockfile import LockFile, AlreadyLocked
 
 from pyfarm.core.logger import getLogger
@@ -88,6 +90,27 @@ LOGFILES_DIR = read_env(
     "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
 TRANSACTION_RETRIES = read_env_int("PYFARM_TRANSACTION_RETRIES", 10)
 AGENT_REQUEST_TIMEOUT = read_env_int("PYFARM_AGENT_REQUEST_TIMEOUT", 10)
+
+DEFAULT_SUCCESS_SUBJECT = Template("Job {{ job.title }} completed successfully")
+DEFAULT_SUCCESS_BODY = Template(
+    "{{ job.jobtype_version.jobtype.name }} job {{ job.title }} "
+    "(id {{ job.id }}) has completed successfully on "
+    "{{ job.time_finished.isoformat() }}.\n\n"
+    "{% if job.output_link %}"
+    "Output:\n"
+    "{{ job.output_link }}\n\n"
+    "{% endif %}"
+    "Sincerely,\n\tThe PyFarm render manager")
+DEFAULT_FAIL_SUBJECT = Template("Job {{ job.title }} failed")
+DEFAULT_FAIL_BODY = Template(
+    "{{ job.jobtype_version.jobtype.name }} job {{ job.title }} "
+    "(id {{ job.id }}) has failed on "
+    "{{ job.time_finished.isoformat() }}.\n\n"
+    "{% if job.output_link %}"
+    "Output:\n"
+    "{{ job.output_link }}\n\n"
+    "{% endif %}"
+    "Sincerely,\n\tThe PyFarm render manager")
 
 @celery_app.task(ignore_result=True, bind=True)
 def send_tasks_to_agent(self, agent_id):
@@ -541,21 +564,33 @@ def send_job_completion_mail(job_id, successful=True):
             if not notified_users:
                 return
 
-            message_text = ("%s job %s (id %s) has %s on %s.\n\n" %
-                            (job.jobtype_version.jobtype.name, job.title, job.id,
-                            ("completed successfully" if successful
-                                else "failed"),
-                            job.time_finished.isoformat()))
-            if job.output_link:
-                message_text += "See:\n"
-                message_text += job.output_link + "\n\n"
-            message_text += "Sincerely,\n\tThe PyFarm render manager"
+            body_template = None
+            subject_template = None
+            if successful:
+                if job.jobtype_version.jobtype.success_body:
+                    body_template = Template(
+                        job.jobtype_version.jobtype.success_body)
+                else:
+                    body_template = DEFAULT_SUCCESS_BODY
+                if job.jobtype_version.jobtype.success_subject:
+                    subject_template = Template(
+                        job.jobtype_version.jobtype.success_subject)
+                else:
+                    subject_template = DEFAULT_SUCCESS_SUBJECT
+            else:
+                if job.jobtype_version.jobtype.fail_body:
+                    body_template = Template(
+                        job.jobtype_version.jobtype.fail_body)
+                else:
+                    body_template = DEFAULT_FAIL_BODY
+                if job.jobtype_version.jobtype.fail_subject:
+                    subject_template = Template(
+                        job.jobtype_version.jobtype.fail_subject)
+                else:
+                    subject_template = DEFAULT_FAIL_SUBJECT
 
-            message = MIMEText(message_text)
-            message["Subject"] = ("Job %s %s" %
-                                    (job.title,
-                                    "completed successfully" if successful else
-                                    "failed"))
+            message = MIMEText(body_template.render(job=job))
+            message["Subject"] = subject_template.render(job=job)
             message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
 
             to = [x.user.email for x in notified_users if x.user.email]
