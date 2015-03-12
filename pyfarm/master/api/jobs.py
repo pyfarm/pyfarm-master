@@ -1111,6 +1111,7 @@ class JobSingleTaskAPI(MethodView):
             return jsonify(error="`frame` cannot be changed"), BAD_REQUEST
 
         new_state = g.json.pop("state", None)
+        agent = task.agent
         state_transition = False
         if new_state is not None and new_state != task.state:
             logger.info("Task %s of job %s: state transition \"%s\" -> \"%s\"",
@@ -1154,8 +1155,7 @@ class JobSingleTaskAPI(MethodView):
         logger.info("Task %s of job %s has been updated, new data: %r",
                     task_id, task.job.title, task_data)
 
-        if task.agent:
-            agent = task.agent
+        if agent:
             task_count = Task.query.filter(
                 Task.agent == agent,
                 or_(Task.state == None,
