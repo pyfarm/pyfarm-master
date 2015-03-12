@@ -86,7 +86,7 @@
       </li>
       <li>
         <label class="checkbox">
-         {% if filters.state_done or no_state_filters %}
+          {% if filters.state_done or no_state_filters %}
           <input type="checkbox" name="state_done" value="true" checked/>
           {% else %}
           <input type="checkbox" name="state_done" value="true"/>
@@ -120,6 +120,34 @@
           <input type="checkbox" name="not_hidden" value="true"/>
           {% endif %}
           Show Not Hidden
+        </label>
+      </li>
+    </ul>
+  </div>
+  <input type="hidden" name="blocked_filter" value="true">
+  <div class="btn-group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="blocked-dropdown-menu" aria-expanded="true">
+      Blocked <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-form" role="menu" aria-labelledby="blocked-dropdown-menu">
+      <li>
+        <label class="checkbox">
+          {% if filters.blocked %}
+          <input type="checkbox" name="blocked" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="blocked" value="true"/>
+          {% endif %}
+          Show Blocked
+        </label>
+      </li>
+      <li>
+        <label class="checkbox">
+          {% if filters.not_blocked %}
+          <input type="checkbox" name="not_blocked" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="not_blocked" value="true"/>
+          {% endif %}
+          Show Not Blocked
         </label>
       </li>
     </ul>
@@ -344,7 +372,7 @@
       {% endif %}
     </td>
     <td>
-      {% if job.blocker_count > 0%}
+      {% if job.blocker_count > 0 %}
       <span class="glyphicon glyphicon-ban-circle" title="blocked by {{ job.blocker_count }} parent {{ 'jobs' if job.blocker_count > 1 else 'job' }}"></span>
       {% endif %}
       {% if not job[0].state %}
