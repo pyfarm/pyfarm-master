@@ -180,10 +180,18 @@
   <tbody>
     {% for tasklog in tasklogs %}
     <tr>
-      <td><a href="/api/v1/jobs/{{ tasklog.task.job.id }}/tasks/{{ tasklog.task.id }}/attempts/{{ tasklog.attempt }}/logs/{{ tasklog.identifier }}/logfile">{{ tasklog.identifier }}</a></td>
+      <td>{% if tasklog.task %}<a href="/api/v1/jobs/{{ tasklog.task.job.id }}/tasks/{{ tasklog.task.id }}/attempts/{{ tasklog.attempt }}/logs/{{ tasklog.identifier }}/logfile">{% endif %}{{ tasklog.identifier }}{% if tasklog.task %}</a>{% endif %}</td>
       <td class="timestamp">{{ tasklog.created_on.isoformat() }}</td>
-      <td><a href="{{ url_for('single_job_ui', job_id=tasklog.task.job.id) }}">{{ tasklog.task.job.title }}</a></td>
-      <td><a href="{{ url_for('single_jobtype_ui', jobtype_id=tasklog.task.job.jobtype_version.jobtype.id) }}">{{ tasklog.task.job.jobtype_version.jobtype.name }}</a> Version {{ tasklog.task.job.jobtype_version.version }}</td>
+      <td>
+        {% if tasklog.task %}
+        <a href="{{ url_for('single_job_ui', job_id=tasklog.task.job.id) }}">{{ tasklog.task.job.title }}</a>
+        {% endif %}
+      </td>
+      <td>
+        {% if tasklog.task %}
+        <a href="{{ url_for('single_jobtype_ui', jobtype_id=tasklog.task.job.jobtype_version.jobtype.id) }}">{{ tasklog.task.job.jobtype_version.jobtype.name }}</a> Version {{ tasklog.task.job.jobtype_version.version }}
+        {% endif %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>
