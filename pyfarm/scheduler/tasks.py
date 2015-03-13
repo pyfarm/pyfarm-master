@@ -153,7 +153,6 @@ def send_tasks_to_agent(self, agent_id):
                            "environ": job.environ if job.environ else {},
                            "by": job.by,
                            "batch": job.batch,
-                           "user": job.user.username,
                            "ram": job.ram,
                            "ram_warning": job.ram_warning,
                            "ram_max": job.ram_max,
@@ -161,6 +160,9 @@ def send_tasks_to_agent(self, agent_id):
                    "jobtype": {"name": job.jobtype_version.jobtype.name,
                                "version": job.jobtype_version.version},
                    "tasks": []}
+
+        if job.user:
+            message["job"]["user"] = job.user.username
 
         for task in tasks:
             message["tasks"].append({"id": task.id,
