@@ -286,8 +286,8 @@ def restart_agent(self, agent_id):
 @celery_app.task(ignore_result=True)
 def assign_tasks():
     db.session.rollback()
-    idle_agents = Agent.query.filter(Agent.state._in([AgentState.ONLINE,
-                                                      AgentState.RUNNING]),
+    idle_agents = Agent.query.filter(or_(Agent.state == AgentState.ONLINE,
+                                         Agent.state == AgentState.RUNNING),
                                      ~Agent.tasks.any(
                                         or_(
                                         Task.state == None,
