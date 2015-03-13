@@ -853,6 +853,19 @@ def stop_task(self, task_id):
 
 
 @celery_app.task(ignore_results=True)
+def delete_to_be_deleted_jobs():
+    db.session.rollback()
+
+    jobs_to_delete_query = Job.query.filter(Job.to_be_deleted == True)
+
+    job_ids_to_delete = []
+    for job in jobs_to_delete_query:
+        delete_job.delay(job.id)
+
+    db.session.commit()
+
+
+@celery_app.task(ignore_results=True)
 def delete_job(job_id):
     db.session.rollback()
     job = Job.query.filter_by(id=job_id).one()
