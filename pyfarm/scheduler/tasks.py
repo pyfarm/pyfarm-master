@@ -55,7 +55,7 @@ from pyfarm.models.software import (
     JobTypeSoftwareRequirement)
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
-from pyfarm.models.tasklog import TaskLog
+from pyfarm.models.tasklog import TaskLog, TaskTaskLogAssociation
 from pyfarm.models.job import Job, JobNotifiedUser
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.jobtype import JobType, JobTypeVersion
@@ -90,12 +90,14 @@ LOGFILES_DIR = read_env(
     "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
 TRANSACTION_RETRIES = read_env_int("PYFARM_TRANSACTION_RETRIES", 10)
 AGENT_REQUEST_TIMEOUT = read_env_int("PYFARM_AGENT_REQUEST_TIMEOUT", 10)
+BASE_URL = read_env("PYFARM_BASE_URL", "http://127.0.0.1:5000")
 
 DEFAULT_SUCCESS_SUBJECT = Template("Job {{ job.title }} completed successfully")
 DEFAULT_SUCCESS_BODY = Template(
     "{{ job.jobtype_version.jobtype.name }} job {{ job.title }} "
     "(id {{ job.id }}) has completed successfully on "
     "{{ job.time_finished.isoformat() }}.\n\n"
+    "Job: {{ job.url }}\n\n"
     "{% if job.output_link %}"
     "Output:\n"
     "{{ job.output_link }}\n\n"
@@ -109,6 +111,13 @@ DEFAULT_FAIL_BODY = Template(
     "{% if job.output_link %}"
     "Output:\n"
     "{{ job.output_link }}\n\n"
+    "{% endif %}"
+    "{% if failed_logs %}"
+    "Logs for failed tasks:\n"
+    "{% for log in failed_logs %}"
+    "{{log.url}}\n"
+    "{% endfor%}"
+    "\n\n"
     "{% endif %}"
     "Sincerely,\n\tThe PyFarm render manager")
 
@@ -555,6 +564,29 @@ def send_job_completion_mail(job_id, successful=True):
             if job.completion_notify_sent:
                 return
 
+            job.url = BASE_URL
+            if job.url[-1] != "/":
+                job.url += "/"
+            job.url+= "jobs/%s" % job.id
+
+            failed_tasks = Task.query.filter(Task.job == job,
+                                             Task.state == WorkState.FAILED)
+            failed_logs = []
+            for task in failed_tasks:
+                last_log_assoc = TaskTaskLogAssociation.query.filter_by(
+                    task=task).order_by(desc(
+                        TaskTaskLogAssociation.attempt)).limit(1).first()
+                if last_log_assoc:
+                    log = last_log_assoc.log
+                    log.url = BASE_URL
+                    if log.url[-1] != "/":
+                        log.url += "/"
+                    log.url += ("api/v1/jobs/%s/tasks/%s/attempts/%s/"
+                                "logs/%s/logfile" %
+                                (job.id, task.id, last_log_assoc.attempt,
+                                 log.identifier))
+                    failed_logs.append(log)
+
             notified_users_query = JobNotifiedUser.query.filter_by(job=job)
             if successful:
                 notified_users_query = notified_users_query.filter_by(
@@ -591,7 +623,8 @@ def send_job_completion_mail(job_id, successful=True):
                 else:
                     subject_template = DEFAULT_FAIL_SUBJECT
 
-            message = MIMEText(body_template.render(job=job))
+            message = MIMEText(
+                body_template.render(job=job, failed_logs=failed_logs))
             message["Subject"] = subject_template.render(job=job)
             message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
 
