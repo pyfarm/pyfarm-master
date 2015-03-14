@@ -335,7 +335,7 @@ class UUIDType(TypeDecorator):
 
     def load_dialect_impl(self, dialect):
         if dialect.name == "postgresql":
-            return dialect.type_descriptor(POSTGRES_UUID())
+            return dialect.type_descriptor(POSTGRES_UUID(as_uuid=True))
 
         return dialect.type_descriptor(VARBINARY(16))
 

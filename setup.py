@@ -31,7 +31,7 @@ from setuptools import setup
 #   flask-admin: New form helps that support async JavaScript requests
 install_requires = [
     "pyfarm.core>=0.9.1",
-    "sqlalchemy>=0.9.3",
+    "sqlalchemy==0.9.8",
     "flask",
     "flask-login",
     "flask-sqlalchemy",
