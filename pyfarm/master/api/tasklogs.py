@@ -40,6 +40,8 @@ from errno import EEXIST
 from flask.views import MethodView
 from flask import g, redirect, send_file, request, Response
 
+from sqlalchemy.exc import IntegrityError
+
 from pyfarm.core.logger import getLogger
 from pyfarm.core.config import read_env
 from pyfarm.models.tasklog import TaskLog, TaskTaskLogAssociation
@@ -166,26 +168,38 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
         path = realpath(join(LOGFILES_DIR, g.json["identifier"]))
         if not realpath(path).startswith(LOGFILES_DIR):
             return jsonify(error="Identifier is not acceptable"), BAD_REQUEST
-        task_log = TaskLog.query.filter_by(
-            identifier=g.json["identifier"]).first()
-        if not task_log:
-            task_log = TaskLog(**g.json)
+        attempts = 0
+        registered = False
+        while not registered:
+            try:
+                task_log = TaskLog.query.filter_by(
+                    identifier=g.json["identifier"]).first()
+                if not task_log:
+                    task_log = TaskLog(**g.json)
 
-        association = TaskTaskLogAssociation.query.filter_by(
-            task=task, log=task_log, attempt=attempt).first()
-        if association:
-            return (jsonify(
-                log=task_log, attempt=attempt, task_id=task_id,
-                error="This log is already registered for this task"), CONFLICT)
+                association = TaskTaskLogAssociation.query.filter_by(
+                    task=task, log=task_log, attempt=attempt).first()
+                if association:
+                    return (jsonify(
+                        log=task_log, attempt=attempt, task_id=task_id,
+                        error="This log is already registered for this task"),
+                    CONFLICT)
 
-        association = TaskTaskLogAssociation()
-        association.task = task
-        association.log = task_log
-        association.attempt = attempt
+                association = TaskTaskLogAssociation()
+                association.task = task
+                association.log = task_log
+                association.attempt = attempt
 
-        db.session.add(association)
-        db.session.add(task_log)
-        db.session.commit()
+                db.session.add(association)
+                db.session.add(task_log)
+                db.session.commit()
+                registered = True
+            except IntegrityError:
+                if attempts < 3:
+                    attempts += 1
+                    db.session.rollback()
+                else:
+                    raise
 
         logger.info("Registered task log %s with attempt %s for task %s",
                     task_log.identifier, attempt, task.id)
