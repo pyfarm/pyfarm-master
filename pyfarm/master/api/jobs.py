@@ -348,33 +348,6 @@ class JobIndexAPI(MethodView):
                 parents.append(parent_job)
             del g.json["parents"]
 
-        notified_usernames = g.json.pop("notified_users", None)
-        notified_users = []
-        if notified_usernames:
-            for entry in notified_usernames:
-                user = User.query.filter_by(username=entry["username"]).first()
-                if not user and AUTOCREATE_USERS:
-                    username = entry["username"]
-                    user = User(username=username)
-                    if AUTO_USERS_DEFAULT_DOMAIN:
-                        user.email = username + "@" + AUTO_USERS_DEFAULT_DOMAIN
-                    db.session.add(user)
-                    db.session.flush()
-                    logger.warning("User %s was autocreated on job submit",
-                                   username)
-                elif not user:
-                    return (jsonify(
-                                error="User %s not found" % entry["username"]),
-                            NOT_FOUND)
-                notified_user = JobNotifiedUser(user=user)
-                if "on_success" in entry:
-                    notified_user.on_success = entry["on_success"]
-                if "on_failure" in entry:
-                    notified_user.on_failure = entry["on_failure"]
-                if "on_deletion" in entry:
-                    notified_user.on_deletion = entry["on_deletion"]
-                notified_users.append(notified_user)
-
         tag_names = g.json.pop("tags", None)
         tags = []
         if tag_names:
@@ -410,6 +383,8 @@ class JobIndexAPI(MethodView):
                                     jobqueue_name),
                             NOT_FOUND)
 
+        notified_usernames = g.json.pop("notified_users", None)
+
         g.json.pop("start", None)
         g.json.pop("end", None)
         job = Job(**g.json)
@@ -422,9 +397,30 @@ class JobIndexAPI(MethodView):
         job.autodelete_time = g.json.get("autodelete_time",
                                          DEFAULT_JOB_DELETE_TIME)
 
-        for notified_user in notified_users:
-            notified_user.job = job
-            db.session.add(notified_user)
+        if notified_usernames:
+            for entry in notified_usernames:
+                user = User.query.filter_by(username=entry["username"]).first()
+                if not user and AUTOCREATE_USERS:
+                    username = entry["username"]
+                    user = User(username=username)
+                    if AUTO_USERS_DEFAULT_DOMAIN:
+                        user.email = username + "@" + AUTO_USERS_DEFAULT_DOMAIN
+                    db.session.add(user)
+                    db.session.flush()
+                    logger.warning("User %s was autocreated on job submit",
+                                   username)
+                elif not user:
+                    return (jsonify(
+                                error="User %s not found" % entry["username"]),
+                            NOT_FOUND)
+                notified_user = JobNotifiedUser(user=user, job=job)
+                if "on_success" in entry:
+                    notified_user.on_success = entry["on_success"]
+                if "on_failure" in entry:
+                    notified_user.on_failure = entry["on_failure"]
+                if "on_deletion" in entry:
+                    notified_user.on_deletion = entry["on_deletion"]
+                db.session.add(notified_user)
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
         if "end" in custom_json and "start" not in custom_json:
