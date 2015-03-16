@@ -55,7 +55,11 @@ celery_app.conf.CELERYBEAT_SCHEDULE = {
     "periodically_compress_task_logs": {
         "task": "pyfarm.scheduler.tasks.compress_task_logs",
         "schedule": timedelta(
-            seconds=read_env_int("PYFARM_LOG_COMPRESS_INTERVAL", 600))}
+            seconds=read_env_int("PYFARM_LOG_COMPRESS_INTERVAL", 600))},
+    "periodically_execute_deletions": {
+        "task": "pyfarm.scheduler.tasks.delete_to_be_deleted_jobs",
+        "schedule": timedelta(
+            seconds=read_env_int("PYFARM_DELETE_HANGING_INTERVAL", 300))}
         }
 
 if __name__ == '__main__':
