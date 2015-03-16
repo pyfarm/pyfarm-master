@@ -145,6 +145,8 @@ def single_agent(agent_id):
         if assocation:
             tasklog.task = assocation.task
             tasklog.attempt = assocation.attempt
+        else:
+            tasklog.task = None
 
     return render_template("pyfarm/user_interface/agent.html", agent=agent,
                            tasks=tasks, software_items=Software.query,
