@@ -120,6 +120,8 @@ DEFAULT_FAIL_BODY = Template(
     "\n\n"
     "{% endif %}"
     "Sincerely,\n\tThe PyFarm render manager")
+OUR_FARM_NAME = read_env("PYFARM_FARM_NAME", "")
+
 
 @celery_app.task(ignore_result=True, bind=True)
 def send_tasks_to_agent(self, agent_id):
@@ -458,17 +460,36 @@ def poll_agent(self, agent_id):
 
     try:
         logger.info("Polling agent %s", agent.hostname)
-        response = requests.get(
+        status_response = requests.get(
+            agent.api_url() + "/status",
+            headers={"User-Agent": USERAGENT},
+            timeout=AGENT_REQUEST_TIMEOUT)
+
+        if status_response.status_code != requests.codes.ok:
+            raise ValueError(
+                "Unexpected return code on checking status of agent "
+                "%s (id %s): %s" % (
+                    agent.hostname, agent.id, status_response.status_code))
+        status_json = status_response.json()
+
+        if ("farm_name" in status_json and
+            status_json["farm_name"] != OUR_FARM_NAME):
+            raise ValueError(
+                "Wrong farm_name from agent %s (id %s): %s. (Expected: %s) " %
+                    (agent.hostname, agent.id, status_json["farm_name"],
+                     OUR_FARM_NAME))
+
+        tasks_response = requests.get(
             agent.api_url() + "/tasks/",
             headers={"User-Agent": USERAGENT},
             timeout=AGENT_REQUEST_TIMEOUT)
 
-        if response.status_code != requests.codes.ok:
+        if tasks_response.status_code != requests.codes.ok:
             raise ValueError(
                 "Unexpected return code on checking tasks in agent "
                 "%s (id %s): %s" % (
-                    agent.hostname, agent.id, response.status_code))
-        json_data = response.json()
+                    agent.hostname, agent.id, tasks_response.status_code))
+        tasks_json = tasks_response.json()
     # Catching ProtocolError here is a work around for
     # https://github.com/kennethreitz/requests/issues/2204
     except (ConnectionError, Timeout, ProtocolError) as e:
@@ -490,7 +511,7 @@ def poll_agent(self, agent_id):
             db.session.commit()
 
     else:
-        present_task_ids = [x["id"] for x in json_data]
+        present_task_ids = [x["id"] for x in tasks_json]
         assigned_task_ids = db.session.query(Task.id).filter(
             Task.agent == agent,
             or_(Task.state == None,
