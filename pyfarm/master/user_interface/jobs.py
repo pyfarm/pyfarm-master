@@ -764,13 +764,19 @@ def add_notified_user_to_job(job_id):
                     "pyfarm/error.html", error="User %s not found" % user_id),
                 NOT_FOUND)
 
-    notified_user = JobNotifiedUser(user=user, job=job)
-    notified_user.on_success = ("on_success" in request.form and
-                                request.form["on_success"] == "true")
-    notified_user.on_failure = ("on_failure" in request.form and
-                                request.form["on_failure"] == "true")
-    notified_user.on_deletion = ("on_deletion" in request.form and
-                                 request.form["on_deletion"] == "true")
+    notified_user = JobNotifiedUser.query.filter_by(user=user, job=job).first()
+    if not notified_user:
+        notified_user = JobNotifiedUser(user=user, job=job)
+
+    notified_user.on_success = (("on_success" in request.form and
+                                 request.form["on_success"] == "true") or
+                                notified_user.on_success)
+    notified_user.on_failure = (("on_failure" in request.form and
+                                 request.form["on_failure"] == "true") or
+                                notified_user.on_failure)
+    notified_user.on_deletion = (("on_deletion" in request.form and
+                                  request.form["on_deletion"] == "true") or
+                                 notified_user.on_deletion)
 
     db.session.add(notified_user)
     db.session.commit()
