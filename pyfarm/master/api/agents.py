@@ -59,6 +59,7 @@ from pyfarm.master.utility import (
 logger = getLogger("api.agents")
 
 MAC_RE = re.compile("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
+OUR_FARM_NAME = read_env("PYFARM_FARM_NAME", "")
 
 
 def fail_missing_assignments(agent, current_assignments):
@@ -134,7 +135,8 @@ def schema():
 
 
 class AgentIndexAPI(MethodView):
-    @validate_with_model(Agent, ignore=("current_assignments", "id"))
+    @validate_with_model(Agent, ignore=("current_assignments", "id",
+                                        "farm_name"))
     def post(self):
         """
         A ``POST`` to this endpoint will either create or update an existing
@@ -240,6 +242,10 @@ class AgentIndexAPI(MethodView):
 
         # Set remote_ip if it did not come in with the request
         g.json.setdefault("remote_ip", request.remote_addr)
+
+        farm_name = g.json.pop("farm_name", None)
+        if farm_name and farm_name != OUR_FARM_NAME:
+            return jsonify(error="Wrong farm name"), BAD_REQUEST
 
         current_assignments = g.json.pop("current_assignments", None)
         mac_addresses = g.json.pop("mac_addresses", None)
@@ -590,7 +596,7 @@ class SingleAgentAPI(MethodView):
     @validate_with_model(
         Agent,
         type_checks={"id": isuuid},
-        ignore=("current_assignments", ),
+        ignore=("current_assignments", "farm_name"),
         ignore_missing=(
             "ram", "cpus", "port", "free_ram", "hostname"))
     def post(self, agent_id):
@@ -648,6 +654,10 @@ class SingleAgentAPI(MethodView):
 
         if "remote_ip" not in g.json:
             g.json["remote_ip"] = request.remote_addr
+
+        farm_name = g.json.pop("farm_name", None)
+        if farm_name and farm_name != OUR_FARM_NAME:
+            return jsonify(error="Wrong farm name"), BAD_REQUEST
 
         current_assignments = g.json.pop("current_assignments", None)
         mac_addresses = g.json.pop("mac_addresses", None)
