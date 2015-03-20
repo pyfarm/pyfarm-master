@@ -561,8 +561,9 @@ def poll_agents():
 
     offline_agents_to_poll_query = Agent.query.filter(
         Agent.state == AgentState.OFFLINE,
-        Agent.last_polled + timedelta(
-            seconds=POLL_OFFLINE_AGENTS_INTERVAL) < datetime.utcnow(),
+        or_(Agent.last_polled == None,
+            Agent.last_polled + timedelta(
+                seconds=POLL_OFFLINE_AGENTS_INTERVAL) < datetime.utcnow()),
         Agent.use_address != UseAgentAddress.PASSIVE)
 
     for agent in offline_agents_to_poll_query:
