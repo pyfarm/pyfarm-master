@@ -197,7 +197,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
         for job in child_jobs:
             if job.state == _WorkState.RUNNING:
                 if (job.num_assigned_agents() < (job.minimum_agents or 0) and
-                    job.num_assigned_agents()+1 <
+                    job.num_assigned_agents() <
                         (job.maximum_agents or maxsize) and
                     job.can_use_more_agents()):
                     return job
@@ -206,7 +206,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
 
         for queue in child_queues:
             if (queue.num_assigned_agents() < (queue.minimum_agents or 0) and
-                queue.num_assigned_agents() + 1 <
+                queue.num_assigned_agents() <
                     (queue.maximum_agents or maxsize)):
                 job = queue.get_job_for_agent(agent)
                 if job:
@@ -248,7 +248,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                 if isinstance(item, Job):
                     if item.state == _WorkState.RUNNING:
                         if (item.can_use_more_agents() and
-                            item.num_assigned_agents() + 1 <
+                            item.num_assigned_agents() <
                                 (item.maximum_agents or maxsize)):
                             if PREFER_RUNNING_JOBS:
                                 return item
@@ -262,7 +262,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                         # looking for already running or queued but older jobs
                         selected_job = item
                 if isinstance(item, JobQueue):
-                    if (item.num_assigned_agents() + 1 <
+                    if (item.num_assigned_agents() <
                             (item.maximum_agents or maxsize)):
                         job = item.get_job_for_agent(agent)
                         if job:
