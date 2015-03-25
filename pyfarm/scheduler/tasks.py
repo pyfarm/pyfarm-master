@@ -474,6 +474,9 @@ def poll_agent(self, agent_id):
 
         if ("farm_name" in status_json and
             status_json["farm_name"] != OUR_FARM_NAME):
+            agent.last_polled = datetime.utcnow()
+            db.session.add(agent)
+            db.session.commit()
             raise ValueError(
                 "Wrong farm_name from agent %s (id %s): %s. (Expected: %s) " %
                     (agent.hostname, agent.id, status_json["farm_name"],
@@ -502,11 +505,15 @@ def poll_agent(self, agent_id):
                            self.request.retries,
                            self.max_retries,
                            e)
+            agent.last_polled = datetime.utcnow()
+            db.session.add(agent)
+            db.session.commit()
             self.retry(exc=e)
         else:
             logger.error("Could not contact agent %s, (id %s), marking as "
                          "offline", agent.hostname, agent.id)
             agent.state = AgentState.OFFLINE
+            agent.last_polled = datetime.utcnow()
             db.session.add(agent)
             db.session.commit()
 
