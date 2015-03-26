@@ -1164,8 +1164,11 @@ class JobSingleTaskAPI(MethodView):
         # was set has committed, so that the new transaction will see the results
         # of other threads that were running concurrently but finished earlier.
         if task.job and state_transition:
+            old_state = task.job.state
             task.job.update_state()
             db.session.commit()
+            if task.job.state != old_state and task.job.state == WorkState.DONE:
+                assign_tasks.delay()
 
         return jsonify(task_data), OK
 
