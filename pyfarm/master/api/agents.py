@@ -43,7 +43,7 @@ from flask.views import MethodView
 from sqlalchemy import or_, not_
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState, AgentState
+from pyfarm.core.enums import WorkState, AgentState, _AgentState
 from pyfarm.core.config import read_env
 from pyfarm.scheduler.tasks import (
     assign_tasks, update_agent, assign_tasks_to_agent, send_tasks_to_agent)
@@ -741,6 +741,12 @@ class SingleAgentAPI(MethodView):
 
         for task in failed_tasks:
             task.job.update_state()
+        if agent.state == _AgentState.OFFLINE:
+            for task in agent.tasks:
+                task.agent = None
+                task.state = None
+                task.job.update_state()
+                db.session.add(task)
         db.session.commit()
 
         assign_tasks_to_agent.delay(agent_id)
