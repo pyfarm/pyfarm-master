@@ -48,7 +48,8 @@ from jinja2 import Template
 from lockfile import LockFile, AlreadyLocked
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import AgentState, WorkState, _WorkState, UseAgentAddress
+from pyfarm.core.enums import (
+    AgentState, _AgentState, WorkState, _WorkState, UseAgentAddress)
 from pyfarm.core.config import read_env, read_env_int
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
@@ -326,6 +327,9 @@ def assign_tasks_to_agent(agent_id):
             agent = Agent.query.filter_by(id=agent_id).first()
             if not agent:
                 raise ValueError("No agent with id %s" % agent_id)
+            if agent.state == _AgentState.OFFLINE:
+                raise ValueError("Agent %s (id %s) is offline" %
+                                 (agent.hostname, agent_id))
 
             task_count = Task.query.filter(Task.agent == agent,
                                         or_(Task.state == None,
