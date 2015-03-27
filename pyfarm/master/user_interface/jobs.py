@@ -767,6 +767,8 @@ def add_notified_user_to_job(job_id):
     notified_user = JobNotifiedUser.query.filter_by(user=user, job=job).first()
     if not notified_user:
         notified_user = JobNotifiedUser(user=user, job=job)
+        notified_user.on_success = False
+        notified_user.on_failure = False
 
     notified_user.on_success = (("on_success" in request.form and
                                  request.form["on_success"] == "true") or
