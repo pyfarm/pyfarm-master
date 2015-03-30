@@ -360,6 +360,20 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                     send_job_completion_mail.apply_async(args=[self.id, False],
                                                          countdown=5)
             db.session.add(self)
+        else:
+            logger.debug("Got at least one active task")
+            num_running_tasks = db.session.query(Task).\
+                filter(Task.job == self,
+                       Task.agent_id != None,
+                       or_(
+                            Task.state == WorkState.RUNNING,
+                            Task.state == None)).count()
+            logger.debug("Got %s running tasks", num_running_tasks)
+            if num_running_tasks == 0:
+                logger.debug("No running tasks in job %s, setting it to queued",
+                             self.title)
+                self.state = None
+                db.session.add(self)
 
     # Methods used by the scheduler
     def num_assigned_agents(self):
