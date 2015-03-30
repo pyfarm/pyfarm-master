@@ -11,6 +11,7 @@ Submodules
    pyfarm.master.user_interface.jobs
    pyfarm.master.user_interface.jobtypes
    pyfarm.master.user_interface.logs_in_task
+   pyfarm.master.user_interface.software
 
 Module contents
 ---------------
