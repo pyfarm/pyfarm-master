@@ -808,6 +808,9 @@ def delete_task(self, task_id):
                              task_id, TRANSACTION_RETRIES)
                 raise
 
+    job.update_state()
+    db.session.commit()
+
     retries = TRANSACTION_RETRIES
     done = False
     while not done and retries > 0:
