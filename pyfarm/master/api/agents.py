@@ -742,7 +742,8 @@ class SingleAgentAPI(MethodView):
         for task in failed_tasks:
             task.job.update_state()
         if agent.state == _AgentState.OFFLINE:
-            for task in agent.tasks:
+            for task in agent.tasks.filter(Task.state != WorkState.DONE,
+                                           Task.state != WorkState.FAILED):
                 task.agent = None
                 task.state = None
                 task.job.update_state()
