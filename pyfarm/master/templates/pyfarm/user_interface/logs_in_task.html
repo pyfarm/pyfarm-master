@@ -12,7 +12,16 @@
   <li> Attempt {{ attempt }}
     <ul>
     {% for log in logs %}
-      <li><span class="timestamp">{{ log.log.created_on.isoformat() }}</span> on {{ log.log.agent.hostname }}: <a href="/api/v1/jobs/{{ task.job.id }}/tasks/{{ task.id }}/attempts/{{ attempt }}/logs/{{ log.log.identifier }}/logfile">{{ log.log.identifier }}</a></li>
+      <li>
+        <span class="timestamp">{{ log.log.created_on.isoformat() }}</span>
+        on {{ log.log.agent.hostname }}:
+        <a href="/api/v1/jobs/{{ task.job.id }}/tasks/{{ task.id }}/attempts/{{ attempt }}/logs/{{ log.log.identifier }}/logfile">{{ log.log.identifier }}</a>
+        – Tasks:
+        {{ log.log.num_queued_tasks() }} /
+        {{ log.log.num_running_tasks() }} /
+        {{ log.log.num_failed_tasks() }} /
+        {{ log.log.num_done_tasks() }}
+      </li>
     {% endfor %}
     </ul>
   </li>
