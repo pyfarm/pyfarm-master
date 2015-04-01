@@ -30,6 +30,7 @@ from datetime import datetime
 
 from sqlalchemy.schema import UniqueConstraint, PrimaryKeyConstraint
 
+from pyfarm.models.core.types import WorkStateEnum
 from pyfarm.master.application import db
 from pyfarm.models.core.mixins import ReprMixin, UtilityMixins
 from pyfarm.models.core.types import id_column, IDTypeAgent, IDTypeWork
@@ -44,6 +45,8 @@ class TaskTaskLogAssociation(db.Model):
     task_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_TASK,
                                                   ondelete="CASCADE"))
     attempt = db.Column(db.Integer, autoincrement=False)
+
+    state = db.Column(WorkStateEnum, nullable=True)
 
     task = db.relationship("Task", backref=db.backref("log_associations",
                                                       lazy="dynamic",
