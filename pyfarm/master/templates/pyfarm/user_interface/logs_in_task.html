@@ -14,7 +14,7 @@
     {% for log in logs %}
       <li>
         <span class="timestamp">{{ log.log.created_on.isoformat() }}</span>
-        on {{ log.log.agent.hostname }}:
+        <a href="{{ url_for('single_agent_ui', agent_id=log.log.agent.id) }}">{{ log.log.agent.hostname }}</a>:
         <a href="/api/v1/jobs/{{ task.job.id }}/tasks/{{ task.id }}/attempts/{{ attempt }}/logs/{{ log.log.identifier }}/logfile">{{ log.log.identifier }}</a>
         – Tasks:
         {{ log.log.num_queued_tasks() }} /
