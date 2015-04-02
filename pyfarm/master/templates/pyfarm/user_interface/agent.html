@@ -174,6 +174,7 @@
   <thead>
     <th>Identifier</th>
     <th>Created On</th>
+    <th>Tasks (Queued / Running / Failed / Done)</th>
     <th>Job</th>
     <th>Jobtype</th>
   </thead>
@@ -182,6 +183,12 @@
     <tr>
       <td>{% if tasklog.task %}<a href="/api/v1/jobs/{{ tasklog.task.job.id }}/tasks/{{ tasklog.task.id }}/attempts/{{ tasklog.attempt }}/logs/{{ tasklog.identifier }}/logfile">{% endif %}{{ tasklog.identifier }}{% if tasklog.task %}</a>{% endif %}</td>
       <td class="timestamp">{{ tasklog.created_on.isoformat() }}</td>
+      <td>
+        {{ tasklog.num_queued_tasks() }} /
+        {{ tasklog.num_running_tasks() }} /
+        {{ tasklog.num_failed_tasks() }} /
+        {{ tasklog.num_done_tasks() }}
+      </td>
       <td>
         {% if tasklog.task %}
         <a href="{{ url_for('single_job_ui', job_id=tasklog.task.job.id) }}">{{ tasklog.task.job.title }}</a>

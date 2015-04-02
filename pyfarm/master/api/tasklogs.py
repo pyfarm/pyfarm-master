@@ -259,6 +259,82 @@ class SingleLogInTaskAttempt(MethodView):
 
         return jsonify(log.to_dict(unpack_relationships=False))
 
+    def post(self, job_id, task_id, attempt, log_identifier):
+        """
+        A ``POST`` to this endpoint will update metadata about the specified
+        logfile
+
+        .. http:post:: /api/v1/jobs/<job_id>/tasks/<task_id>/attempts/<attempt>/logs/<log_identifier> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/jobs/4/tasks/1300/attempts/5/logs/2014-09-03_10-58-59_4_4ee02475335911e4a935c86000cbf5fb.csv HTTP/1.1
+                Accept: application/json
+                Content-Type: application/json
+
+                {
+                    "state": "done"
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "id": 147,
+                    "identifier": "2014-09-03_10-58-59_4_4ee02475335911e4a935c86000cbf5fb.csv",
+                    "created_on": "2014-09-03T10:58:59.754880",
+                    "agent_id": "836ce137-6ad4-443f-abb9-94c4465ff87c"
+                }
+
+        :statuscode 200: no error
+        :statuscode 404: task or logfile not found
+        """
+        task = Task.query.filter_by(id=task_id, job_id=job_id).first()
+        if not task:
+            return jsonify(task_id=task_id, job_id=job_id,
+                           error="Specified task not found"), NOT_FOUND
+
+        log = TaskLog.query.filter_by(identifier=log_identifier).first()
+        if not log:
+            return jsonify(task_id=task_id, job_id=job_id,
+                           error="Specified log not found"), NOT_FOUND
+
+        association = TaskTaskLogAssociation.query.filter_by(
+            task=task,
+            log=log,
+            attempt=attempt).first()
+        if not association:
+            return jsonify(task_id=task.id, log=log.identifier,
+                           error="Specified log not found in task"), NOT_FOUND
+
+        if "state" in g.json:
+            new_state = g.json.pop("state")
+            if new_state != "queued":
+                association.state = new_state
+            else:
+                association.state = None
+            db.session.add(association)
+        if "agent_id" in g.json:
+            association.agent_id = g.json.pop("agent_id")
+            db.session.add(association)
+
+        if "identifier" in g.json:
+            return (jsonify(error="The tasklog identifier cannot be changed"),
+                    BAD_REQUEST)
+        if "created_on" in g.json:
+            return (jsonify(error="The created_on timestampt cannot be changed"),
+                    BAD_REQUEST)
+
+        db.session.commit()
+
+        return jsonify(log.to_dict(unpack_relationships=False))
+
 
 class TaskLogfileAPI(MethodView):
     def get(self, job_id, task_id, attempt, log_identifier):
