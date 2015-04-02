@@ -347,15 +347,16 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                 Task.state == WorkState.FAILED).count()
             if num_failed_tasks == 0:
                 if self.state != _WorkState.DONE:
-                    logger.info("Job %r: state transition %r -> 'done'",
-                                self.title, self.state)
+                    logger.info("Job %r (id %s): state transition %r -> 'done'",
+                                self.title, self.id, self.state)
                     self.state = WorkState.DONE
                     send_job_completion_mail.apply_async(args=[self.id, True],
                                                          countdown=5)
             else:
                 if self.state != _WorkState.FAILED:
-                    logger.info("Job %r: state transition %r -> 'failed'",
-                                self.title, self.state)
+                    logger.info("Job %r (id %s): state transition %r -> "
+                                "'failed'",
+                                self.title, self.id, self.state)
                     self.state = WorkState.FAILED
                     send_job_completion_mail.apply_async(args=[self.id, False],
                                                          countdown=5)
@@ -370,8 +371,8 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                             Task.state == None)).count()
             logger.debug("Got %s running tasks", num_running_tasks)
             if num_running_tasks == 0:
-                logger.debug("No running tasks in job %s, setting it to queued",
-                             self.title)
+                logger.debug("No running tasks in job %s (id %s), setting it "
+                             "to queued", self.title, self.id)
                 self.state = None
                 db.session.add(self)
 
