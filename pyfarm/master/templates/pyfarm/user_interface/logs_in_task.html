@@ -7,24 +7,33 @@
 <h1>Logs in Task {{ task.id }} </h1>
 <h2>(Frame {{ task.frame }} from job <a href="{{ url_for('single_job_ui', job_id=task.job.id) }}">{{ task.job.title }}</a>)</h2>
 
-<ul>
 {% for attempt, logs in attempts.items() %}
-  <li> Attempt {{ attempt }}
-    <ul>
+<div class="panel panel-default">
+  <div class="panel-heading">Attempt {{ attempt }} </div>
+  <table class="table">
+    <tr>
+      <th>Created On</th>
+      <th>On Agent</th>
+      <th>Logfile</th>
+      <th>Tasks (Queued / Running / Failed / Done)</th>
+    </tr>
     {% for log in logs %}
-      <li>
-        <span class="timestamp">{{ log.log.created_on.isoformat() }}</span>
-        on <a href="{{ url_for('single_agent_ui', agent_id=log.log.agent.id) }}">{{ log.log.agent.hostname }}</a>:
+    <tr>
+      <td class="timestamp">{{ log.log.created_on.isoformat() }}</td>
+      <td><a href="{{ url_for('single_agent_ui', agent_id=log.log.agent.id) }}">{{ log.log.agent.hostname }}</a></td>
+      <td>
         <a href="/api/v1/jobs/{{ task.job.id }}/tasks/{{ task.id }}/attempts/{{ attempt }}/logs/{{ log.log.identifier }}/logfile">{{ log.log.identifier }}</a>
-        – Tasks:
+      </td>
+      <td>
         {{ log.log.num_queued_tasks() }} /
         {{ log.log.num_running_tasks() }} /
         {{ log.log.num_failed_tasks() }} /
         {{ log.log.num_done_tasks() }}
-      </li>
+      </td>
+    </tr>
     {% endfor %}
-    </ul>
-  </li>
+  </table>
+</div>
 {%endfor%}
-</ul>
+
 {% endblock %}
