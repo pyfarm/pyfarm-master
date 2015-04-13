@@ -168,13 +168,28 @@ def send_tasks_to_agent(self, agent_id):
                            "ram": job.ram,
                            "ram_warning": job.ram_warning,
                            "ram_max": job.ram_max,
-                           "cpus": job.cpus},
+                           "cpus": job.cpus,
+                           "notified_users": [],
+                           "priority": job.priority,
+                           "notes": job.notes,
+                           "tags": []
+                           },
                    "jobtype": {"name": job.jobtype_version.jobtype.name,
                                "version": job.jobtype_version.version},
                    "tasks": []}
 
         if job.user:
             message["job"]["user"] = job.user.username
+
+        for notified_user in job.notified_users:
+            message["job"]["notified_users"].append(
+                {"username": notified_user.user.username,
+                 "on_success": notified_user.on_success,
+                 "on_failure": notified_user.on_failure,
+                 "on_deletion": notified_user.on_deletion})
+
+        for tag in job.tags:
+            message["job"]["tags"].append(tag)
 
         for task in tasks:
             message["tasks"].append({"id": task.id,
