@@ -207,8 +207,6 @@
   <input type="submit" class="btn" value="Filter">
 </form>
 
-<div>Jobs: {{ jobs_count }}</div>
-
 <nav>
   <ul class="pagination">
     <li class="{{ 'disabled' if filters.page == 1 else '' }}">
@@ -228,6 +226,8 @@
     </li>
   </ul>
 </nav>
+
+<div>Jobs: {{ jobs_count }} (Queued: {{ queued_jobs_count }}, Running: {{ running_jobs_count}}, Failed: {{ failed_jobs_count }}, Done: {{ done_jobs_count }} )</div>
 
 <table class="table table-striped table-bordered">
   <tr>
