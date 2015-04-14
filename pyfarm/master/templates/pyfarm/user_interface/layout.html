@@ -30,7 +30,6 @@
           <a class="navbar-brand" href="#">PyFarm {{farm_name}}</a>
           </div>
           <div class="collapse navbar-collapse" id="pyfarm-navbar-collapse-1">
-            {% if not current_user.is_anonymous() %}
             <ul class="nav navbar-nav">
               <li class="{% block agents_nb_class %}{% endblock %}"><a href="{{ url_for('agents_index_ui') }}">Agents</a></li>
               <li class="{% block jobs_nb_class %}{% endblock %}"><a href="{{ url_for('jobs_index_ui') }}">Jobs</a></li>
@@ -38,7 +37,6 @@
               <li class="{% block jobtypes_nb_class %}{% endblock %}"><a href="{{ url_for('jobtypes_index_ui')}}">Jobtypes</a></li>
               <li class="{% block software_nb_class %}{% endblock %}"><a href="{{ url_for('software_index_ui')}}">Software</a></li>
             </ul>
-            {% endif %}
             <ul class="nav navbar-nav navbar-right">
               {% if current_user.is_anonymous() %}
               <li><a href="/login">Login</a></li>
