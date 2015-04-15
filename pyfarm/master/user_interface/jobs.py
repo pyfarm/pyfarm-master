@@ -268,7 +268,7 @@ def jobs():
         all_pages = range(0, num_pages)
 
     jobs = jobs_query.all()
-    users_query = User.query
+    users_query = User.query.order_by(User.username)
 
     jobtypes_query = JobType.query
 
