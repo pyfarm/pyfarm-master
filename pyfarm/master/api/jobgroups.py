@@ -21,9 +21,11 @@ Job Groups
 This module defines an API for managing and querying job groups
 """
 try:
-    from httplib import OK, NOT_FOUND, CREATED, NO_CONTENT, BAD_REQUEST
+    from httplib import (
+        OK, NOT_FOUND, CREATED, NO_CONTENT, BAD_REQUEST, CONFLICT)
 except ImportError:  # pragma: no cover
-    from http.client import OK, NOT_FOUND, CREATED, NO_CONTENT, BAD_REQUEST
+    from http.client import (
+        OK, NOT_FOUND, CREATED, NO_CONTENT, BAD_REQUEST, CONFLICT)
 
 from flask.views import MethodView
 from flask import g
