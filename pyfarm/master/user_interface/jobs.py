@@ -253,6 +253,13 @@ def jobs():
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
     jobs_count = jobs_query.count()
+    queued_jobs_count = jobs_query.filter(Job.state == None).count()
+    running_jobs_count = jobs_query.filter(
+        Job.state == WorkState.RUNNING).count()
+    failed_jobs_count = jobs_query.filter(Job.state == WorkState.FAILED).count()
+    done_jobs_count = jobs_query.filter(Job.state == WorkState.DONE).count()
+
+    jobs_subquery = jobs_query.subquery()
 
     per_page = int(request.args.get("per_page", 100))
     page = int(request.args.get("page", 1))
@@ -299,7 +306,11 @@ def jobs():
                            all_pages=all_pages, num_pages=num_pages,
                            filters_and_order_wo_pagination=\
                                filters_and_order_wo_pagination,
-                           jobqueues=jobqueues)
+                           jobqueues=jobqueues,
+                           queued_jobs_count=queued_jobs_count,
+                           running_jobs_count=running_jobs_count,
+                           failed_jobs_count=failed_jobs_count,
+                           done_jobs_count=done_jobs_count)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
