@@ -58,6 +58,7 @@ from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.pathmap import PathMap
 from pyfarm.models.tasklog import TaskLog
 from pyfarm.models.gpu import GPU
+from pyfarm.models.jobgroup import JobGroup
 
 logger = getLogger("master.entrypoints")
 
@@ -341,6 +342,8 @@ def load_api(app_instance, api_instance):
         schema as pathmap_schema, PathMapIndexAPI, SinglePathMapAPI)
     from pyfarm.master.api.tasklogs import (
         LogsInTaskAttemptsIndexAPI, SingleLogInTaskAttempt, TaskLogfileAPI)
+    from pyfarm.master.api.jobgroups import (
+        schema as jobgroups_schema, JobGroupIndexAPI, SingleJobGroupAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -364,6 +367,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/pathmaps/",
         view_func=PathMapIndexAPI.as_view("pathmap_index_api"))
+    api_instance.add_url_rule(
+        "/jobgroups/",
+        view_func=JobGroupIndexAPI.as_view("jobgroup_index_api"))
 
     # schemas
     api_instance.add_url_rule(
@@ -387,6 +393,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/pathmaps/schema",
         "pathmap_schema", view_func=pathmap_schema, methods=("GET", ))
+    api_instance.add_url_rule(
+        "/jobgroups/schema",
+        "jobgroups_schema", view_func=jobgroups_schema, methods=("GET", ))
 
     # specific item access
     api_instance.add_url_rule(
@@ -429,6 +438,10 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/pathmaps/<int:pathmap_id>",
         view_func=SinglePathMapAPI.as_view("single_pathmap_by_id_api"))
+
+    api_instance.add_url_rule(
+        "/jobgroups/<int:group_id>",
+        view_func=SingleJobGroupAPI.as_view("single_jobgroup_api"))
 
     # special case for jobype/code
     api_instance.add_url_rule(

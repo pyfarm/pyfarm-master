@@ -229,6 +229,10 @@ class UtilityMixins(object):
                        "weight": relation_object.weight,
                        "maximum_agents": relation_object.maximum_agents,
                        "minimum_agents": relation_object.minimum_agents}
+            elif name == "user":
+                out = relation_object.username
+            elif name == "main_jobtype":
+                out = relation_object.name
             else:
                 raise NotImplementedError(
                     "don't know how to unpack relationships for `%s`" % name)

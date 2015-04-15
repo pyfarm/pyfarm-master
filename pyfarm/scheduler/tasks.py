@@ -63,6 +63,7 @@ from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.gpu import GPU
 from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
+from pyfarm.models.jobgroup import JobGroup
 from pyfarm.master.application import db
 from pyfarm.master.utility import default_json_encoder
 
