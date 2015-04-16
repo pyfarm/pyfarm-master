@@ -1,0 +1,65 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Job Groups{% endblock %}
+{% block jobgroups_nb_class %}active{% endblock %}
+{% block content %}
+
+<table class="table table-striped table-bordered">
+  <tr>
+    <th>
+      Title
+    </th>
+    <th>
+      Main JobType
+    </th>
+    <th>
+      Jobs
+    </th>
+    <th>
+      User
+    </th>
+    <th>
+      Agents
+    </th>
+    <th>
+      Submitted
+    </th>
+  </tr>
+  {% for jobgroup, main_jobtype_name, agent_count, time_submitted in jobgroups %}
+  <tr>
+    <td>
+      {{ jobgroup.title }}
+    </td>
+    <td><a href="{{ url_for('single_jobtype_ui', jobtype_id=jobgroup.main_jobtype_id) }}">{{ main_jobtype_name }}</a></td>
+    <td>
+      {% for job, jobtype_name in jobs_by_group[jobgroup.id] %}
+      {% if not job.state %}
+      <span class="glyphicon glyphicon-time" title="{{ job.title }} ({{ jobtype_name }})"></span>
+      {% endif %}
+      {% if job.state == "running" %}
+      <span style="color:blue">
+        <span class="glyphicon glyphicon-play" title="{{ job.title }} ({{ jobtype_name }})"></span>
+      </span>
+      {% endif %}
+      {% if job.state == "done" %}
+      <span style="color:green">
+        <span class="glyphicon glyphicon-ok" title="{{ job.title }} ({{ jobtype_name }})"></span>
+      </span>
+      {% endif %}
+      {% if job.state == "failed" %}
+      <span style="color:red">
+        <span class="glyphicon glyphicon-remove" title="{{ job.title }} ({{ jobtype_name }})"></span>
+      </span>
+      {% endif %}
+      {% if job.state == "paused" %}
+      <span class="glyphicon glyphicon-pause" title="{{ job.title }} ({{ jobtype_name }})"></span>
+      {% endif %}
+      {% endfor %}
+    </td>
+    <td>{{ jobgroup.user.username }}</td>
+    <td>{{ agent_count }}</td>
+    <td class="timestamp">{{ time_submitted or '' }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}
