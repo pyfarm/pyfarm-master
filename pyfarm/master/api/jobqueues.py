@@ -203,7 +203,7 @@ class SingleJobQueueAPI(MethodView):
 
             .. sourcecode:: http
 
-                GET /api/v1/software/Test%20Queue HTTP/1.1
+                GET /api/v1/jobqueues/Test%20Queue HTTP/1.1
                 Accept: application/json
 
             **Response**
@@ -251,7 +251,7 @@ class SingleJobQueueAPI(MethodView):
 
             .. sourcecode:: http
 
-                PUT /api/v1/jobs/Test%20Queue HTTP/1.1
+                POST /api/v1/jobqueues/Test%20Queue HTTP/1.1
                 Accept: application/json
 
                 {
@@ -330,13 +330,13 @@ class SingleJobQueueAPI(MethodView):
         """
         A ``DELETE`` to this endpoint will delete the specified job queue
 
-        .. http:delete:: /api/v1/jobqueue/HTTP/[<str:name>|<int:id>] 1.1
+        .. http:delete:: /api/v1/jobqueue/[<str:name>|<int:id>]
 
             **Request**
 
             .. sourcecode:: http
 
-                DELETE /api/v1/jobs/Test%20Queue HTTP/1.1
+                DELETE /api/v1/jobqueues/Test%20Queue HTTP/1.1
                 Accept: application/json
 
             **Response**
