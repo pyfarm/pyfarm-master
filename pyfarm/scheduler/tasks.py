@@ -109,6 +109,7 @@ DEFAULT_FAIL_BODY = Template(
     "{{ job.jobtype_version.jobtype.name }} job {{ job.title }} "
     "(id {{ job.id }}) has failed on "
     "{{ job.time_finished.isoformat() }}.\n\n"
+    "Job: {{ job.url }}\n\n"
     "{% if job.output_link %}"
     "Output:\n"
     "{{ job.output_link }}\n\n"
