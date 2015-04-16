@@ -470,7 +470,7 @@ class JobIndexAPI(MethodView):
         del job_data["user_id"]
         job_data["jobqueue"] = job.queue.path() if job.queue else None
         del job_data["job_queue_id"]
-        job_data["jobgroup"] = job.group.name if job.group else None
+        job_data["jobgroup"] = job.group.title if job.group else None
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()
@@ -658,7 +658,7 @@ class SingleJobAPI(MethodView):
         del job_data["user_id"]
         job_data["jobqueue"] = job.queue.path() if job.queue else None
         del job_data["job_queue_id"]
-        job_data["jobgroup"] = job.group.name if job.group else None
+        job_data["jobgroup"] = job.group.title if job.group else None
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()
@@ -894,7 +894,7 @@ class SingleJobAPI(MethodView):
         del job_data["user_id"]
         job_data["jobqueue"] = job.queue.path if job.queue else None
         del job_data["job_queue_id"]
-        job_data["jobgroup"] = job.group.name if job.group else None
+        job_data["jobgroup"] = job.group.title if job.group else None
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()
