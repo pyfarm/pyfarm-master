@@ -106,17 +106,17 @@
       <span class="glyphicon glyphicon-time" title="{{ job.title }} ({{ jobtype_name }})"></span>
       {% endif %}
       {% if job.state == "running" %}
-      <span style="color:blue">
+      <span style="color:#337AB7;">
         <span class="glyphicon glyphicon-play" title="{{ job.title }} ({{ jobtype_name }})"></span>
       </span>
       {% endif %}
       {% if job.state == "done" %}
-      <span style="color:green">
+      <span style="color:#5CB85C">
         <span class="glyphicon glyphicon-ok" title="{{ job.title }} ({{ jobtype_name }})"></span>
       </span>
       {% endif %}
       {% if job.state == "failed" %}
-      <span style="color:red">
+      <span style="color:#D9534F">
         <span class="glyphicon glyphicon-remove" title="{{ job.title }} ({{ jobtype_name }})"></span>
       </span>
       {% endif %}
