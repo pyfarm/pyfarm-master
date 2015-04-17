@@ -361,7 +361,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                     send_job_completion_mail.apply_async(args=[self.id, False],
                                                          countdown=5)
             db.session.add(self)
-        else:
+        elif self.state != _WorkState.PAUSED:
             logger.debug("Got at least one active task")
             num_running_tasks = db.session.query(Task).\
                 filter(Task.job == self,
