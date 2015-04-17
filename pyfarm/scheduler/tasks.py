@@ -189,7 +189,7 @@ def send_tasks_to_agent(self, agent_id):
                  "on_deletion": notified_user.on_deletion})
 
         for tag in job.tags:
-            message["job"]["tags"].append(tag)
+            message["job"]["tags"].append(tag.tag)
 
         for task in tasks:
             message["tasks"].append({"id": task.id,
