@@ -19,6 +19,21 @@
 debug: true
 
 
+# The URL to access the database.  For debugging and development
+# a local SQLite database is used.  For production access should be
+# configured to a more standard SQL database.  MySQL or Postgres are
+# the two primary databases PyFarm is regurarly tested against.  For
+# more information on the expected format of this variable see
+# SQLAlchemy's documentation:
+#   https://sqlalchemy.readthedocs.org/en/latest/core/engines.html#database-urls
+database: "sqlite:///pyfarm.sqlite"
+
+# The name of this render farm, normally this can remain the default value.  If
+# you're running multiple farms this allows you to only accept agents to your
+# master that match your current farm name.
+farm_name: ""
+
+
 # The secret key which is used by several components of Flask
 # for form validation, salting of secrets, etc.
 #
@@ -34,16 +49,6 @@ secret_key: pyfarm
 # frontends, and kept secret.  Do not use the value below for
 # production.
 csrf_session_key: pyfarm
-
-
-# The URL to access the database.  For debugging and development
-# a local SQLite database is used.  For production access should be
-# configured to a more standard SQL database.  MySQL or Postgres are
-# the two primary databases PyFarm is regurarly tested against.  For
-# more information on the expected format of this variable see
-# SQLAlchemy's documentation:
-#   https://sqlalchemy.readthedocs.org/en/latest/core/engines.html#database-urls
-database: "sqlite:///pyfarm.sqlite"
 
 
 # The prefix of the URL from which the API will operate on.  This should

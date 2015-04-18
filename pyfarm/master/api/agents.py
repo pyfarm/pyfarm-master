@@ -44,13 +44,13 @@ from sqlalchemy import or_, not_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState, AgentState, _AgentState
-from pyfarm.core.config import read_env
 from pyfarm.scheduler.tasks import (
     assign_tasks, update_agent, assign_tasks_to_agent, send_tasks_to_agent)
 from pyfarm.models.agent import Agent, AgentMacAddress
 from pyfarm.models.gpu import GPU
 from pyfarm.models.task import Task
 from pyfarm.models.software import Software, SoftwareVersion
+from pyfarm.master.config import config
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     jsonify, validate_with_model, get_ipaddr_argument, get_integer_argument,
@@ -59,7 +59,6 @@ from pyfarm.master.utility import (
 logger = getLogger("api.agents")
 
 MAC_RE = re.compile("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
-OUR_FARM_NAME = read_env("PYFARM_FARM_NAME", "")
 
 
 def fail_missing_assignments(agent, current_assignments):
@@ -244,7 +243,7 @@ class AgentIndexAPI(MethodView):
         g.json.setdefault("remote_ip", request.remote_addr)
 
         farm_name = g.json.pop("farm_name", None)
-        if farm_name and farm_name != OUR_FARM_NAME:
+        if farm_name and farm_name != config.get("farm_name"):
             return jsonify(error="Wrong farm name"), BAD_REQUEST
 
         current_assignments = g.json.pop("current_assignments", None)
@@ -656,7 +655,7 @@ class SingleAgentAPI(MethodView):
             g.json["remote_ip"] = request.remote_addr
 
         farm_name = g.json.pop("farm_name", None)
-        if farm_name and farm_name != OUR_FARM_NAME:
+        if farm_name and farm_name != config.get("farm_name"):
             return jsonify(error="Wrong farm name"), BAD_REQUEST
 
         current_assignments = g.json.pop("current_assignments", None)
