@@ -527,13 +527,13 @@ def pause_single_job(job_id):
                     "pyfarm/error.html", error="Job %s not found" % job_id),
                 NOT_FOUND)
 
-    for task in job.tasks:
-        if task.state == WorkState.RUNNING:
-            stop_task.delay(task.id)
-
     job.state = WorkState.PAUSED
     db.session.add(job)
     db.session.commit()
+
+    for task in job.tasks:
+        if task.state == WorkState.RUNNING:
+            stop_task.delay(task.id)
 
     assign_tasks.delay()
 
@@ -547,6 +547,7 @@ def pause_single_job(job_id):
 def pause_multiple_jobs():
     job_ids = request.form.getlist("job_id")
 
+    task_ids_to_stop = []
     for job_id in job_ids:
         job = Job.query.filter_by(id=job_id).first()
         if not job:
@@ -556,13 +557,15 @@ def pause_multiple_jobs():
 
         for task in job.tasks:
             if task.state == WorkState.RUNNING:
-                stop_task.delay(task.id)
+                task_ids_to_stop.append(task.id)
 
         job.state = WorkState.PAUSED
         db.session.add(job)
 
     db.session.commit()
 
+    for task_id in task_ids_to_stop:
+        stop_task.delay(task.id)
     assign_tasks.delay()
 
     flash("Selected jobs will be paused.")
