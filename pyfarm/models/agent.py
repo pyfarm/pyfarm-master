@@ -34,6 +34,7 @@ from netaddr import AddrFormatError, IPAddress
 from pyfarm.core.enums import (
     AgentState, STRING_TYPES, UseAgentAddress, INTEGER_TYPES, WorkState)
 from pyfarm.core.config import read_env_number, read_env_int, read_env
+from pyfarm.master.config import config
 from pyfarm.master.application import db, app
 from pyfarm.models.core.functions import repr_ip
 from pyfarm.models.core.mixins import (
@@ -52,6 +53,7 @@ from pyfarm.models.job import Job
 
 __all__ = ("Agent", )
 
+ALLOW_AGENT_LOOPBACK = config.get("allow_agents_from_loopback")
 REGEX_HOSTNAME = re.compile("^(?!-)[A-Z\d-]{1,63}(?<!-)"
                             "(\.(?!-)[A-Z\d-]{1,63}(?<!-))*\.?$",
                             re.IGNORECASE)
@@ -356,7 +358,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             raise ValueError(
                 "%s is not a valid address format: %s" % (value, e))
 
-        if app.config.get("ALLOW_AGENT_LOOPBACK_ADDRESSES"):
+        if ALLOW_AGENT_LOOPBACK:
             loopback = lambda: False
         else:
             loopback = address.is_loopback

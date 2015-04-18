@@ -41,10 +41,9 @@ from sqlalchemy import event
 from werkzeug.exceptions import BadRequest
 from werkzeug.routing import BaseConverter, ValidationError
 
-from pyfarm.master.config import config
 from pyfarm.core.enums import NOTSET, STRING_TYPES, PY3
-from pyfarm.core.config import read_env, read_env_bool
 from pyfarm.core.logger import getLogger
+from pyfarm.master.config import config
 
 POST_METHODS = set(("POST", "PUT"))
 IGNORED_MIMETYPES = set((
@@ -113,62 +112,18 @@ def get_application(**configuration_keywords):
         If ``True`` then setup the ``flask.g`` variable to include the
         application level information (ex. ``g.db``)
     """
-    # build the configuration
-    if read_env("PYFARM_CONFIG", "debug") == "debug":
-        secret_key = read_env(
-            "PYFARM_SECRET_KEY", "NG4pWsOCw57DnRfDncO3wqYpPnvDvMO",
-            log_result=False)
-
-        app_config = {
-            "DEBUG": True,
-            "SECRET_KEY": secret_key,
-            "LOGIN_DISABLED":
-                read_env("PYFARM_LOGIN_DISABLED", False, eval_literal=True),
-            "PYFARM_JSON_PRETTY":
-                read_env("PYFARM_JSON_PRETTY", True, eval_literal=True),
-            "SQLALCHEMY_ECHO":
-                read_env("PYFARM_SQL_ECHO", False, eval_literal=True),
-            "SQLALCHEMY_DATABASE_URI":
-                read_env("PYFARM_DATABASE_URI", "sqlite:///pyfarm.sqlite",
-                         log_result=False),
-            "CSRF_SESSION_KEY":
-                read_env("PYFARM_CSRF_SESSION_KEY", secret_key,
-                         log_result=False),
-            "CACHE_TYPE":
-                read_env("PYFARM_CACHE_TYPE", "simple"),
-            "REMEMBER_COOKIE_DURATION": timedelta(hours=1)}
-
-    else:
-        secret_key = read_env("PYFARM_SECRET_KEY", log_result=False)
-        app_config = {
-            "DEBUG": False,
-            "SECRET_KEY": secret_key,
-            "LOGIN_DISABLED":
-                read_env("PYFARM_LOGIN_DISABLED", False, eval_literal=True),
-            "PYFARM_JSON_PRETTY":
-                read_env("PYFARM_JSON_PRETTY", False, eval_literal=True),
-            "SQLALCHEMY_ECHO":
-                read_env("PYFARM_SQL_ECHO", False, eval_literal=True),
-            "SQLALCHEMY_DATABASE_URI":
-                read_env("PYFARM_DATABASE_URI", "sqlite:///pyfarm.sqlite",
-                         log_result=False),
-            "CSRF_SESSION_KEY":
-                read_env("PYFARM_CSRF_SESSION_KEY", secret_key,
-                         log_result=False),
-            "CACHE_TYPE":
-                read_env("PYFARM_CACHE_TYPE", "simple"),
-            "REMEMBER_COOKIE_DURATION": timedelta(hours=12)}
-
-    app_config.setdefault(
-        "JSONIFY_PRETTYPRINT_REGULAR",
-        app_config.get("PYFARM_JSON_PRETTY", True))
-    app_config.setdefault(
-        "ALLOW_AGENT_LOOPBACK_ADDRESSES",
-        read_env_bool("PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES", False))
-    app_config.setdefault(
-        "PYFARM_TIMESTAMP_FORMAT",
-        config.get("timestamp_format") or
-        read_env("PYFARM_TIMESTAMP_FORMAT", "YYYY-MM-DD HH:mm:ss"))
+    app_config = {
+        "DEBUG": config.get("debug"),
+        "SECRET_KEY": config.get("secret_key"),
+        "LOGIN_DISABLED": config.get("login_disabled"),
+        "PYFARM_JSON_PRETTY": config.get("pretty_json"),
+        "SQLALCHEMY_ECHO": config.get("echo_sql"),
+        "SQLALCHEMY_DATABASE_URI": config.get("database"),
+        "CSRF_SESSION_KEY": config.get("csrf_session_key"),
+        "REMEMBER_COOKIE_DURATION": timedelta(**config.get("cookie_duration")),
+        "JSONIFY_PRETTYPRINT_REGULAR": config.get("pretty_json"),
+        "TIMESTAMP_FORMAT": config.get("timestamp_format")
+    }
 
     static_folder = configuration_keywords.pop("static_folder", None)
     if static_folder is None:  # static folder not provided
@@ -187,7 +142,7 @@ def get_application(**configuration_keywords):
     @app.context_processor
     def template_context_processor():
         return {
-            "timestamp_format": app.config["PYFARM_TIMESTAMP_FORMAT"]
+            "timestamp_format": app.config["TIMESTAMP_FORMAT"]
         }
 
     return app
@@ -237,12 +192,10 @@ def get_api_blueprint(url_prefix=None):
 
     :param string url_prefix:
         The url prefix for the api such as ``/api/v1``.  If not provided then
-        value will be derived from :envvar:`PYFARM_API_PREFIX` and/or
-        :envvar:`PYFARM_API_VERSION`
+        value will be derived from the `api_prefix` configuration variable.
     """
     if url_prefix is None:
-        url_prefix = read_env("PYFARM_API_PREFIX",
-                              "/api/v%s" % read_env("PYFARM_API_VERSION", "1"))
+        url_prefix = config.get("api_prefix")
 
     return Blueprint("api", "pyfarm.master.api", url_prefix=url_prefix)
 

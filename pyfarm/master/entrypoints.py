@@ -39,6 +39,7 @@ from flask import request
 
 from pyfarm.core.config import read_env_bool, read_env
 from pyfarm.core.logger import getLogger
+from pyfarm.master.config import config
 from pyfarm.master.application import db
 from pyfarm.master.utility import error_handler
 
@@ -644,7 +645,7 @@ def run_master():  # pragma: no cover
         db.drop_all()
 
     if parsed.allow_agent_loopback_addresses:
-        app.config.update(ALLOW_AGENT_LOOPBACK_ADDRESSES=True)
+        config["allow_agents_from_loopback"] = True
 
     if parsed.create_all:
         db.create_all()

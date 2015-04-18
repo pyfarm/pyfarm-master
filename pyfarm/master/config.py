@@ -35,17 +35,22 @@ def load_environment():
     Provides a mapping of environment variable values to their
     configuration counterparts.
     """
+    read_env_no_log = partial(read_env, log_result=False)
     output = {}
     environment = {
-        "secret_key": (
-            "PYFARM_SECRET_KEY", partial(read_env, log_result=False)),
-        "autocreate_users": (
-            "PYFARM_AUTOCREATE_USERS", read_env_bool),
+        "secret_key": ("PYFARM_SECRET_KEY", read_env_no_log),
+        "autocreate_users": ("PYFARM_AUTOCREATE_USERS", read_env_bool),
         "autocreate_user_domain": (
             "PYFARM_AUTO_USERS_DEFAULT_DOMAIN", read_env_bool),
         "default_job_delete_time": (
             "PYFARM_DEFAULT_JOB_DELETE_TIME", read_env_int),
-
+        "login_disabled": ("PYFARM_LOGIN_DISABLED", read_env_bool),
+        "pretty_json": ("PYFARM_JSON_PRETTY", read_env_bool),
+        "echo_sql": ("PYFARM_SQL_ECHO", read_env_bool),
+        "database": ("PYFARM_DATABASE_URI", read_env_no_log),
+        "timestamp_format": ("PYFARM_TIMESTAMP_FORMAT", read_env),
+        "allow_agents_from_loopback": (
+            "PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES", read_env_bool)
     }
 
     for config_key, (env_key, get_env) in environment.items():

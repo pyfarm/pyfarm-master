@@ -12,23 +12,94 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Configures if the underlying Flask application and other libraries
+# should run in debug mode.
+#
+# **Production Note**: This value should always be false.
+debug: true
+
+
+# The secret key which is used by several components of Flask
+# for form validation, salting of secrets, etc.
+#
+# **Production Note**: This value should be random, consistent between
+# frontends, and kept secret.  Do not use the value below for
+# production.
+secret_key: pyfarm
+
+
+# The key used for signing the csrf token.
+#
+# **Production Note**: This value should be random, consistent between
+# frontends, and kept secret.  Do not use the value below for
+# production.
+csrf_session_key: pyfarm
+
+
+# The URL to access the database.  For debugging and development
+# a local SQLite database is used.  For production access should be
+# configured to a more standard SQL database.  MySQL or Postgres are
+# the two primary databases PyFarm is regurarly tested against.  For
+# more information on the expected format of this variable see
+# SQLAlchemy's documentation:
+#   https://sqlalchemy.readthedocs.org/en/latest/core/engines.html#database-urls
+database: "sqlite:///pyfarm.sqlite"
+
+
+# The prefix of the URL from which the API will operate on.  This should
+# not generally be changed unless you are operating different versions
+# of the API at the same time from one web server.
+api_prefix: /api/v1
+
+
+# Enables or disable the login functionality.  This can be used when
+# debugging or doing development but should not be changed for
+# production.
+login_disabled: false
+
+
+# The amount of time the 'remeber me' cookie should persist.  The keys
+# and values here are passed into a `timedelta` object as keywords.
+cookie_duration:
+  hours: 16
+
+
+# When true json output from te APIs will be reformatted to
+# be more human readable.
+pretty_json: false
+
+
+# When true all SQLAlchemy queries will be echoed.  This is useful
+# for debugging the SQL statements being run and to get an idea of
+# what the underlying ORM may be doing.
+echo_sql: false
+
+
 # When true the application will automatically create users in
 # PyFarm's database if they do not exist already.  Setting this
 # to false will cause an exception to be raised if the user in
 # question does not exist.
 autocreate_users: true
 
+
 # When autocreating users, use this domain for the email address.  Not
 # setting this value and setting `autocreate_users` to true will result
 # in a users's email address not being set.
 autocreate_user_domain: null
+
 
 # When provided an integer this many seconds will elapse after a job
 # has completed before it is deleted.
 default_job_delete_time: null
 
 
-# The format for timestamps in the user interface.  When not set this
-# value is read from $PYFARM_TIMESTAMP_FORMAT which will default
-# to "YYYY-MM-DD HH:mm:ss"
-timestamp_format:
+# The format for timestamps in the user interface.
+timestamp_format: "YYYY-MM-DD HH:mm:ss"
+
+
+# There's some validation that happens when an agent is added to the
+# database.  One of the checks we have is to ensure the agent's address
+# is a remote address which a loopback address normally is not considered
+# 'remote'.  Changing this value to to true disable this and will allow
+# agents from a local address to connect.
+allow_agents_from_loopback: false
