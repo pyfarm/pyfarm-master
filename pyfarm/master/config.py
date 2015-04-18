@@ -39,7 +39,7 @@ except NameError:  # pragma: no cover
 
 class Configuration(_Configuration):
     def __init__(self):
-        super(Configuration, self).__init__("pyfarm.master")
+        super(Configuration, self).__init__("pyfarm.master")  # pylint: disable=super-on-old-class
         read_env_no_log = partial(read_env, log_result=False)
         overrides = {
             "secret_key": ("PYFARM_SECRET_KEY", read_env_no_log),
