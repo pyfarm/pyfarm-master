@@ -28,11 +28,15 @@ debug: true
 #   https://sqlalchemy.readthedocs.org/en/latest/core/engines.html#database-urls
 database: "sqlite:///pyfarm.sqlite"
 
+
 # The name of this render farm, normally this can remain the default value.  If
 # you're running multiple farms this allows you to only accept agents to your
 # master that match your current farm name.
 farm_name: ""
 
+# The location where we'll store temporary files.  If not provided, this
+# will default to using `tempfile.gettempdir()` once during startup.
+tempdir: null
 
 # The secret key which is used by several components of Flask
 # for form validation, salting of secrets, etc.
@@ -110,9 +114,9 @@ timestamp_format: "YYYY-MM-DD HH:mm:ss"
 allow_agents_from_loopback: false
 
 
-# The directory to store updates for agents.  When not set
-# we'll use <system temp dir>/pyfarm-updates.
-agent_updates_dir: null
+# The directory to store updates for agents.  This will use `tempdir` above
+# as the base directory.
+agent_updates_dir: $tempdir/pyfarm-updates
 
 
 # Optional directory to serve GET requests for agent updates
