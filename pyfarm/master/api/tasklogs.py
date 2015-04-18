@@ -50,7 +50,7 @@ from pyfarm.master.utility import jsonify, validate_with_model, isuuid
 
 logger = getLogger("api.tasklogs")
 
-LOGFILES_DIR = config.get("logfiles_dir")
+LOGFILES_DIR = config.get("tasklogs_dir")
 
 try:
     makedirs(LOGFILES_DIR)
