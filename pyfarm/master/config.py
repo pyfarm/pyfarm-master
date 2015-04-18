@@ -55,7 +55,7 @@ def load_environment():
 
     for config_key, (env_key, get_env) in environment.items():
         if env_key in os.environ:
-            output[config_key] = get_env()
+            output[config_key] = get_env(env_key)
 
     return environment
 
