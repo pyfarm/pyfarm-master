@@ -44,8 +44,6 @@ VERSION_REGEX = re.compile("\d+(\.\d+(\.\d+)?)?((-pre\d?)|(-dev\d?)|(-rc?\d?)|"
                            "(-alpha\d?)|(-beta\d?))?$")
 
 UPDATES_DIR = config.get("agent_updates_dir")
-if UPDATES_DIR is None:
-    UPDATES_DIR = join(tempfile.gettempdir(), "pyfarm-updates")
 
 try:
     makedirs(UPDATES_DIR)
