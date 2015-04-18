@@ -31,7 +31,6 @@ except ImportError:  # pragma: no cover
       OK, NOT_FOUND, CONFLICT, TEMPORARY_REDIRECT, CREATED, BAD_REQUEST,
       INTERNAL_SERVER_ERROR)
 
-import tempfile
 from gzip import GzipFile
 from os import makedirs
 from os.path import join, realpath
@@ -43,7 +42,7 @@ from flask import g, redirect, send_file, request, Response
 from sqlalchemy.exc import IntegrityError
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.config import read_env
+from pyfarm.master.config import config
 from pyfarm.models.tasklog import TaskLog, TaskTaskLogAssociation
 from pyfarm.models.task import Task
 from pyfarm.master.application import db
@@ -51,9 +50,7 @@ from pyfarm.master.utility import jsonify, validate_with_model, isuuid
 
 logger = getLogger("api.tasklogs")
 
-# TODO a temp directory might not be a good default for putting logs
-LOGFILES_DIR = read_env(
-    "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
+LOGFILES_DIR = config.get("logfiles_dir")
 
 try:
     makedirs(LOGFILES_DIR)

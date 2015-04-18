@@ -34,9 +34,11 @@ database: "sqlite:///pyfarm.sqlite"
 # master that match your current farm name.
 farm_name: ""
 
+
 # The location where we'll store temporary files.  If not provided, this
 # will default to using `tempfile.gettempdir()` once during startup.
 tempdir: null
+
 
 # The secret key which is used by several components of Flask
 # for form validation, salting of secrets, etc.
@@ -125,3 +127,10 @@ agent_updates_dir: $tempdir/pyfarm-updates
 # can be useful when you're caching requests or doing something with
 # the update files prior to them being requested by the agent.
 agent_updates_webdir: null
+
+
+# The directory to store downloaded logs in.
+#
+# **Production Note**: For production it's probably best if these are kept
+# in a persistent location rather than $tempdir.
+tasklogs_dir: $tempdir/task_logs

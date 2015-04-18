@@ -57,7 +57,8 @@ class Configuration(_Configuration):
                 "PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES", read_env_bool),
             "agent_updates_dir": ("PYFARM_AGENT_UPDATES_DIR", read_env),
             "agent_updates_webdir": ("PYFARM_AGENT_UPDATES_WEBDIR", read_env),
-            "farm_name": ("PYFARM_FARM_NAME", read_env)
+            "farm_name": ("PYFARM_FARM_NAME", read_env),
+            "tasklogs_dir": ("PYFARM_LOGFILES_DIR", read_env)
         }
 
         self.load(environment=overrides)
