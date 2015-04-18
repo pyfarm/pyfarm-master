@@ -41,17 +41,15 @@ from sqlalchemy import event
 from werkzeug.exceptions import BadRequest
 from werkzeug.routing import BaseConverter, ValidationError
 
+from pyfarm.master.config import config
 from pyfarm.core.enums import NOTSET, STRING_TYPES, PY3
-from pyfarm.core.config import Configuration, read_env, read_env_bool
+from pyfarm.core.config import read_env, read_env_bool
 from pyfarm.core.logger import getLogger
 
 POST_METHODS = set(("POST", "PUT"))
 IGNORED_MIMETYPES = set((
     "application/x-www-form-urlencoded", "multipart/form-data",
     "application/zip", "text/csv"))
-
-config = Configuration("pyfarm.master")
-config.load(environment=os.environ)
 
 logger = getLogger("app")
 
