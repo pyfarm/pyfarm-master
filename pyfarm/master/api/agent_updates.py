@@ -47,8 +47,6 @@ UPDATES_DIR = config.get("agent_updates_dir")
 if UPDATES_DIR is None:
     UPDATES_DIR = join(tempfile.gettempdir(), "pyfarm-updates")
 
-UPDATES_WEBDIR = config.get("agent_updates_webdir")
-
 try:
     makedirs(UPDATES_DIR)
 except OSError as e:  # pragma: no cover
@@ -132,8 +130,9 @@ class AgentUpdatesAPI(MethodView):
                     BAD_REQUEST)
         filename = "pyfarm-agent-%s.zip" % version
 
-        if UPDATES_WEBDIR:
-            return redirect(join(UPDATES_WEBDIR, filename))
+        updates_webdir = config.get("agent_updates_webdir")
+        if updates_webdir:
+            return redirect(join(updates_webdir, filename))
 
         update_file = join(UPDATES_DIR, filename)
         if not isfile(update_file):
