@@ -12,6 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# When true the application will automatically create users in
+# PyFarm's database if they do not exist already.  Setting this
+# to false will cause an exception to be raised if the user in
+# question does not exist.
+autocreate_users: true
+
+# When autocreating users, use this domain for the email address.  Not
+# setting this value and setting `autocreate_users` to true will result
+# in a users's email address not being set.
+autocreate_user_domain: null
+
+# When provided an integer this many seconds will elapse after a job
+# has completed before it is deleted.
+default_job_delete_time: null
+
+
 # The format for timestamps in the user interface.  When not set this
 # value is read from $PYFARM_TIMESTAMP_FORMAT which will default
 # to "YYYY-MM-DD HH:mm:ss"

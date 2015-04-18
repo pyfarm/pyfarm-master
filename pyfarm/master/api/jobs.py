@@ -35,13 +35,12 @@ except ImportError:  # pragma: no cover
 from flask.views import MethodView
 from flask import g, request
 
-from sqlalchemy.sql import func, or_, and_
+from sqlalchemy.sql import func, or_
 
-from pyfarm.core.config import read_env_bool, read_env
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES, WorkState
 from pyfarm.scheduler.tasks import (
-    assign_tasks_to_agent, assign_tasks, send_job_completion_mail, delete_job)
+    assign_tasks_to_agent, assign_tasks, delete_job)
 from pyfarm.models.core.cfg import (
     MAX_JOBTYPE_LENGTH, MAX_USERNAME_LENGTH, MAX_JOBQUEUE_NAME_LENGTH)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
@@ -55,6 +54,7 @@ from pyfarm.models.jobqueue import JobQueue
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     jsonify, validate_with_model, get_request_argument)
+from pyfarm.master.config import config
 
 RANGE_TYPES = NUMERIC_TYPES[:-1] + (Decimal, )
 
@@ -63,11 +63,10 @@ logger = getLogger("api.jobs")
 # Load model mappings once per process
 TASK_MODEL_MAPPINGS = Task.types().mappings
 
-AUTOCREATE_USERS = read_env_bool("PYFARM_AUTOCREATE_USERS", True)
-AUTO_USERS_DEFAULT_DOMAIN = read_env("PYFARM_AUTO_USERS_DEFAULT_DOMAIN", None)
-DEFAULT_JOB_DELETE_TIME = read_env("PYFARM_DEFAULT_JOB_DELETE_TIME", None)
-if DEFAULT_JOB_DELETE_TIME is not None:
-    DEFAULT_JOB_DELETE_TIME = int(DEFAULT_JOB_DELETE_TIME)
+AUTOCREATE_USERS = config.get("autocreate_users")
+AUTO_USERS_DEFAULT_DOMAIN = config.get("autocreate_user_domain")
+DEFAULT_JOB_DELETE_TIME = config.get("default_job_delete_time")
+
 
 class ObjectNotFound(Exception):
     pass
