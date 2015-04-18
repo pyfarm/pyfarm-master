@@ -24,6 +24,8 @@ compatibility for some environment variables.
 """
 
 import os
+from functools import partial
+
 from pyfarm.core.config import (
     Configuration, read_env_int, read_env, read_env_bool)
 
@@ -33,17 +35,22 @@ def load_environment():
     Provides a mapping of environment variable values to their
     configuration counterparts.
     """
+    output = {}
     environment = {
-        "autocreate_users": read_env_bool("PYFARM_AUTOCREATE_USERS", True),
-        "autocreate_user_domain":
-            read_env("PYFARM_AUTO_USERS_DEFAULT_DOMAIN", None),
+        "secret_key": (
+            "PYFARM_SECRET_KEY", partial(read_env, log_result=False)),
+        "autocreate_users": (
+            "PYFARM_AUTOCREATE_USERS", read_env_bool),
+        "autocreate_user_domain": (
+            "PYFARM_AUTO_USERS_DEFAULT_DOMAIN", read_env_bool),
+        "default_job_delete_time": (
+            "PYFARM_DEFAULT_JOB_DELETE_TIME", read_env_int),
+
     }
 
-    if "PYFARM_DEFAULT_JOB_DELETE_TIME" in os.environ:
-        environment.update(
-            default_job_delete_time=read_env_int(
-                "PYFARM_DEFAULT_JOB_DELETE_TIME")
-        )
+    for config_key, (env_key, get_env) in environment.items():
+        if env_key in os.environ:
+            output[config_key] = get_env()
 
     return environment
 
