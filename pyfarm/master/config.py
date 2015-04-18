@@ -50,7 +50,9 @@ def load_environment():
         "database": ("PYFARM_DATABASE_URI", read_env_no_log),
         "timestamp_format": ("PYFARM_TIMESTAMP_FORMAT", read_env),
         "allow_agents_from_loopback": (
-            "PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES", read_env_bool)
+            "PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES", read_env_bool),
+        "agent_updates_dir": ("PYFARM_AGENT_UPDATES_DIR", read_env),
+        "agent_updates_webdir": ("PYFARM_AGENT_UPDATES_WEBDIR", read_env)
     }
 
     for config_key, (env_key, get_env) in environment.items():

@@ -103,3 +103,16 @@ timestamp_format: "YYYY-MM-DD HH:mm:ss"
 # 'remote'.  Changing this value to to true disable this and will allow
 # agents from a local address to connect.
 allow_agents_from_loopback: false
+
+
+# The directory to store updates for agents.  When not set
+# we'll use <system temp dir>/pyfarm-updates.
+agent_updates_dir: null
+
+
+# Optional directory to serve GET requests for agent updates
+# from.  This is different from `agent_updates_dir` in that it's
+# only used when an agent is requested a file to update from.  This
+# can be useful when you're caching requests or doing something with
+# the update files prior to them being requested by the agent.
+agent_updates_webdir: null
