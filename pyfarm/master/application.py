@@ -178,6 +178,9 @@ def get_application(**configuration_keywords):
         static_folder = os.path.join(
             os.path.dirname(pyfarm.master.__file__), "static")
 
+    static_folder = os.path.abspath(static_folder)
+    assert os.path.isdir(static_folder), "No such directory %s" % static_folder
+
     app = Flask("pyfarm.master", static_folder=static_folder)
     app.config.update(app_config)
     app.config.update(configuration_keywords)
