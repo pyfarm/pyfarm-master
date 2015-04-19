@@ -37,7 +37,6 @@ except ImportError:
 
 from flask import request
 
-from pyfarm.core.config import read_env_bool, read_env
 from pyfarm.core.logger import getLogger
 from pyfarm.master.config import config
 from pyfarm.master.application import db
@@ -153,7 +152,7 @@ def load_user_interface(app_instance):
         add_software_version, add_software, remove_software,
         update_version_default_status)
 
-    farm_name = read_env("PYFARM_FARM_NAME", "")
+    farm_name = config.get("farm_name")
     app_instance.jinja_env.globals.update({"farm_name": farm_name})
 
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
@@ -652,21 +651,17 @@ def run_master():  # pragma: no cover
 
     load_setup(app)
     load_master(app, api)
-
-    if read_env_bool("PYFARM_DEV_LISTEN_ON_WILDCARD", False):
-        app.run(host='0.0.0.0')
-    else:
-        app.run()
+    app.run(host=config.get("flask_listen_address"))
 
 
 def create_app():
     """An entry point specifically for uWSGI or similar to use"""
     from pyfarm.master.application import app, api
 
-    if read_env_bool("PYFARM_DEV_APP_DB_DROP_ALL", False):
+    if config.get("dev_db_drop_all"):
         db.drop_all()
 
-    if read_env_bool("PYFARM_DEV_APP_DB_CREATE_ALL", False):
+    if config.get("dev_db_create_all"):
         db.create_all()
 
     load_setup(app)
@@ -674,5 +669,5 @@ def create_app():
     return app
 
 
-if read_env_bool("PYFARM_APP_INSTANCE", False):
+if config.get("instance_application"):
     app = create_app()

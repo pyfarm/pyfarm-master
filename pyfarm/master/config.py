@@ -41,6 +41,7 @@ class Configuration(_Configuration):
     def __init__(self):  # pylint: disable=super-on-old-class
         super(Configuration, self).__init__("pyfarm.master")
         read_env_no_log = partial(read_env, log_result=False)
+        env_bool_false = partial(read_env_bool, default=False)
         overrides = {
             "secret_key": ("PYFARM_SECRET_KEY", read_env_no_log),
             "autocreate_users": ("PYFARM_AUTOCREATE_USERS", read_env_bool),
@@ -58,7 +59,18 @@ class Configuration(_Configuration):
             "agent_updates_dir": ("PYFARM_AGENT_UPDATES_DIR", read_env),
             "agent_updates_webdir": ("PYFARM_AGENT_UPDATES_WEBDIR", read_env),
             "farm_name": ("PYFARM_FARM_NAME", read_env),
-            "tasklogs_dir": ("PYFARM_LOGFILES_DIR", read_env)
+            "tasklogs_dir": ("PYFARM_LOGFILES_DIR", read_env),
+            "flask_listen_address": (
+                "PYFARM_DEV_LISTEN_ON_WILDCARD", env_bool_false
+            ),
+            "dev_db_drop_all": (
+                "PYFARM_DEV_APP_DB_DROP_ALL", env_bool_false
+            ),
+            "dev_db_create_all": (
+                "PYFARM_DEV_APP_DB_CREATE_ALL", env_bool_false
+            ),
+            "instance_application": ("PYFARM_APP_INSTANCE", env_bool_false)
+
         }
 
         self.load(environment=overrides)

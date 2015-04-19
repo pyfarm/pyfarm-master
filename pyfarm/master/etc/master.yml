@@ -134,3 +134,30 @@ agent_updates_webdir: null
 # **Production Note**: For production it's probably best if these are kept
 # in a persistent location rather than $tempdir.
 tasklogs_dir: $tempdir/task_logs
+
+
+# The address the Flask application should listen on.  By default
+# this will only listen locally but could be changed to listen on
+# a specific adatper or `0.0.0.0` for all addresses.
+flask_listen_address: 127.0.0.1
+
+
+# When true all database tables will be dropped prior to setting
+# up the application.  This is useful for development purposes only
+# and should not be used in production.  There's also the `pyfarm-tables`
+# command line tool which can be used to create or drop tables.
+dev_db_drop_all: false
+
+
+# When true we'll attempt to create any missing database tables
+# prior to the application starting.  This is useful for development
+# purposes only and should not be used in production.  There's also
+# the `pyfarm-tables` command line tool which can be used to create
+# or drop tables.
+dev_db_create_all: false
+
+
+# When true the application will be instanced as 'app' in the
+# pyfarm.master.entrypoints module.  When running behind something
+# like uwsgi this should be true.
+instance_application: false
