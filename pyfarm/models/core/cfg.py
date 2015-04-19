@@ -13,53 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
-Configuration Variables
-=======================
-
-Stores basic configuration data related to tables and models.  Most of these
-variables have defaults defined in the configuration under `PYFARM_DB_<value>`
-
-:const string TABLE_PREFIX:
-    Prefix for all tables
-
-:const string TABLE_SOFTWARE:
-    Stores the name of the table for software items
-
-:const string TABLE_TAG:
-    Stores the name of the table for tags
-
-:const string TABLE_AGENT:
-    Stores the name of the table for agents
-
-:const string TABLE_AGENT_TAGS:
-    Stores the name of the table for agent tags
-
-:const string TABLE_JOB:
-    Stores the name of the table for jobs
-
-:const string TABLE_JOB_TAG:
-    Stores the name of the table for job tags
-
-:const string TABLE_TASK:
-    Stores the name of the table for job tasks
-
-:const string TABLE_USER:
-    Stores the registered users (both human and api)
-
-:const string TABLE_ROLE:
-    Stores roles in which a user can operate in
-
-:const string TABLE_USERS_USER_ROLE:
-    Stores relationships between :const:`.TABLE_USERS_USER` and
-    :const:`.TABLE_ROLE`
-
-:const string TABLE_JOB_QUEUES:
-    Stores the name of the table for job queues
-
-:const string TABLE_PATH_MAP:
-    Stores the name of the table for path maps
 
 :const integer MAX_HOSTNAME_LENGTH:
     the max length of a hostname
@@ -81,36 +35,37 @@ variables have defaults defined in the configuration under `PYFARM_DB_<value>`
         multiple values at a later time
 """
 
-from pyfarm.core.config import read_env, read_env_int
+from pyfarm.core.config import read_env_int
+from pyfarm.master.config import config
 
 # table names
-TABLE_PREFIX = read_env("PYFARM_DB_PREFIX", "")
-TABLE_SOFTWARE = "%ssoftware" % TABLE_PREFIX
-TABLE_SOFTWARE_VERSION = "%s_versions" % TABLE_SOFTWARE
-TABLE_TAG = "%stags" % TABLE_PREFIX
-TABLE_AGENT = "%sagents" % TABLE_PREFIX
-TABLE_AGENT_SOFTWARE_VERSION_ASSOC = (
-    "%sagent_software_version_associations" % TABLE_PREFIX)
-TABLE_AGENT_TAG_ASSOC = "%sagent_tag_associations" % TABLE_PREFIX
-TABLE_AGENT_MAC_ADDRESS = "%sagent_mac_addresses" % TABLE_PREFIX
-TABLE_JOB = "%sjobs" % TABLE_PREFIX
-TABLE_JOB_TYPE = "%sjobtypes" % TABLE_PREFIX
-TABLE_JOB_TYPE_VERSION = "%sjobtype_versions" % TABLE_PREFIX
-TABLE_JOB_TAG_ASSOC = "%sjob_tag_associations" % TABLE_PREFIX
-TABLE_JOB_DEPENDENCY = "%sjob_dependencies" % TABLE_PREFIX
-TABLE_JOB_SOFTWARE_REQ = "%sjob_software_requirements" % TABLE_PREFIX
-TABLE_JOB_NOTIFIED_USER = "%snotified_users" % TABLE_PREFIX
-TABLE_JOB_TYPE_SOFTWARE_REQ = "%sjobtype_software_requirements" % TABLE_PREFIX
-TABLE_TASK = "%stasks" % TABLE_PREFIX
-TABLE_USER = "%susers" % TABLE_PREFIX
-TABLE_ROLE = "%sroles" % TABLE_PREFIX
-TABLE_USER_ROLE = "%suser_roles" % TABLE_PREFIX
-TABLE_JOB_QUEUE = "%sjob_queues" % TABLE_PREFIX
-TABLE_PATH_MAP = "%spath_maps" % TABLE_PREFIX
-TABLE_TASK_LOG = "%stask_logs" % TABLE_PREFIX
-TABLE_TASK_TASK_LOG_ASSOC = "%stask_log_associations" % TABLE_PREFIX
-TABLE_GPU = "%sgpus" % TABLE_PREFIX
-TABLE_GPU_IN_AGENT = "%sgpu_agent_associations" % TABLE_PREFIX
+TABLE_PREFIX = config.get("table_prefix")
+TABLE_SOFTWARE = config.get("table_software")
+TABLE_SOFTWARE_VERSION = config.get("table_software_version")
+TABLE_TAG = config.get("table_tag")
+TABLE_AGENT = config.get("table_agent")
+TABLE_AGENT_SOFTWARE_VERSION_ASSOC = \
+    config.get("table_agent_software_version_assoc")
+TABLE_AGENT_TAG_ASSOC = config.get("table_agent_tag_assoc")
+TABLE_AGENT_MAC_ADDRESS = config.get("table_agent_mac_address")
+TABLE_JOB = config.get("table_job")
+TABLE_JOB_TYPE = config.get("table_job_type")
+TABLE_JOB_TYPE_VERSION = config.get("table_job_type_version")
+TABLE_JOB_TAG_ASSOC = config.get("table_job_tag_assoc")
+TABLE_JOB_DEPENDENCY = config.get("table_job_dependency")
+TABLE_JOB_SOFTWARE_REQ = config.get("table_job_software_req")
+TABLE_JOB_NOTIFIED_USER = config.get("table_job_notified_users")
+TABLE_JOB_TYPE_SOFTWARE_REQ = config.get("table_job_type_software_req")
+TABLE_TASK = config.get("table_task")
+TABLE_USER = config.get("table_user")
+TABLE_ROLE = config.get("table_role")
+TABLE_USER_ROLE = config.get("table_user_role")
+TABLE_JOB_QUEUE = config.get("table_job_queue")
+TABLE_PATH_MAP = config.get("table_path_map")
+TABLE_TASK_LOG = config.get("table_task_log")
+TABLE_TASK_LOG_ASSOC = config.get("table_task_log_assoc")
+TABLE_GPU = config.get("table_gpus")
+TABLE_GPU_IN_AGENT = config.get("table_gpu_in_agent")
 
 TABLES = (TABLE_SOFTWARE, TABLE_SOFTWARE_VERSION, TABLE_TAG,
           TABLE_AGENT_SOFTWARE_VERSION_ASSOC, TABLE_AGENT, TABLE_JOB_TYPE,
@@ -119,7 +74,7 @@ TABLES = (TABLE_SOFTWARE, TABLE_SOFTWARE_VERSION, TABLE_TAG,
           TABLE_JOB_DEPENDENCY, TABLE_JOB_TAG_ASSOC, TABLE_JOB_SOFTWARE_REQ,
           TABLE_JOB_NOTIFIED_USER, TABLE_JOB_TYPE_SOFTWARE_REQ, TABLE_JOB,
           TABLE_JOB_TYPE_VERSION, TABLE_JOB_QUEUE, TABLE_PATH_MAP,
-          TABLE_TASK_LOG, TABLE_TASK_TASK_LOG_ASSOC, TABLE_AGENT_MAC_ADDRESS,
+          TABLE_TASK_LOG, TABLE_TASK_LOG_ASSOC, TABLE_AGENT_MAC_ADDRESS,
           TABLE_GPU, TABLE_GPU_IN_AGENT)
 
 # column lengths

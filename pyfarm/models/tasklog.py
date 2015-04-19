@@ -36,10 +36,10 @@ from pyfarm.master.application import db
 from pyfarm.models.core.mixins import ReprMixin, UtilityMixins
 from pyfarm.models.core.types import id_column, IDTypeAgent, IDTypeWork
 from pyfarm.models.core.cfg import (
-    TABLE_TASK_LOG, TABLE_AGENT, TABLE_TASK, TABLE_TASK_TASK_LOG_ASSOC)
+    TABLE_TASK_LOG, TABLE_AGENT, TABLE_TASK, TABLE_TASK_LOG_ASSOC)
 
 class TaskTaskLogAssociation(db.Model):
-    __tablename__ = TABLE_TASK_TASK_LOG_ASSOC
+    __tablename__ = TABLE_TASK_LOG_ASSOC
     __table_args__ = (PrimaryKeyConstraint("task_log_id", "task_id", "attempt"),)
     task_log_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_TASK_LOG,
                                                       ondelete="CASCADE"))
