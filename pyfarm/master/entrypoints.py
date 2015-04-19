@@ -30,7 +30,7 @@ try:
     from httplib import (
         responses, BAD_REQUEST, UNAUTHORIZED, NOT_FOUND, METHOD_NOT_ALLOWED,
         INTERNAL_SERVER_ERROR, UNSUPPORTED_MEDIA_TYPE)
-except ImportError:
+except ImportError:  # pragma: no cover
     from http.client import (
         responses, BAD_REQUEST, UNAUTHORIZED, NOT_FOUND, METHOD_NOT_ALLOWED,
         INTERNAL_SERVER_ERROR, UNSUPPORTED_MEDIA_TYPE)
