@@ -64,7 +64,7 @@ TABLE_JOB_QUEUE = config.get("table_job_queue")
 TABLE_PATH_MAP = config.get("table_path_map")
 TABLE_TASK_LOG = config.get("table_task_log")
 TABLE_TASK_LOG_ASSOC = config.get("table_task_log_assoc")
-TABLE_GPU = config.get("table_gpus")
+TABLE_GPU = config.get("table_gpu")
 TABLE_GPU_IN_AGENT = config.get("table_gpu_in_agent")
 
 # column lengths
