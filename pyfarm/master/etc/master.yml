@@ -63,6 +63,11 @@ csrf_session_key: pyfarm
 api_prefix: /api/v1
 
 
+# The URL template we use to communicate with the agent.
+agent_api_url_template: http://${host}:${port}/api/v1
+
+
+
 # Enables or disable the login functionality.  This can be used when
 # debugging or doing development but should not be changed for
 # production.
@@ -106,14 +111,6 @@ default_job_delete_time: null
 
 # The format for timestamps in the user interface.
 timestamp_format: "YYYY-MM-DD HH:mm:ss"
-
-
-# There's some validation that happens when an agent is added to the
-# database.  One of the checks we have is to ensure the agent's address
-# is a remote address which a loopback address normally is not considered
-# 'remote'.  Changing this value to to true disable this and will allow
-# agents from a local address to connect.
-allow_agents_from_loopback: false
 
 
 # The directory to store updates for agents.  This will use `tempdir` above
@@ -249,4 +246,58 @@ table_gpu_in_agent: ${table_prefix}gpu_agent_associations
 
 ##
 ## END Database Table Names
+##
+
+##
+## BEGIN Database Model Constraints
+##
+
+# There's some validation that happens when an agent is added to the
+# database.  One of the checks we have is to ensure the agent's address
+# is a remote address which a loopback address normally is not considered
+# 'remote'.  Changing this value to to true disable this and will allow
+# agents from a local address to connect.
+allow_agents_from_loopback: false
+
+
+# The maximum length of a tag
+max_tag_length: 64
+
+# The maximum length of a hostname
+max_hostname_length: 255
+
+
+# The maximum length of the operating system's name for an agent.
+max_osname_length: 128
+
+
+# The maximum length of an agent's CPU name
+max_cpuname_length: 128
+
+
+# **Not Implemented** The default amount of ram the agent is allowed to
+# allocate towards work.  A value of 1.0 would allow the agent to be
+# assigned as much work as the system's ram would allow.
+agent_ram_allocation: .8
+
+
+# **Not Implemented** Based on load, this is the default amount of CPU space
+# an agent is allowed to occupy with work.
+agent_cpu_allocation: 1.0
+
+
+# The minimum and maxinum ports an agent can connect from
+agent_min_port: 1024
+agent_max_port: 65535
+
+# The minimum and maxinum CPUs an agent can declare
+agent_min_cpus: 1
+agent_max_cpus: 256
+
+# The minimum and maxinum amount of RAM, in megabytes, an agent can declare
+agent_min_ram: 16
+agent_max_ram: 262144
+
+##
+## END Database Model Constraints
 ##
