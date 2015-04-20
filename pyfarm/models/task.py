@@ -58,7 +58,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     agent_id = db.Column(
         IDTypeAgent,
-        db.ForeignKey("%s.id" % config.get("table_job")),
+        db.ForeignKey("%s.id" % config.get("table_agent")),
         doc="Foreign key which stores :attr:`Job.id`")
 
     job_id = db.Column(
