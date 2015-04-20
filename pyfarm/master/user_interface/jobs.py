@@ -587,6 +587,8 @@ def unpause_single_job(job_id):
     db.session.add(job)
     db.session.commit()
 
+    assign_tasks.delay()
+
     flash("Job %s is unpaused." % job.title)
 
     if "next" in request.args:
@@ -609,6 +611,8 @@ def unpause_multiple_jobs():
         db.session.add(job)
 
     db.session.commit()
+
+    assign_tasks.delay()
 
     flash("Selected jobs are unpaused")
 
