@@ -19,6 +19,11 @@
 debug: true
 
 
+# Enables verbose output of loggers associated with the
+# job queue.
+debug_queue: false
+
+
 # The URL to access the database.  For debugging and development
 # a local SQLite database is used.  For production access should be
 # configured to a more standard SQL database.  MySQL or Postgres are
@@ -341,6 +346,25 @@ max_path_length: 512
 # The maximum length a GPU name is allowed to be.
 max_gpu_name_length: 128
 
+
+# The maximum length a queue name is allowed to be.
+max_queue_name_length: 255
+
+
+# The maximum length of a queue's path
+max_queue_path_length: 1024
+
 ##
 ## END Database Model Constraints
 ##
+
+# When true the queue will prefer to assign work
+# for jobs which are already running.
+queue_prefer_running_jobs: true
+
+# The default priority for a newly created job queue.
+queue_default_priority: 0
+
+# The default weight of a newly created job queue.
+queue_default_weight: 10
+
