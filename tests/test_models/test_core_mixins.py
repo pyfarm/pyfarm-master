@@ -26,7 +26,7 @@ BaseTestCase.build_environment()
 
 from pyfarm.core.enums import _WorkState, WorkState, DBWorkState
 from pyfarm.master.application import db
-from pyfarm.models.core.cfg import TABLE_PREFIX
+from pyfarm.master.config import config
 from pyfarm.models.core.types import IPv4Address, WorkStateEnum
 from pyfarm.models.core.mixins import (
     WorkStateChangedMixin, ValidatePriorityMixin, UtilityMixins,
@@ -37,7 +37,7 @@ rand_state = lambda: choice(list(WorkState))
 
 
 class ValidationModel(db.Model, ValidateWorkStateMixin, ValidatePriorityMixin):
-    __tablename__ = "%s_validation_mixin_test" % TABLE_PREFIX
+    __tablename__ = "%s_validation_mixin_test" % config.get("table_prefix")
     STATE_ENUM = WorkState
     id = db.Column(Integer, primary_key=True, autoincrement=True)
     state = db.Column(WorkStateEnum)
@@ -46,7 +46,7 @@ class ValidationModel(db.Model, ValidateWorkStateMixin, ValidatePriorityMixin):
 
 
 class WorkStateChangedModel(db.Model, WorkStateChangedMixin):
-    __tablename__ = "%s_state_change_test" % TABLE_PREFIX
+    __tablename__ = "%s_state_change_test" % config.get("table_prefix")
     id = db.Column(Integer, primary_key=True, autoincrement=True)
     state = db.Column(WorkStateEnum)
     attempts = db.Column(Integer, nullable=False, default=0)
@@ -58,19 +58,21 @@ event.listen(
 
 
 MixinModelRelation1 = db.Table(
-    "%s_mixin_rel_test1" % TABLE_PREFIX, db.metadata,
+    "%s_mixin_rel_test1" % config.get("table_prefix"), db.metadata,
     db.Column("mixin_id", db.Integer,
-              db.ForeignKey("%s.id" % "%s_mixin_test" % TABLE_PREFIX),
+              db.ForeignKey(
+                  "%s.id" % "%s_mixin_test" % config.get("table_prefix")),
               primary_key=True))
 
 MixinModelRelation2 = db.Table(
-    "%s_mixin_rel_test2" % TABLE_PREFIX, db.metadata,
+    "%s_mixin_rel_test2" % config.get("table_prefix"), db.metadata,
     db.Column("mixin_id", db.Integer,
-              db.ForeignKey("%s.id" % "%s_mixin_test" % TABLE_PREFIX),
+              db.ForeignKey(
+                  "%s.id" % "%s_mixin_test" % config.get("table_prefix")),
               primary_key=True))
 
 class MixinModel(db.Model, UtilityMixins):
-    __tablename__ = "%s_mixin_test" % TABLE_PREFIX
+    __tablename__ = "%s_mixin_test" % config.get("table_prefix")
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     a = db.Column(db.Integer)
     b = db.Column(db.String(512))
