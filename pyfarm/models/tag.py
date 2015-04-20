@@ -14,18 +14,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """
 Tag
 ===
 Table with tags for both jobs and agents
 """
 
-from textwrap import dedent
-
 from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.master.application import db
-from pyfarm.models.core.cfg import TABLE_TAG, MAX_TAG_LENGTH
+from pyfarm.master.config import config
 from pyfarm.models.core.types import id_column
 from pyfarm.models.core.mixins import UtilityMixins
 
@@ -36,10 +35,11 @@ class Tag(db.Model, UtilityMixins):
     """
     Model which provides tagging for :class:`.Job` and class:`.Agent` objects
     """
-    __tablename__ = TABLE_TAG
+    __tablename__ = config.get("table_tag")
     __table_args__ = (UniqueConstraint("tag"), )
 
     id = id_column()
 
-    tag = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
-                    doc=dedent("""The actual value of the tag"""))
+    tag = db.Column(
+        db.String(config.get("max_tag_length")),
+        nullable=False, doc="The actual value of the tag")

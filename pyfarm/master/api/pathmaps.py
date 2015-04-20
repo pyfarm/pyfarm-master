@@ -35,11 +35,11 @@ from sqlalchemy import or_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES
-from pyfarm.models.core.cfg import MAX_TAG_LENGTH
 from pyfarm.models.pathmap import PathMap
 from pyfarm.models.tag import Tag
 from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
+from pyfarm.master.config import config
 from pyfarm.master.utility import (
     jsonify, validate_with_model, get_uuid_argument)
 
@@ -79,7 +79,7 @@ def schema():
     """
     out = PathMap.to_schema()
     del out["tag_id"]
-    out["tag"] = "VARCHAR(%s)" % MAX_TAG_LENGTH
+    out["tag"] = "VARCHAR(%s)" % config.get("max_tag_length")
     return jsonify(out)
 
 
