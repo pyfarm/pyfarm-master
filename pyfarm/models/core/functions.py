@@ -27,12 +27,12 @@ from datetime import datetime
 from textwrap import dedent
 
 from pyfarm.core.enums import STRING_TYPES
-from pyfarm.core.config import read_env_int
 from pyfarm.master.application import db
+from pyfarm.master.config import config
 from pyfarm.models.core.types import (
     id_column, IDTypeWork, IPAddress, WorkStateEnum)
 
-DEFAULT_PRIORITY = read_env_int("PYFARM_QUEUE_DEFAULT_PRIORITY", 0)
+DEFAULT_PRIORITY = config.get("queue_default_priority")
 
 
 def modelfor(model, table):
@@ -40,9 +40,9 @@ def modelfor(model, table):
     Returns True if the given `model` object is for the
     expected `table`.
 
-    >>> from pyfarm.models.core.cfg import TABLE_AGENT
+    >>> from pyfarm.master.config import config
     >>> from pyfarm.models.agent import Agent
-    >>> modelfor(Agent("foo", "10.56.0.0", "255.0.0.0"), TABLE_AGENT)
+    >>> modelfor(Agent("foo", "10.56.0.0", "255.0.0.0"), config.get("table_agent"))
     True
     """
     try:
