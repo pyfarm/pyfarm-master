@@ -41,8 +41,6 @@ from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES, WorkState
 from pyfarm.scheduler.tasks import (
     assign_tasks_to_agent, assign_tasks, delete_job)
-from pyfarm.models.core.cfg import (
-    MAX_JOBTYPE_LENGTH, MAX_USERNAME_LENGTH, MAX_JOBQUEUE_NAME_LENGTH)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 from pyfarm.models.user import User
@@ -62,10 +60,6 @@ logger = getLogger("api.jobs")
 
 # Load model mappings once per process
 TASK_MODEL_MAPPINGS = Task.types().mappings
-
-AUTOCREATE_USERS = config.get("autocreate_users")
-AUTO_USERS_DEFAULT_DOMAIN = config.get("autocreate_user_domain")
-DEFAULT_JOB_DELETE_TIME = config.get("default_job_delete_time")
 
 
 class ObjectNotFound(Exception):
@@ -196,8 +190,9 @@ def schema():
     # dynamically computed by the api
     schema_dict["start"] = "NUMERIC(10,4)"
     schema_dict["end"] = "NUMERIC(10,4)"
-    schema_dict["user"] = "VARCHAR(%s)" % MAX_USERNAME_LENGTH
-    schema_dict["jobqueue"] = "VARCHAR(%s)" % MAX_JOBQUEUE_NAME_LENGTH
+    schema_dict["user"] = "VARCHAR(%s)" % config.get("max_username_length")
+    schema_dict["jobqueue"] = \
+        "VARCHAR(%s)" % config.get("max_queue_name_length")
 
     # In the database, we are storing the jobtype_version_id, but over the wire,
     # we are using the jobtype's name plus version to identify it
@@ -206,7 +201,8 @@ def schema():
     del schema_dict["user_id"]
     # jobqueue too
     del schema_dict["job_queue_id"]
-    schema_dict["jobtype"] = "VARCHAR(%s)" % MAX_JOBTYPE_LENGTH
+    schema_dict["jobtype"] = \
+        "VARCHAR(%s)" % config.get("job_type_max_name_length")
     schema_dict["jobtype_version"] = "INTEGER"
     return jsonify(schema_dict), OK
 
@@ -360,10 +356,10 @@ class JobIndexAPI(MethodView):
         username = g.json.pop("user", None)
         if username:
             user = User.query.filter_by(username=username).first()
-            if not user and AUTOCREATE_USERS:
+            if not user and config.get("autocreate_users"):
                 user = User(username=username)
-                if AUTO_USERS_DEFAULT_DOMAIN:
-                    user.email = username + "@" + AUTO_USERS_DEFAULT_DOMAIN
+                if config.get("autocreate_user_domain"):
+                    user.email = username + "@" + config.get("autocreate_user_domain")
                 db.session.add(user)
                 logger.warning("User %s was autocreated on job submit", username)
             elif not user:
@@ -394,16 +390,16 @@ class JobIndexAPI(MethodView):
         job.user = user
         job.queue = jobqueue
         job.autodelete_time = g.json.get("autodelete_time",
-                                         DEFAULT_JOB_DELETE_TIME)
+                                         config.get("default_job_delete_time"))
 
         if notified_usernames:
             for entry in notified_usernames:
                 user = User.query.filter_by(username=entry["username"]).first()
-                if not user and AUTOCREATE_USERS:
+                if not user and config.get("autocreate_users"):
                     username = entry["username"]
                     user = User(username=username)
-                    if AUTO_USERS_DEFAULT_DOMAIN:
-                        user.email = username + "@" + AUTO_USERS_DEFAULT_DOMAIN
+                    if config.get("autocreate_user_domain"):
+                        user.email = username + "@" + config.get("autocreate_user_domain")
                     db.session.add(user)
                     db.session.flush()
                     logger.warning("User %s was autocreated on job submit",
