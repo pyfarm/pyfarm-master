@@ -291,12 +291,40 @@ agent_min_port: 1024
 agent_max_port: 65535
 
 # The minimum and maxinum CPUs an agent can declare
+# These values also drive the min/max number of CPUS job is allowed to request.
 agent_min_cpus: 1
 agent_max_cpus: 256
 
-# The minimum and maxinum amount of RAM, in megabytes, an agent can declare
+# The minimum and maxinum amount of RAM, in megabytes, an agent can declare.
+# These values also drive the min/max amount of ram a job is allowed to request.
 agent_min_ram: 16
 agent_max_ram: 262144
+
+# The default weight given to a job for use in the queue.
+queue_default_weight: 10
+
+# The maxinum length a job's title is allowed to be
+jobtitle_max_length: 255
+
+# The global default batch size for all new jobs.
+job_default_batch: 1
+
+# The global default number of times a job will requeue
+# for tailed tasks.  0 will never requeue, -1 will
+# requeue indefinitely.
+job_requeue_default: 3
+
+# The global default minimum number of CPUs a job may execute
+# on.  0 will disable the minimum, -1 for force an entire agent
+# to be exclusive to a job's task.
+job_default_cpus: 1
+
+# The global default amount of ram that's required to be free on
+# host in order for a task of a job to run on a given agent.  A
+# value of 0 will not require a minimum, -1 will force the agent's
+# entire ram to be allocated to the given task.
+job_default_ram: 32
+
 
 ##
 ## END Database Model Constraints
