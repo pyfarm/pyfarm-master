@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2014 Ambient Entertainment GmbH & Co. KG
+# Copyright 2015 Oliver Palmer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +27,7 @@ from textwrap import dedent
 from functools import reduce
 from logging import DEBUG
 
-from sqlalchemy import event, desc, asc, func, distinct, or_
+from sqlalchemy import event, distinct, or_
 from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.core.config import read_env_int, read_env_bool
