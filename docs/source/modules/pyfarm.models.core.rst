@@ -6,7 +6,6 @@ Submodules
 
 .. toctree::
 
-   pyfarm.models.core.cfg
    pyfarm.models.core.functions
    pyfarm.models.core.mixins
    pyfarm.models.core.types
