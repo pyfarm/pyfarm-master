@@ -354,8 +354,19 @@ max_queue_name_length: 255
 # The maximum length of a queue's path
 max_queue_path_length: 1024
 
+
+# The maximum length of a job type's name
+job_type_max_name_length: 64
+
+# The maximum length of a job type's class name
+job_type_max_class_name_length: 64
+
 ##
 ## END Database Model Constraints
+##
+
+##
+## BEGIN Queue defautls
 ##
 
 # When true the queue will prefer to assign work
@@ -368,3 +379,19 @@ queue_default_priority: 0
 # The default weight of a newly created job queue.
 queue_default_weight: 10
 
+##
+## END Queue defautls
+##
+
+##
+## BEGIN Job Type defautls
+##
+
+# The maximum number of tasks for the given job type
+# to send to an agent at once.
+job_type_max_batch: 1
+
+
+# When batching and this value is true frames will be batched
+# in contiguous groups.
+job_type_batch_contiguous: true

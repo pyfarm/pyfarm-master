@@ -24,23 +24,17 @@ to an individual job.  See :mod:`pyfarm.models.job` for more the more
 general implementation.
 """
 
-from textwrap import dedent
-
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 
-from pyfarm.core.config import read_env_int, read_env_bool, read_env
 from pyfarm.core.logger import getLogger
 from pyfarm.master.application import db
-from pyfarm.models.core.cfg import (
-    TABLE_JOB_TYPE, TABLE_JOB_TYPE_VERSION, MAX_JOBTYPE_LENGTH)
+from pyfarm.master.config import config
 from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
 from pyfarm.models.core.types import id_column, IDTypeWork
 
 
 __all__ = ("JobType", )
-
-JOBTYPE_BASECLASS = read_env("PYFARM_JOBTYPE_SUBCLASSES_BASE_CLASS", "JobType")
 
 logger = getLogger("models.jobtype")
 
@@ -49,38 +43,52 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
     """
     Stores the unique information necessary to execute a task
     """
-    __tablename__ = TABLE_JOB_TYPE
+    __tablename__ = config.get("table_job_type")
     __table_args__ = (UniqueConstraint("name"),)
     REPR_COLUMNS = ("id", "name")
 
     id = id_column(IDTypeWork)
-    name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
-                     doc=dedent("""
-                     The name of the job type.  This can be either a human
-                     readable name or the name of the job type class
-                     itself."""))
-    description = db.Column(db.Text, nullable=True,
-                            doc=dedent("""
-                            Human readable description of the job type.  This
-                            field is not required and is not directly relied
-                            upon anywhere."""))
-    success_subject = db.Column(db.Text, nullable=True,
-                                doc="The subject line to use for notifications "
-                                    "in case of success.  Some substitions, "
-                                    "for example for the job title, are "
-                                    "available.")
-    success_body = db.Column(db.Text, nullable=True,
-                             doc="The email body to use for notifications in "
-                                 "in case of success.  Some substitions, for "
-                                 "example for the job title, are available.")
-    fail_subject = db.Column(db.Text, nullable=True,
-                             doc="The subject line to use for notifications "
-                                 "in case of failure.  Some substitions, for "
-                                 "example for the job title, are available.")
-    fail_body = db.Column(db.Text, nullable=True,
-                             doc="The email body to use for notifications in "
-                                 "in case of success.  Some substitions, for "
-                                 "example for the job title, are available.")
+
+    name = db.Column(
+        db.String(config.get("job_type_max_name_length")),
+        nullable=False,
+        doc="The name of the job type.  This can be either a human "
+            "readable name or the name of the job type class itself.")
+
+    description = db.Column(
+        db.Text,
+        nullable=True,
+        doc="Human readable description of the job type.  This field is not "
+            "required and is not directly relied upon anywhere.")
+
+
+    success_subject = db.Column(
+        db.Text,
+        nullable=True,
+        doc="The subject line to use for notifications in case of "
+            "success.  Some substitutions, for example for the job title, "
+            "are available.")
+
+    success_body = db.Column(
+        db.Text,
+        nullable=True,
+        doc="The email body to use for notifications in "
+            "in case of success.  Some substitutions, for "
+            "example for the job title, are available.")
+
+    fail_subject = db.Column(
+        db.Text,
+        nullable=True,
+        doc="The subject line to use for notifications "
+            "in case of failure.  Some substitutions, for "
+            "example for the job title, are available.")
+
+    fail_body = db.Column(
+        db.Text,
+        nullable=True,
+        doc="The email body to use for notifications in "
+            "in case of success.  Some substitutions, for "
+            "example for the job title, are available.")
 
     @validates("name")
     def validate_name(self, key, value):
@@ -91,53 +99,67 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
 
 
 class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
-    __tablename__ = TABLE_JOB_TYPE_VERSION
+    __tablename__ = config.get("table_job_type_version")
     __table_args__ = (UniqueConstraint("jobtype_id", "version"),)
 
-    REPR_COLUMNS = (
-        "id", "jobtype_id", "version")
-    id = id_column(IDTypeWork)
-    jobtype_id = db.Column(IDTypeWork,
-                           db.ForeignKey("%s.id" % TABLE_JOB_TYPE),
-                           nullable=False,
-                           doc="The jobtype this version belongs to")
-    version = db.Column(db.Integer, nullable=False, doc="The version number")
-    max_batch = db.Column(db.Integer,
-                          default=read_env_int(
-                              "JOBTYPE_DEFAULT_MAX_BATCH",
-                              read_env_int("PYFARM_QUEUE_MAX_BATCH", 1)),
-                          doc=dedent("""
-                          When the queue runs, this is the maximum number of
-                          tasks that the queue can select to assign to a single
-                          agent.  If left empty, no maximum applies"""))
-    batch_contiguous = db.Column(db.Boolean,
-                                 default=read_env_bool(
-                                     "JOBTYPE_DEFAULT_BATCH_CONTIGUOUS", True),
-                                 doc=dedent("""
-                                 If True then the queue will be forced to batch
-                                 numerically contiguous tasks only for this
-                                 job type.  For example if True it would batch
-                                 frames 1, 2, 3, 4 together but not 2, 4, 6,
-                                 8.  If this column is False however the queue
-                                 will batch non-contiguous tasks too."""))
-    classname = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=True,
-                          doc=dedent("""
-                          The name of the job class contained within the file
-                          being loaded.  This field may be null but when it's
-                          not provided job type name will be used instead."""))
-    code = db.Column(db.UnicodeText, nullable=False,
-                     doc="The source code of the job type")
+    REPR_COLUMNS = ("id", "jobtype_id", "version")
 
-    jobtype = db.relationship("JobType",
-                              backref=db.backref("versions", lazy="dynamic",
-                                                 cascade="all, delete-orphan"),
-                              doc=dedent("""
-                                  Relationship between this version and the
-                                  :class:`JobType` it belongs to"""))
-    jobs = db.relationship("Job", backref="jobtype_version", lazy="dynamic",
-                           doc=dedent("""
-                           Relationship between this jobtype version and
-                           :class:`.Job` objects."""))
+    id = id_column(IDTypeWork)
+
+    jobtype_id = db.Column(
+        IDTypeWork,
+        db.ForeignKey("%s.id" % config.get("table_job_type")),
+        nullable=False,
+        doc="The jobtype this version belongs to")
+
+    version = db.Column(
+        db.Integer,
+        nullable=False,
+        doc="The version number")
+
+    max_batch = db.Column(
+        db.Integer,
+        default=config.get("job_type_max_batch"),
+        doc="When the queue runs, this is the maximum number of tasks "
+            "that the queue can select to assign to a single"
+            "agent.  If left empty, no maximum applies")
+
+    batch_contiguous = db.Column(
+        db.Boolean,
+        default=config.get("job_type_batch_contiguous"),
+        doc="If True then the queue will be forced to batch"
+            "numerically contiguous tasks only for this job type.  "
+            "For example if True it would batch frames 1, 2, 3, 4 "
+            "together but not 2, 4, 6, 8.  If this column is False "
+            "however the queue will batch non-contiguous tasks too.")
+
+
+    classname = db.Column(
+        db.String(config.get("job_type_max_class_name_length")),
+        nullable=True,
+        doc="The name of the job class contained within the file being "
+            "loaded.  This field may be null but when it's not provided "
+            "job type name will be used instead.")
+
+    code = db.Column(
+        db.UnicodeText,
+        nullable=False,
+        doc="The source code of the job type")
+
+    #
+    # Relationships
+    #
+    jobtype = db.relationship(
+        "JobType",
+        backref=db.backref(
+            "versions", lazy="dynamic", cascade="all, delete-orphan"),
+        doc="Relationship between this version and the "
+            ":class:`JobType` it belongs to""")
+
+    jobs = db.relationship(
+        "Job", backref="jobtype_version", lazy="dynamic",
+        doc="Relationship between this jobtype version and "
+            ":class:`.Job` objects.")
 
     @validates("max_batch")
     def validate_max_batch(self, key, value):
