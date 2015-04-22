@@ -1206,7 +1206,7 @@ class TestJobAPI(BaseTestCase):
                             "attempts": 0,
                             "failures": 0,
                             "priority": 1,
-                            "progress": 0.0,
+                            "progress": 1.0,
                             "time_started": None,
                             "time_submitted": task1_submitted,
                             "frame": 1.0,
