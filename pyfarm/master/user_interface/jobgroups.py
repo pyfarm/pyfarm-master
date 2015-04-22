@@ -21,7 +21,7 @@ except ImportError:  # pragma: no cover
 
 from flask import render_template, request
 
-from sqlalchemy import func, or_, distinct, desc, asc
+from sqlalchemy import func, or_, and_, distinct, desc, asc
 
 from pyfarm.core.enums import WorkState, AgentState
 
@@ -51,6 +51,10 @@ def jobgroups():
     jobs_queued_query = db.session.query(
         Job.job_group_id, func.count('*').label('j_queued')).\
             filter(Job.state == None).group_by(Job.job_group_id).subquery()
+    jobs_paused_query = db.session.query(
+        Job.job_group_id, func.count('*').label('j_paused')).\
+            filter(Job.state == WorkState.PAUSED).\
+                group_by(Job.job_group_id).subquery()
     jobs_running_query = db.session.query(
         Job.job_group_id, func.count('*').label('j_running')).\
             filter(Job.state == WorkState.RUNNING).\
@@ -75,6 +79,8 @@ def jobgroups():
         join(JobType, JobGroup.main_jobtype_id == JobType.id).\
         outerjoin(jobs_queued_query,
                   JobGroup.id == jobs_queued_query.c.job_group_id).\
+        outerjoin(jobs_paused_query,
+                  JobGroup.id == jobs_paused_query.c.job_group_id).\
         outerjoin(jobs_running_query,
                   JobGroup.id == jobs_running_query.c.job_group_id).\
         outerjoin(jobs_done_query,
@@ -89,9 +95,63 @@ def jobgroups():
 
     filters = {}
 
+    filters["st_queued"] = ("st_queued" in request.args and
+                            request.args["st_queued"].lower() == "true")
+    filters["st_paused"] = ("st_paused" in request.args and
+                            request.args["st_paused"].lower() == "true")
+    filters["st_running"] = ("st_running" in request.args and
+                             request.args["st_running"].lower() == "true")
+    filters["st_failed"] = ("st_failed" in request.args and
+                             request.args["st_failed"].lower() == "true")
+    filters["st_any_done"] = ("st_any_done" in request.args and
+                               request.args["st_any_done"].lower() == "true")
+    filters["st_all_done"] = ("st_all_done" in request.args and
+                               request.args["st_all_done"].lower() == "true")
+    no_state_filters = True
+    if (filters["st_queued"] or
+        filters["st_paused"] or
+        filters["st_running"] or
+        filters["st_failed"] or
+        filters["st_any_done"] or
+        filters["st_all_done"]):
+        no_state_filters = False
+        conditions = []
+        if filters["st_queued"]:
+            conditions.append(and_(jobs_running_query.c.j_running == None,
+                                   jobs_paused_query.c.j_paused == None,
+                                   jobs_done_query.c.j_done == None,
+                                   jobs_failed_query.c.j_failed == None))
+        if filters["st_paused"]:
+            conditions.append(jobs_paused_query.c.j_paused != None)
+        if filters["st_running"]:
+            conditions.append(jobs_running_query.c.j_running != None)
+        if filters["st_failed"]:
+            conditions.append(jobs_failed_query.c.j_failed != None)
+        if filters["st_any_done"]:
+            conditions.append(jobs_done_query.c.j_done != None)
+        if filters["st_all_done"]:
+            conditions.append(and_(jobs_queued_query.c.j_queued == None,
+                                   jobs_running_query.c.j_running == None,
+                                   jobs_paused_query.c.j_paused == None,
+                                   jobs_failed_query.c.j_failed == None))
+        jobgroups_query = jobgroups_query.filter(or_(*conditions))
+
+    if "u" in request.args or filters["no_user"]:
+        user_ids = request.args.getlist("u")
+        user_ids = [int(x) for x in user_ids]
+        jobgroups_query = jobgroups_query.filter(JobGroup.user_id.in_(user_ids))
+        filters["u"] = user_ids
+
+    if "jt" in request.args:
+        jobtype_ids = request.args.getlist("jt")
+        jobtype_ids = [int(x) for x in jobtype_ids]
+        jobgroups_query = jobgroups_query.filter(
+            JobGroup.main_jobtype_id.in_(jobtype_ids))
+        filters["jt"] = jobtype_ids
+
+
     exists_query = jobgroups_query.filter(Job.job_group_id == JobGroup.id).\
         exists()
-
     jobs_query = db.session.query(Job.job_group_id,
                                   Job,
                                   JobType.name.label('jobtype_name')).\
@@ -130,7 +190,11 @@ def jobgroups():
             BAD_REQUEST)
     jobgroups_query = jobgroups_query.order_by("%s %s" % (order_by, order_dir))
 
+    users_query = User.query.order_by(User.username)
+    jobtypes_query = JobType.query
+
     return render_template("pyfarm/user_interface/jobgroups.html",
                            jobgroups=jobgroups_query,
                            jobs_by_group=jobs_by_group, filters=filters,
-                           order_dir=order_dir, order_by=order_by)
+                           order_dir=order_dir, order_by=order_by,
+                           users=users_query, jobtypes=jobtypes_query)
