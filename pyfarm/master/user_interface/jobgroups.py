@@ -136,6 +136,8 @@ def jobgroups():
                                    jobs_failed_query.c.j_failed == None))
         jobgroups_query = jobgroups_query.filter(or_(*conditions))
 
+    filters["no_user"] = ("no_user" in request.args and
+                          request.args["no_user"].lower == "true")
     if "u" in request.args or filters["no_user"]:
         user_ids = request.args.getlist("u")
         user_ids = [int(x) for x in user_ids]
@@ -148,7 +150,6 @@ def jobgroups():
         jobgroups_query = jobgroups_query.filter(
             JobGroup.main_jobtype_id.in_(jobtype_ids))
         filters["jt"] = jobtype_ids
-
 
     exists_query = jobgroups_query.filter(Job.job_group_id == JobGroup.id).\
         exists()
