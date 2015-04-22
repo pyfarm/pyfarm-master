@@ -90,6 +90,9 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     sent_to_agent = db.Column(db.Boolean, default=False, nullable=False,
                               doc="Whether this task was already sent to the "
                                   "assigned agent")
+    progress = db.Column(db.Float, default=0.0,
+                         doc="The progress for this task, as a value between "
+                             "0.0 and 1.0. Used purely for display purposes.")
 
     # relationships
     job = db.relationship("Job",
