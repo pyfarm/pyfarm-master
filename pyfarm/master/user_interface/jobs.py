@@ -583,8 +583,11 @@ def unpause_single_job(job_id):
                 NOT_FOUND)
 
     job.state = None
+    job.update_state()
     db.session.add(job)
     db.session.commit()
+
+    assign_tasks.delay()
 
     flash("Job %s is unpaused." % job.title)
 
@@ -604,9 +607,12 @@ def unpause_multiple_jobs():
                     NOT_FOUND)
 
         job.state = None
+        job.update_state()
         db.session.add(job)
 
     db.session.commit()
+
+    assign_tasks.delay()
 
     flash("Selected jobs are unpaused")
 
