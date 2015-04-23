@@ -823,7 +823,7 @@ def delete_task(self, task_id):
             job = task.job
             job_id = task.job_id
             agent = task.agent
-            job_group = job.job_group
+            job_group = job.group
 
             logger.info("Deleting task %s (job %s - \"%s\")",task.id, job.id,
                         job.title)
