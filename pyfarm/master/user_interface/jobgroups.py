@@ -67,14 +67,45 @@ def jobgroups():
         Job.job_group_id, func.count('*').label('j_failed')).\
             filter(Job.state == WorkState.FAILED).\
                 group_by(Job.job_group_id).subquery()
+    tasks_queued_query = db.session.query(
+        func.count(Task.id).label("t_queued"), Job.job_group_id).\
+            join(Job, Task.job_id == Job.id).\
+            filter(Task.state == None).group_by(Job.job_group_id).subquery()
+    tasks_running_query = db.session.query(
+        func.count(Task.id).label('t_running'), Job.job_group_id).\
+            join(Job, Task.job_id == Job.id).\
+            filter(Task.state == WorkState.RUNNING).\
+                group_by(Job.job_group_id).subquery()
+    tasks_done_query = db.session.query(
+        func.count(Task.id).label('t_done'), Job.job_group_id).\
+            join(Job, Task.job_id == Job.id).\
+            filter(Task.state == WorkState.DONE).\
+                group_by(Job.job_group_id).subquery()
+    tasks_failed_query = db.session.query(
+        func.count(Task.id).label('t_failed'), Job.job_group_id).\
+            join(Job, Task.job_id == Job.id).\
+            filter(Task.state == WorkState.FAILED).\
+                group_by(Job.job_group_id).subquery()
     jobgroups_query = db.session.query(JobGroup,
                                        User.username,
-                                       JobType.name.label('main_jobtype_name'),
+                                       JobType.name.label("main_jobtype_name"),
                                        func.coalesce(
                                            agent_count_query.c.agent_count,
-                                           0).label('agent_count'),
+                                           0).label("agent_count"),
                                        submit_time_query.c.time_submitted.\
-                                           label('time_submitted'),
+                                           label("time_submitted"),
+                                       func.coalesce(
+                                           tasks_queued_query.c.t_queued,
+                                           0).label("t_queued"),
+                                       func.coalesce(
+                                           tasks_running_query.c.t_running,
+                                           0).label("t_running"),
+                                       func.coalesce(
+                                           tasks_done_query.c.t_done,
+                                           0).label("t_done"),
+                                       func.coalesce(
+                                           tasks_failed_query.c.t_failed,
+                                           0).label("t_failed")
                                        ).\
         join(JobType, JobGroup.main_jobtype_id == JobType.id).\
         outerjoin(jobs_queued_query,
@@ -87,6 +118,14 @@ def jobgroups():
                   JobGroup.id == jobs_done_query.c.job_group_id).\
         outerjoin(jobs_failed_query,
                   JobGroup.id == jobs_failed_query.c.job_group_id).\
+        outerjoin(tasks_queued_query,
+                  JobGroup.id == tasks_queued_query.c.job_group_id).\
+        outerjoin(tasks_running_query,
+                  JobGroup.id == tasks_running_query.c.job_group_id).\
+        outerjoin(tasks_done_query,
+                  JobGroup.id == tasks_done_query.c.job_group_id).\
+        outerjoin(tasks_failed_query,
+                  JobGroup.id == tasks_failed_query.c.job_group_id).\
         outerjoin(User, JobGroup.user_id == User.id).\
         outerjoin(agent_count_query,
                   JobGroup.id == agent_count_query.c.job_group_id).\
@@ -104,9 +143,9 @@ def jobgroups():
     filters["st_failed"] = ("st_failed" in request.args and
                              request.args["st_failed"].lower() == "true")
     filters["st_any_done"] = ("st_any_done" in request.args and
-                               request.args["st_any_done"].lower() == "true")
+                              request.args["st_any_done"].lower() == "true")
     filters["st_all_done"] = ("st_all_done" in request.args and
-                               request.args["st_all_done"].lower() == "true")
+                              request.args["st_all_done"].lower() == "true")
     no_state_filters = True
     if (filters["st_queued"] or
         filters["st_paused"] or
@@ -173,13 +212,15 @@ def jobgroups():
         order_by = request.args.get("order_by")
     if order_by not in ["title", "time_submitted", "username",
                         "main_jobtype_name", "agent_count", "j_queued",
-                        "j_running", "j_failed", "j_done"]:
+                        "j_running", "j_failed", "j_done", "t_queued",
+                        "t_running", "t_failed", "t_done"]:
         return (render_template(
             "pyfarm/error.html",
             error="Unknown order key %r. Options are 'title', "
                   "'main_jobtype_name' 'time_submitted', 'username', "
                   "'agent_count', 'j_queued', 'j_running', 'j_failed', "
-                  "'j_done'" % order_by),
+                  "'j_done', 't_queued', 't_running', 't_failed', 't_done'" %
+                  order_by),
                 BAD_REQUEST)
     if "order_dir" in request.args:
         order_dir = request.args.get("order_dir")

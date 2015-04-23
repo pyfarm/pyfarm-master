@@ -1,6 +1,9 @@
 {% extends "pyfarm/user_interface/layout.html" %}
 {% block title %}Job Groups{% endblock %}
 {% block jobgroups_nb_class %}active{% endblock %}
+{% block additional_styles %}
+<link href="{{ url_for('static', filename='css/jobgroups.css') }}" rel="stylesheet">
+{% endblock %}
 {% block content %}
 
 <form method="GET" action="{{ url_for('jobgroups_index_ui') }}" class="form-inline" role="form" style="margin-top: 15px;">
@@ -180,6 +183,44 @@
       </a>)
     </th>
     <th>
+      Tasks (
+      <a href="{{ url_for('jobgroups_index_ui', order_by='t_queued', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        queued
+        {% if order_by == 't_queued' and order_dir == 'desc' %}
+        <span class="glyphicon glyphicon-chevron-down"></span>
+        {% elif order_by == 't_queued' %}
+        <span class="glyphicon glyphicon-chevron-up"></span>
+        {% endif %}
+      </a>
+      /
+      <a href="{{ url_for('jobgroups_index_ui', order_by='t_running', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        running
+        {% if order_by == 't_running' and order_dir == 'desc' %}
+        <span class="glyphicon glyphicon-chevron-down"></span>
+        {% elif order_by == 't_running' %}
+        <span class="glyphicon glyphicon-chevron-up"></span>
+        {% endif %}
+      </a>
+      /
+      <a href="{{ url_for('jobgroups_index_ui', order_by='t_failed', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        failed
+        {% if order_by == 't_failed' and order_dir == 'desc' %}
+        <span class="glyphicon glyphicon-chevron-down"></span>
+        {% elif order_by == 't_failed' %}
+        <span class="glyphicon glyphicon-chevron-up"></span>
+        {% endif %}
+      </a>
+      /
+      <a href="{{ url_for('jobgroups_index_ui', order_by='t_done', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        done
+        {% if order_by == 't_done' and order_dir == 'desc' %}
+        <span class="glyphicon glyphicon-chevron-down"></span>
+        {% elif order_by == 't_done' %}
+        <span class="glyphicon glyphicon-chevron-up"></span>
+        {% endif %}
+      </a>)
+    </th>
+    <th>
       <a href="{{ url_for('jobgroups_index_ui', order_by='username', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
         User
         {% if order_by == 'username' and order_dir == 'desc' %}
@@ -210,7 +251,7 @@
       </a>
     </th>
   </tr>
-  {% for jobgroup, username, main_jobtype_name, agent_count, time_submitted in jobgroups %}
+  {% for jobgroup, username, main_jobtype_name, agent_count, time_submitted, t_queued, t_running, t_done, t_failed in jobgroups %}
   <tr>
     <td>
       {{ jobgroup.title }}
@@ -250,6 +291,20 @@
       </a>
       {% endif %}
       {% endfor %}
+    </td>
+    <td>
+      <div class="progress job_progress">
+        <div class="progress-bar progress-bar-success" style="width:{{ (100 * t_done / (t_queued + t_running + t_failed + t_done)) if (t_queued + t_running + t_failed + t_done) > 0 else 0 }}%">
+          <span>{{ (100 * t_done / (t_queued + t_running + t_failed + t_done))|round(1) if (t_queued + t_running + t_failed + t_done) > 0 else 0 }}%</span>
+        </div>
+        <div class="progress-bar progress-bar-striped" style="width:{{ (100 * t_running / (t_queued + t_running + t_failed + t_done)) if (t_queued + t_running + t_failed + t_done) > 0 else 0 }}%">
+          <span>{{ (100 * t_running / (t_queued + t_running + t_failed + t_done))|round(1) if (t_queued + t_running + t_failed + t_done) > 0 else 0 }}%</span>
+        </div>
+        <div class="progress-bar progress-bar-danger" style="width:{{ (100 * t_failed / (t_queued + t_running + t_failed + t_done)) if (t_queued + t_running + t_failed + t_done) > 0 else 0 }}%">
+          <span>{{ (100 * t_failed / (t_queued + t_running + t_failed + t_done))|round(1) if (t_queued + t_running + t_failed + t_done) > 0 else 0 }}%</span>
+        </div>
+      </div>
+      {{ t_queued }}/{{ t_running }}/{{ t_failed }}/{{ t_done }}
     </td>
     <td>{{ username }}</td>
     <td>{{ agent_count }}</td>
