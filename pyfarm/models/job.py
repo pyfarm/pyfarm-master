@@ -502,4 +502,9 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
         return value
 
+    @validates("progress")
+    def validate_progress(self, key, value):
+        if value < 0.0 or value > 1.0:
+            raise ValueError("Progress must be between 0.0 and 1.0")
+
 event.listen(Job.state, "set", Job.state_changed)
