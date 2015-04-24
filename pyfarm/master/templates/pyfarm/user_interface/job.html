@@ -464,6 +464,11 @@
                 <div class="progress-bar progress-bar-success" style="width:{{ 100 * task.progress }}%">
                   {{ (100 * task.progress)|round(1) }}%
                 </div>
+                {% if task.running() %}
+                <div class="progress-bar progress-bar-striped" style="width:{{ 100 * (1.0 - task.progress) }}%"></div>
+                {% elif task.failed() %}
+                <div class="progress-bar progress-bar-danger" style="width:{{ 100 * (1.0 - task.progress) }}%"></div>
+                {% endif %}
               </div>
             </td>
             <td>

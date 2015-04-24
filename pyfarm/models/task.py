@@ -101,6 +101,12 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                           relationship attribute which retrieves the
                           associated job for this task"""))
 
+    def running(self):
+        return self.state == WorkState.RUNNING
+
+    def failed(self):
+        return self.state == WorkState.FAILED
+
     @staticmethod
     def increment_attempts(target, new_value, old_value, initiator):
         if new_value is not None and new_value != old_value:
