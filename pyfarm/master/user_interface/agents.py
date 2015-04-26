@@ -83,7 +83,7 @@ def agents():
     order_by = "hostname"
     if "order_by" in request.args:
         order_by = request.args.get("order_by")
-        if order_by not in ["hostname", "remote_ip", "state"]:
+        if order_by not in ["hostname", "remote_ip", "state", "version"]:
             return (render_template(
                 "pyfarm/error.html", error="unknown order key"), BAD_REQUEST)
         if "order_dir" in request.args:
@@ -224,6 +224,9 @@ def agent_add_software(agent_id):
                     "pyfarm/error.html", error="Software %s not found" %
                     request.form["software"]), NOT_FOUND)
 
+    if request.form["version"].strip() == "":
+        return (render_template(
+            "pyfarm/error.html", error="No version selected"), BAD_REQUEST)
     version = SoftwareVersion.query.filter_by(
         id=int(request.form["version"]), software=software).first()
     if not version:

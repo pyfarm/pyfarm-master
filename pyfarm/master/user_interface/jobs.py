@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from decimal import Decimal
+from datetime import datetime
 
 try:
     from httplib import (
@@ -336,7 +337,8 @@ def single_job(job_id):
                            tasks=tasks, first_task=first_task,
                            last_task=last_task, queues=jobqueues,
                            users=users_query,
-                           latest_jobtype_version=latest_jobtype_version[0])
+                           latest_jobtype_version=latest_jobtype_version[0],
+                           now=datetime.utcnow())
 
 def delete_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
@@ -583,8 +585,11 @@ def unpause_single_job(job_id):
                 NOT_FOUND)
 
     job.state = None
+    job.update_state()
     db.session.add(job)
     db.session.commit()
+
+    assign_tasks.delay()
 
     flash("Job %s is unpaused." % job.title)
 
@@ -604,9 +609,12 @@ def unpause_multiple_jobs():
                     NOT_FOUND)
 
         job.state = None
+        job.update_state()
         db.session.add(job)
 
     db.session.commit()
+
+    assign_tasks.delay()
 
     flash("Selected jobs are unpaused")
 

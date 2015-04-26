@@ -38,7 +38,7 @@ from flask import g, request
 from sqlalchemy.sql import func, or_
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES, WorkState
+from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES, WorkState, _WorkState
 from pyfarm.scheduler.tasks import (
     assign_tasks_to_agent, assign_tasks, delete_job)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
@@ -1100,6 +1100,12 @@ class JobSingleTaskAPI(MethodView):
 
         if "frame" in g.json:
             return jsonify(error="`frame` cannot be changed"), BAD_REQUEST
+
+        if (task.state == _WorkState.DONE and
+            "progress" in g.json and
+            g.json["progress"] != 1.0):
+            return jsonify(error="Cannot set progress: task is already in "
+                                 "state `done`"), BAD_REQUEST
 
         new_state = g.json.pop("state", None)
         agent = task.agent

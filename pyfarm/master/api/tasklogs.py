@@ -171,16 +171,18 @@ class LogsInTaskAttemptsIndexAPI(MethodView):
             try:
                 task_log = TaskLog.query.filter_by(
                     identifier=g.json["identifier"]).first()
+                if task_log:
+                    association = TaskTaskLogAssociation.query.filter_by(
+                        task=task, log=task_log, attempt=attempt).first()
+                    if association:
+                        return (jsonify(
+                            log=task_log, attempt=attempt, task_id=task_id,
+                            error="This log is already registered for this "
+                                  "task."),
+                        CONFLICT)
+
                 if not task_log:
                     task_log = TaskLog(**g.json)
-
-                association = TaskTaskLogAssociation.query.filter_by(
-                    task=task, log=task_log, attempt=attempt).first()
-                if association:
-                    return (jsonify(
-                        log=task_log, attempt=attempt, task_id=task_id,
-                        error="This log is already registered for this task"),
-                    CONFLICT)
 
                 association = TaskTaskLogAssociation()
                 association.task = task
