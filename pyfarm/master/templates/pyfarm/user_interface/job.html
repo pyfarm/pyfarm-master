@@ -432,10 +432,10 @@
         <thead>
           <th></th>
           <th>Frame</th>
-          <th>State</job>
-          <th>Agent</job>
-          <th>Failures</job>
-          <th>Last Error</job>
+          <th>Agent</th>
+          <th>Failures</th>
+          <th>Runtime</th>
+          <th>Last Error</th>
         </thead>
         <tbody>
           {% for task in tasks %}
@@ -449,8 +449,24 @@
                 <span class="glyphicon glyphicon-list"></span>
               </a>
             </td>
-            <td>{{ task.frame }}</td>
-            <td>{{ task.state if task.state else "queued" }}</td>
+            <td>
+              {% if not task.state %}
+              <span class="glyphicon glyphicon-time" title="queued"></span>
+              {% endif %}
+              {% if task.state == "running" %}
+              <span class="glyphicon glyphicon-play" title="running"></span>
+              {% endif %}
+              {% if task.state == "done" %}
+              <span class="glyphicon glyphicon-ok" title="done"></span>
+              {% endif %}
+              {% if task.state == "failed" %}
+              <span class="glyphicon glyphicon-remove" title="failed"></span>
+              {% endif %}
+              {% if task.state == "paused" %}
+              <span class="glyphicon glyphicon-pause" title="paused"></span>
+              {% endif %}
+              {{ task.frame }}
+            </td>
             <td>
               {% if task.agent %}
               <a href="{{ url_for('single_agent_ui', agent_id=task.agent_id) }}">
@@ -460,6 +476,13 @@
             </td>
             <td>
               {{ task.failures }}
+            </td>
+            <td>
+              {% if task.time_finished and task.time_started %}
+              {{ task.time_finished - task.time_started }}
+              {% elif task.time_started %}
+              <em>{{ now - task.time_started }}</em>
+              {% endif %}
             </td>
             <td>
               {{ task.last_error or "" }}
