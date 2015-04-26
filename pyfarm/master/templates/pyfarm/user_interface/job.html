@@ -434,6 +434,7 @@
           <th>Frame</th>
           <th>State</job>
           <th>Agent</job>
+          <th>Progress</th>
           <th>Failures</job>
           <th>Last Error</job>
         </thead>
@@ -457,6 +458,18 @@
                 {{ task.agent.hostname }}
               </a>
               {%endif%}
+            </td>
+            <td>
+              <div class="progress job_progress">
+                <div class="progress-bar progress-bar-success" style="width:{{ 100 * task.progress }}%">
+                  {{ (100 * task.progress)|round(1) }}%
+                </div>
+                {% if task.running() %}
+                <div class="progress-bar progress-bar-striped" style="width:{{ 100 * (1.0 - task.progress) }}%"></div>
+                {% elif task.failed() %}
+                <div class="progress-bar progress-bar-danger" style="width:{{ 100 * (1.0 - task.progress) }}%"></div>
+                {% endif %}
+              </div>
             </td>
             <td>
               {{ task.failures }}

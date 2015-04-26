@@ -90,6 +90,9 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     sent_to_agent = db.Column(db.Boolean, default=False, nullable=False,
                               doc="Whether this task was already sent to the "
                                   "assigned agent")
+    progress = db.Column(db.Float, default=0.0,
+                         doc="The progress for this task, as a value between "
+                             "0.0 and 1.0. Used purely for display purposes.")
 
     # relationships
     job = db.relationship("Job",
@@ -97,6 +100,12 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                           doc=dedent("""
                           relationship attribute which retrieves the
                           associated job for this task"""))
+
+    def running(self):
+        return self.state == WorkState.RUNNING
+
+    def failed(self):
+        return self.state == WorkState.FAILED
 
     @staticmethod
     def increment_attempts(target, new_value, old_value, initiator):
@@ -107,6 +116,11 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     def update_failures(target, new_value, old_value, initiator):
         if new_value == WorkState.FAILED and new_value != old_value:
             target.failures += 1
+
+    @staticmethod
+    def set_progress_on_success(target, new_value, old_value, initiator):
+        if new_value == WorkState.DONE:
+            target.progress = 1.0
 
     @staticmethod
     def reset_agent_if_failed_and_retry(
@@ -136,6 +150,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 event.listen(Task.state, "set", Task.clear_error_state)
 event.listen(Task.state, "set", Task.state_changed)
 event.listen(Task.state, "set", Task.update_failures)
+event.listen(Task.state, "set", Task.set_progress_on_success)
 event.listen(Task.agent_id, "set", Task.increment_attempts)
 event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry,
              retval=True)
