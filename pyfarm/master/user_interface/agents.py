@@ -95,6 +95,14 @@ def agents():
     agents_query = agents_query.order_by("%s %s" % (order_by, order_dir))
 
     agents_count = agents_query.count()
+    online_agents_count = agents_query.filter(
+        Agent.state == AgentState.ONLINE).count()
+    offline_agents_count = agents_query.filter(
+        Agent.state == AgentState.OFFLINE).count()
+    running_agents_count = agents_query.filter(
+        Agent.state == AgentState.RUNNING).count()
+    disabled_agents_count = agents_query.filter(
+        Agent.state == AgentState.DISABLED).count()
 
     per_page = int(request.args.get("per_page", 100))
     page = int(request.args.get("page", 1))
@@ -124,7 +132,11 @@ def agents():
                            filters_and_order_wo_pagination=
                            filters_and_order_wo_pagination,
                            no_state_filters=no_state_filters,
-                           filters_and_order=filters_and_order)
+                           filters_and_order=filters_and_order,
+                           online_agents_count=online_agents_count,
+                           offline_agents_count=offline_agents_count,
+                           running_agents_count=running_agents_count,
+                           disabled_agents_count=disabled_agents_count)
 
 def single_agent(agent_id):
     agent = Agent.query.filter_by(id=agent_id).first()
