@@ -54,7 +54,7 @@ class ValidatePriorityMixin(object):
     MIN_PRIORITY = config.get("queue_min_priority")
     MAX_PRIORITY = config.get("queue_max_priority")
 
-    if MAX_PRIORITY >= MIN_PRIORITY:
+    if MAX_PRIORITY <= MIN_PRIORITY:
         raise AssertionError(
             "`queue_min_priority` must be <= `queue_max_priority`")
 
