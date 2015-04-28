@@ -31,7 +31,7 @@ install:
 
 before_script:
   - if [[ $TDB_TYPE == "postgres" ]]; then psql -c "create database pyfarm;" -U postgres; fi
-  - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
+  - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;" --user=root; fi
 
 script:
   - if [[ $PYLINT != "1" ]]; then pip freeze; fi
