@@ -95,25 +95,18 @@ class Configuration(_Configuration):
 
     def __init__(self):  # pylint: disable=super-on-old-class
         super(Configuration, self).__init__("pyfarm.master")
-        self.load(environment=self.ENVIRONMENT_OVERRIDES)
+        self.load()
+        try:
+            items = self.ENVIRONMENT_OVERRIDES.iteritems
+        except AttributeError:  # pragma: no cover
+            items = self.ENVIRONMENT_OVERRIDES.items
 
-    def load(self, environment=None):  # pylint: disable=super-on-old-class
-        """
-        Overrides the default behavior of :meth:`load so we can
-        support environment variables.
-        """
-        if environment is None:
-            environment = {}
-            try:
-                items = self.ENVIRONMENT_OVERRIDES.iteritems
-            except AttributeError:  # pragma: no cover
-                items = self.ENVIRONMENT_OVERRIDES.items
+        overrides = {}
+        for config_var, (envvar, load_func) in items():
+            if envvar in os.environ:
+                overrides[config_var] = load_func(envvar)
 
-            for config_var, (envvar, load_func) in items():
-                if envvar in os.environ:
-                    environment[config_var] = load_func(envvar)
-
-        return super(Configuration, self).load(environment=environment)
+        self.update(overrides)
 
 try:
     config
