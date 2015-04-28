@@ -39,6 +39,7 @@ except NameError:  # pragma: no cover
 read_env_no_log = partial(read_env, log_result=False)
 env_bool_false = partial(read_env_bool, default=False)
 
+
 class Configuration(_Configuration):
     """
     The main configuration object for the master, models and
@@ -109,6 +110,20 @@ class Configuration(_Configuration):
         except (OSError, IOError, WindowsError) as error:
             if error.errno != EEXIST:
                 raise
+
+    def load(self, environment=None):  # pylint: disable=super-on-old-class
+        """
+        Overrides the default behavior of :meth:`load so we can
+        support environment variables.
+        """
+        assert environment is not None
+
+        load_environment = {}
+        for config_var, (envvar, load_func) in environment.items():
+            if envvar in os.environ:
+                load_environment[config_var] = load_func(envvar)
+
+        return super(Configuration, self).load(environment=load_environment)
 
 try:
     config
