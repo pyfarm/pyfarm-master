@@ -69,8 +69,26 @@ class Configuration(_Configuration):
             "dev_db_create_all": (
                 "PYFARM_DEV_APP_DB_CREATE_ALL", env_bool_false
             ),
-            "instance_application": ("PYFARM_APP_INSTANCE", env_bool_false)
-
+            "instance_application": ("PYFARM_APP_INSTANCE", env_bool_false),
+            "scheduler_broker": ("PYFARM_SCHEDULER_BROKER", read_env),
+            "agent_poll_interval": (
+                "PYFARM_AGENTS_POLL_INTERVAL", read_env_int
+            ),
+            "assign_tasks_interval": (
+                "PYFARM_SCHEDULER_INTERVAL", read_env_int
+            ),
+            "orphaned_log_cleanup_interval": (
+                "PYFARM_LOG_CLEANUP_INTERVAL", read_env_int
+            ),
+            "autodelete_old_job_interval": (
+                "PYFARM_AUTODELETE_INTERVAL", read_env_int
+            ),
+            "compress_log_interval": (
+                "PYFARM_LOG_COMPRESS_INTERVAL", read_env_int
+            ),
+            "delete_job_interval": (
+                "PYFARM_DELETE_HANGING_INTERVAL", read_env_int
+            )
         }
 
         self.load(environment=overrides)

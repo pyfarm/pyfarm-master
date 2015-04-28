@@ -34,6 +34,13 @@ debug_queue: false
 database: "sqlite:///pyfarm.sqlite"
 
 
+# The broker that PyFarm's scheduler should use.  For debugging and
+# development running Redis is the simplest.  For large deployments, or
+# to understand the format of this variable, see:
+#   http://celery.readthedocs.org/en/latest/configuration.html#broker-url
+scheduler_broker: "redis://"
+
+
 # The name of this render farm, normally this can remain the default value.  If
 # you're running multiple farms this allows you to only accept agents to your
 # master that match your current farm name.
@@ -413,3 +420,47 @@ job_type_max_batch: 1
 # When batching and this value is true frames will be batched
 # in contiguous groups.
 job_type_batch_contiguous: true
+
+##
+## END Job Type defautls
+##
+
+##
+## BEGIN Scheduler Settings
+##
+
+# How often the scheduler should run and poll agents.  The keys and
+# values here are passed into a `timedelta` object as keywords.
+agent_poll_interval:
+  seconds: 30
+
+# How often the scheduler should run and and assign tasks.  The keys and
+# values here are passed into a `timedelta` object as keywords.
+assign_tasks_interval:
+  minutes: 4
+
+# How often orphaned task logs should be cleaned up on disk.  The keys and
+# values here are passed into a `timedelta` object as keywords.
+orphaned_log_cleanup_interval:
+  hours: 1
+
+# How often we should attempt to compress old task logs.  The keys and
+# values here are passed into a `timedelta` object as keywords.
+compress_log_interval:
+  minutes: 10
+
+# How often old jobs should be deleted. Please note this only marks
+# jobs as to be deleted and does not actually perform the deletion
+# itself.  See the ``delete_job_interval`` setting which will actually
+# trigger the deletion of jobs.  The keys and values here are passed
+# into a `timedelta` object as keywords.
+autodelete_old_job_interval:
+  hours: 1
+
+
+delete_job_interval:
+  minutes: 5
+
+##
+## END Scheduler Settings
+##

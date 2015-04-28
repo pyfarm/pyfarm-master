@@ -29,38 +29,39 @@ from datetime import timedelta
 
 from celery import Celery
 
-from pyfarm.core.config import read_env_int, read_env
+from pyfarm.master.config import config
 
-celery_app = Celery("pyfarm.tasks",
-                    broker=read_env("PYFARM_SCHEDULER_BROKER", "redis://"),
-                    include=["pyfarm.scheduler.tasks"])
+celery_app = Celery(
+    "pyfarm.tasks",
+    broker=config.get("scheduler_broker"),
+    include=["pyfarm.scheduler.tasks"])
 
 celery_app.conf.CELERYBEAT_SCHEDULE = {
     "periodically_poll_agents": {
         "task": "pyfarm.scheduler.tasks.poll_agents",
-        "schedule": timedelta(
-            seconds=read_env_int("PYFARM_AGENTS_POLL_INTERVAL", 30))},
+        "schedule": timedelta(**config.get("agent_poll_interval"))
+    },
     "periodical_scheduler": {
         "task": "pyfarm.scheduler.tasks.assign_tasks",
-        "schedule": timedelta(seconds=read_env_int("PYFARM_SCHEDULER_INTERVAL",
-                                                   240))},
+        "schedule": timedelta(**config.get("agent_poll_interval"))
+    },
     "periodically_clean_task_logs": {
         "task": "pyfarm.scheduler.tasks.clean_up_orphaned_task_logs",
-        "schedule": timedelta(seconds=read_env_int("PYFARM_LOG_CLEANUP_INTERVAL",
-                                                   3600))},
+        "schedule": timedelta(**config.get("orphaned_log_cleanup_interval"))
+    },
     "periodically_delete_old_jobs": {
         "task": "pyfarm.scheduler.tasks.autodelete_old_jobs",
-        "schedule": timedelta(seconds=read_env_int("PYFARM_AUTODELETE_INTERVAL",
-                                                   3600))},
+        "schedule": timedelta(**config.get("autodelete_old_job_interval")),
+    },
     "periodically_compress_task_logs": {
         "task": "pyfarm.scheduler.tasks.compress_task_logs",
-        "schedule": timedelta(
-            seconds=read_env_int("PYFARM_LOG_COMPRESS_INTERVAL", 600))},
+        "schedule": timedelta(**config.get("compress_log_interval"))
+    },
     "periodically_execute_deletions": {
         "task": "pyfarm.scheduler.tasks.delete_to_be_deleted_jobs",
-        "schedule": timedelta(
-            seconds=read_env_int("PYFARM_DELETE_HANGING_INTERVAL", 300))}
-        }
+        "schedule": timedelta(**config.get("delete_job_interval")),
+    }
+}
 
 if __name__ == '__main__':
     celery_app.start()
