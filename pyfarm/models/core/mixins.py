@@ -31,10 +31,10 @@ except ImportError:
 
 from sqlalchemy.orm import validates, class_mapper
 
-from pyfarm.core.enums import DBWorkState, _WorkState, Values, PY2
+from pyfarm.core.enums import _WorkState, Values, PY2
 from pyfarm.core.logger import getLogger
-from pyfarm.core.config import read_env_int
 from pyfarm.models.core.types import IPAddress
+from pyfarm.master.config import config
 
 logger = getLogger("models.mixin")
 
@@ -51,11 +51,12 @@ class ValidatePriorityMixin(object):
     Mixin that adds a `state` column and uses a class
     level `STATE_ENUM` attribute to assist in validation.
     """
-    MIN_PRIORITY = read_env_int("PYFARM_QUEUE_MIN_PRIORITY", -1000)
-    MAX_PRIORITY = read_env_int("PYFARM_QUEUE_MAX_PRIORITY", 1000)
+    MIN_PRIORITY = config.get("queue_min_priority")
+    MAX_PRIORITY = config.get("queue_max_priority")
 
-    # quick check of the configured data
-    assert MAX_PRIORITY >= MIN_PRIORITY, "MIN_PRIORITY must be <= MAX_PRIORITY"
+    if MAX_PRIORITY >= MIN_PRIORITY:
+        raise AssertionError(
+            "`queue_min_priority` must be <= `queue_max_priority`")
 
     @validates("priority")
     def validate_priority(self, key, value):
