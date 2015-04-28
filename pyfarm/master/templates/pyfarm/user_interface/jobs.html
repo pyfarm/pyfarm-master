@@ -181,6 +181,36 @@
     </ul>
   </div>
   <div class="btn-group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="jobqueue-dropdown-menu" aria-expanded="true">
+      Queue <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-form" role="menu" aria-labelledby="jobqueue-dropdown-menu">
+      <li>
+        <label class="checkbox">
+          {% if filters.no_queue %}
+          <input type="checkbox" name="no_queue" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="no_queue" value="true"/>
+          {% endif %}
+        </label>
+      </li>
+      {% for jobqueue in jobqueues %}
+      <li>
+        <nobr>
+          <label class="checkbox">
+            {% if jobqueue.id in filters.q %}
+            <input type="checkbox" name="q" value="{{ jobqueue.id }}" checked/>
+            {% else %}
+            <input type="checkbox" name="q" value="{{ jobqueue.id }}"/>
+            {% endif %}
+            {{ jobqueue.path() }}
+          </label>
+        </nobr>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="btn-group">
     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="jobtype-dropdown-menu" aria-expanded="true">
       Jobtype <span class="caret"></span>
     </button>
