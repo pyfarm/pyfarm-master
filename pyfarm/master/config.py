@@ -95,35 +95,25 @@ class Configuration(_Configuration):
 
     def __init__(self):  # pylint: disable=super-on-old-class
         super(Configuration, self).__init__("pyfarm.master")
-
         self.load(environment=self.ENVIRONMENT_OVERRIDES)
-
-        # TODO: Specialize per platform? gettempdir() is not constant on OS X.
-        if self["tempdir"] is None:
-            self["tempdir"] = tempfile.gettempdir()
-
-        # Make sure tempdir exists.  In the default case
-        # this should always be true.  In the non-default
-        # case we won't know unless we try.
-        try:
-            os.makedirs(self["tempdir"])
-        except (OSError, IOError, WindowsError) as error:
-            if error.errno != EEXIST:
-                raise
 
     def load(self, environment=None):  # pylint: disable=super-on-old-class
         """
         Overrides the default behavior of :meth:`load so we can
         support environment variables.
         """
-        assert environment is not None
+        if environment is None:
+            environment = {}
+            try:
+                items = self.ENVIRONMENT_OVERRIDES.iteritems
+            except AttributeError:  # pragma: no cover
+                items = self.ENVIRONMENT_OVERRIDES.items
 
-        load_environment = {}
-        for config_var, (envvar, load_func) in environment.items():
-            if envvar in os.environ:
-                load_environment[config_var] = load_func(envvar)
+            for config_var, (envvar, load_func) in items():
+                if envvar in os.environ:
+                    environment[config_var] = load_func(envvar)
 
-        return super(Configuration, self).load(environment=load_environment)
+        return super(Configuration, self).load(environment=environment)
 
 try:
     config

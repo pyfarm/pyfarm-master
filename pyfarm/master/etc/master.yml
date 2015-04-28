@@ -47,11 +47,6 @@ scheduler_broker: "redis://"
 farm_name: ""
 
 
-# The location where we'll store temporary files.  If not provided, this
-# will default to using `tempfile.gettempdir()` once during startup.
-tempdir: null
-
-
 # The secret key which is used by several components of Flask
 # for form validation, salting of secrets, etc.
 #
@@ -125,9 +120,9 @@ default_job_delete_time: null
 timestamp_format: "YYYY-MM-DD HH:mm:ss"
 
 
-# The directory to store updates for agents.  This will use `tempdir` above
+# The directory to store updates for agents.  This will use `temp` above
 # as the base directory.
-agent_updates_dir: ${tempdir}/pyfarm-updates
+agent_updates_dir: ${temp}/pyfarm-updates
 
 
 # Optional directory to serve GET requests for agent updates
@@ -141,8 +136,8 @@ agent_updates_webdir: null
 # The directory to store downloaded logs in.
 #
 # **Production Note**: For production it's probably best if these are kept
-# in a persistent location rather than $tempdir.
-tasklogs_dir: ${tempdir}/task_logs
+# in a persistent location rather than $temp.
+tasklogs_dir: ${temp}/task_logs
 
 
 # The address the Flask application should listen on.  By default
