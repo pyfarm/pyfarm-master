@@ -867,7 +867,7 @@ def update_tags_in_job(job_id):
                 NOT_FOUND)
 
     tagnames = request.form["tags"].split(" ")
-    tagnames = [x for x in tagnames if not x == ""]
+    tagnames = [x.strip() for x in tagnames if not x == ""]
     tags = []
     for name in tagnames:
         tag = Tag.query.filter_by(tag=name).first()
