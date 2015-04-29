@@ -220,6 +220,14 @@ def send_tasks_to_agent(self, agent_id):
                     task.attempts -= 1
                     db.session.add(task)
                 db.session.commit()
+            if response.status_code == requests.codes.bad_request:
+                logger.error("Agent %s, (id %s), answered BAD_REQUEST, "
+                             "removing assignment", agent.hostname, agent.id)
+                for task in tasks:
+                    task.agent = None
+                    task.attempts -= 1
+                    db.session.add(task)
+                db.session.commit()
             elif response.status_code not in [requests.codes.accepted,
                                               requests.codes.ok,
                                               requests.codes.created,
