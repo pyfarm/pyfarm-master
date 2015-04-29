@@ -502,6 +502,9 @@ def poll_agent(self, agent_id):
                     (agent.hostname, agent.id, status_json["farm_name"],
                      OUR_FARM_NAME))
 
+        agent.state = status_json["state"]
+        agent.free_ram = status_json["free_ram"]
+
         tasks_response = requests.get(
             agent.api_url() + "/tasks/",
             headers={"User-Agent": USERAGENT},
