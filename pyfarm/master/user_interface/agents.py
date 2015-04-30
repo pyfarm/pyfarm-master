@@ -84,7 +84,7 @@ def agents():
     if "order_by" in request.args:
         order_by = request.args.get("order_by")
         if order_by not in ["hostname", "remote_ip", "state", "version",
-                            "last_heard_from"]:
+                            "last_heard_from", "cpus", "ram"]:
             return (render_template(
                 "pyfarm/error.html", error="unknown order key"), BAD_REQUEST)
         if "order_dir" in request.args:

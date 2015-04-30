@@ -130,6 +130,26 @@
         {% endif %}
       </a>
     </th>
+     <th>
+      <a href="{{ url_for('agents_index_ui', order_by='cpus', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        CPUs
+        {% if order_by == 'cpus' and order_dir == 'desc' %}
+        <span class="glyphicon glyphicon-chevron-down"></span>
+        {% elif order_by == 'cpus' %}
+        <span class="glyphicon glyphicon-chevron-up"></span>
+        {% endif %}
+      </a>
+    </th>
+    <th>
+      <a href="{{ url_for('agents_index_ui', order_by='ram', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        RAM
+        {% if order_by == 'ram' and order_dir == 'desc' %}
+        <span class="glyphicon glyphicon-chevron-down"></span>
+        {% elif order_by == 'ram' %}
+        <span class="glyphicon glyphicon-chevron-up"></span>
+        {% endif %}
+      </a>
+    </th>
     <th>
       <a href="{{ url_for('agents_index_ui', order_by='version', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
         Version
@@ -185,6 +205,8 @@
       </a>
     </td>
     <td>{{ agent.remote_ip }}</td>
+    <td>{{ agent.cpus }}</td>
+    <td>{{ agent.ram }} MiB</td>
     <td>{{ agent.version }}</td>
     <td>
       {% for tag in agent.tags %}
