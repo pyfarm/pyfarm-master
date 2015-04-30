@@ -141,6 +141,16 @@
       </a>
     </th>
     <th>Tags</th>
+    <th>
+      <a href="{{ url_for('agents_index_ui', order_by='last_heard_from', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        Last Heard From
+        {% if order_by == 'last_heard_from' and order_dir == 'desc' %}
+        <span class="glyphicon glyphicon-chevron-down"></span>
+        {% elif order_by == 'last_heard_from' %}
+        <span class="glyphicon glyphicon-chevron-up"></span>
+        {% endif %}
+      </a>
+    </th>
   </tr>
   {% for agent in agents %}
   <tr>
@@ -181,6 +191,7 @@
       <div>{{ tag.tag }}</div>
       {% endfor %}
     </td>
+    <td class="timestamp">{{ agent.last_heard_from }}</td>
   </tr>
   {% endfor %}
 </table>
