@@ -93,6 +93,7 @@ def agents():
                 "pyfarm/error.html", error="unknown order dir"), BAD_REQUEST)
 
     agents_query = agents_query.order_by("%s %s" % (order_by, order_dir))
+    agents_query = agents_query.order_by(Agent.id)
 
     agents_count = agents_query.count()
     online_agents_count = agents_query.filter(

@@ -266,6 +266,8 @@ def jobs():
     else:
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
 
+    jobs_query = jobs_query.order_by(Job.id)
+
     jobs_count = jobs_query.count()
     queued_jobs_count = jobs_query.filter(Job.state == None).count()
     running_jobs_count = jobs_query.filter(
