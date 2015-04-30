@@ -718,7 +718,7 @@ class SingleAgentAPI(MethodView):
                 if existing_gpu.fullname not in gpus:
                     logger.debug("Existing gpu %s is not in supplied "
                                     "gpus, for agent %s, removing it.",
-                                    existing_address.mac_address,
+                                    existing_gpu.fullname,
                                     agent.hostname)
                     agent.gpus.remove(existing_gpu)
                 else:
