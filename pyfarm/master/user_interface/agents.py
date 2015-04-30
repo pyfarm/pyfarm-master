@@ -42,7 +42,7 @@ def agents():
     filters = {}
     if "tags" in request.args:
         filters["tags"] = request.args.get("tags")
-        tags = request.args.get("tags").split(",")
+        tags = request.args.get("tags").split(" ")
         tags = [x for x in tags if not x == ""]
         if tags:
             agents_query = agents_query.filter(Agent.tags.any(Tag.tag.in_(tags)))

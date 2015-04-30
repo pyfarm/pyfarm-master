@@ -160,7 +160,6 @@
         {% endif %}
       </a>
     </th>
-    <th>Tags</th>
     <th>
       <a href="{{ url_for('agents_index_ui', order_by='last_heard_from', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
         Last Heard From
@@ -203,16 +202,22 @@
       <a href="{{ url_for('single_agent_ui', agent_id=agent.id) }}">
         {{ agent.hostname }}
       </a>
+      {% for tag in agent.tags %}
+      {% if tag.tag in filters.tags %}
+      <span class="label label-default">
+        {{ tag.tag }}
+      </span>
+      {% else %}
+      <a class="label label-info" style="margin:3px;" href="{{ url_for('agents_index_ui', tags=(filters.tags or '') + ' ' + tag.tag, **order) }}">
+        {{ tag.tag }}
+      </a>
+      {% endif %}
+      {% endfor %}
     </td>
     <td>{{ agent.remote_ip }}</td>
     <td>{{ agent.cpus }}</td>
     <td>{{ agent.ram }} MiB</td>
     <td>{{ agent.version }}</td>
-    <td>
-      {% for tag in agent.tags %}
-      <div>{{ tag.tag }}</div>
-      {% endfor %}
-    </td>
     <td class="timestamp">{{ agent.last_heard_from }}</td>
   </tr>
   {% endfor %}
