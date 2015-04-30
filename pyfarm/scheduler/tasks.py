@@ -478,12 +478,14 @@ def poll_agent(self, agent_id):
     if (running_tasks_count > 0 and
         agent.last_heard_from is not None and
         agent.last_heard_from + timedelta(seconds=POLL_BUSY_AGENTS_INTERVAL) >
-            datetime.utcnow()):
+            datetime.utcnow() and
+        not agent.state == _AgentState.OFFLINE):
         return
     elif (running_tasks_count == 0 and
           agent.last_heard_from is not None and
           agent.last_heard_from + timedelta(seconds=POLL_IDLE_AGENTS_INTERVAL) >
-            datetime.utcnow()):
+            datetime.utcnow() and
+          not agent.state == _AgentState.OFFLINE):
         return
 
     try:
