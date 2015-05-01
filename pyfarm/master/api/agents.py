@@ -51,6 +51,7 @@ from pyfarm.models.gpu import GPU
 from pyfarm.models.task import Task
 from pyfarm.models.software import Software, SoftwareVersion
 from pyfarm.master.config import config
+from pyfarm.models.tag import Tag
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     jsonify, validate_with_model, get_ipaddr_argument, get_integer_argument,
@@ -667,6 +668,8 @@ class SingleAgentAPI(MethodView):
 
         gpus = g.json.pop("gpus", None)
 
+        tags = g.json.pop("tags", None)
+
         try:
             items = g.json.iteritems
         except AttributeError:
@@ -714,7 +717,7 @@ class SingleAgentAPI(MethodView):
                 if existing_gpu.fullname not in gpus:
                     logger.debug("Existing gpu %s is not in supplied "
                                     "gpus, for agent %s, removing it.",
-                                    existing_address.mac_address,
+                                    existing_gpu.fullname,
                                     agent.hostname)
                     agent.gpus.remove(existing_gpu)
                 else:
@@ -726,6 +729,24 @@ class SingleAgentAPI(MethodView):
                     gpu = GPU(fullname=gpu_name)
                     db.session.add(gpu)
                 agent.gpus.append(gpu)
+
+        if tags is not None:
+            modified["tags"] = tags
+            for existing_tag in agent.tags:
+                if existing_tag.tag not in tags:
+                    logger.debug("Existing tag %s is not in supplied "
+                                 "tags, for agent %s, removing it.",
+                                 existing_tag.tag, agent.hostname)
+                    agent.tags.remove(existing_tag)
+                else:
+                    tags.remove(existing_tag.tag)
+
+            for tag_name in tags:
+                tag = Tag.query.filter_by(tag=tag_name).first()
+                if not tag:
+                    tag = Tag(tag=tag_name)
+                    db.session.add(tag)
+                agent.tags.append(tag)
 
         # TODO Only do that if this is really the agent speaking to us.
         failed_tasks = []

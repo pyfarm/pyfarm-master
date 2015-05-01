@@ -202,7 +202,8 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                                           Job.state == None,
                                           Job.state != WorkState.DONE)),
                                       Job.jobtype_version_id.in_(
-                                            supported_types)).all()
+                                            supported_types),
+                                      Job.ram <= agent.free_ram).all()
         child_queues = JobQueue.query.filter(
             JobQueue.parent_jobqueue_id == self.id).all()
 

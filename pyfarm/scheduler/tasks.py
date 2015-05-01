@@ -220,6 +220,14 @@ def send_tasks_to_agent(self, agent_id):
                     task.attempts -= 1
                     db.session.add(task)
                 db.session.commit()
+            if response.status_code == requests.codes.bad_request:
+                logger.error("Agent %s, (id %s), answered BAD_REQUEST, "
+                             "removing assignment", agent.hostname, agent.id)
+                for task in tasks:
+                    task.agent = None
+                    task.attempts -= 1
+                    db.session.add(task)
+                db.session.commit()
             elif response.status_code not in [requests.codes.accepted,
                                               requests.codes.ok,
                                               requests.codes.created,
@@ -470,12 +478,14 @@ def poll_agent(self, agent_id):
     if (running_tasks_count > 0 and
         agent.last_heard_from is not None and
         agent.last_heard_from + timedelta(seconds=POLL_BUSY_AGENTS_INTERVAL) >
-            datetime.utcnow()):
+            datetime.utcnow() and
+        not agent.state == _AgentState.OFFLINE):
         return
     elif (running_tasks_count == 0 and
           agent.last_heard_from is not None and
           agent.last_heard_from + timedelta(seconds=POLL_IDLE_AGENTS_INTERVAL) >
-            datetime.utcnow()):
+            datetime.utcnow() and
+          not agent.state == _AgentState.OFFLINE):
         return
 
     try:
@@ -501,6 +511,9 @@ def poll_agent(self, agent_id):
                 "Wrong farm_name from agent %s (id %s): %s. (Expected: %s) " %
                     (agent.hostname, agent.id, status_json["farm_name"],
                      OUR_FARM_NAME))
+
+        agent.state = status_json["state"]
+        agent.free_ram = status_json["free_ram"]
 
         tasks_response = requests.get(
             agent.api_url() + "/tasks/",

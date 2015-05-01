@@ -194,7 +194,7 @@ def jobs():
             blocker_count_query.c.blocker_count != None)
 
     filters["no_user"] = ("no_user" in request.args and
-                          request.args["no_user"].lower == "true")
+                          request.args["no_user"].lower() == "true")
     if "u" in request.args or filters["no_user"]:
         user_ids = request.args.getlist("u")
         user_ids = [int(x) for x in user_ids]
@@ -205,6 +205,19 @@ def jobs():
         else:
             jobs_query = jobs_query.filter(Job.user_id.in_(user_ids))
         filters["u"] = user_ids
+
+    filters["no_queue"] = ("no_queue" in request.args and
+                           request.args["no_queue"].lower() == "true")
+    if "q" in request.args or filters["no_queue"]:
+        jobqueue_ids = request.args.getlist("q")
+        jobqueue_ids = [int(x) for x in jobqueue_ids]
+        if filters["no_queue"]:
+            jobs_query = jobs_query.filter(or_(
+                Job.job_queue_id.in_(jobqueue_ids),
+                Job.job_queue_id == None))
+        else:
+            jobs_query = jobs_query.filter(JobQueue.id.in_(jobqueue_ids))
+        filters["q"] = jobqueue_ids
 
     if "jt" in request.args:
         jobtype_ids = request.args.getlist("jt")
@@ -252,6 +265,8 @@ def jobs():
         jobs_query = jobs_query.order_by(desc(Job.priority))
     else:
         jobs_query = jobs_query.order_by("%s %s" % (order_by, order_dir))
+
+    jobs_query = jobs_query.order_by(Job.id)
 
     jobs_count = jobs_query.count()
     queued_jobs_count = jobs_query.filter(Job.state == None).count()
@@ -867,7 +882,7 @@ def update_tags_in_job(job_id):
                 NOT_FOUND)
 
     tagnames = request.form["tags"].split(" ")
-    tagnames = [x for x in tagnames if not x == ""]
+    tagnames = [x.strip() for x in tagnames if not x == ""]
     tags = []
     for name in tagnames:
         tag = Tag.query.filter_by(tag=name).first()
