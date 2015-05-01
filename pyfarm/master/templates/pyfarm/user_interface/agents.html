@@ -25,7 +25,6 @@
   <input type="text" class="form-control" id="tags" name="tags" value="{{ filters.tags }}" placeholder="Tags separated by commas"/>
   <label for="hostname">Hostname</label>
   <input type="text" class="form-control" id="hostname" name="hostname" value="{{ filters.hostname }}" placeholder="Part of hostname"/>
-  <label for="state">State</label>
   <div class="btn-group">
     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="state-dropdown-menu" aria-expanded="true">
       State <span class="caret"></span>
@@ -104,6 +103,14 @@
     <th><input type="checkbox" title="Select all rows" class="all-agents-selector"/></th>
     <th></th>
     <th>
+      <a href="{{ url_for('agents_index_ui', order_by='state', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        State
+        {% if order_by == 'state' and order_dir == 'desc' %}
+        <span class="glyphicon glyphicon-chevron-down"></span>
+        {% elif order_by == 'state' %}
+        <span class="glyphicon glyphicon-chevron-up"></span>
+        {% endif %}
+      </a> /
       <a href="{{ url_for('agents_index_ui', order_by='hostname', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
         Hostname
         {% if order_by == 'hostname' and order_dir == 'desc' %}
@@ -123,6 +130,26 @@
         {% endif %}
       </a>
     </th>
+     <th>
+      <a href="{{ url_for('agents_index_ui', order_by='cpus', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        CPUs
+        {% if order_by == 'cpus' and order_dir == 'desc' %}
+        <span class="glyphicon glyphicon-chevron-down"></span>
+        {% elif order_by == 'cpus' %}
+        <span class="glyphicon glyphicon-chevron-up"></span>
+        {% endif %}
+      </a>
+    </th>
+    <th>
+      <a href="{{ url_for('agents_index_ui', order_by='ram', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        RAM
+        {% if order_by == 'ram' and order_dir == 'desc' %}
+        <span class="glyphicon glyphicon-chevron-down"></span>
+        {% elif order_by == 'ram' %}
+        <span class="glyphicon glyphicon-chevron-up"></span>
+        {% endif %}
+      </a>
+    </th>
     <th>
       <a href="{{ url_for('agents_index_ui', order_by='version', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
         Version
@@ -134,16 +161,15 @@
       </a>
     </th>
     <th>
-      <a href="{{ url_for('agents_index_ui', order_by='state', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
-        State
-        {% if order_by == 'state' and order_dir == 'desc' %}
+      <a href="{{ url_for('agents_index_ui', order_by='last_heard_from', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        Last Heard From
+        {% if order_by == 'last_heard_from' and order_dir == 'desc' %}
         <span class="glyphicon glyphicon-chevron-down"></span>
-        {% elif order_by == 'state' %}
+        {% elif order_by == 'last_heard_from' %}
         <span class="glyphicon glyphicon-chevron-up"></span>
         {% endif %}
       </a>
     </th>
-    <th>Tags</th>
   </tr>
   {% for agent in agents %}
   <tr>
@@ -161,18 +187,38 @@
       {% endif %}
     </td>
     <td>
+      {% if agent.state == "online" %}
+      <span style="color:#5CB85C" class="glyphicon glyphicon-ok" title="online"></span>
+      {% endif %}
+      {% if agent.state == "running" %}
+      <span style="color:#337AB7" class="glyphicon glyphicon-play" title="running"></span>
+      {% endif %}
+      {% if agent.state == "offline" %}
+      <span style="color:#D9534F" class="glyphicon glyphicon-remove" title="offline"></span>
+      {% endif %}
+      {% if agent.state == "disabled" %}
+      <span class="glyphicon glyphicon-pause" title="disabled"></span>
+      {% endif %}
       <a href="{{ url_for('single_agent_ui', agent_id=agent.id) }}">
         {{ agent.hostname }}
       </a>
-    </td>
-    <td>{{ agent.remote_ip }}</td>
-    <td>{{ agent.version }}</td>
-    <td>{{ agent.state }}</td>
-    <td>
       {% for tag in agent.tags %}
-      <div>{{ tag.tag }}</div>
+      {% if tag.tag in filters.tags %}
+      <span class="label label-default">
+        {{ tag.tag }}
+      </span>
+      {% else %}
+      <a class="label label-info" style="margin:3px;" href="{{ url_for('agents_index_ui', tags=(filters.tags or '') + ' ' + tag.tag, **order) }}">
+        {{ tag.tag }}
+      </a>
+      {% endif %}
       {% endfor %}
     </td>
+    <td>{{ agent.remote_ip }}</td>
+    <td>{{ agent.cpus }}</td>
+    <td>{{ agent.ram }} MiB</td>
+    <td>{{ agent.version }}</td>
+    <td class="timestamp">{{ agent.last_heard_from }}</td>
   </tr>
   {% endfor %}
 </table>
