@@ -451,6 +451,14 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
             return self.assigned_agents_count
 
+    def clear_assigned_counts(self):
+        try:
+            del self.assigned_agents_count
+        except AttributeError:
+            pass
+        if self.queue:
+            self.queue.clear_assigned_counts()
+
     def can_use_more_agents(self):
         # Import here instead of at the top of the file to avoid circular import
         from pyfarm.models.agent import Agent
