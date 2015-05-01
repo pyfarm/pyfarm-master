@@ -174,6 +174,14 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
 
             return self.assigned_agents_count
 
+    def clear_assigned_counts(self):
+        try:
+            del self.assigned_agents_count
+        except AttributeError:
+            pass
+        if self.parent:
+            self.parent.clear_assigned_counts()
+
     def get_job_for_agent(self, agent):
         # Import down here instead of at the top to avoid circular import
         from pyfarm.models.job import Job
