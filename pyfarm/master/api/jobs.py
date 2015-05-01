@@ -752,16 +752,19 @@ class SingleJobAPI(MethodView):
         if not job:
             return jsonify(error="Job not found"), NOT_FOUND
 
+        old_first_task = Task.query.filter_by(job=job).order_by(
+            "frame asc").first()
+        old_last_task = Task.query.filter_by(job=job).order_by(
+            "frame desc").first()
+
+        if not old_first_task or not old_last_task: # pragma: no cover
+            return (jsonify(error="Job does not have any tasks"),
+                    INTERNAL_SERVER_ERROR)
+
+        start = old_first_task.frame
+        end = old_last_task.frame
+
         if "start" in g.json or "end" in g.json or "by" in g.json:
-            old_first_task = Task.query.filter_by(job=job).order_by(
-                "frame asc").first()
-            old_last_task = Task.query.filter_by(job=job).order_by(
-                "frame desc").first()
-
-            if not old_first_task or not old_last_task: # pragma: no cover
-                return (jsonify(error="Job does not have any tasks"),
-                        INTERNAL_SERVER_ERROR)
-
             json = loads(request.data.decode(), parse_float=Decimal)
             start = Decimal(json.pop("start", old_first_task.frame))
             end = Decimal(json.pop("end", old_last_task.frame))
@@ -876,7 +879,7 @@ class SingleJobAPI(MethodView):
                                                      "parents",
                                                      "children"])
         job_data["start"] = start
-        job_data["end"] = min(current_frame, end)
+        job_data["end"] = end
         del job_data["jobtype_version_id"]
         job_data["jobtype"] = job.jobtype_version.jobtype.name
         job_data["jobtype_version"] = job.jobtype_version.version
