@@ -115,7 +115,8 @@ def get_application(**configuration_keywords):
         If ``True`` then setup the ``flask.g`` variable to include the
         application level information (ex. ``g.db``)
     """
-    secret_key = read_env("PYFARM_SECRET_KEY", log_result=False)
+    # TODO: raise exception instead of providing default secret key
+    secret_key = read_env("PYFARM_SECRET_KEY", "pyfarm", log_result=False)
     app_config = {
         "DEBUG": False,
         "SECRET_KEY": secret_key,
