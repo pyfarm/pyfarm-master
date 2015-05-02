@@ -29,17 +29,16 @@ from json import dumps
 from smtplib import SMTP
 from email.mime.text import MIMEText
 from time import time, sleep
-from sys import maxsize
-from os.path import join, isfile, join
+from os.path import isfile, join
 from os import remove, listdir
 from errno import ENOENT
 from gzip import GzipFile
 
-from sqlalchemy import or_, and_, func, distinct, desc, asc
+from sqlalchemy import or_, desc
 from sqlalchemy.exc import InvalidRequestError
 
 import requests
-from requests.exceptions import ConnectionError, Timeout, RequestException
+from requests.exceptions import ConnectionError, Timeout
 # Workaround for https://github.com/kennethreitz/requests/issues/2204
 from requests.packages.urllib3.exceptions import ProtocolError
 
