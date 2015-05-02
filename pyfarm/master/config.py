@@ -24,9 +24,7 @@ compatibility for some environment variables.
 """
 
 import os
-import tempfile
 from functools import partial
-from errno import EEXIST
 
 from pyfarm.core.config import (
     Configuration as _Configuration, read_env_int, read_env, read_env_bool)
@@ -96,6 +94,17 @@ class Configuration(_Configuration):
     def __init__(self):  # pylint: disable=super-on-old-class
         super(Configuration, self).__init__("pyfarm.master")
         self.load()
+
+        # Load model configuration
+        models_config = _Configuration("pyfarm.models", version=self.version)
+        models_config.load()
+        self.update(models_config)
+
+        # Load scheduler configuration
+        sched_config = _Configuration("pyfarm.scheduler", version=self.version)
+        sched_config.load()
+        self.update(sched_config)
+
         try:
             items = self.ENVIRONMENT_OVERRIDES.iteritems
         except AttributeError:  # pragma: no cover
