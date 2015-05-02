@@ -21,7 +21,7 @@ assert sys.version_info[0:2] >= (2, 7), "Python 2.7 or higher is required"
 
 import os
 from os import walk
-from os.path import isfile, join
+from os.path import isfile, join, commonprefix
 from setuptools import setup
 
 # Version requirements explanations:
@@ -55,20 +55,20 @@ else:
     long_description = ""
 
 
-def get_package_data():
-    master_root = join("pyfarm", "master")
+def get_package_data(*package_data_roots):
     packge_data_roots = (
         join("pyfarm", "master", "etc"),
         join("pyfarm", "master", "static"),
         join("pyfarm", "master", "templates"),
         join("pyfarm", "master", "api", "templates"),
         join("pyfarm", "master", "api", "static"))
+    package_root = commonprefix(package_data_roots)
 
     output = []
     for top in packge_data_roots:
         for root, dirs, files in walk(top):
             for filename in files:
-                output.append(join(root, filename).split(master_root)[-1][1:])
+                output.append(join(root, filename).split(package_root)[-1][1:])
 
     return output
 
@@ -85,10 +85,27 @@ setup(
         "pyfarm.scheduler"],
     namespace_packages=["pyfarm"],
     include_package_data=True,
-    package_data={"pyfarm.master": get_package_data()},
+    package_data={
+        "pyfarm.master": get_package_data(
+            join("pyfarm", "master", "etc"),
+            join("pyfarm", "master", "static"),
+            join("pyfarm", "master", "templates"),
+            join("pyfarm", "master", "api", "templates"),
+            join("pyfarm", "master", "api", "static")
+        ),
+        "pyfarm-models": get_package_data(
+            join("pyfarm", "models", "core"),
+            join("pyfarm", "models", "etc")
+        ),
+        "pyfarm-scheduler": get_package_data(
+            join("pyfarm", "scheduler", "etc")
+        )
+    },
     data_files=[
         ("etc/pyfarm", [
-            "pyfarm/master/etc/master.yml"
+            "pyfarm/master/etc/master.yml",
+            "pyfarm/models/etc/models.yml",
+            "pyfarm/scheduler/etc/scheduler.yml"
         ])
     ],
     entry_points={
