@@ -27,11 +27,11 @@ from setuptools import setup
 # Version requirements explanations:
 #   pyfarm.core: certain enums which are only present in later versions,
 #   configuration loader changes
-#   sqlalchemy: Bugfix for pymysql in Python 3 and locking off from 1.x for now
+#   sqlalchemy: Post-1.x release there were a few regressions that broke tests
 #   flask-admin: New form helps that support async JavaScript requests
 install_requires = [
     "pyfarm.core>=0.9.1",
-    "sqlalchemy>=0.9.9,<1.0.0",
+    "sqlalchemy>=0.9.9,!=1.0.0,!=1.0.1,!=1.0.2",
     "flask",
     "flask-login",
     "flask-sqlalchemy",
