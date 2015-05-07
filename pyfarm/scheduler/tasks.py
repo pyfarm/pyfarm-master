@@ -576,6 +576,8 @@ def poll_agent(self, agent_id):
             logger.warning("Agent %s has got tasks it is not supposed to have.",
                            agent.hostname)
             for task_id in set(present_task_ids) - set(assigned_task_ids):
+                logger.warning("Stopping task id %s on agent %s",
+                               task_id, agent.hostname)
                 stop_task.delay(task_id, agent_id)
 
         agent.last_heard_from = datetime.utcnow()
