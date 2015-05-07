@@ -79,7 +79,7 @@ def parse_requirements(requirements):
     and returns a list of :class:`JobRequirement` objects.
 
     Raises TypeError if the input was not as expected or ObjectNotFound if a
-    referenced software of or version was not found.
+    referenced software or version was not found.
 
     :param list requirements:
         A list of of dicts specifying a software and optionally min_version
