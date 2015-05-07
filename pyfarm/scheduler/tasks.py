@@ -228,10 +228,25 @@ def send_tasks_to_agent(self, agent_id):
                     task.attempts -= 1
                     db.session.add(task)
                 db.session.commit()
+            if response.status_code == requests.codes.conflict:
+                logger.error("Agent %s, (id %s), answered CONFLICT, removing"
+                             "conflicting assignments", agent.hostname,
+                             agent.id)
+                response_data = response.json()
+                if "rejected_task_ids" in response_data:
+                    for task_id in response_data["rejected_task_ids"]:
+                        task = Task.query.filter_by(id=task_id).first()
+                        if task:
+                            logger.error("Removing assignment for task %s "
+                                         "(Frame %s from job %s)", task_id,
+                                         task.frame, task.job.title)
+                            task.agent = None
+                            task.attempts -= 1
+                            db.session.add(task)
+                    db.session.commit()
             elif response.status_code not in [requests.codes.accepted,
                                               requests.codes.ok,
-                                              requests.codes.created,
-                                              requests.codes.conflict]:
+                                              requests.codes.created]:
                 raise ValueError("Unexpected return code on sending batch to "
                                  "agent: %s", response.status_code)
             else:
