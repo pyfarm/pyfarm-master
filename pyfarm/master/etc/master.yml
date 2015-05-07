@@ -41,6 +41,11 @@ database: "sqlite:///pyfarm.sqlite"
 scheduler_broker: "redis://"
 
 
+# The URL the master is running on.  This is used to form internal
+# urls and other information.
+base_url: http://127.0.0.1:5000/
+
+
 # The name of this render farm, normally this can remain the default value.  If
 # you're running multiple farms this allows you to only accept agents to your
 # master that match your current farm name.

@@ -58,6 +58,8 @@ class Configuration(_Configuration):
             "PYFARM_AUTO_USERS_DEFAULT_DOMAIN", read_env_bool),
         "default_job_delete_time": (
             "PYFARM_DEFAULT_JOB_DELETE_TIME", read_env_int),
+        "base_url": (
+            "PYFARM_BASE_URL", read_env),
         "login_disabled": ("PYFARM_LOGIN_DISABLED", read_env_bool),
         "pretty_json": ("PYFARM_JSON_PRETTY", read_env_bool),
         "echo_sql": ("PYFARM_SQL_ECHO", read_env_bool),
