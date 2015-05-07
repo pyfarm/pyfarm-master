@@ -11,7 +11,7 @@ PyFarm.
     :maxdepth: 3
 
     commands
-    environment
+    configuration
     modules/pyfarm.master
     modules/pyfarm.models
     modules/pyfarm.scheduler
