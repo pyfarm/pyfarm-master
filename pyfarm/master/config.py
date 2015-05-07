@@ -16,7 +16,7 @@
 
 """
 Configuration
-============
+=============
 
 A small wrapper around :class:`pyfarm.core.config.Configuration`
 that loads in the configuration files and provides backwards
