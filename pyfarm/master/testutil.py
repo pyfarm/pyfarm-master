@@ -118,10 +118,6 @@ def get_test_environment(**environment):
         "PYFARM_DATABASE_URI",
         os.environ.get("PYFARM_DATABASE_URI", "sqlite:///:memory:"))
 
-    environment.setdefault(
-        "PYFARM_CONFIG",
-        os.environ.get("PYFARM_CONFIG", "debug"))
-
     return environment
 
 
