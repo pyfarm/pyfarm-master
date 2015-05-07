@@ -62,6 +62,14 @@ delete_job_interval:
 poll_busy_agents_interval:
   minutes: 5
 
+
+# Used when polling agents to determine if we should or should not
+# reach out to an agent.  This is used in combination with an agent's
+# `last_head_from` column, state and running task count.  The keys
+# and values here are passed into a `timedelta` object as keywords.
+poll_idle_agents_interval:
+  hours: 1
+
 ##
 ## END Scheduler Settings
 ##

@@ -90,7 +90,9 @@ class Configuration(_Configuration):
         "delete_job_interval": (
             "PYFARM_DELETE_HANGING_INTERVAL", read_env_int),
         "poll_busy_agents_interval": (
-            "PYFARM_POLL_BUSY_AGENTS_INTERVAL", read_env_int)
+            "PYFARM_POLL_BUSY_AGENTS_INTERVAL", read_env_int),
+        "poll_idle_agents_interval": (
+            "POLL_IDLE_AGENTS_INTERVAL", read_env_int)
     }
 
     def __init__(self):  # pylint: disable=super-on-old-class

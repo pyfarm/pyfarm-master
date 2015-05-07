@@ -80,8 +80,7 @@ logger.setLevel(DEBUG)
 
 USERAGENT = config.get("master_user_agent")
 POLL_BUSY_AGENTS_INTERVAL = timedelta(**config.get("poll_busy_agents_interval"))
-POLL_IDLE_AGENTS_INTERVAL = read_env_int(
-    "PYFARM_POLL_IDLE_AGENTS_INTERVAL", 3600)
+POLL_IDLE_AGENTS_INTERVAL = timedelta(**config.get("poll_idle_agents_interval"))
 POLL_OFFLINE_AGENTS_INTERVAL = read_env_int(
     "PYFARM_POLL_OFFLINE_AGENTS_INTERVAL", 7200)
 SCHEDULER_LOCKFILE_BASE = read_env(
@@ -484,7 +483,7 @@ def poll_agent(self, agent_id):
         return
     elif (running_tasks_count == 0 and
           agent.last_heard_from is not None and
-          agent.last_heard_from + timedelta(seconds=POLL_IDLE_AGENTS_INTERVAL) >
+          agent.last_heard_from + POLL_IDLE_AGENTS_INTERVAL >
             datetime.utcnow() and
           not agent.state == _AgentState.OFFLINE):
         return
@@ -576,8 +575,7 @@ def poll_agents():
         Agent.state != AgentState.OFFLINE,
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
-                timedelta(
-                    seconds=POLL_IDLE_AGENTS_INTERVAL) < datetime.utcnow()),
+                POLL_IDLE_AGENTS_INTERVAL < datetime.utcnow()),
         ~Agent.tasks.any(or_(Task.state == None,
                              Task.state == WorkState.RUNNING)),
         Agent.use_address != UseAgentAddress.PASSIVE)
