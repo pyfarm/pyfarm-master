@@ -238,8 +238,10 @@ def send_tasks_to_agent(self, agent_id):
                         task = Task.query.filter_by(id=task_id).first()
                         if task:
                             logger.error("Removing assignment for task %s "
-                                         "(Frame %s from job %s)", task_id,
-                                         task.frame, task.job.title)
+                                         "(Frame %s from job %s) from agent %s "
+                                         "(id %s)", task_id, task.frame,
+                                         task.job.title, agent.hostname,
+                                         agent.id)
                             task.agent = None
                             task.attempts -= 1
                             db.session.add(task)
