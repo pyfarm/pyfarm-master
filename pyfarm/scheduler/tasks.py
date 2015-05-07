@@ -504,6 +504,12 @@ def poll_agent(self, agent_id):
                     agent.hostname, agent.id, status_response.status_code))
         status_json = status_response.json()
 
+        if status_json["agent_id"] != agent_id:
+            logger.error("Wrong agent reached under %s. Expected id %s, got %s",
+                         agent.api_url(), agent_id, status_json["agent_id"])
+            raise ValueError("Wrong agent_id on polling. Excepted: %s. Got %s" %
+                             (agent_id, status_json["agent_id"]))
+
         if ("farm_name" in status_json and
             status_json["farm_name"] != OUR_FARM_NAME):
             agent.last_polled = datetime.utcnow()
