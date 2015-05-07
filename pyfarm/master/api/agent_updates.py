@@ -44,6 +44,8 @@ VERSION_REGEX = re.compile("\d+(\.\d+(\.\d+)?)?((-pre\d?)|(-dev\d?)|(-rc?\d?)|"
                            "(-alpha\d?)|(-beta\d?))?$")
 
 UPDATES_DIR = config.get("agent_updates_dir")
+UPDATES_WEBDIR = config.get("agent_updates_webdir")
+
 
 try:
     makedirs(UPDATES_DIR)
@@ -128,9 +130,8 @@ class AgentUpdatesAPI(MethodView):
                     BAD_REQUEST)
         filename = "pyfarm-agent-%s.zip" % version
 
-        updates_webdir = config.get("agent_updates_webdir")
-        if updates_webdir:
-            return redirect(join(updates_webdir, filename))
+        if UPDATES_WEBDIR:
+            return redirect(join(UPDATES_WEBDIR, filename))
 
         update_file = join(UPDATES_DIR, filename)
         if not isfile(update_file):
