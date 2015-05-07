@@ -229,7 +229,7 @@ def send_tasks_to_agent(self, agent_id):
                     db.session.add(task)
                 db.session.commit()
             if response.status_code == requests.codes.conflict:
-                logger.error("Agent %s, (id %s), answered CONFLICT, removing"
+                logger.error("Agent %s, (id %s), answered CONFLICT, removing "
                              "conflicting assignments", agent.hostname,
                              agent.id)
                 response_data = response.json()
