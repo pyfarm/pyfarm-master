@@ -571,6 +571,11 @@ def poll_agent(self, agent_id):
                          "to have. Registering task pusher", agent.hostname)
             send_tasks_to_agent.delay(agent_id)
 
+        if set(present_task_ids) - set(assigned_task_ids):
+            logger.warning("Agent %s has got tasks it is not supposed to have.")
+            for task_id in set(present_task_ids) - set(assigned_task_ids):
+                stop_task.delay(task_id, agent_id)
+
         agent.last_heard_from = datetime.utcnow()
         db.session.add(agent)
         db.session.commit()
@@ -914,14 +919,18 @@ def delete_task(self, task_id):
 
 
 @celery_app.task(ignore_results=True, bind=True)
-def stop_task(self, task_id):
+def stop_task(self, task_id, agent_id=None):
     db.session.rollback()
     task = Task.query.filter_by(id=task_id).one()
     job = task.job
 
-    if (task.agent is not None and
-        task.state not in [WorkState.DONE, WorkState.FAILED]):
-        agent = task.agent
+    if ((task.agent is not None and
+         task.state not in [WorkState.DONE, WorkState.FAILED]) or
+        agent_id is not None):
+        if agent_id is not None:
+            agent = Agent.query.filter_by(id=agent_id).one()
+        else:
+            agent = task.agent
         try:
             response = requests.delete("%s/tasks/%s" %
                                             (agent.api_url(), task.id),
