@@ -89,38 +89,18 @@ LOGFILES_DIR = read_env(
     "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
 TRANSACTION_RETRIES = read_env_int("PYFARM_TRANSACTION_RETRIES", 10)
 AGENT_REQUEST_TIMEOUT = read_env_int("PYFARM_AGENT_REQUEST_TIMEOUT", 10)
-BASE_URL = read_env("PYFARM_BASE_URL", "http://127.0.0.1:5000")
+BASE_URL = config.get("base_url")
 
-DEFAULT_SUCCESS_SUBJECT = Template("Job {{ job.title }} completed successfully")
-DEFAULT_SUCCESS_BODY = Template(
-    "{{ job.jobtype_version.jobtype.name }} job {{ job.title }} "
-    "(id {{ job.id }}) has completed successfully on "
-    "{{ job.time_finished.isoformat() }}.\n\n"
-    "Job: {{ job.url }}\n\n"
-    "{% if job.output_link %}"
-    "Output:\n"
-    "{{ job.output_link }}\n\n"
-    "{% endif %}"
-    "Sincerely,\n\tThe PyFarm render manager")
-DEFAULT_FAIL_SUBJECT = Template("Job {{ job.title }} failed")
-DEFAULT_FAIL_BODY = Template(
-    "{{ job.jobtype_version.jobtype.name }} job {{ job.title }} "
-    "(id {{ job.id }}) has failed on "
-    "{{ job.time_finished.isoformat() }}.\n\n"
-    "Job: {{ job.url }}\n\n"
-    "{% if job.output_link %}"
-    "Output:\n"
-    "{{ job.output_link }}\n\n"
-    "{% endif %}"
-    "{% if failed_logs %}"
-    "Logs for failed tasks:\n"
-    "{% for log in failed_logs %}"
-    "{{log.url}}\n"
-    "{% endfor%}"
-    "\n\n"
-    "{% endif %}"
-    "Sincerely,\n\tThe PyFarm render manager")
-OUR_FARM_NAME = read_env("PYFARM_FARM_NAME", "")
+# Email settings
+SMTP_SERVER = config.get("smtp_server")
+SMTP_PORT = config.get("smtp_port")
+SMTP_USER, SMTP_PASSWORD = config.get("smtp_login")
+FROM_ADDRESS = config.get("from_email")
+DEFAULT_SUCCESS_SUBJECT = Template(config.get("success_subject"))
+DEFAULT_SUCCESS_BODY = Template(config.get("success_body"))
+DEFAULT_FAIL_SUBJECT = Template(config.get("failed_subject"))
+DEFAULT_FAIL_BODY = Template(config.get("failed_body"))
+OUR_FARM_NAME = config.get("farm_name")
 
 
 @celery_app.task(ignore_result=True, bind=True)
@@ -611,6 +591,9 @@ def poll_agents():
 
 @celery_app.task(ignore_results=True)
 def send_job_completion_mail(job_id, successful=True):
+    if not SMTP_SERVER:
+        return
+
     job_lockfile_name = SCHEDULER_LOCKFILE_BASE + "-job-" + str(job_id)
     job_lock = LockFile(job_lockfile_name)
 
@@ -687,15 +670,19 @@ def send_job_completion_mail(job_id, successful=True):
             message = MIMEText(
                 body_template.render(job=job, failed_logs=failed_logs))
             message["Subject"] = subject_template.render(job=job)
-            message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
+            message["From"] = FROM_ADDRESS
 
             to = [x.user.email for x in notified_users if x.user.email]
             message["To"] = ",".join(to)
 
             if to:
-                smtp = SMTP(read_env("PYFARM_MAIL_SERVER", "localhost"))
-                smtp.sendmail(read_env("PYFARM_FROM_ADDRESS",
-                                    "pyfarm@localhost"), to, message.as_string())
+                smtp = SMTP(SMTP_SERVER, port=SMTP_PORT)
+
+                # Password could be blank in some cases
+                if SMTP_USER is not None:
+                    smtp.login(SMTP_USER, SMTP_PASSWORD)
+
+                smtp.sendmail(FROM_ADDRESS, to, message.as_string())
                 smtp.quit()
 
                 logger.info("Job completion mail for job %s (id %s) sent to %s",

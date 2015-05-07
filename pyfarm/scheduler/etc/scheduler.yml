@@ -73,3 +73,99 @@ poll_idle_agents_interval:
 ##
 ## END Scheduler Settings
 ##
+
+##
+## BEGIN Email Server Settings
+##
+
+##
+## END Email Server Settings
+##
+
+# The smtp server used to send email notifications.  Note that setting
+# this value to null or leaving it blank will disable email notifications.
+smtp_server: localhost
+
+# Port to connect to the smtp server on.  The default port, 0, will
+# cause the underlying library to use the default smtp port.
+smtp_port: 0
+
+# Optional login credentials for the smtp server.  The default value
+# [null, null] means no username and password is required.
+smtp_login: [null, null]
+
+# The default address from which all emails from the scheduler will
+# originate.
+from_email: pyfarm@localhost
+
+
+
+
+##
+## BEGIN Email Template Settings
+##
+
+# General note about the settings below.  The brackets, {{ }}
+# are used by the tempating system for string substitution.  For example,
+# {{ job.title }} would substitute in the string found on the `title` column
+# of a job model.  For more information on template formatting, see Jinja's
+# documentation: http://jinja.pocoo.org/docs/
+# Finally, for multi-line strings follow this syntax:
+#   foobar:
+#   |
+#     This is a multi-line
+#     string.  It's indentation
+#
+#     and whitespace will be preserved.
+
+
+# The template email subject line used for a succesful job.
+success_subject: Job {{ job.title }} completed successfully
+
+# The template body of an email for a succesful job
+success_body:
+|
+  {{ job.jobtype_version.jobtype.name }} job {{ job.title }} (id {{ job.id }})
+  has completed successfully on {{ job.time_finished.isoformat() }}.
+
+  Job: {{ job.url }}
+
+  {% if job.output_link %}
+  Output: {{ job.output_link }}
+  {% endif %}
+
+  Sincerely,
+      The PyFarm render manager
+
+
+# The template email subject line used for a failed job.
+failed_subject: Job {{ job.title }} failed
+
+# The template email body for a failed job.
+failed_body:
+|
+  {{ job.jobtype_version.jobtype.name }} job {{ job.title }}
+  (id {{ job.id }}) has failed on
+  {{ job.time_finished.isoformat() }}.
+
+  Job: {{ job.url }}
+
+  {% if job.output_link %}
+  Output:
+
+  {{ job.output_link }}
+  {% endif %}
+
+  {% if failed_logs %}
+  Log(s) for failed tasks:
+  {% for log in failed_logs %}
+  {{log.url}}
+  {% endfor%}
+  {% endif %}
+
+  Sincerely,
+      The PyFarm render manager
+
+##
+## END Email Template Settings
+##

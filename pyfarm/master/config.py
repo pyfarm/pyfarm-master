@@ -94,7 +94,11 @@ class Configuration(_Configuration):
         "poll_busy_agents_interval": (
             "PYFARM_POLL_BUSY_AGENTS_INTERVAL", read_env_int),
         "poll_idle_agents_interval": (
-            "POLL_IDLE_AGENTS_INTERVAL", read_env_int)
+            "POLL_IDLE_AGENTS_INTERVAL", read_env_int),
+        "smtp_server": (
+            "PYFARM_MAIL_SERVER", read_env),
+        "from_email": (
+            "PYFARM_FROM_ADDRESS", read_env),
     }
 
     def __init__(self):  # pylint: disable=super-on-old-class
