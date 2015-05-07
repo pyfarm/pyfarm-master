@@ -60,6 +60,7 @@ from pyfarm.master.utility import (
 logger = getLogger("api.agents")
 
 MAC_RE = re.compile("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
+OUT_FARM_NAME = config.get("farm_name")
 
 
 def fail_missing_assignments(agent, current_assignments):
@@ -244,7 +245,7 @@ class AgentIndexAPI(MethodView):
         g.json.setdefault("remote_ip", request.remote_addr)
 
         farm_name = g.json.pop("farm_name", None)
-        if farm_name and farm_name != config.get("farm_name"):
+        if farm_name and farm_name != OUR_FARM_NAME:
             return jsonify(error="Wrong farm name"), BAD_REQUEST
 
         current_assignments = g.json.pop("current_assignments", None)
@@ -656,7 +657,7 @@ class SingleAgentAPI(MethodView):
             g.json["remote_ip"] = request.remote_addr
 
         farm_name = g.json.pop("farm_name", None)
-        if farm_name and farm_name != config.get("farm_name"):
+        if farm_name and farm_name != OUR_FARM_NAME:
             return jsonify(error="Wrong farm name"), BAD_REQUEST
 
         current_assignments = g.json.pop("current_assignments", None)
