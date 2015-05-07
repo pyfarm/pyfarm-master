@@ -578,7 +578,7 @@ def poll_agent(self, agent_id):
             for task_id in set(present_task_ids) - set(assigned_task_ids):
                 logger.warning("Stopping task id %s on agent %s",
                                task_id, agent.hostname)
-                stop_task.delay(task_id, agent_id)
+                stop_task.delay(task_id, agent_id, dissociate_agent=False)
 
         agent.last_heard_from = datetime.utcnow()
         db.session.add(agent)
@@ -923,7 +923,7 @@ def delete_task(self, task_id):
 
 
 @celery_app.task(ignore_results=True, bind=True)
-def stop_task(self, task_id, agent_id=None):
+def stop_task(self, task_id, agent_id=None, dissociate_agent=True):
     db.session.rollback()
     task = Task.query.filter_by(id=task_id).one()
     job = task.job
@@ -950,7 +950,7 @@ def stop_task(self, task_id, agent_id=None):
                 raise ValueError("Unexpected return code on stopping task %s on "
                                  "agent %s: %s",
                                  task.id, agent.id, response.status_code)
-            else:
+            elif dissociate_agent:
                 task.agent = None
                 task.state = None
                 db.session.add(task)
