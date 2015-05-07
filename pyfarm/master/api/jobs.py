@@ -1110,8 +1110,8 @@ class JobSingleTaskAPI(MethodView):
             return jsonify(error="`frame` cannot be changed"), BAD_REQUEST
 
         if (("state" in g.json or "progress" in g.json) and
-            request.remote_addr != task.agent.remote_ip and
-            request.headers.get('User-Agent', "") == "PyFarm/1.0 (agent)"):
+            request.headers.get('User-Agent', "") == "PyFarm/1.0 (agent)" and
+            request.remote_addr != task.agent.remote_ip):
             return jsonify(error="`state` and `progress` can only be changed "
                                  "by the agent owning this task"), BAD_REQUEST
 
