@@ -34,6 +34,7 @@ from os.path import join, isfile, join
 from os import remove, listdir
 from errno import ENOENT
 from gzip import GzipFile
+from uuid import UUID
 
 from sqlalchemy import or_, and_, func, distinct, desc, asc
 from sqlalchemy.exc import InvalidRequestError
@@ -504,7 +505,7 @@ def poll_agent(self, agent_id):
                     agent.hostname, agent.id, status_response.status_code))
         status_json = status_response.json()
 
-        if status_json["agent_id"] != agent_id:
+        if UUID(status_json["agent_id"]) != agent_id:
             logger.error("Wrong agent reached under %s. Expected id %s, got %s",
                          agent.api_url(), agent_id, status_json["agent_id"])
             raise ValueError("Wrong agent_id on polling. Excepted: %s. Got %s" %
