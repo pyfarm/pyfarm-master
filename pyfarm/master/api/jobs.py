@@ -1111,6 +1111,7 @@ class JobSingleTaskAPI(MethodView):
 
         if (("state" in g.json or "progress" in g.json) and
             request.headers.get('User-Agent', "") == "PyFarm/1.0 (agent)" and
+            task.agent is not None and
             request.remote_addr != task.agent.remote_ip):
             return jsonify(error="`state` and `progress` can only be changed "
                                  "by the agent owning this task"), BAD_REQUEST
