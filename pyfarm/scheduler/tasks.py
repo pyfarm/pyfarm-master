@@ -22,7 +22,6 @@ Tasks
 This module is responsible for finding and allocating tasks on agents.
 """
 
-import tempfile
 from datetime import timedelta, datetime
 from logging import DEBUG
 from json import dumps
@@ -49,7 +48,6 @@ from lockfile import LockFile, AlreadyLocked
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import (
     AgentState, _AgentState, WorkState, _WorkState, UseAgentAddress)
-from pyfarm.core.config import read_env, read_env_int
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
     JobTypeSoftwareRequirement)
@@ -81,14 +79,12 @@ logger.setLevel(DEBUG)
 USERAGENT = config.get("master_user_agent")
 POLL_BUSY_AGENTS_INTERVAL = timedelta(**config.get("poll_busy_agents_interval"))
 POLL_IDLE_AGENTS_INTERVAL = timedelta(**config.get("poll_idle_agents_interval"))
-POLL_OFFLINE_AGENTS_INTERVAL = read_env_int(
-    "PYFARM_POLL_OFFLINE_AGENTS_INTERVAL", 7200)
-SCHEDULER_LOCKFILE_BASE = read_env(
-    "PYFARM_SCHEDULER_LOCKFILE_BASE", "/tmp/pyfarm_scheduler_lock")
-LOGFILES_DIR = read_env(
-    "PYFARM_LOGFILES_DIR", join(tempfile.gettempdir(), "task_logs"))
-TRANSACTION_RETRIES = read_env_int("PYFARM_TRANSACTION_RETRIES", 10)
-AGENT_REQUEST_TIMEOUT = read_env_int("PYFARM_AGENT_REQUEST_TIMEOUT", 10)
+POLL_OFFLINE_AGENTS_INTERVAL = \
+    timedelta(**config.get("poll_offline_agents_interval"))
+SCHEDULER_LOCKFILE_BASE = config.get("scheduler_lockfile_base")
+LOGFILES_DIR = config.get("task_logs_dir")
+TRANSACTION_RETRIES = config.get("transaction_retries")
+AGENT_REQUEST_TIMEOUT = config.get("agent_request_timeout")
 BASE_URL = config.get("base_url")
 
 # Email settings
@@ -100,7 +96,25 @@ DEFAULT_SUCCESS_SUBJECT = Template(config.get("success_subject"))
 DEFAULT_SUCCESS_BODY = Template(config.get("success_body"))
 DEFAULT_FAIL_SUBJECT = Template(config.get("failed_subject"))
 DEFAULT_FAIL_BODY = Template(config.get("failed_body"))
+DEFAULT_DELETE_SUBJECT = config.get("deleted_subject")
+DEFAULT_DELETE_BODY = config.get("deleted_body")
 OUR_FARM_NAME = config.get("farm_name")
+
+def send_email(to, message):
+    """
+    Configures and instance of :class:`SMTP` and sends a message to the
+    given address.
+    """
+    smtp = SMTP(SMTP_SERVER, port=SMTP_PORT)
+
+    # Password could be blank in some cases
+    if SMTP_USER is not None:
+        smtp.login(SMTP_USER, SMTP_PASSWORD)
+
+    try:
+        smtp.sendmail(FROM_ADDRESS, to, message)
+    finally:
+        smtp.quit()
 
 
 @celery_app.task(ignore_result=True, bind=True)
@@ -580,8 +594,8 @@ def poll_agents():
     offline_agents_to_poll_query = Agent.query.filter(
         Agent.state == AgentState.OFFLINE,
         or_(Agent.last_polled == None,
-            Agent.last_polled + timedelta(
-                seconds=POLL_OFFLINE_AGENTS_INTERVAL) < datetime.utcnow()),
+            Agent.last_polled + POLL_OFFLINE_AGENTS_INTERVAL
+                < datetime.utcnow()),
         Agent.use_address != UseAgentAddress.PASSIVE)
 
     for agent in offline_agents_to_poll_query:
@@ -676,15 +690,7 @@ def send_job_completion_mail(job_id, successful=True):
             message["To"] = ",".join(to)
 
             if to:
-                smtp = SMTP(SMTP_SERVER, port=SMTP_PORT)
-
-                # Password could be blank in some cases
-                if SMTP_USER is not None:
-                    smtp.login(SMTP_USER, SMTP_PASSWORD)
-
-                smtp.sendmail(FROM_ADDRESS, to, message.as_string())
-                smtp.quit()
-
+                send_email(to, message.as_string())
                 logger.info("Job completion mail for job %s (id %s) sent to %s",
                             job.title, job.id, to)
 
@@ -728,22 +734,19 @@ def send_job_completion_mail(job_id, successful=True):
 def send_job_deletion_mail(job_id, jobtype_name, job_title, to):
     logger.debug("In send_job_deletion_mail(), job_id: %s, jobtype_name: %s, "
                  "job_title: %s, to: %s", job_id, jobtype_name, job_title, to)
-    message_text = ("%s job %s (id %s) has been deleted.\n\n" %
-                    (jobtype_name, job_title, job_id))
-    message_text += "Sincerely,\n\tThe PyFarm render manager"
+    message_text = DEFAULT_DELETE_SUBJECT.format(
+        job_title=job_title,
+        jobtype_name=jobtype_name,
+        job_id=job_id
+    )
 
     message = MIMEText(message_text)
-    message["Subject"] = ("Job %s deleted" % job_title)
-    message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
-
+    message["Subject"] = DEFAULT_DELETE_SUBJECT.format(title=job_title)
+    message["From"] = FROM_ADDRESS
     message["To"] = ",".join(to)
 
     if to:
-        smtp = SMTP(read_env("PYFARM_MAIL_SERVER", "localhost"))
-        smtp.sendmail(read_env("PYFARM_FROM_ADDRESS",
-                               "pyfarm@localhost"), to, message.as_string())
-        smtp.quit()
-
+        send_email(to, message.as_string())
         logger.info("Job deletion mail for job %s (id %s) sent to %s",
                     job_title, job_id, to)
 

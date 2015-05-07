@@ -21,25 +21,30 @@
 # updated to reflect the change made here.
 master_user_agent: "PyFarm/1.0 (master)"
 
+
 # How often the scheduler should run and poll agents.  The keys and
 # values here are passed into a `timedelta` object as keywords.
 agent_poll_interval:
   seconds: 30
+
 
 # How often the scheduler should run and and assign tasks.  The keys and
 # values here are passed into a `timedelta` object as keywords.
 assign_tasks_interval:
   minutes: 4
 
+
 # How often orphaned task logs should be cleaned up on disk.  The keys and
 # values here are passed into a `timedelta` object as keywords.
 orphaned_log_cleanup_interval:
   hours: 1
 
+
 # How often we should attempt to compress old task logs.  The keys and
 # values here are passed into a `timedelta` object as keywords.
 compress_log_interval:
   minutes: 10
+
 
 # How often old jobs should be deleted. Please note this only marks
 # jobs as to be deleted and does not actually perform the deletion
@@ -48,6 +53,7 @@ compress_log_interval:
 # into a `timedelta` object as keywords.
 autodelete_old_job_interval:
   hours: 1
+
 
 # How often the scheduler which deletes jobs should run.  The keys and values
 # here are passed into a `timedelta` object as keywords.
@@ -70,6 +76,29 @@ poll_busy_agents_interval:
 poll_idle_agents_interval:
   hours: 1
 
+
+# Used when polling agents to determine if an agent is considered
+# offline or not after a given period of time without communication.  The keys
+# and values here are passed into a `timedelta` object as keywords.
+poll_offline_agents_interval:
+  hours: 2
+
+
+# A directory where lock files for the scheuler can be found.
+scheduler_lockfile_base: ${temp}/scheduler_lock
+
+
+# The directory where all task logs should be stored.
+task_logs_dir: ${temp}/task_logs
+
+
+# The number of times an SQL transation error should be retried.
+transaction_retries: 10
+
+# The number of seconds we wait for a request to an agent to respond.  An
+# exception is raised if we exceed this amount.
+agent_request_timeout: 10
+
 ##
 ## END Scheduler Settings
 ##
@@ -86,20 +115,20 @@ poll_idle_agents_interval:
 # this value to null or leaving it blank will disable email notifications.
 smtp_server: localhost
 
+
 # Port to connect to the smtp server on.  The default port, 0, will
 # cause the underlying library to use the default smtp port.
 smtp_port: 0
+
 
 # Optional login credentials for the smtp server.  The default value
 # [null, null] means no username and password is required.
 smtp_login: [null, null]
 
+
 # The default address from which all emails from the scheduler will
 # originate.
 from_email: pyfarm@localhost
-
-
-
 
 ##
 ## BEGIN Email Template Settings
@@ -122,6 +151,7 @@ from_email: pyfarm@localhost
 # The template email subject line used for a succesful job.
 success_subject: Job {{ job.title }} completed successfully
 
+
 # The template body of an email for a succesful job
 success_body:
 |
@@ -140,6 +170,7 @@ success_body:
 
 # The template email subject line used for a failed job.
 failed_subject: Job {{ job.title }} failed
+
 
 # The template email body for a failed job.
 failed_body:
@@ -165,6 +196,25 @@ failed_body:
 
   Sincerely,
       The PyFarm render manager
+
+
+# The template email subject line used for a deleted job.  Supported
+# template values are:
+#   {job_title} - The title of the job being deleted
+deleted_subject: Job {job_title} deleted
+
+# The template email body for a deleted job.  Supported template
+# values are:
+#   {job_title} - The title of the job deleted
+#   {job_id} - The id of the job deleted
+#   {jobtype_name} - The name of the job type used
+deleted_body:
+|
+  {jobtype_name} job {job_title} has been deleted.
+
+  Sincerely,
+      The PyFarm render manager
+
 
 ##
 ## END Email Template Settings

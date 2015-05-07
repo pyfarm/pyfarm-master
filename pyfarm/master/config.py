@@ -95,10 +95,19 @@ class Configuration(_Configuration):
             "PYFARM_POLL_BUSY_AGENTS_INTERVAL", read_env_int),
         "poll_idle_agents_interval": (
             "POLL_IDLE_AGENTS_INTERVAL", read_env_int),
+        "poll_offline_agents_interval": (
+            "POLL_OFFLINE_AGENTS_INTERVAL", read_env_int),
+        "scheduler_lockfile_base": (
+            "PYFARM_SCHEDULER_LOCKFILE_BASE", read_env),
+        "task_logs_dir": (
+            "PYFARM_LOGFILES_DIR", read_env),
+        "transaction_retries": ("PYFARM_TRANSACTION_RETRIES", read_env_int),
+        "agent_request_timeout": (
+            "PYFARM_AGENT_REQUEST_TIMEOUT", read_env_int),
         "smtp_server": (
             "PYFARM_MAIL_SERVER", read_env),
         "from_email": (
-            "PYFARM_FROM_ADDRESS", read_env),
+            "PYFARM_FROM_ADDRESS", read_env)
     }
 
     def __init__(self):  # pylint: disable=super-on-old-class
