@@ -16,6 +16,11 @@
 ## BEGIN Scheduler Settings
 ##
 
+# The user agent the scheduler will use when connecting to
+# an agent.  Do not change this value unless the agent is
+# updated to reflect the change made here.
+master_user_agent: "PyFarm/1.0 (master)"
+
 # How often the scheduler should run and poll agents.  The keys and
 # values here are passed into a `timedelta` object as keywords.
 agent_poll_interval:
@@ -44,8 +49,17 @@ compress_log_interval:
 autodelete_old_job_interval:
   hours: 1
 
-
+# How often the scheduler which deletes jobs should run.  The keys and values
+# here are passed into a `timedelta` object as keywords.
 delete_job_interval:
+  minutes: 5
+
+
+# Used when polling agents to determine if we should or should not
+# reach out to an agent.  This is used in combination with the agent's
+# `last_heard_from` column, it's state and number of running tasks.  The keys
+# and values here are passed into a `timedelta` object as keywords.
+poll_busy_agents_interval:
   minutes: 5
 
 ##
