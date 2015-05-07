@@ -60,6 +60,9 @@ logger = getLogger("api.jobs")
 
 # Load model mappings once per process
 TASK_MODEL_MAPPINGS = Task.types().mappings
+AUTOCREATE_USERS = config.get("autocreate_users")
+AUTO_USER_EMAIL = config.get("autocreate_user_email")
+DEFAULT_JOB_DELETE_TIME = config.get("default_job_delete_time")
 
 
 class ObjectNotFound(Exception):
@@ -356,10 +359,10 @@ class JobIndexAPI(MethodView):
         username = g.json.pop("user", None)
         if username:
             user = User.query.filter_by(username=username).first()
-            if not user and config.get("autocreate_users"):
+            if not user and AUTOCREATE_USERS:
                 user = User(username=username)
-                if config.get("autocreate_user_domain"):
-                    user.email = username + "@" + config.get("autocreate_user_domain")
+                if AUTO_USER_EMAIL:
+                    user.email = AUTO_USER_EMAIL.format(username=username)
                 db.session.add(user)
                 logger.warning("User %s was autocreated on job submit", username)
             elif not user:
@@ -390,16 +393,16 @@ class JobIndexAPI(MethodView):
         job.user = user
         job.queue = jobqueue
         job.autodelete_time = g.json.get("autodelete_time",
-                                         config.get("default_job_delete_time"))
+                                         DEFAULT_JOB_DELETE_TIME)
 
         if notified_usernames:
             for entry in notified_usernames:
                 user = User.query.filter_by(username=entry["username"]).first()
-                if not user and config.get("autocreate_users"):
+                if not user and AUTOCREATE_USERS:
                     username = entry["username"]
                     user = User(username=username)
-                    if config.get("autocreate_user_domain"):
-                        user.email = username + "@" + config.get("autocreate_user_domain")
+                    if AUTO_USER_EMAIL:
+                        user.email = AUTO_USER_EMAIL.format(username=username)
                     db.session.add(user)
                     db.session.flush()
                     logger.warning("User %s was autocreated on job submit",

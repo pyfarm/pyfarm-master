@@ -54,8 +54,6 @@ class Configuration(_Configuration):
     ENVIRONMENT_OVERRIDES = {
         "secret_key": ("PYFARM_SECRET_KEY", read_env_no_log),
         "autocreate_users": ("PYFARM_AUTOCREATE_USERS", read_env_bool),
-        "autocreate_user_domain": (
-            "PYFARM_AUTO_USERS_DEFAULT_DOMAIN", read_env_bool),
         "default_job_delete_time": (
             "PYFARM_DEFAULT_JOB_DELETE_TIME", read_env_int),
         "base_url": (

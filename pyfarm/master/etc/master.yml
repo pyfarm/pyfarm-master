@@ -110,10 +110,11 @@ echo_sql: false
 autocreate_users: true
 
 
-# When autocreating users, use this domain for the email address.  Not
-# setting this value and setting `autocreate_users` to true will result
-# in a users's email address not being set.
-autocreate_user_domain: null
+# When autocreating users, use this email address as a template.  For example:
+#   {username}@example.com
+# Not setting this value and setting `autocreate_users` to true will result
+# in a users's email address not being set on a newly created user.
+autocreate_user_email: null
 
 
 # When provided an integer this many seconds will elapse after a job
