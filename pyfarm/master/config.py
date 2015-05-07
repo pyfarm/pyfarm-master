@@ -79,24 +79,6 @@ class Configuration(_Configuration):
             "PYFARM_DEV_APP_DB_CREATE_ALL", env_bool_false),
         "instance_application": ("PYFARM_APP_INSTANCE", env_bool_false),
         "scheduler_broker": ("PYFARM_SCHEDULER_BROKER", read_env),
-        "agent_poll_interval": (
-            "PYFARM_AGENTS_POLL_INTERVAL", read_env_int),
-        "assign_tasks_interval": (
-            "PYFARM_SCHEDULER_INTERVAL", read_env_int),
-        "orphaned_log_cleanup_interval": (
-            "PYFARM_LOG_CLEANUP_INTERVAL", read_env_int),
-        "autodelete_old_job_interval": (
-            "PYFARM_AUTODELETE_INTERVAL", read_env_int),
-        "compress_log_interval": (
-            "PYFARM_LOG_COMPRESS_INTERVAL", read_env_int),
-        "delete_job_interval": (
-            "PYFARM_DELETE_HANGING_INTERVAL", read_env_int),
-        "poll_busy_agents_interval": (
-            "PYFARM_POLL_BUSY_AGENTS_INTERVAL", read_env_int),
-        "poll_idle_agents_interval": (
-            "POLL_IDLE_AGENTS_INTERVAL", read_env_int),
-        "poll_offline_agents_interval": (
-            "POLL_OFFLINE_AGENTS_INTERVAL", read_env_int),
         "scheduler_lockfile_base": (
             "PYFARM_SCHEDULER_LOCKFILE_BASE", read_env),
         "task_logs_dir": (
