@@ -60,7 +60,7 @@ from pyfarm.master.utility import (
 logger = getLogger("api.agents")
 
 MAC_RE = re.compile("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
-OUT_FARM_NAME = config.get("farm_name")
+OUR_FARM_NAME = config.get("farm_name")
 
 
 def fail_missing_assignments(agent, current_assignments):
