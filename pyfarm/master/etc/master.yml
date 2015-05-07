@@ -179,11 +179,14 @@ instance_application: false
 # for jobs which are already running.
 queue_prefer_running_jobs: true
 
+
 # The default priority for a newly created job queue.
 queue_default_priority: 0
 
+
 # The default weight of a newly created job queue.
 queue_default_weight: 10
+
 
 # The minimum and maxinum priority any queue can have.  This is
 # used by the models for validation purposes.

@@ -20,6 +20,7 @@
 # below for uage.
 table_prefix: ""
 
+
 # The name of the table for software items
 table_software: ${table_prefix}software
 
@@ -115,6 +116,7 @@ allow_agents_from_loopback: false
 
 # The maximum length of a tag
 max_tag_length: 64
+
 
 # The maximum length of a hostname
 max_hostname_length: 255
