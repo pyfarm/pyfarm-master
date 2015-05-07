@@ -7,12 +7,9 @@ python:
 sudo: false
 
 env:
-  - TDB_TYPE=sqlite PYFARM_DATABASE_URI="sqlite:///:memory:" PYFARM_CONFIG="debug"
-  - TDB_TYPE=sqlite PYFARM_DATABASE_URI="sqlite:///:memory:" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 PYFARM_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 PYFARM_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
-  - TDB_TYPE=mysql TDB_DRIVER="mysql-connector-python --allow-external mysql-connector-python" PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="debug"
-  - TDB_TYPE=mysql TDB_DRIVER="mysql-connector-python --allow-external mysql-connector-python" PYFARM_DATABASE_URI="mysql+mysqlconnector://travis:@127.0.0.1/pyfarm" PYFARM_CONFIG="prod" PYFARM_SECRET_KEY="travis"
+  - TDB_TYPE=sqlite PYFARM_DATABASE_URI="sqlite:///:memory:"
+  - TDB_TYPE=postgres TDB_DRIVER=psycopg2 PYFARM_DATABASE_URI="postgresql+psycopg2://postgres:@127.0.0.1/pyfarm"
+  - TDB_TYPE=mysql TDB_DRIVER="mysql-connector-python --allow-external mysql-connector-python" PYFARM_DATABASE_URI="mysql+mysqlconnector://root:@127.0.0.1/pyfarm"
   - PYLINT=1
 
 matrix:
@@ -34,7 +31,7 @@ install:
 
 before_script:
   - if [[ $TDB_TYPE == "postgres" ]]; then psql -c "create database pyfarm;" -U postgres; fi
-  - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;"; fi
+  - if [[ $TDB_TYPE == "mysql" ]]; then mysql -e "create database pyfarm;" --user=root; fi
 
 script:
   - if [[ $PYLINT != "1" ]]; then pip freeze; fi

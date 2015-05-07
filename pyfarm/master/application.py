@@ -115,51 +115,26 @@ def get_application(**configuration_keywords):
         If ``True`` then setup the ``flask.g`` variable to include the
         application level information (ex. ``g.db``)
     """
-    # build the configuration
-    if read_env("PYFARM_CONFIG", "debug") == "debug":
-        secret_key = read_env(
-            "PYFARM_SECRET_KEY", "NG4pWsOCw57DnRfDncO3wqYpPnvDvMO",
-            log_result=False)
-
-        app_config = {
-            "DEBUG": True,
-            "SECRET_KEY": secret_key,
-            "LOGIN_DISABLED":
-                read_env("PYFARM_LOGIN_DISABLED", False, eval_literal=True),
-            "PYFARM_JSON_PRETTY":
-                read_env("PYFARM_JSON_PRETTY", True, eval_literal=True),
-            "SQLALCHEMY_ECHO":
-                read_env("PYFARM_SQL_ECHO", False, eval_literal=True),
-            "SQLALCHEMY_DATABASE_URI":
-                read_env("PYFARM_DATABASE_URI", "sqlite:///pyfarm.sqlite",
-                         log_result=False),
-            "CSRF_SESSION_KEY":
-                read_env("PYFARM_CSRF_SESSION_KEY", secret_key,
-                         log_result=False),
-            "CACHE_TYPE":
-                read_env("PYFARM_CACHE_TYPE", "simple"),
-            "REMEMBER_COOKIE_DURATION": timedelta(hours=1)}
-
-    else:
-        secret_key = read_env("PYFARM_SECRET_KEY", log_result=False)
-        app_config = {
-            "DEBUG": False,
-            "SECRET_KEY": secret_key,
-            "LOGIN_DISABLED":
-                read_env("PYFARM_LOGIN_DISABLED", False, eval_literal=True),
-            "PYFARM_JSON_PRETTY":
-                read_env("PYFARM_JSON_PRETTY", False, eval_literal=True),
-            "SQLALCHEMY_ECHO":
-                read_env("PYFARM_SQL_ECHO", False, eval_literal=True),
-            "SQLALCHEMY_DATABASE_URI":
-                read_env("PYFARM_DATABASE_URI", "sqlite:///pyfarm.sqlite",
-                         log_result=False),
-            "CSRF_SESSION_KEY":
-                read_env("PYFARM_CSRF_SESSION_KEY", secret_key,
-                         log_result=False),
-            "CACHE_TYPE":
-                read_env("PYFARM_CACHE_TYPE", "simple"),
-            "REMEMBER_COOKIE_DURATION": timedelta(hours=12)}
+    # TODO: raise exception instead of providing default secret key
+    secret_key = read_env("PYFARM_SECRET_KEY", "pyfarm", log_result=False)
+    app_config = {
+        "DEBUG": False,
+        "SECRET_KEY": secret_key,
+        "LOGIN_DISABLED":
+            read_env("PYFARM_LOGIN_DISABLED", False, eval_literal=True),
+        "PYFARM_JSON_PRETTY":
+            read_env("PYFARM_JSON_PRETTY", False, eval_literal=True),
+        "SQLALCHEMY_ECHO":
+            read_env("PYFARM_SQL_ECHO", False, eval_literal=True),
+        "SQLALCHEMY_DATABASE_URI":
+            read_env("PYFARM_DATABASE_URI", "sqlite:///pyfarm.sqlite",
+                     log_result=False),
+        "CSRF_SESSION_KEY":
+            read_env("PYFARM_CSRF_SESSION_KEY", secret_key,
+                     log_result=False),
+        "CACHE_TYPE":
+            read_env("PYFARM_CACHE_TYPE", "simple"),
+        "REMEMBER_COOKIE_DURATION": timedelta(hours=12)}
 
     app_config.setdefault(
         "JSONIFY_PRETTYPRINT_REGULAR",
