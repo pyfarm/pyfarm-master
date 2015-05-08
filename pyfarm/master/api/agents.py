@@ -241,9 +241,10 @@ class AgentIndexAPI(MethodView):
         except KeyError:
             return jsonify(error="`id` not provided"), BAD_REQUEST
 
-        # If state is not in the request, this is not an announce by the agent
-        # itself. It could be some other client editing the agent.
-        if "state" in g.json:
+        # If the remote user agent is not "PyFarm/1.0 (agent)", this is not an
+        # announce by the agent itself. It could be some other client editing
+        # the agent.
+        if request.headers.get("User-Agent", "") == "PyFarm/1.0 (agent)":
             # Set remote_ip if it did not come in with the request
             g.json.setdefault("remote_ip", request.remote_addr)
 
