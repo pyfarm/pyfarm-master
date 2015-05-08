@@ -115,7 +115,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     @staticmethod
     def log_assign_change(target, new_value, old_value, initiator):
         logger.debug("Agent change for task %s: old %s new: %s",
-                     self.id, old_value, new_value)
+                     target.id, old_value, new_value)
 
     @staticmethod
     def update_failures(target, new_value, old_value, initiator):
