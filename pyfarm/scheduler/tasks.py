@@ -573,12 +573,20 @@ def poll_agent(self, agent_id):
             send_tasks_to_agent.delay(agent_id)
 
         if set(present_task_ids) - set(assigned_task_ids):
-            logger.warning("Agent %s has got tasks it is not supposed to have.",
-                           agent.hostname)
             for task_id in set(present_task_ids) - set(assigned_task_ids):
-                logger.warning("Stopping task id %s on agent %s",
-                               task_id, agent.hostname)
-                stop_task.delay(task_id, agent_id, dissociate_agent=False)
+                task = Task.query.filter_by(id=task_id).first()
+                if task:
+                    if task.agent_id != agent_id:
+                        logger.warning("Task %s belongs to agent %s (id %s), "
+                                       "but has been found running on %s "
+                                       "(id %s), stopping it.", task_id,
+                                       task.agent.hostname, task.agent_id,
+                                       agent.hostname, agent_id)
+                        stop_task.delay(task_id, agent_id,
+                                        dissociate_agent=False)
+                else:
+                    logger.warning("Superfluous task %s not found in db",
+                                   task_id)
 
         agent.last_heard_from = datetime.utcnow()
         db.session.add(agent)
