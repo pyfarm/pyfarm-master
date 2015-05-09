@@ -59,26 +59,38 @@ REGEX_HOSTNAME = re.compile("^(?!-)[A-Z\d-]{1,63}(?<!-)"
 
 AgentSoftwareVersionAssociation = db.Table(
     TABLE_AGENT_SOFTWARE_VERSION_ASSOC, db.metadata,
-    db.Column("agent_id", IDTypeAgent,
-              db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
-    db.Column("software_version_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION), primary_key=True))
+    db.Column(
+        "agent_id", IDTypeAgent,
+        db.ForeignKey("%s.id" % TABLE_AGENT),
+        primary_key=True),
+    db.Column(
+        "software_version_id", db.Integer,
+        db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+        primary_key=True))
 
 
 AgentTagAssociation = db.Table(
     TABLE_AGENT_TAG_ASSOC, db.metadata,
-    db.Column("agent_id", IDTypeAgent,
-              db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
-    db.Column("tag_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_TAG), primary_key=True))
+    db.Column(
+        "agent_id", IDTypeAgent,
+        db.ForeignKey("%s.id" % TABLE_AGENT),
+        primary_key=True),
+    db.Column(
+        "tag_id", db.Integer,
+        db.ForeignKey("%s.id" % TABLE_TAG),
+        primary_key=True))
 
 
 GPUInAgent = db.Table(
     TABLE_GPU_IN_AGENT, db.metadata,
-    db.Column("agent_id", IDTypeAgent,
-              db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
-    db.Column("gpu_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_GPU), primary_key=True))
+    db.Column(
+        "agent_id", IDTypeAgent,
+        db.ForeignKey("%s.id" % TABLE_AGENT),
+        primary_key=True),
+    db.Column(
+        "gpu_id", db.Integer,
+        db.ForeignKey("%s.id" % TABLE_GPU),
+        primary_key=True))
 
 
 class AgentTaggingMixin(object):
