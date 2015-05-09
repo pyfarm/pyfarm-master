@@ -69,8 +69,6 @@ class Configuration(_Configuration):
         "agent_updates_webdir": ("PYFARM_AGENT_UPDATES_WEBDIR", read_env),
         "farm_name": ("PYFARM_FARM_NAME", read_env),
         "tasklogs_dir": ("PYFARM_LOGFILES_DIR", read_env),
-        "flask_listen_address": (
-            "PYFARM_DEV_LISTEN_ON_WILDCARD", env_bool_false),
         "dev_db_drop_all": (
             "PYFARM_DEV_APP_DB_DROP_ALL", env_bool_false),
         "dev_db_create_all": (
@@ -113,6 +111,10 @@ class Configuration(_Configuration):
         for config_var, (envvar, load_func) in items():
             if envvar in os.environ:
                 overrides[config_var] = load_func(envvar)
+
+        if ("PYFARM_DEV_LISTEN_ON_WILDCARD" in os.environ
+                and read_env_bool("PYFARM_DEV_LISTEN_ON_WILDCARD")):
+            self.update(flask_listen_address="0.0.0.0")
 
         self.update(overrides)
 
