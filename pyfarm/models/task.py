@@ -113,6 +113,11 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             target.attempts += 1
 
     @staticmethod
+    def log_assign_change(target, new_value, old_value, initiator):
+        logger.debug("Agent change for task %s: old %s new: %s",
+                     target.id, old_value, new_value)
+
+    @staticmethod
     def update_failures(target, new_value, old_value, initiator):
         if new_value == WorkState.FAILED and new_value != old_value:
             target.failures += 1
@@ -152,5 +157,6 @@ event.listen(Task.state, "set", Task.state_changed)
 event.listen(Task.state, "set", Task.update_failures)
 event.listen(Task.state, "set", Task.set_progress_on_success)
 event.listen(Task.agent_id, "set", Task.increment_attempts)
+event.listen(Task.agent_id, "set", Task.log_assign_change)
 event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry,
              retval=True)
