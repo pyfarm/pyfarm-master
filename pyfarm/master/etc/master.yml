@@ -146,7 +146,8 @@ agent_updates_webdir: null
 tasklogs_dir: ${temp}/task_logs
 
 
-# The address the Flask application should listen on.  By default
+# The address the Flask application should listen on.  This is only important
+# when running the application in a standalone mode of operation. By default
 # this will only listen locally but could be changed to listen on
 # a specific adatper or `0.0.0.0` for all addresses.
 flask_listen_address: 127.0.0.1
