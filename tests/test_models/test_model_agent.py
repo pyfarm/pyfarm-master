@@ -247,7 +247,7 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
 
         for scheme in ("http", "https"):
             for version in (1, 2, 3):
-                args = (scheme, version)
+                args = (scheme, )
 
                 # run the tests
                 model.use_address = UseAgentAddress.REMOTE
