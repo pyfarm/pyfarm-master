@@ -145,6 +145,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         "id", "hostname", "port", "state", "remote_ip",
         "cpus", "ram", "free_ram")
     REPR_CONVERT_COLUMN = {"remote_ip": repr_ip}
+    URL_TEMPLATE = "{scheme}://{host}:{port}/api/v1"
 
     MIN_PORT = read_env_int("PYFARM_AGENT_MIN_PORT", 1024)
     MAX_PORT = read_env_int("PYFARM_AGENT_MAX_PORT", 65535)
@@ -414,9 +415,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
         return value
 
-    def api_url(self,
-            scheme=read_env("PYFARM_AGENT_API_SCHEME", "http"),
-            version=read_env_int("PYFARM_AGENT_API_VERSION", 1)):
+    def api_url(self, scheme=read_env("PYFARM_AGENT_API_SCHEME", "http")):
         """
         Returns the base url which should be used to access the api
         of this specific agent.
@@ -426,15 +425,20 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             :attr:`use_address` column is set to ``PASSIVE``
         """
         assert scheme in ("http", "https")
-        assert isinstance(version, int)
 
         if self.use_address == UseAgentAddress.REMOTE:
-            return "%s://%s:%d/api/v%d" % (
-                scheme, self.remote_ip, self.port, version)
+            return self.URL_TEMPLATE.format(
+                scheme=scheme,
+                host=self.remote_ip,
+                port=self.port
+            )
 
         elif self.use_address == UseAgentAddress.HOSTNAME:
-            return "%s://%s:%d/api/v%d" % (
-                scheme, self.hostname, self.port, version)
+            return self.URL_TEMPLATE.format(
+                scheme=scheme,
+                host=self.hostname,
+                port=self.port
+            )
 
         else:
             raise ValueError(
