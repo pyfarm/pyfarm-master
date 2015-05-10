@@ -139,8 +139,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     """
     __tablename__ = TABLE_JOB
     REPR_COLUMNS = ("id", "state", "project")
-    REPR_CONVERT_COLUMN = {
-        "state": repr}
+    REPR_CONVERT_COLUMN = {"state": repr}
     STATE_ENUM = list(WorkState) + [None]
     MIN_CPUS = read_env_int("PYFARM_QUEUE_MIN_CPUS", 1)
     MAX_CPUS = read_env_int("PYFARM_QUEUE_MAX_CPUS", 256)
@@ -157,166 +156,184 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     assert MAX_RAM >= 1, "$PYFARM_QUEUE_MAX_RAM must be > 0"
     assert MAX_RAM >= MIN_RAM, "MIN_RAM must be <= MAX_RAM"
 
-
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
         work_columns(None, "job.priority")
-    jobtype_version_id = db.Column(IDTypeWork,
-                                    db.ForeignKey("%s.id"
-                                        % TABLE_JOB_TYPE_VERSION),
-                                    nullable=False,
-                                    doc=dedent("""
-                                    The foreign key which stores
-                                    :class:`JobTypeVersion.id`"""))
-    job_queue_id = db.Column(IDTypeWork,
-                             db.ForeignKey("%s.id" % TABLE_JOB_QUEUE),
-                             nullable=True,
-                             doc=dedent("""
-                                The foreign key which stores
-                                :class:`JobQueue.id`"""))
-    user_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_USER),
-                        doc="The id of the user who owns this job")
-    minimum_agents = db.Column(db.Integer, nullable=True,
-                          doc=dedent("""
-                          The scheduler will try to assign at least this number
-                          of agents to this job as long as it can use them,
-                          before any other considerations."""))
-    maximum_agents = db.Column(db.Integer, nullable=True,
-                          doc=dedent("""
-                          The scheduler will never assign more than this number
-                          of agents to this job."""))
-    weight = db.Column(db.Integer, nullable=False,
-                       default=read_env_int(
-                                   "PYFARM_QUEUE_DEFAULT_WEIGHT", 10),
-                       doc=dedent("""
-                            The weight of this job.
-                            The scheduler will distribute available agents
-                            between jobs and job queues in the same queue
-                            in proportion to their weights.
-                            """))
-    title = db.Column(db.String(MAX_JOBTITLE_LENGTH), nullable=False,
-                      doc="The title of this job")
-    notes = db.Column(db.Text, default="",
-                      doc=dedent("""
-                      Notes that are provided on submission or added after
-                      the fact. This column is only provided for human
-                      consumption, is not scanned, index, or used when
-                      searching"""))
 
-    output_link = db.Column(db.Text, nullable=True,
-                            doc="An optional link to a URI where this job's "
-                                "output can be viewed.")
+    jobtype_version_id = db.Column(
+        IDTypeWork,
+        db.ForeignKey("%s.id" % TABLE_JOB_TYPE_VERSION),
+        nullable=False,
+        doc="The foreign key which stores :class:`JobTypeVersion.id`")
+
+    job_queue_id = db.Column(
+        IDTypeWork,
+        db.ForeignKey("%s.id" % TABLE_JOB_QUEUE),
+        nullable=True,
+        doc="The foreign key which stores :class:`JobQueue.id`")
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("%s.id" % TABLE_USER),
+        doc="The id of the user who owns this job")
+
+    minimum_agents = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="The scheduler will try to assign at least this number "
+            "of agents to this job as long as it can use them, "
+            "before any other considerations.")
+
+    maximum_agents = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="The scheduler will never assign more than this number"
+            "of agents to this job.")
+
+    weight = db.Column(
+        db.Integer,
+        nullable=False,
+        default=read_env_int("PYFARM_QUEUE_DEFAULT_WEIGHT", 10),
+        doc="The weight of this job. The scheduler will distribute "
+            "available agents between jobs and job queues in the "
+            "same queue in proportion to their weights.")
+
+    title = db.Column(
+        db.String(MAX_JOBTITLE_LENGTH),
+        nullable=False,
+        doc="The title of this job")
+
+    notes = db.Column(
+        db.Text,
+        default="",
+        doc="Notes that are provided on submission or added after "
+            "the fact. This column is only provided for human "
+            "consumption, is not scanned, indexed, or used when "
+            "searching")
+
+    output_link = db.Column(
+        db.Text,
+        nullable=True,
+        doc="An optional link to a URI where this job's output can "
+            "be viewed.")
 
     # task data
-    by = db.Column(db.Numeric(10, 4), default=1,
-                   doc=dedent("""
-                   The number of frames to count by between `start` and
-                   `end`.  This column may also sometimes be referred to
-                   as 'step' by other software."""))
-    batch = db.Column(db.Integer,
-                      default=read_env_int("PYFARM_QUEUE_DEFAULT_BATCH", 1),
-                      doc=dedent("""
-                      Number of tasks to run on a single agent at once.
-                      Depending on the capabilities of the software being run
-                      this will either cause a single process to execute on
-                      the agent or multiple processes one after the other.
+    by = db.Column(
+        db.Numeric(10, 4),
+        default=1,
+        doc="The number of frames to count by between `start` and "
+            "`end`.  This column may also sometimes be referred to "
+            "as 'step' by other software.")
 
-                      **configured by**: `job.batch`"""))
-    requeue = db.Column(db.Integer,
-                        default=read_env_int("PYFARM_QUEUE_DEFAULT_REQUEUE", 3),
-                        doc=dedent("""
-                        Number of times to requeue failed tasks
+    batch = db.Column(
+        db.Integer,
+        default=read_env_int("PYFARM_QUEUE_DEFAULT_BATCH", 1),
+        doc="Number of tasks to run on a single agent at once. Depending "
+            "on the capabilities of the software being run this will "
+            "either cause a single process to execute on the agent "
+            "or multiple processes one after the other.")
 
-                        .. csv-table:: **Special Values**
-                            :header: Value, Result
-                            :widths: 10, 50
+    requeue = db.Column(
+        db.Integer,
+        default=read_env_int("PYFARM_QUEUE_DEFAULT_REQUEUE", 3),
+        doc="Number of times to requeue failed tasks "
+            ""
+            ".. csv-table:: **Special Values**"
+            "   :header: Value, Result"
+            "   :widths: 10, 50"
+            ""
+            "   0, never requeue failed tasks"
+            "  -1, requeue failed tasks indefinitely")
 
-                            0, never requeue failed tasks
-                            -1, requeue failed tasks indefinitely
+    cpus = db.Column(
+        db.Integer,
+        default=read_env_int("PYFARM_QUEUE_DEFAULT_CPUS", 1),
+        doc="Number of cpus or threads each task should consume on"
+            "each agent.  Depending on the job type being executed "
+            "this may result in additional cpu consumption, longer "
+            "wait times in the queue (2 cpus means 2 'fewer' cpus on "
+            "an agent), or all of the above."
+            ""
+            ".. csv-table:: **Special Values**"
+            "   :header: Value, Result"
+            "   :widths: 10, 50"
+            ""
+            "   0, minimum number of cpu resources not required "
+            "   -1, agent cpu is exclusive for a task from this job")
 
-                        **configured by**: `job.requeue`"""))
-    cpus = db.Column(db.Integer,
-                     default=read_env_int("PYFARM_QUEUE_DEFAULT_CPUS", 1),
-                     doc=dedent("""
-                     Number of cpus or threads each task should consume on
-                     each agent.  Depending on the job type being executed
-                     this may result in additional cpu consumption, longer
-                     wait times in the queue (2 cpus means 2 'fewer' cpus on
-                     an agent), or all of the above.
+    ram = db.Column(
+        db.Integer,
+        default=read_env_int("PYFARM_QUEUE_DEFAULT_RAM", 32),
+        doc="Amount of ram a task from this job will require to be "
+            "free in order to run.  A task exceeding this value will "
+            "not result in any special behavior."
+            ""
+            ".. csv-table:: **Special Values**"
+            "    :header: Value, Result"
+            "    :widths: 10, 50"
+            ""
+            "0, minimum amount of free ram not required"
+            "-1, agent ram is exclusive for a task from this job")
 
-                     .. csv-table:: **Special Values**
-                        :header: Value, Result
-                        :widths: 10, 50
+    ram_warning = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="Amount of ram used by a task before a warning raised. "
+            "A task exceeding this value will not  cause any work "
+            "stopping behavior.")
 
-                        0, minimum number of cpu resources not required
-                        -1, agent cpu is exclusive for a task from this job
+    ram_max = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="Maximum amount of ram a task is allowed to consume on "
+            "an agent."
+            ""
+            ".. warning:: "
+            "   If set, the task will be **terminated** if the ram in "
+            "   use by the process exceeds this value.")
 
-                     **configured by**: `job.cpus`"""))
-    ram = db.Column(db.Integer,
-                    default=read_env_int("PYFARM_QUEUE_DEFAULT_RAM", 32),
-                    doc=dedent("""
-                    Amount of ram a task from this job will require to be
-                    free in order to run.  A task exceeding this value will
-                    not result in any special behavior.
+    hidden = db.Column(
+        db.Boolean,
+        default=False, nullable=False,
+        doc="If True, keep the job hidden from the queue and web "
+            "ui.  This is typically set to True if you either want "
+            "to save a job for later viewing or if the jobs data "
+            "is being populated in a deferred manner.")
 
-                    .. csv-table:: **Special Values**
-                        :header: Value, Result
-                        :widths: 10, 50
+    environ = db.Column(
+        JSONDict,
+        doc="Dictionary containing information about the environment "
+            "in which the job will execute. "
+            ""
+            ".. note::"
+            "    Changes made directly to this object are **not** "
+            "    applied to the session.")
 
-                        0, minimum amount of free ram not required
-                        -1, agent ram is exclusive for a task from this job
+    data = db.Column(
+        JSONDict,
+        doc="Json blob containing additional data for a job "
+            ""
+            ".. note:: "
+            "   Changes made directly to this object are **not** "
+            "   applied to the session.")
 
-                    **configured by**: `job.ram`"""))
-    ram_warning = db.Column(db.Integer, nullable=True,
-                            doc=dedent("""
-                            Amount of ram used by a task before a warning raised.
-                            A task exceeding this value will not  cause any work
-                            stopping behavior."""))
-    ram_max = db.Column(db.Integer, nullable=True,
-                        doc=dedent("""
-                        Maximum amount of ram a task is allowed to consume on
-                        an agent.
+    to_be_deleted = db.Column(
+        db.Boolean,
+        nullable=False, default=False,
+        doc="If true, the master will stop all running tasks for "
+            "this job and then delete it.")
 
-                        .. warning::
-                            If set, the task will be **terminated** if the ram in
-                            use by the process exceeds this value.
-                        """))
-    hidden = db.Column(db.Boolean, default=False, nullable=False,
-                       doc=dedent("""
-                       If True, keep the job hidden from the queue and web
-                       ui.  This is typically set to True if you either want
-                       to save a job for later viewing or if the jobs data
-                       is being populated in a deferred manner."""))
-    environ = db.Column(JSONDict,
-                        doc=dedent("""
-                        Dictionary containing information about the environment
-                        in which the job will execute.
+    completion_notify_sent = db.Column(
+        db.Boolean,
+        nullable=False, default=False,
+        doc="Whether or not the finish notification mail has already "
+            "been sent out.")
 
-                        .. note::
-                            Changes made directly to this object are **not**
-                            applied to the session."""))
-    data = db.Column(JSONDict,
-                     doc=dedent("""
-                     Json blob containing additional data for a job
-
-                     .. note::
-                        Changes made directly to this object are **not**
-                        applied to the session."""))
-
-    to_be_deleted = db.Column(db.Boolean, nullable=False, default=False,
-                              doc="If true, the master will stop all running "
-                                  "tasks for this job and then delete it.")
-
-    completion_notify_sent = db.Column(db.Boolean, nullable=False,
-                                       default=False,
-                                       doc="Whether or not the finish "
-                                           "notification mail has already "
-                                           "been sent out.")
-
-    autodelete_time = db.Column(db.Integer, nullable=True, default=None,
-                                doc="If not None, this job will be "
-                                    "automatically deleted this number of "
-                                    "seconds after it finishes.")
+    autodelete_time = db.Column(
+        db.Integer,
+        nullable=True, default=None,
+        doc="If not None, this job will be automatically deleted this "
+            "number of seconds after it finishes.")
 
     queue = db.relationship("JobQueue",
                             backref=db.backref("jobs", lazy="dynamic"),
