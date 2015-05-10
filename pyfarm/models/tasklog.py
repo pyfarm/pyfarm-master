@@ -77,25 +77,43 @@ class TaskTaskLogAssociation(db.Model):
 
 
 class TaskLog(db.Model, UtilityMixins, ReprMixin):
+    """Table which represents a single task log entry"""
     __tablename__ = TABLE_TASK_LOG
     __table_args__ = (UniqueConstraint("identifier"),)
-    id = id_column(db.Integer)
-    identifier = db.Column(db.String(255), nullable=False,
-                           doc="The identifier for this log")
-    agent_id = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
-                         nullable=True,
-                         doc="The agent this log was created on")
-    created_on = db.Column(db.DateTime,
-                           default=datetime.utcnow,
-                           doc="The time when this log was created")
 
-    agent = db.relationship("Agent",
-                            backref=db.backref("task_logs", lazy="dynamic"),
-                            doc="Relationship between an :class:`TaskLog`"
-                                "and the :class:`pyfarm.models.Agent` it was "
-                                "created on")
-    task_associations = db.relationship(TaskTaskLogAssociation,
-                                        backref="log")
+    id = id_column(db.Integer)
+
+    identifier = db.Column(
+        db.String(255),
+        nullable=False,
+        doc="The identifier for this log")
+
+    agent_id = db.Column(
+        IDTypeAgent,
+        db.ForeignKey("%s.id" % TABLE_AGENT),
+        nullable=True,
+        doc="The agent this log was created on")
+
+    created_on = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        doc="The time when this log was created")
+
+    #
+    # Relationships
+    #
+    agent = db.relationship(
+        "Agent",
+        backref=db.backref("task_logs", lazy="dynamic"),
+        doc="Relationship between an :class:`TaskLog`"
+            "and the :class:`pyfarm.models.Agent` it was "
+            "created on")
+
+    task_associations = db.relationship(
+        TaskTaskLogAssociation,
+        backref="log",
+        doc="Relationship between tasks and their logs."
+    )
 
     def num_queued_tasks(self):
         return TaskTaskLogAssociation.query.filter_by(
