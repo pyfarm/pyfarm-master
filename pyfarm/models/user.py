@@ -23,7 +23,6 @@ Stores users and their roles in the database.
 
 from hashlib import sha256
 from datetime import datetime
-from textwrap import dedent
 
 from flask.ext.login import UserMixin
 
@@ -211,24 +210,32 @@ class Role(db.Model):
     """
     __tablename__ = TABLE_ROLE
 
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        nullable=False)
 
-    active = db.Column(db.Boolean, default=True,
-                       doc=dedent("""
-                       Enables or disables a role.  Disabling a role
-                       will prevent any users of this role from accessing
-                       PyFarm"""))
+    active = db.Column(
+        db.Boolean,
+        default=True,
+        doc="Enables or disables a role.  Disabling a role"
+            "will prevent any users of this role from accessing "
+            "PyFarm")
 
-    name = db.Column(db.String(MAX_ROLE_LENGTH), unique=True, nullable=False,
-                     doc="The name of the role")
+    name = db.Column(
+        db.String(MAX_ROLE_LENGTH),
+        unique=True, nullable=False,
+        doc="The name of the role")
 
-    expiration = db.Column(db.DateTime,
-                       doc=dedent("""
-                       Role expiration.  If this value is set then the role, and
-                       anyone assigned to it, will no longer be able to access
-                       PyFarm past the expiration."""))
+    expiration = db.Column(
+        db.DateTime,
+        doc="Role expiration.  If this value is set then the role, and "
+            "anyone assigned to it, will no longer be able to access "
+            "PyFarm past the expiration.")
 
-    description = db.Column(db.Text, doc="Human description of the role.")
+    description = db.Column(
+        db.Text,
+        doc="Human description of the role.")
 
     @classmethod
     def create(cls, name, description=None):
