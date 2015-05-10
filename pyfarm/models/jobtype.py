@@ -24,8 +24,6 @@ to an individual job.  See :mod:`pyfarm.models.job` for more the more
 general implementation.
 """
 
-from textwrap import dedent
-
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 
