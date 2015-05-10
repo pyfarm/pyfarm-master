@@ -66,7 +66,6 @@ class Software(db.Model, UtilityMixins):
 class SoftwareVersion(db.Model, UtilityMixins):
     """
     Model to represent a version for a given software
-
     """
     __tablename__ = TABLE_SOFTWARE_VERSION
     __table_args__ = (
@@ -74,23 +73,30 @@ class SoftwareVersion(db.Model, UtilityMixins):
         UniqueConstraint("software_id", "rank"))
 
     id = id_column()
-    software_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_SOFTWARE),
-                            nullable=False,
-                            doc="The software this version belongs to")
-    version = db.Column(db.String(MAX_TAG_LENGTH),
-                        default="any", nullable=False,
-                        doc=dedent("""
-                            The version of the software.  This value does not
-                            follow any special formatting rules because the
-                            format depends on the 3rd party."""))
-    rank = db.Column(db.Integer, nullable=False,
-                     doc=dedent("""
-                        The rank of this version relative to other versions of
-                        the same software. Used to determine whether a version
-                        is higher or lower than another."""))
-    default = db.Column(db.Boolean, default=False, nullable=False,
-                        doc="If true, this software version will be registered"
-                            "on new nodes by default.")
+    software_id = db.Column(
+        db.Integer,
+        db.ForeignKey("%s.id" % TABLE_SOFTWARE),
+        nullable=False, doc="The software this version belongs to")
+
+    version = db.Column(
+        db.String(MAX_TAG_LENGTH),
+        default="any", nullable=False,
+        doc="The version of the software.  This value does not "
+            "follow any special formatting rules because the "
+            "format depends on the 3rd party.")
+
+    rank = db.Column(
+        db.Integer,
+        nullable=False,
+        doc="The rank of this version relative to other versions of "
+            "the same software. Used to determine whether a version "
+            "is higher or lower than another.")
+
+    default = db.Column(
+        db.Boolean,
+        default=False, nullable=False,
+        doc="If true, this software version will be registered"
+            "on new nodes by default.")
 
 
 class JobSoftwareRequirement(db.Model, UtilityMixins):
