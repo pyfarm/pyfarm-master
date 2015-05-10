@@ -16,7 +16,7 @@
 
 """
 GPU
----
+===
 
 Model describing a given make and model of graphics card.
 Every agent can have zero or more GPUs associated with it.
