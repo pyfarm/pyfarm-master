@@ -25,11 +25,9 @@ from functools import partial
 from textwrap import dedent
 
 from sqlalchemy import event
-from sqlalchemy.orm.attributes import NO_VALUE, NO_CHANGE
-from sqlalchemy.sql import or_, and_
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState, _WorkState
+from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
 from pyfarm.models.core.functions import work_columns, repr_enum
