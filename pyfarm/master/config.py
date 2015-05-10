@@ -51,16 +51,19 @@ class Configuration(_Configuration):
     def __init__(self):  # pylint: disable=super-on-old-class
         super(Configuration, self).__init__("pyfarm.master")
         self.load()
+        self.loaded = set(self.loaded)
 
         # Load model configuration
         models_config = _Configuration("pyfarm.models", version=self.version)
         models_config.load()
         self.update(models_config)
+        self.loaded.update(models_config.loaded)
 
         # Load scheduler configuration
         sched_config = _Configuration("pyfarm.scheduler", version=self.version)
         sched_config.load()
         self.update(sched_config)
+        self.loaded.update(sched_config.loaded)
 
         try:
             items = self.ENVIRONMENT_OVERRIDES.iteritems
@@ -73,6 +76,7 @@ class Configuration(_Configuration):
                 overrides[config_var] = load_func(envvar)
 
         self.update(overrides)
+        self.loaded = tuple(self.loaded)
 
 try:
     config
