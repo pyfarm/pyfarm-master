@@ -16,8 +16,9 @@
 # limitations under the License.
 
 """
-Software
-========
+Software Models
+===============
+
 Table of software items. Agents can reference this table to show that they
 provide a given software. Jobs or jobtypes can depend on a software via the
 SoftwareRequirement table
