@@ -15,8 +15,8 @@
 # limitations under the License.
 
 """
-Permissions
-===========
+User and Role Models
+====================
 
 Stores users and their roles in the database.
 """
@@ -36,15 +36,20 @@ from pyfarm.models.core.cfg import (
     MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
     MAX_ROLE_LENGTH)
 
-__all__ = ("User", )
+__all__ = ("User", "Role")
 
 # roles the user is a member of
 UserRole = db.Table(
     TABLE_USER_ROLE,
-    db.Column("user_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_USER)),
-    db.Column("role_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_ROLE)))
+    db.Column(
+        "user_id", db.Integer,
+        db.ForeignKey("%s.id" % TABLE_USER),
+        doc="The id of the associated user"),
+    db.Column(
+        "role_id", db.Integer,
+        db.ForeignKey("%s.id" % TABLE_ROLE),
+        doc="The id of the associated role")
+)
 
 
 class User(db.Model, UserMixin, ReprMixin):
