@@ -22,7 +22,6 @@ Models and interface classes related to tasks
 """
 
 from functools import partial
-from textwrap import dedent
 
 from sqlalchemy import event
 
@@ -57,47 +56,69 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
         work_columns(STATE_DEFAULT, "job.priority")
-    agent_id = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
-                         doc="Foreign key which stores :attr:`Job.id`")
-    job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
-                       nullable=False,
-                       doc="Foreign key which stores :attr:`Job.id`")
-    hidden = db.Column(db.Boolean, default=False,
-                       doc=dedent("""
-                       hides the task from queue and web ui"""))
-    attempts = db.Column(db.Integer, nullable=False, default=0,
-                         doc=dedent("""
-                         The number of attempts which have been made on this
-                         task. This value is auto incremented when
-                         :attr:`state` changes to a value synonymous with a
-                         running state."""))
-    failures = db.Column(db.Integer, nullable=False, default=0,
-                         doc=dedent("""
-                         The number of times this task has failed. This value
-                         is auto incremented when :attr:`state` changes to a
-                         value synonymous with a failed state."""))
-    frame = db.Column(db.Numeric(10, 4), nullable=False,
-                      doc="The frame this :class:`Task` will be executing.")
-    last_error = db.Column(db.UnicodeText, nullable=True,
-                           doc="This column may be set when an error is "
-                               "present.  The agent typically sets this "
-                               "column when the job type either can't or "
-                               "won't run a given task.  This column will "
-                               "be cleared whenever the task's state is "
-                               "returned to a non-error state.")
-    sent_to_agent = db.Column(db.Boolean, default=False, nullable=False,
-                              doc="Whether this task was already sent to the "
-                                  "assigned agent")
-    progress = db.Column(db.Float, default=0.0,
-                         doc="The progress for this task, as a value between "
-                             "0.0 and 1.0. Used purely for display purposes.")
 
-    # relationships
-    job = db.relationship("Job",
-                          backref=db.backref("tasks", lazy="dynamic"),
-                          doc=dedent("""
-                          relationship attribute which retrieves the
-                          associated job for this task"""))
+    agent_id = db.Column(
+        IDTypeAgent,
+        db.ForeignKey("%s.id" % TABLE_AGENT),
+        doc="Foreign key which stores :attr:`Job.id`")
+
+    job_id = db.Column(
+        IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+        nullable=False,
+        doc="Foreign key which stores :attr:`Job.id`")
+
+    hidden = db.Column(
+        db.Boolean, default=False,
+        doc="When True this hides the task from queue and web ui")
+
+    attempts = db.Column(
+        db.Integer,
+        nullable=False, default=0,
+        doc="The number of attempts which have been made on this "
+            "task. This value is auto incremented when "
+            "``state`` changes to a value synonymous with a "
+            "running state.")
+
+    failures = db.Column(
+        db.Integer,
+        nullable=False, default=0,
+        doc="The number of times this task has failed. This value "
+            "is auto incremented when :attr:`state` changes to a "
+            "value synonymous with a failed state.")
+
+    frame = db.Column(
+        db.Numeric(10, 4),
+        nullable=False,
+        doc="The frame this :class:`Task` will be executing.")
+
+    last_error = db.Column(
+        db.UnicodeText,
+        nullable=True,
+        doc="This column may be set when an error is "
+            "present.  The agent typically sets this "
+            "column when the job type either can't or "
+            "won't run a given task.  This column will "
+            "be cleared whenever the task's state is "
+            "returned to a non-error state.")
+
+    sent_to_agent = db.Column(
+        db.Boolean,
+        default=False, nullable=False,
+        doc="Whether this task was already sent to the assigned agent")
+
+    progress = db.Column(
+        db.Float, default=0.0,
+        doc="The progress for this task, as a value between "
+            "0.0 and 1.0. Used purely for display purposes.")
+
+    #
+    # Relationships
+    #
+    job = db.relationship(
+        "Job",
+        backref=db.backref("tasks", lazy="dynamic"),
+        doc="relationship attribute which retrieves the "
+            "associated job for this task")
 
     def running(self):
         return self.state == WorkState.RUNNING
