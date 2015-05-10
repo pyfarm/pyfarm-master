@@ -61,40 +61,49 @@ class User(db.Model, UserMixin, ReprMixin):
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
 
-    active = db.Column(db.Boolean, default=True,
-                       doc=dedent("""
-                       Enables or disables a particular user across the
-                       entire system"""))
+    active = db.Column(
+        db.Boolean,
+        default=True,
+        doc="Enables or disables a particular user across the entire "
+            "system")
 
     username = db.Column(
-        db.String(MAX_USERNAME_LENGTH), unique=True, nullable=False,
+        db.String(MAX_USERNAME_LENGTH),
+        unique=True, nullable=False,
         doc="The username used to login.")
 
-    password = db.Column(db.String(SHA256_ASCII_LENGTH),
-                         doc="The password used to login")
+    password = db.Column(
+        db.String(SHA256_ASCII_LENGTH),
+        doc="The password used to login")
 
-    email = db.Column(db.String(MAX_EMAILADDR_LENGTH), unique=True,
-                      doc=dedent("""
-                      Contact email for registration and possible
-                      notifications"""))
+    email = db.Column(
+        db.String(MAX_EMAILADDR_LENGTH),
+        unique=True,
+        doc="Contact email for registration and possible "
+            "notifications")
 
-    expiration = db.Column(db.DateTime,
-                           doc=dedent("""
-                           User expiration.  If this value is set then the user
-                           will no longer be able to access PyFarm past the
-                           expiration."""))
+    expiration = db.Column(
+        db.DateTime,
+        doc="User expiration.  If this value is set then the user"
+            "will no longer be able to access PyFarm past the"
+            "expiration.")
 
-    onetime_code = db.Column(db.String(SHA256_ASCII_LENGTH),
-                             doc=dedent("""
-                             SHA256 one time use code which can be used for
-                             unique urls such as for password resets."""))
+    onetime_code = db.Column(
+        db.String(SHA256_ASCII_LENGTH),
+        doc="SHA256 one time use code which can be used for unique "
+            "urls such as for password resets.")
 
-    last_login = db.Column(db.DateTime,
-                           doc=dedent("""
-                           The last date that this user was logged in."""))
+    last_login = db.Column(
+        db.DateTime,
+        doc="The last date that this user was logged in.")
 
-    roles = db.relationship("Role", secondary=UserRole,
-                            backref=db.backref("users", lazy="dynamic"))
+    #
+    # Relationships
+    #
+    roles = db.relationship(
+        "Role",
+        secondary=UserRole,
+        backref=db.backref("users", lazy="dynamic"))
 
     @classmethod
     def create(cls, username, password, email=None, roles=None):
