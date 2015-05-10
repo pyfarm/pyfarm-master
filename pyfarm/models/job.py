@@ -28,7 +28,6 @@ except ImportError:  # pragma: no cover
     pwd = None
 
 
-from textwrap import dedent
 from sys import maxsize
 
 from sqlalchemy import event, distinct, or_, and_
