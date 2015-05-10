@@ -24,11 +24,8 @@ to an individual job.  See :mod:`pyfarm.models.job` for more the more
 general implementation.
 """
 
-import ast
-from hashlib import sha1
 from textwrap import dedent
 
-from sqlalchemy import event
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 
