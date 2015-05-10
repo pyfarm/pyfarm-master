@@ -57,18 +57,36 @@ logger = getLogger("models.job")
 
 JobTagAssociation = db.Table(
     TABLE_JOB_TAG_ASSOC, db.metadata,
-    db.Column("job_id", IDTypeWork,
-              db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True),
-    db.Column("tag_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_TAG), primary_key=True))
+    db.Column(
+        "job_id",
+        IDTypeWork,
+        db.ForeignKey("%s.id" % TABLE_JOB),
+        primary_key=True,
+        doc="The id of the job associated with this task"),
+    db.Column(
+        "tag_id",
+        db.Integer,
+        db.ForeignKey("%s.id" % TABLE_TAG),
+        primary_key=True,
+        doc="The id of the tag being associated with the job")
+)
 
 
 JobDependency = db.Table(
     TABLE_JOB_DEPENDENCY, db.metadata,
-    db.Column("parentid", IDTypeWork,
-              db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True),
-    db.Column("childid", IDTypeWork,
-              db.ForeignKey("%s.id" % TABLE_JOB), primary_key=True))
+    db.Column(
+        "parentid",
+        IDTypeWork,
+        db.ForeignKey("%s.id" % TABLE_JOB),
+        primary_key=True,
+        doc="The parent job id of the job dependency"),
+    db.Column(
+        "childid",
+        IDTypeWork,
+        db.ForeignKey("%s.id" % TABLE_JOB),
+        primary_key=True,
+        doc="The child job id of the job dependency")
+)
 
 
 class JobNotifiedUser(db.Model):
