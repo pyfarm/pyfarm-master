@@ -33,19 +33,17 @@ from sys import maxsize
 
 from sqlalchemy import event, distinct, or_, and_
 from sqlalchemy.orm import validates
-from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.config import read_env, read_env_int
 from pyfarm.core.enums import WorkState, DBWorkState, _WorkState, AgentState
 from pyfarm.master.application import db
 from pyfarm.models.core.functions import work_columns
-from pyfarm.models.core.types import JSONDict, JSONList, IDTypeWork
+from pyfarm.models.core.types import JSONDict, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
-    TABLE_JOB_TAG_ASSOC, MAX_COMMAND_LENGTH, MAX_USERNAME_LENGTH,
-    MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCY, TABLE_JOB_QUEUE,
-    TABLE_USER, TABLE_JOB_NOTIFIED_USER)
+    TABLE_JOB_TAG_ASSOC, MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCY,
+    TABLE_JOB_QUEUE, TABLE_USER, TABLE_JOB_NOTIFIED_USER)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin, UtilityMixins)
