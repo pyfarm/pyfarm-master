@@ -239,6 +239,7 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
         self.assertEqual(
             model.api_url(),
             model.URL_TEMPLATE.format(
+                scheme="http",
                 host=model.remote_ip,
                 port=model.port
             )
@@ -253,6 +254,7 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
         self.assertEqual(
             model.api_url(),
             model.URL_TEMPLATE.format(
+                scheme="http",
                 host=model.hostname,
                 port=model.port
             )
