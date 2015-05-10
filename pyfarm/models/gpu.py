@@ -32,6 +32,10 @@ from pyfarm.models.core.cfg import TABLE_GPU, MAX_GPUNAME_LENGTH
 class GPU(db.Model, UtilityMixins, ReprMixin):
     __tablename__ = TABLE_GPU
     __table_args__ = (UniqueConstraint("fullname"),)
+
     id = id_column(db.Integer)
-    fullname = db.Column(db.String(MAX_GPUNAME_LENGTH), nullable=False,
-                         doc="The full name of this graphics card model")
+
+    fullname = db.Column(
+        db.String(MAX_GPUNAME_LENGTH),
+        nullable=False,
+        doc="The full name of this graphics card model")
