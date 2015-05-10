@@ -65,7 +65,6 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
         doc="Human readable description of the job type.  This field is not "
             "required and is not directly relied upon anywhere.")
 
-
     success_subject = db.Column(
         db.Text,
         nullable=True,
