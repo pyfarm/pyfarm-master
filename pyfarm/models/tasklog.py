@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2014 Ambient Entertainment GmbH & Co. KG
+# Copyright 2015 Oliver Palmer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,15 +16,15 @@
 # limitations under the License.
 
 """
-TaskLog
--------
+Task Log Models
+===============
 
 Model describing a log file for a task or batch of tasks.
-A task can be associated with more than one log file, for example because it
-needed to be retried and there are logs for every attempt or because the jobtype
-used uses more than one process to execute a batch.
-A log file can belong to more than one task if tasks have been batched together
-for execution.
+
+A task can be associated with more than one log file, for example because
+it needed to be retried and there are logs for every attempt or because the
+job type used uses more than one process to execute a batch. A log file can
+belong to more than one task if tasks have been batched together for execution.
 """
 
 from datetime import datetime
@@ -39,19 +40,41 @@ from pyfarm.models.core.cfg import (
     TABLE_TASK_LOG, TABLE_AGENT, TABLE_TASK, TABLE_TASK_TASK_LOG_ASSOC)
 
 class TaskTaskLogAssociation(db.Model):
+    """Stores an association between the task table and a task log"""
     __tablename__ = TABLE_TASK_TASK_LOG_ASSOC
-    __table_args__ = (PrimaryKeyConstraint("task_log_id", "task_id", "attempt"),)
-    task_log_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_TASK_LOG,
-                                                      ondelete="CASCADE"))
-    task_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_TASK,
-                                                  ondelete="CASCADE"))
-    attempt = db.Column(db.Integer, autoincrement=False)
+    __table_args__ = (
+        PrimaryKeyConstraint("task_log_id", "task_id", "attempt"),)
 
-    state = db.Column(WorkStateEnum, nullable=True)
+    task_log_id = db.Column(
+        db.Integer,
+        db.ForeignKey("%s.id" % TABLE_TASK_LOG, ondelete="CASCADE"),
+        doc="The ID of the task log")
 
-    task = db.relationship("Task", backref=db.backref("log_associations",
-                                                      lazy="dynamic",
-                                                      passive_deletes=True))
+    task_id = db.Column(
+        IDTypeWork,
+        db.ForeignKey("%s.id" % TABLE_TASK, ondelete="CASCADE"),
+        doc="The ID of the job a task log is associated with")
+
+    attempt = db.Column(
+        db.Integer,
+        autoincrement=False,
+        doc="The attempt number for the given task log")
+
+    state = db.Column(
+        WorkStateEnum,
+        nullable=True,
+        doc="The state of the work being performed")
+
+    #
+    # Relationships
+    #
+    task = db.relationship(
+        "Task",
+        backref=db.backref(
+            "log_associations",
+            lazy="dynamic",
+            passive_deletes=True))
+
 
 class TaskLog(db.Model, UtilityMixins, ReprMixin):
     __tablename__ = TABLE_TASK_LOG
