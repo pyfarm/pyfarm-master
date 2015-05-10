@@ -29,7 +29,7 @@ from textwrap import dedent
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 
-from pyfarm.core.config import read_env_int, read_env_bool, read_env
+from pyfarm.core.config import read_env_int, read_env_bool
 from pyfarm.core.logger import getLogger
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import (
