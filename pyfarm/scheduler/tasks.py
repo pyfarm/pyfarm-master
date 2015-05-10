@@ -772,7 +772,6 @@ def send_job_deletion_mail(job_id, jobtype_name, job_title, to):
 
     if to:
         send_email(to, message.as_string())
-
         logger.info("Job deletion mail for job %s (id %s) sent to %s",
                     job_title, job_id, to)
 
