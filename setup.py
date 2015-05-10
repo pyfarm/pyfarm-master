@@ -94,7 +94,6 @@ setup(
             join("pyfarm", "master", "api", "static")
         ),
         "pyfarm.models": get_package_data(
-            join("pyfarm", "models", "core"),
             join("pyfarm", "models", "etc")
         ),
         "pyfarm.scheduler": get_package_data(
