@@ -29,7 +29,7 @@ from sqlalchemy.schema import UniqueConstraint
 from pyfarm.master.application import db
 from pyfarm.models.core.cfg import (
     TABLE_SOFTWARE, TABLE_SOFTWARE_VERSION, MAX_TAG_LENGTH,
-    TABLE_JOB, TABLE_JOB_SOFTWARE_REQ, TABLE_JOB_TYPE, TABLE_JOB_TYPE_VERSION,
+    TABLE_JOB, TABLE_JOB_SOFTWARE_REQ, TABLE_JOB_TYPE_VERSION,
     TABLE_JOB_TYPE_SOFTWARE_REQ)
 from pyfarm.models.core.types import id_column, IDTypeWork
 from pyfarm.models.core.mixins import UtilityMixins
