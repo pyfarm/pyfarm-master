@@ -103,38 +103,49 @@ class JobSoftwareRequirement(db.Model, UtilityMixins):
     """
     Model representing a dependency of a job on a software tag, with optional
     version constraints
-
     """
     __tablename__ = TABLE_JOB_SOFTWARE_REQ
-    __table_args__ = (
-        UniqueConstraint("software_id", "job_id"), )
+    __table_args__ = (UniqueConstraint("software_id", "job_id"), )
 
     id = id_column()
-    software_id = db.Column(db.Integer,
-                            db.ForeignKey("%s.id" % TABLE_SOFTWARE),
-                            nullable=False,
-                            doc="Reference to the required software")
-    job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
-                       nullable=False,
-                       doc="Foreign key to :class:`Job.id`")
-    min_version_id = db.Column(db.Integer,
-                               db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
-                               nullable=True,
-                               doc="Reference to the minimum required version")
-    max_version_id = db.Column(db.Integer,
-                            db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
-                            nullable=True,
-                            doc="Reference to the maximum required version")
 
-    job = db.relationship("Job", backref=db.backref("software_requirements",
-                                                    lazy="dynamic",
-                                                    cascade=
-                                                        "all, delete-orphan"))
+    software_id = db.Column(
+        db.Integer,
+        db.ForeignKey("%s.id" % TABLE_SOFTWARE),
+        nullable=False, doc="Reference to the required software")
+
+    job_id = db.Column(
+        IDTypeWork,
+        db.ForeignKey("%s.id" % TABLE_JOB),
+        nullable=False, doc="Foreign key to :class:`Job.id`")
+
+    min_version_id = db.Column(
+        db.Integer,
+        db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+        nullable=True, doc="Reference to the minimum required version")
+
+    max_version_id = db.Column(
+        db.Integer,
+        db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+        nullable=True, doc="Reference to the maximum required version")
+    #
+    # Relationships
+    #
+    job = db.relationship(
+        "Job",
+        backref=db.backref(
+            "software_requirements",
+            lazy="dynamic",
+            cascade="all, delete-orphan"))
+
+
     software = db.relationship("Software")
-    min_version = db.relationship("SoftwareVersion",
-                                  foreign_keys=[min_version_id])
-    max_version = db.relationship("SoftwareVersion",
-                                  foreign_keys=[max_version_id])
+
+    min_version = db.relationship(
+        "SoftwareVersion", foreign_keys=[min_version_id])
+
+    max_version = db.relationship(
+        "SoftwareVersion", foreign_keys=[max_version_id])
 
 
 class JobTypeSoftwareRequirement(db.Model, UtilityMixins):
