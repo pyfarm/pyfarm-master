@@ -48,7 +48,7 @@ class Software(db.Model, UtilityMixins):
     id = id_column()
 
     software = db.Column(
-        db.String(MAX_TAG_LENGTH,
+        db.String(MAX_TAG_LENGTH),
         nullable=False, doc="The name of the software")
 
     #
