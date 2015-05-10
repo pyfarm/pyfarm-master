@@ -42,24 +42,25 @@ class Software(db.Model, UtilityMixins):
     Model to represent a versioned piece of software that can be present on an
     agent and may be depended on by a job and/or jobtype through the appropriate
     SoftwareRequirement table
-
     """
     __tablename__ = TABLE_SOFTWARE
-    __table_args__ = (
-        UniqueConstraint("software"), )
+    __table_args__ = (UniqueConstraint("software"), )
 
     id = id_column()
-    software = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
-                         doc=dedent("""
-                         The name of the software"""))
 
-    versions = db.relationship("SoftwareVersion",
-                               backref=db.backref("software"),
-                               lazy="dynamic",
-                               cascade="all, delete-orphan",
-                               order_by="asc(SoftwareVersion.rank)",
-                               doc="All known versions of this "
-                                   "software")
+    software = db.Column(
+        db.String(MAX_TAG_LENGTH,
+        nullable=False, doc="The name of the software")
+
+    #
+    # Relationships
+    #
+    versions = db.relationship(
+        "SoftwareVersion",
+        backref=db.backref("software"),
+        lazy="dynamic", order_by="asc(SoftwareVersion.rank)",
+        cascade="all, delete-orphan",
+        doc="All known versions of this software")
 
 
 class SoftwareVersion(db.Model, UtilityMixins):
