@@ -40,8 +40,6 @@ from pyfarm.models.core.types import id_column, IDTypeWork
 
 __all__ = ("JobType", )
 
-JOBTYPE_BASECLASS = read_env("PYFARM_JOBTYPE_SUBCLASSES_BASE_CLASS", "JobType")
-
 logger = getLogger("models.jobtype")
 
 
