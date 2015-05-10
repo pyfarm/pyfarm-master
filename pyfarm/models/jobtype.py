@@ -52,33 +52,47 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
     REPR_COLUMNS = ("id", "name")
 
     id = id_column(IDTypeWork)
-    name = db.Column(db.String(MAX_JOBTYPE_LENGTH), nullable=False,
-                     doc=dedent("""
-                     The name of the job type.  This can be either a human
-                     readable name or the name of the job type class
-                     itself."""))
-    description = db.Column(db.Text, nullable=True,
-                            doc=dedent("""
-                            Human readable description of the job type.  This
-                            field is not required and is not directly relied
-                            upon anywhere."""))
-    success_subject = db.Column(db.Text, nullable=True,
-                                doc="The subject line to use for notifications "
-                                    "in case of success.  Some substitions, "
-                                    "for example for the job title, are "
-                                    "available.")
-    success_body = db.Column(db.Text, nullable=True,
-                             doc="The email body to use for notifications in "
-                                 "in case of success.  Some substitions, for "
-                                 "example for the job title, are available.")
-    fail_subject = db.Column(db.Text, nullable=True,
-                             doc="The subject line to use for notifications "
-                                 "in case of failure.  Some substitions, for "
-                                 "example for the job title, are available.")
-    fail_body = db.Column(db.Text, nullable=True,
-                             doc="The email body to use for notifications in "
-                                 "in case of success.  Some substitions, for "
-                                 "example for the job title, are available.")
+
+    name = db.Column(
+        db.String(MAX_JOBTYPE_LENGTH),
+        nullable=False,
+        doc="The name of the job type.  This can be either a human "
+            "readable name or the name of the job type class itself.")
+
+    description = db.Column(
+        db.Text,
+        nullable=True,
+        doc="Human readable description of the job type.  This field is not "
+            "required and is not directly relied upon anywhere.")
+
+
+    success_subject = db.Column(
+        db.Text,
+        nullable=True,
+        doc="The subject line to use for notifications in case of "
+            "success.  Some substitutions, for example for the job title, "
+            "are available.")
+
+    success_body = db.Column(
+        db.Text,
+        nullable=True,
+        doc="The email body to use for notifications in "
+            "in case of success.  Some substitutions, for "
+            "example for the job title, are available.")
+
+    fail_subject = db.Column(
+        db.Text,
+        nullable=True,
+        doc="The subject line to use for notifications "
+            "in case of failure.  Some substitutions, for "
+            "example for the job title, are available.")
+
+    fail_body = db.Column(
+        db.Text,
+        nullable=True,
+        doc="The email body to use for notifications in "
+            "in case of success.  Some substitutions, for "
+            "example for the job title, are available.")
 
     @validates("name")
     def validate_name(self, key, value):
