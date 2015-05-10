@@ -15,8 +15,10 @@
 # limitations under the License.
 
 import os
-from unittest import TestCase
+import pkg_resources
+from os.path import join
 from random import randint
+from unittest import TestCase
 
 from pyfarm.core.config import read_env_int
 from pyfarm.master.config import Configuration
@@ -35,3 +37,27 @@ class TestConfiguration(TestCase):
         )
         config = Configuration()
         self.assertEqual(config["unittest_override"], value)
+
+    def test_loads_master_yml(self):
+        config = Configuration()
+        self.assertIn(
+            pkg_resources.resource_filename(
+                "pyfarm.master", join("etc", "master.yml")),
+            config.loaded
+        )
+
+    def test_loads_scheduler_yml(self):
+        config = Configuration()
+        self.assertIn(
+            pkg_resources.resource_filename(
+                "pyfarm.scheduler", join("etc", "scheduler.yml")),
+            config.loaded
+        )
+
+    def test_loads_models_yml(self):
+        config = Configuration()
+        self.assertIn(
+            pkg_resources.resource_filename(
+                "pyfarm.models", join("etc", "models.yml")),
+            config.loaded
+        )
