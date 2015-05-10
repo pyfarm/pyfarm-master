@@ -335,59 +335,67 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         doc="If not None, this job will be automatically deleted this "
             "number of seconds after it finishes.")
 
-    queue = db.relationship("JobQueue",
-                            backref=db.backref("jobs", lazy="dynamic"),
-                            doc="The queue for this job")
+    #
+    # Relationships
+    #
 
-    user = db.relationship("User",
-                           backref=db.backref("jobs", lazy="dynamic"),
-                           doc="The owner of this job")
+    queue = db.relationship(
+        "JobQueue",
+        backref=db.backref("jobs", lazy="dynamic"),
+        doc="The queue for this job")
+
+    user = db.relationship(
+        "User",
+        backref=db.backref("jobs", lazy="dynamic"),
+        doc="The owner of this job")
 
     # self-referential many-to-many relationship
-    parents = db.relationship("Job",
-                              secondary=JobDependency,
-                              primaryjoin=id==JobDependency.c.childid,
-                              secondaryjoin=id==JobDependency.c.parentid,
-                              backref="children")
+    parents = db.relationship(
+        "Job",
+        secondary=JobDependency,
+        primaryjoin=id==JobDependency.c.childid,
+        secondaryjoin=id==JobDependency.c.parentid,
+        backref="children")
 
-    notified_users = db.relationship("JobNotifiedUser", lazy="dynamic",
-                                     backref=db.backref("job"),
-                                     cascade="all,delete")
+    notified_users = db.relationship(
+        "JobNotifiedUser",
+        lazy="dynamic",
+        backref=db.backref("job"),
+        cascade="all,delete")
 
-    tasks_queued = db.relationship("Task", lazy="dynamic",
+    tasks_queued = db.relationship(
+        "Task",
+        lazy="dynamic",
         primaryjoin="(Task.state == None) & "
                     "(Task.job_id == Job.id)",
-        doc=dedent("""
-        Relationship between this job and any :class:`Task` objects which are
-        queued."""))
+        doc="Relationship between this job and any :class:`Task` "
+            "objects which are queued.")
 
-    tasks_running = db.relationship("Task", lazy="dynamic",
+    tasks_running = db.relationship(
+        "Task",
+        lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
                     "(Task.job_id == Job.id)" % DBWorkState.RUNNING,
-        doc=dedent("""
-        Relationship between this job and any :class:`Task` objects which are
-        running."""))
+        doc="Relationship between this job and any :class:`Task` "
+            "objects which are running.")
 
     tasks_done = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
                     "(Task.job_id == Job.id)" % DBWorkState.DONE,
-        doc=dedent("""
-        Relationship between this job and any :class:`Task` objects which are
-        done."""))
+        doc="Relationship between this job and any :class:`Task` objects "
+            "which are done.")
 
     tasks_failed = db.relationship("Task", lazy="dynamic",
         primaryjoin="(Task.state == %s) & "
                     "(Task.job_id == Job.id)" % DBWorkState.FAILED,
-        doc=dedent("""
-        Relationship between this job and any :class:`Task` objects which have
-        failed."""))
+        doc="Relationship between this job and any :class:`Task` objects "
+            "which have failed.")
 
-    # resource relationships
-    tags = db.relationship("Tag", backref="jobs", lazy="dynamic",
-                           secondary=JobTagAssociation,
-                           doc=dedent("""
-                           Relationship between this job and
-                           :class:`.Tag` objects"""))
+    tags = db.relationship(
+        "Tag",
+        backref="jobs", lazy="dynamic",
+        secondary=JobTagAssociation,
+        doc="Relationship between this job and :class:`.Tag` objects")
 
     def paused(self):
         return self.state == WorkState.PAUSED
