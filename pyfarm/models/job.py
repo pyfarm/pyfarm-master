@@ -90,16 +90,44 @@ JobDependency = db.Table(
 
 
 class JobNotifiedUser(db.Model):
+    """
+    Defines the table containing users to be notified of certain
+    events pertaining to jobs.
+    """
     __tablename__ = TABLE_JOB_NOTIFIED_USER
-    user_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_USER),
-                        primary_key=True)
-    job_id = db.Column(IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
-                       primary_key=True)
-    on_success = db.Column(db.Boolean, nullable=False, default=True)
-    on_failure = db.Column(db.Boolean, nullable=False, default=True)
-    on_deletion = db.Column(db.Boolean, nullable=False, default=False)
-    user = db.relationship("User", backref=db.backref("subscribed_jobs",
-                                                      lazy="dynamic"))
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("%s.id" % TABLE_USER),
+        primary_key=True,
+        doc="The id of the user to be notified")
+
+    job_id = db.Column(
+        IDTypeWork,
+        db.ForeignKey("%s.id" % TABLE_JOB),
+        primary_key=True,
+        doc="The id of the associated job")
+
+    on_success = db.Column(
+        db.Boolean,
+        nullable=False, default=True,
+        doc="True if a user should be notified on successful "
+            "completion of a job")
+
+    on_failure = db.Column(
+        db.Boolean,
+        nullable=False, default=True,
+        doc="True if a user should be notified of a job's failure")
+
+    on_deletion = db.Column(
+        db.Boolean,
+        nullable=False, default=False,
+        doc="True if a user should be notified on deletion of "
+            "a job")
+
+    user = db.relationship(
+        "User",
+        backref=db.backref("subscribed_jobs", lazy="dynamic"))
 
 
 
