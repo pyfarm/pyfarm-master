@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2014 Ambient Entertainment GmbH & Co. KG
+# Copyright 2015 Oliver Palmer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +27,7 @@ from textwrap import dedent
 from functools import reduce
 from logging import DEBUG
 
-from sqlalchemy import event, desc, asc, func, distinct, or_
+from sqlalchemy import event, distinct, or_
 from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.core.config import read_env_int, read_env_bool
@@ -56,51 +57,69 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
     REPR_COLUMNS = ("id", "name")
 
     id = id_column(IDTypeWork)
-    parent_jobqueue_id = db.Column(IDTypeWork,
-                                   db.ForeignKey("%s.id" % TABLE_JOB_QUEUE),
-                                   nullable=True,
-                                   doc="The parent queue of this queue. If "
-                                       "NULL, this is a top level queue.")
-    name = db.Column(db.String(MAX_JOBQUEUE_NAME_LENGTH), nullable=False)
-    minimum_agents = db.Column(db.Integer, nullable=True,
-                          doc=dedent("""
-                          The scheduler will try to assign at least this number
-                          of agents to jobs in or below this queue as long as it
-                          can use them, before any other considerations."""))
-    maximum_agents = db.Column(db.Integer, nullable=True,
-                          doc=dedent("""
-                          The scheduler will never assign more than this number
-                          of agents to jobs in or below this queue."""))
-    priority = db.Column(db.Integer, nullable=False,
-                         default=read_env_int(
-                                   "PYFARM_QUEUE_DEFAULT_PRIORITY", 0),
-                         doc=dedent("""
-                             The priority of this job queue.
-                             The scheduler will not assign any nodes to other
-                             job queues or jobs with the same parent and a lower
-                             priority as long as this one can still use nodes.
-                             The minimum_agents column takes precedence over
-                             this."""))
-    weight = db.Column(db.Integer, nullable=False,
-                       default=read_env_int(
-                                   "PYFARM_QUEUE_DEFAULT_WEIGHT", 10),
-                       doc=dedent("""
-                            The weight of this job queue.
-                            The scheduler will distribute available agents
-                            between jobs and job queues in the same queue
-                            in proportion to their weights.
-                            """))
-    fullpath = db.Column(db.String(MAX_JOBQUEUE_PATH_LENGTH),
-                         doc="The path of this jobqueue.  This column is a "
-                             "database denormalization.  It is technically "
-                             "redundant, but faster to access than recursively "
-                             "querying all parent queues.  If set to NULL, the "
-                             "path must be computed by recursively querying "
-                             "the parent queues.")
-    parent = db.relationship("JobQueue",
-                             remote_side=[id],
-                             backref=db.backref("children", lazy="dynamic"),
-                             doc="Relationship between this queue its parent")
+
+    parent_jobqueue_id = db.Column(
+        IDTypeWork,
+        db.ForeignKey("%s.id" % TABLE_JOB_QUEUE),
+        nullable=True,
+        doc="The parent queue of this queue. If NULL, this is a top "
+            "level queue.")
+
+    name = db.Column(
+        db.String(MAX_JOBQUEUE_NAME_LENGTH),
+        nullable=False,
+        doc="The name of the job queue")
+
+    minimum_agents = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="The scheduler will try to assign at least this number of "
+            "agents to jobs in or below this queue as long as it "
+            "can use them, before any other considerations.")
+
+    maximum_agents = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="The scheduler will never assign more than this number of "
+            "agents to jobs in or below this queue.")
+
+    priority = db.Column(
+        db.Integer,
+        nullable=False,
+        default=read_env_int("PYFARM_QUEUE_DEFAULT_PRIORITY", 0),
+        doc="The priority of this job queue. The scheduler will not "
+            "assign any nodes to other job queues or jobs with the "
+            "same parent and a lower priority as long as this one "
+            "can still use nodes. The minimum_agents column takes "
+            "precedence over this.")
+
+    weight = db.Column(
+        db.Integer,
+        nullable=False,
+        default=read_env_int("PYFARM_QUEUE_DEFAULT_WEIGHT", 10),
+        doc="The weight of this job queue. The scheduler will "
+            "distribute available agents between jobs and job "
+            "queues in the same queue in proportion to their "
+            "weights.")
+
+    fullpath = db.Column(
+        db.String(MAX_JOBQUEUE_PATH_LENGTH),
+        doc="The path of this jobqueue.  This column is a "
+            "database denormalization.  It is technically "
+            "redundant, but faster to access than recursively "
+            "querying all parent queues.  If set to NULL, the "
+            "path must be computed by recursively querying "
+            "the parent queues.")
+
+    #
+    # Relationship
+    #
+
+    parent = db.relationship(
+        "JobQueue",
+        remote_side=[id],
+        backref=db.backref("children", lazy="dynamic"),
+        doc="Relationship between this queue its parent")
 
     def path(self):
         # Import here instead of at the top to break circular dependency
