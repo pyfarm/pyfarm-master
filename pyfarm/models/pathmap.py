@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2014 Ambient Entertainment GmbH & Co. KG
+# Copyright 2015 Oliver Palmer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,23 +30,44 @@ from pyfarm.models.core.cfg import (
     TABLE_PATH_MAP, MAX_PATH_LENGTH, TABLE_TAG)
 
 class PathMap(db.Model, ReprMixin, UtilityMixins):
+    """
+    Defines a table which is used for cross-platform
+    file path mappings.
+    """
     __tablename__ = TABLE_PATH_MAP
+
     id = id_column(db.Integer)
-    path_linux = db.Column(db.String(MAX_PATH_LENGTH), nullable=False,
-                           doc="The path on linux platforms")
-    path_windows = db.Column(db.String(MAX_PATH_LENGTH), nullable=False,
-                             doc="The path on Windows platforms")
-    path_osx = db.Column(db.String(MAX_PATH_LENGTH), nullable=False,
-                         doc="The path on Mac OS X platforms")
-    tag_id = db.Column(db.Integer,
-                       db.ForeignKey("%s.id" % TABLE_TAG),
-                       nullable=True,
-                       doc="The tag an agent needs to have for this path map "
-                           "to apply to it. "
-                           "If this is NULL, this path map applies to all "
-                           "agents, but is overridden by applying path maps "
-                           "that do specify a tag.")
-    tag = db.relationship("Tag",
-                          backref=db.backref("path_maps", lazy="dynamic"),
-                          doc="Relationship attribute for the tag this path map "
-                              "applies to.")
+
+    path_linux = db.Column(
+        db.String(MAX_PATH_LENGTH),
+        nullable=False,
+        doc="The path on linux platforms")
+
+    path_windows = db.Column(
+        db.String(MAX_PATH_LENGTH),
+        nullable=False,
+        doc="The path on Windows platforms")
+
+    path_osx = db.Column(
+        db.String(MAX_PATH_LENGTH),
+        nullable=False,
+        doc="The path on Mac OS X platforms")
+
+    tag_id = db.Column(
+        db.Integer,
+        db.ForeignKey("%s.id" % TABLE_TAG),
+        nullable=True,
+        doc="The tag an agent needs to have for this path map "
+            "to apply to it. "
+            "If this is NULL, this path map applies to all "
+            "agents, but is overridden by applying path maps "
+            "that do specify a tag.")
+
+    #
+    # Relationships
+    #
+    tag = db.relationship(
+        "Tag",
+        backref=db.backref("path_maps", lazy="dynamic"),
+        doc="Relationship attribute for the tag this path map "
+            "applies to.")
