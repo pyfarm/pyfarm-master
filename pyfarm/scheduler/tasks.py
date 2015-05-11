@@ -249,7 +249,8 @@ def send_tasks_to_agent(self, agent_id):
                 else:
                     logger.error("CONFLICT response from agent %s (id %s) did "
                                  "not contain a list of rejected task ids. "
-                                 "Please update the agent to 0.8.4 or higher.")
+                                 "Please update the agent to 0.8.4 or higher.",
+                                 agent.hostname, agent.id)
             elif response.status_code not in [requests.codes.accepted,
                                               requests.codes.ok,
                                               requests.codes.created]:
