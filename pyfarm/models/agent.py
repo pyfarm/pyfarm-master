@@ -23,7 +23,6 @@ Models and interface classes related to the agent.
 
 import re
 import uuid
-from textwrap import dedent
 from datetime import datetime
 
 from sqlalchemy import or_
@@ -59,26 +58,38 @@ REGEX_HOSTNAME = re.compile("^(?!-)[A-Z\d-]{1,63}(?<!-)"
 
 AgentSoftwareVersionAssociation = db.Table(
     TABLE_AGENT_SOFTWARE_VERSION_ASSOC, db.metadata,
-    db.Column("agent_id", IDTypeAgent,
-              db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
-    db.Column("software_version_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION), primary_key=True))
+    db.Column(
+        "agent_id", IDTypeAgent,
+        db.ForeignKey("%s.id" % TABLE_AGENT),
+        primary_key=True),
+    db.Column(
+        "software_version_id", db.Integer,
+        db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+        primary_key=True))
 
 
 AgentTagAssociation = db.Table(
     TABLE_AGENT_TAG_ASSOC, db.metadata,
-    db.Column("agent_id", IDTypeAgent,
-              db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
-    db.Column("tag_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_TAG), primary_key=True))
+    db.Column(
+        "agent_id", IDTypeAgent,
+        db.ForeignKey("%s.id" % TABLE_AGENT),
+        primary_key=True),
+    db.Column(
+        "tag_id", db.Integer,
+        db.ForeignKey("%s.id" % TABLE_TAG),
+        primary_key=True))
 
 
 GPUInAgent = db.Table(
     TABLE_GPU_IN_AGENT, db.metadata,
-    db.Column("agent_id", IDTypeAgent,
-              db.ForeignKey("%s.id" % TABLE_AGENT), primary_key=True),
-    db.Column("gpu_id", db.Integer,
-              db.ForeignKey("%s.id" % TABLE_GPU), primary_key=True))
+    db.Column(
+        "agent_id", IDTypeAgent,
+        db.ForeignKey("%s.id" % TABLE_AGENT),
+        primary_key=True),
+    db.Column(
+        "gpu_id", db.Integer,
+        db.ForeignKey("%s.id" % TABLE_GPU),
+        primary_key=True))
 
 
 class AgentTaggingMixin(object):
@@ -133,8 +144,8 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     REPR_COLUMNS = (
         "id", "hostname", "port", "state", "remote_ip",
         "cpus", "ram", "free_ram")
-    REPR_CONVERT_COLUMN = {
-        "remote_ip": repr_ip}
+    REPR_CONVERT_COLUMN = {"remote_ip": repr_ip}
+    URL_TEMPLATE = "{scheme}://{host}:{port}/api/v1"
 
     MIN_PORT = read_env_int("PYFARM_AGENT_MIN_PORT", 1024)
     MAX_PORT = read_env_int("PYFARM_AGENT_MAX_PORT", 65535)
@@ -157,116 +168,152 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     id = id_column(IDTypeAgent, default=uuid.uuid4, autoincrement=False)
 
     # basic host attribute information
-    hostname = db.Column(db.String(MAX_HOSTNAME_LENGTH), nullable=False,
-                         doc=dedent("""
-                         The hostname we should use to talk to this host.
-                         Preferably this value will be the fully qualified
-                         name instead of the base hostname alone."""))
-    remote_ip = db.Column(IPv4Address, nullable=True,
-                          doc="the remote address which came in with the "
-                              "request")
-    use_address = db.Column(UseAgentAddressEnum, nullable=False,
-                            default=UseAgentAddress.REMOTE,
-                            doc="The address we should use when communicating "
-                                "with the agent")
+    hostname = db.Column(
+        db.String(MAX_HOSTNAME_LENGTH),
+        nullable=False,
+        doc="The hostname we should use to talk to this host. "
+            "Preferably this value will be the fully qualified "
+            "name instead of the base hostname alone.")
+
+    remote_ip = db.Column(
+        IPv4Address, nullable=True,
+        doc="the remote address which came in with the request")
+
+    use_address = db.Column(
+        UseAgentAddressEnum,
+        nullable=False, default=UseAgentAddress.REMOTE,
+        doc="The address we should use when communicating with the agent")
+
     # TODO Make non-nullable later
-    os_class = db.Column(OperatingSystemEnum,
-                         doc="The type of operating system running on the "
-                             "agent; \"linux\", \"windows\", or \"mac\".")
-    os_fullname = db.Column(db.String(MAX_OSNAME_LENGTH),
-                            doc="The full human-readable name of the agent's "
-                                "OS, as returned by platform.platform()")
-    ram = db.Column(db.Integer, nullable=False,
-                    doc="The amount of ram installed on the agent in megabytes")
-    free_ram = db.Column(db.Integer, nullable=False,
-                         doc="The amount of ram which was last considered free")
-    cpus = db.Column(db.Integer, nullable=False,
-                     doc="The number of logical CPU cores installed on the "
-                         "agent")
-    cpu_name = db.Column(db.String(MAX_CPUNAME_LENGTH),
-                         doc="The make and model of CPUs in this agents")
-    port = db.Column(db.Integer, nullable=False,
-                     doc="The port the agent is currently running on")
-    time_offset = db.Column(db.Integer, nullable=False, default=0,
-                            doc="The offset in seconds the agent is from "
-                                "an official time server")
+    os_class = db.Column(
+        OperatingSystemEnum,
+        doc="The type of operating system running on the "
+            "agent; 'linux', 'windows', or 'mac'.")
 
-    version = db.Column(db.String(16), nullable=True,
-                        doc="The pyfarm version number this agent is running.")
+    os_fullname = db.Column(
+        db.String(MAX_OSNAME_LENGTH),
+        doc="The full human-readable name of the agent's OS, as returned "
+            "by platform.platform()")
 
-    upgrade_to = db.Column(db.String(16), nullable=True,
-                           doc="The version this agent should upgrade to.")
+    ram = db.Column(
+        db.Integer,
+        nullable=False,
+        doc="The amount of ram installed on the agent in megabytes")
 
-    restart_requested = db.Column(db.Boolean, default=False, nullable=False,
-                                  doc="If True, the agent will be restarted")
+    free_ram = db.Column(
+        db.Integer,
+        nullable=False,
+        doc="The amount of ram which was last considered free")
+
+    cpus = db.Column(
+        db.Integer,
+        nullable=False,
+        doc="The number of logical CPU cores installed on the agent")
+
+    cpu_name = db.Column(
+        db.String(MAX_CPUNAME_LENGTH),
+        doc="The make and model of CPUs in this agents")
+
+    port = db.Column(
+        db.Integer,
+        nullable=False,
+        doc="The port the agent is currently running on")
+
+    time_offset = db.Column(
+        db.Integer,
+        nullable=False, default=0,
+        doc="The offset in seconds the agent is from an official time server")
+
+    version = db.Column(
+        db.String(16),
+        nullable=True,
+        doc="The pyfarm version number this agent is running.")
+
+    upgrade_to = db.Column(
+        db.String(16),
+        nullable=True,
+        doc="The version this agent should upgrade to.")
+
+    restart_requested = db.Column(
+        db.Boolean,
+        default=False, nullable=False,
+        doc="If True, the agent will be restarted")
 
     # host state
-    state = db.Column(AgentStateEnum, default=AgentState.ONLINE,
-                      nullable=False,
-                      doc=dedent("""
-                      Stores the current state of the host.  This value can be
-                      changed either by a master telling the host to do
-                      something with a task or from the host via REST api."""))
+    state = db.Column(
+        AgentStateEnum,
+        default=AgentState.ONLINE, nullable=False,
+        doc="Stores the current state of the host.  This value can be "
+            "changed either by a master telling the host to do "
+            "something with a task or from the host via REST api.")
 
-    last_heard_from = db.Column(db.DateTime,
-                                default=datetime.utcnow,
-                                doc="Time we last had contact with this agent")
+    last_heard_from = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        doc="Time we last had contact with this agent")
 
-    last_polled = db.Column(db.DateTime,
-                            doc="Time we last tried to contact the agent")
+    last_polled = db.Column(
+        db.DateTime,
+        doc="Time we last tried to contact the agent")
 
     # Max allocation of the two primary resources which `1.0` is 100%
     # allocation.  For `cpu_allocation` 100% allocation typically means
     # one task per cpu.
-    ram_allocation = db.Column(db.Float,
-                               default=read_env_number(
-                                   "PYFARM_AGENT_RAM_ALLOCATION", .8),
-                               doc=dedent("""
-                               The amount of ram the agent is allowed to
-                               allocate towards work.  A value of 1.0 would
-                               mean to let the agent use all of the memory
-                               installed on the system when assigning work."""))
+    ram_allocation = db.Column(
+        db.Float,
+        default=read_env_number("PYFARM_AGENT_RAM_ALLOCATION", .8),
+        doc="The amount of ram the agent is allowed to allocate "
+            "towards work.  A value of 1.0 would mean to let the "
+            "agent use all of the memory installed on the system "
+            "when assigning work.")
 
-    cpu_allocation = db.Column(db.Float,
-                               default=read_env_number(
-                                   "PYFARM_AGENT_CPU_ALLOCATION", 1.0),
-                               doc=dedent("""
-                               The total amount of cpu space an agent is
-                               allowed to process work in.  A value of 1.0
-                               would mean an agent can handle as much work
-                               as the system could handle given the
-                               requirements of a task.  For example if an agent
-                               has 8 cpus, cpu_allocation is .5, and a task
-                               requires 4 cpus then only that task will run
-                               on the system."""))
-    # relationships
-    tasks = db.relationship("Task", backref="agent", lazy="dynamic",
-                            doc=dedent("""
-                            Relationship between an :class:`Agent`
-                            and any :class:`pyfarm.models.Task`
-                            objects"""))
-    tags = db.relationship("Tag", secondary=AgentTagAssociation,
-                            backref=db.backref("agents", lazy="dynamic"),
-                            lazy="dynamic",
-                            doc="Tags associated with this agent")
-    software_versions = db.relationship("SoftwareVersion",
-                                       secondary=AgentSoftwareVersionAssociation,
-                                       backref=db.backref("agents",
-                                                          lazy="dynamic"),
-                                       lazy="dynamic",
-                                       doc="software this agent has installed "
-                                           "or is configured for")
-    mac_addresses = db.relationship("AgentMacAddress", backref="agent",
-                                    lazy="dynamic",
-                                    doc="The MAC addresses this agent has",
-                                    cascade="save-update, merge, delete, "
-                                            "delete-orphan")
-    gpus = db.relationship("GPU",
-                           secondary=GPUInAgent,
-                           backref=db.backref("agents", lazy="dynamic"),
-                           lazy="dynamic",
-                           doc="The graphics cards that are installed in this "
-                               "agent")
+    cpu_allocation = db.Column(
+        db.Float,
+        default=read_env_number("PYFARM_AGENT_CPU_ALLOCATION", 1.0),
+        doc="The total amount of cpu space an agent is allowed to "
+            "process work in.  A value of 1.0 would mean an agent "
+            "can handle as much work as the system could handle "
+            "given the requirements of a task.  For example if "
+            "an agent has 8 cpus, cpu_allocation is .5, and a "
+            "task requires 4 cpus then only that task will "
+            "run on the system.")
+
+    #
+    # Relationships
+    #
+
+    tasks = db.relationship(
+        "Task",
+        backref="agent", lazy="dynamic",
+        doc="Relationship between an :class:`Agent` and any "
+            ":class:`pyfarm.models.Task` objects")
+
+    tags = db.relationship(
+        "Tag",
+        secondary=AgentTagAssociation,
+        backref=db.backref("agents", lazy="dynamic"),
+        lazy="dynamic",
+        doc="Tags associated with this agent")
+
+    software_versions = db.relationship(
+        "SoftwareVersion",
+        secondary=AgentSoftwareVersionAssociation,
+        backref=db.backref("agents", lazy="dynamic"),
+        lazy="dynamic",
+        doc="software this agent has installed or is configured for")
+
+    mac_addresses = db.relationship(
+        "AgentMacAddress", backref="agent",
+        lazy="dynamic",
+        doc="The MAC addresses this agent has",
+        cascade="save-update, merge, delete, delete-orphan")
+
+    gpus = db.relationship(
+        "GPU",
+        secondary=GPUInAgent,
+        backref=db.backref("agents", lazy="dynamic"),
+        lazy="dynamic",
+        doc="The graphics cards that are installed in this agent")
 
     def is_offline(self):
         return self.state == AgentState.OFFLINE
@@ -368,9 +415,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
         return value
 
-    def api_url(self,
-            scheme=read_env("PYFARM_AGENT_API_SCHEME", "http"),
-            version=read_env_int("PYFARM_AGENT_API_VERSION", 1)):
+    def api_url(self, scheme=read_env("PYFARM_AGENT_API_SCHEME", "http")):
         """
         Returns the base url which should be used to access the api
         of this specific agent.
@@ -380,15 +425,20 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             :attr:`use_address` column is set to ``PASSIVE``
         """
         assert scheme in ("http", "https")
-        assert isinstance(version, int)
 
         if self.use_address == UseAgentAddress.REMOTE:
-            return "%s://%s:%d/api/v%d" % (
-                scheme, self.remote_ip, self.port, version)
+            return self.URL_TEMPLATE.format(
+                scheme=scheme,
+                host=self.remote_ip,
+                port=self.port
+            )
 
         elif self.use_address == UseAgentAddress.HOSTNAME:
-            return "%s://%s:%d/api/v%d" % (
-                scheme, self.hostname, self.port, version)
+            return self.URL_TEMPLATE.format(
+                scheme=scheme,
+                host=self.hostname,
+                port=self.port
+            )
 
         else:
             raise ValueError(

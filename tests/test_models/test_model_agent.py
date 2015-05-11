@@ -230,35 +230,45 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
 
             db.session.rollback()
 
-    def test_api_url(self):
+    def test_api_url_remote(self):
         model = Agent(
             hostname="foo", port=12345, remote_ip="10.56.0.1",
-            ram=1024, free_ram=128, cpus=4)
+            ram=1024, free_ram=128, cpus=4,
+            use_address=UseAgentAddress.REMOTE)
 
-        # Commit then retrieve the model so we get the
-        # custom types applied to the columns.  Otherwise
-        # we won't get a chance to test the string formatting
-        # under the right conditions.
-        db.session.add(model)
-        db.session.commit()
-        model_id = model.id
-        db.session.remove()
-        model = Agent.query.filter_by(id=model_id).first()
+        self.assertEqual(
+            model.api_url(),
+            model.URL_TEMPLATE.format(
+                scheme="http",
+                host=model.remote_ip,
+                port=model.port
+            )
+        )
 
-        for scheme in ("http", "https"):
-            for version in (1, 2, 3):
-                args = (scheme, version)
+    def test_api_url_hostname(self):
+        model = Agent(
+            hostname="foo", port=12345, remote_ip="10.56.0.1",
+            ram=1024, free_ram=128, cpus=4,
+            use_address=UseAgentAddress.HOSTNAME)
 
-                # run the tests
-                model.use_address = UseAgentAddress.REMOTE
-                self.assertEqual(
-                    model.api_url(*args),
-                    "%s://10.56.0.1:12345/api/v%d" % args)
+        self.assertEqual(
+            model.api_url(),
+            model.URL_TEMPLATE.format(
+                scheme="http",
+                host=model.hostname,
+                port=model.port
+            )
+        )
 
-                model.use_address = UseAgentAddress.HOSTNAME
-                self.assertEqual(
-                    model.api_url(*args),
-                    "%s://foo:12345/api/v%d" % args)
+    def test_api_url_passive(self):
+        model = Agent(
+            hostname="foo", port=12345, remote_ip="10.56.0.1",
+            ram=1024, free_ram=128, cpus=4,
+            use_address=UseAgentAddress.PASSIVE)
+
+        # Shouldn't have access to api_url if we're operating under PASSIVE
+        with self.assertRaises(ValueError):
+            model.api_url()
 
     def test_api_url_errors(self):
         model = Agent(
