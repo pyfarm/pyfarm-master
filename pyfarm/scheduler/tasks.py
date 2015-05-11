@@ -508,7 +508,7 @@ def poll_agent(self, agent_id):
         if UUID(status_json["agent_id"]) != agent_id:
             logger.error("Wrong agent reached under %s. Expected id %s, got %s",
                          agent.api_url(), agent_id, status_json["agent_id"])
-            raise ValueError("Wrong agent_id on polling. Excepted: %s. Got %s" %
+            raise ValueError("Wrong agent_id on polling. Expected: %s. Got %s" %
                              (agent_id, status_json["agent_id"]))
 
         if ("farm_name" in status_json and
