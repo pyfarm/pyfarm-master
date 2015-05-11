@@ -1113,6 +1113,11 @@ class JobSingleTaskAPI(MethodView):
             request.headers.get("User-Agent", "") == "PyFarm/1.0 (agent)" and
             (task.agent is None or
              request.remote_addr != task.agent.remote_ip)):
+            logger.error("Agent with IP address %s tried to set state or "
+                         "progress for task %s. IP address for assigned agent "
+                         "is %s. Request rejected.",
+                         request.remote_addr, task.id,
+                         (task.agent.remote_ip if task.agent else "(n/a)"))
             return jsonify(error="`state` and `progress` can only be changed "
                                  "by the agent owning this task"), BAD_REQUEST
 
