@@ -572,8 +572,9 @@ def poll_agent(self, agent_id):
                          "to have. Registering task pusher", agent.hostname)
             send_tasks_to_agent.delay(agent_id)
 
-        if set(present_task_ids) - set(assigned_task_ids):
-            for task_id in set(present_task_ids) - set(assigned_task_ids):
+        superfluous_tasks = set(present_task_ids) - set(assigned_task_ids)
+        if superfluous_tasks:
+            for task_id in superfluous_tasks:
                 task = Task.query.filter_by(id=task_id).first()
                 if task:
                     if task.agent_id != agent_id:
