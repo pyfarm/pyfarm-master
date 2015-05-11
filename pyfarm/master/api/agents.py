@@ -657,10 +657,8 @@ class SingleAgentAPI(MethodView):
         if agent is None:
             return jsonify(error="Agent %s not found" % agent_id), NOT_FOUND
 
-        # If state is not in the request, this is not an announce by the agent
-        # itself. It could be some other client editing the agent.
         if ("remote_ip" not in g.json and
-            "state" in g.json):
+            request.headers.get("User-Agent", "") == "PyFarm/1.0 (agent)"):
             g.json["remote_ip"] = request.remote_addr
 
         farm_name = g.json.pop("farm_name", None)
