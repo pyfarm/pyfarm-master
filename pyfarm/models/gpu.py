@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2014 Ambient Entertainment GmbH & Co. KG
+# Copyright 2015 Oliver Palmer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +16,8 @@
 # limitations under the License.
 
 """
-GPU
----
+GPU Model
+=========
 
 Model describing a given make and model of graphics card.
 Every agent can have zero or more GPUs associated with it.
@@ -32,6 +33,10 @@ from pyfarm.models.core.cfg import TABLE_GPU, MAX_GPUNAME_LENGTH
 class GPU(db.Model, UtilityMixins, ReprMixin):
     __tablename__ = TABLE_GPU
     __table_args__ = (UniqueConstraint("fullname"),)
+
     id = id_column(db.Integer)
-    fullname = db.Column(db.String(MAX_GPUNAME_LENGTH), nullable=False,
-                         doc="The full name of this graphics card model")
+
+    fullname = db.Column(
+        db.String(MAX_GPUNAME_LENGTH),
+        nullable=False,
+        doc="The full name of this graphics card model")
