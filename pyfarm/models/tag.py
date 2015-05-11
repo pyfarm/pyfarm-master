@@ -14,13 +14,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """
-Tag
-===
+Tag Model
+=========
+
 Table with tags for both jobs and agents
 """
-
-from textwrap import dedent
 
 from sqlalchemy.schema import UniqueConstraint
 
@@ -41,5 +41,6 @@ class Tag(db.Model, UtilityMixins):
 
     id = id_column()
 
-    tag = db.Column(db.String(MAX_TAG_LENGTH), nullable=False,
-                    doc=dedent("""The actual value of the tag"""))
+    tag = db.Column(
+        db.String(MAX_TAG_LENGTH),
+        nullable=False, doc="The actual value of the tag")
