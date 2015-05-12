@@ -298,7 +298,7 @@ class SingleJobGroupAPI(MethodView):
             jobtype_name = g.json.pop("main_jobtype")
             jobtype = JobType.query.filter_by(name=jobtype_name).first()
             if not jobtype:
-                return (jsonify(error="Jobtpye %s not found" % jobtype_name),
+                return (jsonify(error="Jobtype %s not found" % jobtype_name),
                         NOT_FOUND)
             jobgroup.main_jobtype = jobtype
 
