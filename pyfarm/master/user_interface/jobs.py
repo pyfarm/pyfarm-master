@@ -219,6 +219,12 @@ def jobs():
             jobs_query = jobs_query.filter(JobQueue.id.in_(jobqueue_ids))
         filters["q"] = jobqueue_ids
 
+    if "p" in request.args:
+        priorities = request.args.getlist("p")
+        priorities = [int(x) for x in priorities]
+        jobs_query = jobs_query.filter(Job.priority.in_(priorities))
+        filters["p"] = priorities
+
     if "jt" in request.args:
         jobtype_ids = request.args.getlist("jt")
         jobtype_ids = [int(x) for x in jobtype_ids]
@@ -306,6 +312,9 @@ def jobs():
 
     jobqueues = JobQueue.query.all()
 
+    available_priorities = db.session.query(distinct(Job.priority)).all()
+    available_priorities = set([x[0] for x in available_priorities])
+
     filters_and_order = filters.copy()
     filters_and_order.update({"order_by": order_by, "order_dir": order_dir})
     filters_and_order_wo_pagination = filters_and_order.copy()
@@ -326,7 +335,8 @@ def jobs():
                            queued_jobs_count=queued_jobs_count,
                            running_jobs_count=running_jobs_count,
                            failed_jobs_count=failed_jobs_count,
-                           done_jobs_count=done_jobs_count)
+                           done_jobs_count=done_jobs_count,
+                           priorities=available_priorities)
 
 def single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
