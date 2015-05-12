@@ -132,20 +132,19 @@ def jobgroups():
         outerjoin(submit_time_query,
                   JobGroup.id == submit_time_query.c.job_group_id)
 
-    filters = {}
-
-    filters["st_queued"] = ("st_queued" in request.args and
-                            request.args["st_queued"].lower() == "true")
-    filters["st_paused"] = ("st_paused" in request.args and
-                            request.args["st_paused"].lower() == "true")
-    filters["st_running"] = ("st_running" in request.args and
-                             request.args["st_running"].lower() == "true")
-    filters["st_failed"] = ("st_failed" in request.args and
-                             request.args["st_failed"].lower() == "true")
-    filters["st_any_done"] = ("st_any_done" in request.args and
-                              request.args["st_any_done"].lower() == "true")
-    filters["st_all_done"] = ("st_all_done" in request.args and
-                              request.args["st_all_done"].lower() == "true")
+    filters = {
+        "st_queued": ("st_queued" in request.args and
+                       request.args["st_queued"].lower() == "true"),
+        "st_paused": ("st_paused" in request.args and
+                      request.args["st_paused"].lower() == "true"),
+        "st_running": ("st_running" in request.args and
+                       request.args["st_running"].lower() == "true"),
+        "st_failed": ("st_failed" in request.args and
+                      request.args["st_failed"].lower() == "true"),
+        "st_any_done": ("st_any_done" in request.args and
+                        request.args["st_any_done"].lower() == "true"),
+        "st_all_done": ("st_all_done" in request.args and
+                        request.args["st_all_done"].lower() == "true")}
     no_state_filters = True
     if (filters["st_queued"] or
         filters["st_paused"] or
