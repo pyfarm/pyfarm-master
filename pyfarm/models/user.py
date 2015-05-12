@@ -83,8 +83,8 @@ class User(db.Model, UserMixin, ReprMixin):
 
     expiration = db.Column(
         db.DateTime,
-        doc="User expiration.  If this value is set then the user"
-            "will no longer be able to access PyFarm past the"
+        doc="User expiration.  If this value is set then the user "
+            "will no longer be able to access PyFarm past the "
             "expiration.")
 
     onetime_code = db.Column(
@@ -218,7 +218,7 @@ class Role(db.Model):
     active = db.Column(
         db.Boolean,
         default=True,
-        doc="Enables or disables a role.  Disabling a role"
+        doc="Enables or disables a role.  Disabling a role "
             "will prevent any users of this role from accessing "
             "PyFarm")
 
