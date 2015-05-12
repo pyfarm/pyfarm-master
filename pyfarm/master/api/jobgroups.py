@@ -286,7 +286,8 @@ class SingleJobGroupAPI(MethodView):
             return (jsonify(error="Requested job group %s not found" % group_id),
                     NOT_FOUND)
 
-        jobgroup.title = g.json.pop("title", None)
+        if "title" in g.json:
+            jobgroup.title = g.json.pop("title")
         if "user" in g.json:
             username = g.json.pop("user")
             user = User.query.filter_by(username=username).first()
