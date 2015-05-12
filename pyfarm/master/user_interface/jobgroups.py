@@ -146,12 +146,7 @@ def jobgroups():
         "st_all_done": ("st_all_done" in request.args and
                         request.args["st_all_done"].lower() == "true")}
     no_state_filters = True
-    if (filters["st_queued"] or
-        filters["st_paused"] or
-        filters["st_running"] or
-        filters["st_failed"] or
-        filters["st_any_done"] or
-        filters["st_all_done"]):
+    if (any(filters.values())):
         no_state_filters = False
         conditions = []
         if filters["st_queued"]:
