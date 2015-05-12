@@ -150,8 +150,8 @@ class JobGroupIndexAPI(MethodView):
         db.session.commit()
 
         jobgroup_data = jobgroup.to_dict()
-        del jobgroup_data["user_id"]
-        del jobgroup_data["main_jobtype_id"]
+        jobgroup_data.pop("user_id", None)
+        jobgroup_data.pop("main_jobtype_id", None)
         logger.info("Created job group %s: %r", jobgroup.title, jobgroup_data)
 
         return jsonify(jobgroup_data), CREATED
@@ -191,8 +191,8 @@ class JobGroupIndexAPI(MethodView):
         for jobgroup in JobGroup.query:
             jobgroup_data = jobgroup.to_dict(
                 unpack_relationships=["user", "main_jobtype"])
-            del jobgroup_data["user_id"]
-            del jobgroup_data["main_jobtype_id"]
+            jobgroup_data.pop("user_id", None)
+            jobgroup_data.pop("main_jobtype_id", None)
             out.append(jobgroup_data)
 
         return jsonify(out), OK
@@ -237,8 +237,8 @@ class SingleJobGroupAPI(MethodView):
                     NOT_FOUND)
 
         jobgroup_data = jobgroup.to_dict()
-        del jobgroup_data["user_id"]
-        del jobgroup_data["main_jobtype_id"]
+        jobgroup_data.pop("user_id", None)
+        jobgroup_data.pop("main_jobtype_id", None)
 
         return jsonify(jobgroup_data), OK
 
@@ -309,8 +309,8 @@ class SingleJobGroupAPI(MethodView):
         db.session.commit()
 
         jobgroup_data = jobgroup.to_dict()
-        del jobgroup_data["user_id"]
-        del jobgroup_data["main_jobtype_id"]
+        jobgroup_data.pop("user_id", None)
+        jobgroup_data.pop("main_jobtype_id", None)
         logger.info("Updated job group %s: %r", jobgroup.title, jobgroup_data)
 
         return jsonify(jobgroup_data), OK
