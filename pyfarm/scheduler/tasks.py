@@ -883,8 +883,7 @@ def delete_task(self, task_id):
                 raise
 
     if job_deleted and job_group:
-        jobs_count = job_group.jobs.count()
-        if jobs_count == 0:
+        if job_group.jobs.count() == 0:
             logger.info("Job group %s (id %s) has no jobs left, deleting",
                         job_group.name, job_group.id)
             db.session.delete(job_group)
@@ -1015,8 +1014,7 @@ def delete_job(job_id):
     db.session.commit()
 
     if async_deletes == 0 and job_group:
-        jobs_count = job_group.jobs.count()
-        if jobs_count == 0:
+        if job_group.jobs.count() == 0:
             logger.info("Job group %s (id %s) has no jobs left, deleting",
                         job_group.name, job_group.id)
             db.session.delete(job_group)
