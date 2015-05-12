@@ -15,8 +15,8 @@
 # limitations under the License.
 
 """
-Permissions
-===========
+User and Role Models
+====================
 
 Stores users and their roles in the database.
 """
@@ -32,7 +32,7 @@ from pyfarm.master.config import config
 from pyfarm.models.core.mixins import ReprMixin
 from pyfarm.models.core.functions import split_and_extend
 
-__all__ = ("User", )
+__all__ = ("User", "Role")
 
 SHA256_ASCII_LENGTH = 64  # static length of a sha256 string
 
@@ -82,8 +82,8 @@ class User(db.Model, UserMixin, ReprMixin):
 
     expiration = db.Column(
         db.DateTime,
-        doc="User expiration.  If this value is set then the user"
-            "will no longer be able to access PyFarm past the"
+        doc="User expiration.  If this value is set then the user "
+            "will no longer be able to access PyFarm past the "
             "expiration.")
 
     onetime_code = db.Column(
@@ -95,9 +95,13 @@ class User(db.Model, UserMixin, ReprMixin):
         db.DateTime,
         doc="The last date that this user was logged in.")
 
+    #
+    # Relationships
+    #
     roles = db.relationship(
         "Role",
-        secondary=UserRole, backref=db.backref("users", lazy="dynamic"))
+        secondary=UserRole,
+        backref=db.backref("users", lazy="dynamic"))
 
     @classmethod
     def create(cls, username, password, email=None, roles=None):
@@ -205,12 +209,15 @@ class Role(db.Model):
     """
     __tablename__ = config.get("table_role")
 
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        nullable=False)
 
     active = db.Column(
         db.Boolean,
         default=True,
-        doc="Enables or disables a role.  Disabling a role"
+        doc="Enables or disables a role.  Disabling a role "
             "will prevent any users of this role from accessing "
             "PyFarm")
 
@@ -225,7 +232,9 @@ class Role(db.Model):
             "anyone assigned to it, will no longer be able to access "
             "PyFarm past the expiration.")
 
-    description = db.Column(db.Text, doc="Human description of the role.")
+    description = db.Column(
+        db.Text,
+        doc="Human description of the role.")
 
     @classmethod
     def create(cls, name, description=None):

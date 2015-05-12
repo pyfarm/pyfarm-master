@@ -66,9 +66,16 @@ class TaskTaskLogAssociation(db.Model):
         nullable=True,
         doc="The state of the work being performed")
 
-    task = db.relationship("Task", backref=db.backref("log_associations",
-                                                      lazy="dynamic",
-                                                      passive_deletes=True))
+    #
+    # Relationships
+    #
+    task = db.relationship(
+        "Task",
+        backref=db.backref(
+            "log_associations",
+            lazy="dynamic",
+            passive_deletes=True))
+
 
 
 class TaskLog(db.Model, UtilityMixins, ReprMixin):
@@ -94,6 +101,9 @@ class TaskLog(db.Model, UtilityMixins, ReprMixin):
         default=datetime.utcnow,
         doc="The time when this log was created")
 
+    #
+    # Relationships
+    #
     agent = db.relationship(
         "Agent",
         backref=db.backref("task_logs", lazy="dynamic"),

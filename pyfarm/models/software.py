@@ -14,9 +14,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """
-Software
-========
+Software Models
+===============
+
 Table of software items. Agents can reference this table to show that they
 provide a given software. Jobs or jobtypes can depend on a software via the
 SoftwareRequirement table
@@ -37,7 +39,6 @@ class Software(db.Model, UtilityMixins):
     Model to represent a versioned piece of software that can be present on an
     agent and may be depended on by a job and/or jobtype through the appropriate
     SoftwareRequirement table
-
     """
     __tablename__ = config.get("table_software")
     __table_args__ = (
@@ -52,20 +53,17 @@ class Software(db.Model, UtilityMixins):
     #
     # Relationships
     #
-
-    versions = db.relationship("SoftwareVersion",
-                               backref=db.backref("software"),
-                               lazy="dynamic",
-                               cascade="all, delete-orphan",
-                               order_by="asc(SoftwareVersion.rank)",
-                               doc="All known versions of this "
-                                   "software")
+    versions = db.relationship(
+        "SoftwareVersion",
+        backref=db.backref("software"),
+        lazy="dynamic", order_by="asc(SoftwareVersion.rank)",
+        cascade="all, delete-orphan",
+        doc="All known versions of this software")
 
 
 class SoftwareVersion(db.Model, UtilityMixins):
     """
     Model to represent a version for a given software
-
     """
     __tablename__ = config.get("table_software_version")
     __table_args__ = (
@@ -104,7 +102,6 @@ class JobSoftwareRequirement(db.Model, UtilityMixins):
     """
     Model representing a dependency of a job on a software tag, with optional
     version constraints
-
     """
     __tablename__ = config.get("table_job_software_req")
     __table_args__ = (
@@ -135,24 +132,26 @@ class JobSoftwareRequirement(db.Model, UtilityMixins):
     #
     # Relationships
     #
-
     job = db.relationship(
         "Job",
-        backref=db.backref("software_requirements",
-                           lazy="dynamic", cascade="all, delete-orphan"))
+        backref=db.backref(
+            "software_requirements",
+            lazy="dynamic",
+            cascade="all, delete-orphan"))
 
     software = db.relationship("Software")
-    min_version = db.relationship("SoftwareVersion",
-                                  foreign_keys=[min_version_id])
-    max_version = db.relationship("SoftwareVersion",
-                                  foreign_keys=[max_version_id])
+
+    min_version = db.relationship(
+        "SoftwareVersion", foreign_keys=[min_version_id])
+
+    max_version = db.relationship(
+        "SoftwareVersion", foreign_keys=[max_version_id])
 
 
 class JobTypeSoftwareRequirement(db.Model, UtilityMixins):
     """
     Model representing a dependency of a job on a software tag, with optional
     version constraints
-
     """
     __tablename__ = config.get("table_job_type_software_req")
     __table_args__ = (
@@ -183,12 +182,12 @@ class JobTypeSoftwareRequirement(db.Model, UtilityMixins):
     #
     # Relationships
     #
-
     jobtype_version = db.relationship(
         "JobTypeVersion",
         backref=db.backref(
             "software_requirements",
-            lazy="dynamic", cascade="all, delete-orphan"))
+            lazy="dynamic",
+            cascade="all, delete-orphan"))
 
     software = db.relationship("Software")
 

@@ -108,12 +108,14 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
             "path must be computed by recursively querying "
             "the parent queues.")
 
+    #
+    # Relationship
+    #
     parent = db.relationship(
         "JobQueue",
         remote_side=[id],
         backref=db.backref("children", lazy="dynamic"),
         doc="Relationship between this queue its parent")
-
 
     def path(self):
         # Import here instead of at the top to break circular dependency

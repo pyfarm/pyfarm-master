@@ -282,32 +282,37 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     #
 
     tasks = db.relationship(
-        "Task", backref="agent", lazy="dynamic",
+        "Task",
+        backref="agent", lazy="dynamic",
         doc="Relationship between an :class:`Agent` and any "
             ":class:`pyfarm.models.Task` objects")
 
-    tags = db.relationship("Tag", secondary=AgentTagAssociation,
-                            backref=db.backref("agents", lazy="dynamic"),
-                            lazy="dynamic",
-                            doc="Tags associated with this agent")
-    software_versions = db.relationship("SoftwareVersion",
-                                       secondary=AgentSoftwareVersionAssociation,
-                                       backref=db.backref("agents",
-                                                          lazy="dynamic"),
-                                       lazy="dynamic",
-                                       doc="software this agent has installed "
-                                           "or is configured for")
-    mac_addresses = db.relationship("AgentMacAddress", backref="agent",
-                                    lazy="dynamic",
-                                    doc="The MAC addresses this agent has",
-                                    cascade="save-update, merge, delete, "
-                                            "delete-orphan")
-    gpus = db.relationship("GPU",
-                           secondary=GPUInAgent,
-                           backref=db.backref("agents", lazy="dynamic"),
-                           lazy="dynamic",
-                           doc="The graphics cards that are installed in this "
-                               "agent")
+    tags = db.relationship(
+        "Tag",
+        secondary=AgentTagAssociation,
+        backref=db.backref("agents", lazy="dynamic"),
+        lazy="dynamic",
+        doc="Tags associated with this agent")
+
+    software_versions = db.relationship(
+        "SoftwareVersion",
+        secondary=AgentSoftwareVersionAssociation,
+        backref=db.backref("agents", lazy="dynamic"),
+        lazy="dynamic",
+        doc="software this agent has installed or is configured for")
+
+    mac_addresses = db.relationship(
+        "AgentMacAddress", backref="agent",
+        lazy="dynamic",
+        doc="The MAC addresses this agent has",
+        cascade="save-update, merge, delete, delete-orphan")
+
+    gpus = db.relationship(
+        "GPU",
+        secondary=GPUInAgent,
+        backref=db.backref("agents", lazy="dynamic"),
+        lazy="dynamic",
+        doc="The graphics cards that are installed in this agent")
 
     def is_offline(self):
         return self.state == AgentState.OFFLINE

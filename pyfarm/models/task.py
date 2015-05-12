@@ -110,6 +110,9 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         doc="The progress for this task, as a value between "
             "0.0 and 1.0. Used purely for display purposes.")
 
+    #
+    # Relationships
+    #
     job = db.relationship(
         "Job",
         backref=db.backref("tasks", lazy="dynamic"),
@@ -126,6 +129,11 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     def increment_attempts(target, new_value, old_value, initiator):
         if new_value is not None and new_value != old_value:
             target.attempts += 1
+
+    @staticmethod
+    def log_assign_change(target, new_value, old_value, initiator):
+        logger.debug("Agent change for task %s: old %s new: %s",
+                     target.id, old_value, new_value)
 
     @staticmethod
     def update_failures(target, new_value, old_value, initiator):
@@ -167,5 +175,6 @@ event.listen(Task.state, "set", Task.state_changed)
 event.listen(Task.state, "set", Task.update_failures)
 event.listen(Task.state, "set", Task.set_progress_on_success)
 event.listen(Task.agent_id, "set", Task.increment_attempts)
+event.listen(Task.agent_id, "set", Task.log_assign_change)
 event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry,
              retval=True)

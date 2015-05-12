@@ -16,8 +16,8 @@
 # limitations under the License.
 
 """
-GPU
-===
+GPU Model
+=========
 
 Model describing a given make and model of graphics card.
 Every agent can have zero or more GPUs associated with it.

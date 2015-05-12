@@ -63,6 +63,9 @@ class PathMap(db.Model, ReprMixin, UtilityMixins):
             "agents, but is overridden by applying path maps "
             "that do specify a tag.")
 
+    #
+    # Relationships
+    #
     tag = db.relationship(
         "Tag",
         backref=db.backref("path_maps", lazy="dynamic"),

@@ -61,7 +61,6 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
         doc="Human readable description of the job type.  This field is not "
             "required and is not directly relied upon anywhere.")
 
-
     success_subject = db.Column(
         db.Text,
         nullable=True,
@@ -99,6 +98,9 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
 
 
 class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
+    """
+    Defines a specific jobtype version.
+    """
     __tablename__ = config.get("table_job_type_version")
     __table_args__ = (UniqueConstraint("jobtype_id", "version"),)
 
@@ -132,7 +134,6 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
             "For example if True it would batch frames 1, 2, 3, 4 "
             "together but not 2, 4, 6, 8.  If this column is False "
             "however the queue will batch non-contiguous tasks too.")
-
 
     classname = db.Column(
         db.String(config.get("job_type_max_class_name_length")),

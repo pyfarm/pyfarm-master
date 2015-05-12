@@ -16,8 +16,9 @@
 # limitations under the License.
 
 """
-Tag
-===
+Tag Model
+=========
+
 Table with tags for both jobs and agents
 """
 
