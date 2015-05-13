@@ -216,7 +216,8 @@ def send_tasks_to_agent(self, agent_id):
                     logger.warning(
                         "Agent %s, (id %s), answered SERVICE_UNAVAILABLE, "
                         "retrying the request later", agent.hostname, agent.id)
-                    self.retry(exc=e)
+                    self.retry(exc=ValueError("Got return code "
+                                              "SERVICE_UNAVAILABLE"))
                 else:
                     logger.error(
                         "Agent %s, (id %s), answered SERVICE_UNAVAILABLE, "
