@@ -717,7 +717,7 @@ def send_job_completion_mail(job_id, successful=True):
             message["To"] = ",".join(to)
 
             if to:
-                send_email(to, message.message.as_string())
+                send_email(to, message.as_string())
                 logger.info("Job completion mail for job %s (id %s) sent to %s",
                             job.title, job.id, to)
 
