@@ -789,8 +789,6 @@ def send_job_completion_mail(job_id, successful=True):
 
 @celery_app.task(ignore_results=True)
 def send_job_deletion_mail(job_id, jobtype_name, job_title, to):
-    logger.debug("In send_job_deletion_mail(), job_id: %s, jobtype_name: %s, "
-                 "job_title: %s, to: %s", job_id, jobtype_name, job_title, to)
     message_text = ("%s job %s (id %s) has been deleted.\n\n" %
                     (jobtype_name, job_title, job_id))
     message_text += "Sincerely,\n\tThe PyFarm render manager"
