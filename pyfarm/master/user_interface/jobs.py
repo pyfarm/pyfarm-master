@@ -313,7 +313,7 @@ def jobs():
     jobqueues = JobQueue.query.all()
 
     available_priorities = db.session.query(distinct(Job.priority)).all()
-    available_priorities = set([x[0] for x in available_priorities])
+    available_priorities = set(x[0] for x in available_priorities)
 
     filters_and_order = filters.copy()
     filters_and_order.update({"order_by": order_by, "order_dir": order_dir})
