@@ -34,6 +34,7 @@ from os.path import join, isfile, join
 from os import remove, listdir
 from errno import ENOENT
 from gzip import GzipFile
+from uuid import UUID
 
 from sqlalchemy import or_, and_, func, distinct, desc, asc
 from sqlalchemy.exc import InvalidRequestError
@@ -504,6 +505,12 @@ def poll_agent(self, agent_id):
                     agent.hostname, agent.id, status_response.status_code))
         status_json = status_response.json()
 
+        if UUID(status_json["agent_id"]) != agent_id:
+            logger.error("Wrong agent reached under %s. Expected id %s, got %s",
+                         agent.api_url(), agent_id, status_json["agent_id"])
+            raise ValueError("Wrong agent_id on polling. Expected: %s. Got %s" %
+                             (agent_id, status_json["agent_id"]))
+
         if ("farm_name" in status_json and
             status_json["farm_name"] != OUR_FARM_NAME):
             agent.last_polled = datetime.utcnow()
@@ -564,6 +571,23 @@ def poll_agent(self, agent_id):
             logger.debug("Agent %s does not have all the tasks it is supposed "
                          "to have. Registering task pusher", agent.hostname)
             send_tasks_to_agent.delay(agent_id)
+
+        superfluous_tasks = set(present_task_ids) - set(assigned_task_ids)
+        if superfluous_tasks:
+            for task_id in superfluous_tasks:
+                task = Task.query.filter_by(id=task_id).first()
+                if task:
+                    if task.agent_id != agent_id:
+                        logger.warning("Task %s belongs to agent %s (id %s), "
+                                       "but has been found running on %s "
+                                       "(id %s), stopping it.", task_id,
+                                       task.agent.hostname, task.agent_id,
+                                       agent.hostname, agent_id)
+                        stop_task.delay(task_id, agent_id,
+                                        dissociate_agent=False)
+                else:
+                    logger.warning("Superfluous task %s not found in db",
+                                   task_id)
 
         agent.last_heard_from = datetime.utcnow()
         db.session.add(agent)
@@ -908,14 +932,18 @@ def delete_task(self, task_id):
 
 
 @celery_app.task(ignore_results=True, bind=True)
-def stop_task(self, task_id):
+def stop_task(self, task_id, agent_id=None, dissociate_agent=True):
     db.session.rollback()
     task = Task.query.filter_by(id=task_id).one()
     job = task.job
 
-    if (task.agent is not None and
-        task.state not in [WorkState.DONE, WorkState.FAILED]):
-        agent = task.agent
+    if ((task.agent is not None and
+         task.state not in [WorkState.DONE, WorkState.FAILED]) or
+        agent_id is not None):
+        if agent_id is not None:
+            agent = Agent.query.filter_by(id=agent_id).one()
+        else:
+            agent = task.agent
         try:
             response = requests.delete("%s/tasks/%s" %
                                             (agent.api_url(), task.id),
@@ -931,7 +959,7 @@ def stop_task(self, task_id):
                 raise ValueError("Unexpected return code on stopping task %s on "
                                  "agent %s: %s",
                                  task.id, agent.id, response.status_code)
-            else:
+            elif dissociate_agent:
                 task.agent = None
                 task.state = None
                 db.session.add(task)
