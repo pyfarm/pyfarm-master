@@ -229,10 +229,32 @@ def send_tasks_to_agent(self, agent_id):
                     task.attempts -= 1
                     db.session.add(task)
                 db.session.commit()
+            if response.status_code == requests.codes.conflict:
+                logger.error("Agent %s, (id %s), answered CONFLICT, removing "
+                             "conflicting assignments", agent.hostname,
+                             agent.id)
+                response_data = response.json()
+                if "rejected_task_ids" in response_data:
+                    for task_id in response_data["rejected_task_ids"]:
+                        task = Task.query.filter_by(id=task_id).first()
+                        if task:
+                            logger.error("Removing assignment for task %s "
+                                         "(Frame %s from job %s) from agent %s "
+                                         "(id %s)", task_id, task.frame,
+                                         task.job.title, agent.hostname,
+                                         agent.id)
+                            task.agent = None
+                            task.attempts -= 1
+                            db.session.add(task)
+                    db.session.commit()
+                else:
+                    logger.error("CONFLICT response from agent %s (id %s) did "
+                                 "not contain a list of rejected task ids. "
+                                 "Please update the agent to 0.8.4 or higher.",
+                                 agent.hostname, agent.id)
             elif response.status_code not in [requests.codes.accepted,
                                               requests.codes.ok,
-                                              requests.codes.created,
-                                              requests.codes.conflict]:
+                                              requests.codes.created]:
                 raise ValueError("Unexpected return code on sending batch to "
                                  "agent: %s", response.status_code)
             else:
