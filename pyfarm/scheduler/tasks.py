@@ -232,16 +232,24 @@ def send_tasks_to_agent(self, agent_id):
             logger.debug("Return code after sending batch to agent: %s",
                          response.status_code)
             if response.status_code == requests.codes.service_unavailable:
-                logger.error("Agent %s, (id %s), answered SERVICE_UNAVAILABLE, "
-                             "marking it as offline", agent.hostname, agent.id)
-                agent.state = AgentState.OFFLINE
-                db.session.add(agent)
-                for task in tasks:
-                    task.agent = None
-                    task.attempts -= 1
-                    db.session.add(task)
-                db.session.commit()
-            if response.status_code == requests.codes.bad_request:
+                if self.request.retries < self.max_retries:
+                    logger.warning(
+                        "Agent %s, (id %s), answered SERVICE_UNAVAILABLE, "
+                        "retrying the request later", agent.hostname, agent.id)
+                    self.retry(exc=ValueError("Got return code "
+                                              "SERVICE_UNAVAILABLE"))
+                else:
+                    logger.error(
+                        "Agent %s, (id %s), answered SERVICE_UNAVAILABLE, "
+                        "marking it as offline", agent.hostname, agent.id)
+                    agent.state = AgentState.OFFLINE
+                    db.session.add(agent)
+                    for task in tasks:
+                        task.agent = None
+                        task.attempts -= 1
+                        db.session.add(task)
+                    db.session.commit()
+            elif response.status_code == requests.codes.bad_request:
                 logger.error("Agent %s, (id %s), answered BAD_REQUEST, "
                              "removing assignment", agent.hostname, agent.id)
                 for task in tasks:
@@ -249,7 +257,7 @@ def send_tasks_to_agent(self, agent_id):
                     task.attempts -= 1
                     db.session.add(task)
                 db.session.commit()
-            if response.status_code == requests.codes.conflict:
+            elif response.status_code == requests.codes.conflict:
                 logger.error("Agent %s, (id %s), answered CONFLICT, removing "
                              "conflicting assignments", agent.hostname,
                              agent.id)
