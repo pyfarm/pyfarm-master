@@ -281,3 +281,47 @@ def agent_delete_software(agent_id, version_id):
           (version.software.software, version.version, agent.hostname))
 
     return redirect(url_for("single_agent_ui", agent_id=agent.id), SEE_OTHER)
+
+def update_notes_for_agent(agent_id):
+    agent = Agent.query.filter_by(id=agent_id).first()
+    if not agent:
+        return (render_template(
+                    "pyfarm/error.html", error="Agent %s not found" % agent_id),
+                NOT_FOUND)
+
+    print("Notes: %s" % request.form["notes"])
+
+    agent.notes = request.form["notes"]
+
+    db.session.add(agent)
+    db.session.commit()
+
+    flash("Free form notes for agent %s have been edited." % agent.hostname)
+
+    return redirect(url_for("single_agent_ui", agent_id=agent.id), SEE_OTHER)
+
+def update_tags_in_agent(agent_id):
+    agent = Agent.query.filter_by(id=agent_id).first()
+    if not agent:
+        return (render_template(
+                    "pyfarm/error.html", error="Agent %s not found" % agent_id),
+                NOT_FOUND)
+
+    tagnames = request.form["tags"].split(" ")
+    tagnames = [x.strip() for x in tagnames if not x == ""]
+    tags = []
+    for name in tagnames:
+        tag = Tag.query.filter_by(tag=name).first()
+        if not tag:
+            tag = Tag(tag=name)
+            db.session.add(tag)
+        tags.append(tag)
+
+    agent.tags = tags
+
+    db.session.add(agent)
+    db.session.commit()
+
+    flash("Tags for agent %s have been updated." % agent.hostname)
+
+    return redirect(url_for("single_agent_ui", agent_id=agent.id), SEE_OTHER)

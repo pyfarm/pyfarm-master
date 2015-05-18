@@ -152,6 +152,20 @@
           </tr>
         </tbody>
       </table>
+
+      <h4>Notes</h4>
+      <form method="POST" action="{{ url_for('update_agent_notes_ui', agent_id=agent.id) }}">
+        <p><textarea name="notes" class="form-control">{{ agent.notes }}</textarea></p>
+        <input type="submit" class="btn" value="Change Notes"/>
+      </form>
+
+      <h4>Tags</h4>
+      <form method="POST" action="{{ url_for('update_agent_tags_ui', agent_id=agent.id) }}">
+        <p>
+          <textarea name="tags" class="form-control">{% for tag in agent.tags %}{{ tag.tag }} {% endfor %}</textarea>
+        </p>
+        <input type="submit" class="btn" value="Edit Tags"/>
+      </form>
     </div>
 
     <div class="col-md-8 well">
