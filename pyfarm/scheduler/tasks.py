@@ -124,7 +124,27 @@ DEFAULT_FAIL_BODY = Template(
     "{% endif %}"
     "Sincerely,\n\tThe PyFarm render manager")
 OUR_FARM_NAME = read_env("PYFARM_FARM_NAME", "")
+SMTP_SERVER = read_env("PYFARM_MAIL_SERVER", "localhost")
+SMTP_PORT = 0
+SMTP_USER = None
+SMTP_PASSWORD = ""
+FROM_ADDRESS = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
 
+def send_email(to, message):
+    """
+    Configures and instance of :class:`SMTP` and sends a message to the
+    given address.
+    """
+    smtp = SMTP(SMTP_SERVER, port=SMTP_PORT)
+
+    # Password could be blank in some cases
+    if SMTP_USER is not None:
+        smtp.login(SMTP_USER, SMTP_PASSWORD)
+
+    try:
+        smtp.sendmail(FROM_ADDRESS, to, message)
+    finally:
+        smtp.quit()
 
 @celery_app.task(ignore_result=True, bind=True)
 def send_tasks_to_agent(self, agent_id):
@@ -737,17 +757,13 @@ def send_job_completion_mail(job_id, successful=True):
             message = MIMEText(
                 body_template.render(job=job, failed_logs=failed_logs))
             message["Subject"] = subject_template.render(job=job)
-            message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
+            message["From"] = FROM_ADDRESS
 
             to = [x.user.email for x in notified_users if x.user.email]
             message["To"] = ",".join(to)
 
             if to:
-                smtp = SMTP(read_env("PYFARM_MAIL_SERVER", "localhost"))
-                smtp.sendmail(read_env("PYFARM_FROM_ADDRESS",
-                                    "pyfarm@localhost"), to, message.as_string())
-                smtp.quit()
-
+                send_email(to, message.as_string())
                 logger.info("Job completion mail for job %s (id %s) sent to %s",
                             job.title, job.id, to)
 
@@ -797,16 +813,11 @@ def send_job_deletion_mail(job_id, jobtype_name, job_title, to):
 
     message = MIMEText(message_text)
     message["Subject"] = ("Job %s deleted" % job_title)
-    message["From"] = read_env("PYFARM_FROM_ADDRESS", "pyfarm@localhost")
-
+    message["From"] = FROM_ADDRESS
     message["To"] = ",".join(to)
 
     if to:
-        smtp = SMTP(read_env("PYFARM_MAIL_SERVER", "localhost"))
-        smtp.sendmail(read_env("PYFARM_FROM_ADDRESS",
-                               "pyfarm@localhost"), to, message.as_string())
-        smtp.quit()
-
+        send_email(to, message.as_string())
         logger.info("Job deletion mail for job %s (id %s) sent to %s",
                     job_title, job_id, to)
 
