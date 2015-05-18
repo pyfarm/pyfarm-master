@@ -547,6 +547,36 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             if self.state != WorkState.RUNNING:
                 self.state = None
 
+    def rerun(self):
+        running_tasks = False
+        for task in self.tasks:
+            if task.state != _WorkState.RUNNING and task.state is not None:
+                task.state = None
+                task.agent = None
+                task.failures = 0
+                db.session.add(task)
+            elif task.state == _WorkState.RUNNING or task.agent is not None:
+                running_tasks = True
+
+        if not running_tasks:
+            self.state = None
+        else:
+            self.state = WorkState.RUNNING
+        self.completion_notify_sent = False
+        db.session.add(self)
+
+    def rerun_failed(self):
+        for task in self.tasks:
+            if task.state == _WorkState.FAILED:
+                task.state = None
+                task.agent = None
+                task.failures = 0
+                db.session.add(task)
+
+        self.state = None
+        self.completion_notify_sent = False
+        db.session.add(self)
+
     @validates("ram", "cpus")
     def validate_resource(self, key, value):
         """

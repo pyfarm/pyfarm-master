@@ -435,18 +435,8 @@ def rerun_single_job(job_id):
                     "pyfarm/error.html", error="Job %s not found" % job_id),
                 NOT_FOUND)
 
-    for task in job.tasks:
-        if task.state != WorkState.RUNNING:
-            task.state = None
-            task.agent = None
-            task.failures = 0
-            db.session.add(task)
-
-    job.state = None
-    job.completion_notify_sent = False
-    db.session.add(job)
+    job.rerun()
     db.session.commit()
-
     assign_tasks.delay()
 
     flash("Job %s will be run again." % job.title)
@@ -465,20 +455,9 @@ def rerun_multiple_jobs():
             return (render_template(
                         "pyfarm/error.html", error="Job %s not found" % job_id),
                     NOT_FOUND)
-
-        for task in job.tasks:
-            if task.state != WorkState.RUNNING:
-                task.state = None
-                task.agent = None
-                task.failures = 0
-                db.session.add(task)
-
-        job.state = None
-        job.completion_notify_sent = False
-        db.session.add(job)
+        job.rerun()
 
     db.session.commit()
-
     assign_tasks.delay()
 
     flash("Selected jobs will be run again.")
@@ -495,16 +474,7 @@ def rerun_failed_in_job(job_id):
                     "pyfarm/error.html", error="Job %s not found" % job_id),
                 NOT_FOUND)
 
-    for task in job.tasks:
-        if task.state == _WorkState.FAILED:
-            task.state = None
-            task.agent = None
-            task.failures = 0
-            db.session.add(task)
-
-    job.state = None
-    job.completion_notify_sent = False
-    db.session.add(job)
+    job.rerun_failed()
     db.session.commit()
 
     assign_tasks.delay()
@@ -526,16 +496,7 @@ def rerun_failed_in_multiple_jobs():
                         "pyfarm/error.html", error="Job %s not found" % job_id),
                     NOT_FOUND)
 
-        for task in job.tasks:
-            if task.state == _WorkState.FAILED:
-                task.state = None
-                task.agent = None
-                task.failures = 0
-                db.session.add(task)
-
-        job.state = None
-        job.completion_notify_sent = False
-        db.session.add(job)
+        job.rerun_failed()
         db.session.commit()
 
     assign_tasks.delay()
