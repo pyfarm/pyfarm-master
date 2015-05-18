@@ -117,16 +117,32 @@
       <table class="table table-striped table-bordered model-list">
         <tr>
           <th>Title</th>
-          <th>User</th>
-          <th>Submitted</th>
-          <th>State</th>
+          <th>Jobtype</th>
         </tr>
         {% for parent in job.parents %}
         <tr>
-          <td><a href="{{ url_for('single_job_ui', job_id=parent.id) }}">{{ parent.title }}</a></td>
-          <td>{{ parent.user.username }}</td>
-          <td class="timestamp">{{ parent.time_submitted.isoformat() }}</td>
-          <td>{{ 'deleting' if parent.to_be_deleted else parent.state }}</td>
+          <td>
+            {% if not parent.state %}
+            <span class="glyphicon glyphicon-time" title="queued"></span>
+            {% endif %}
+            {% if parent.state == "running" %}
+            <span style="color:#337AB7" class="glyphicon glyphicon-play" title="running"></span>
+            {% endif %}
+            {% if parent.state == "done" %}
+            <span style="color:#5CB85C" class="glyphicon glyphicon-ok" title="done"></span>
+            {% endif %}
+            {% if parent.state == "failed" %}
+            <span style="color:#D9534F" class="glyphicon glyphicon-remove" title="failed"></span>
+            {% endif %}
+            {% if parent.state == "paused" %}
+            <span class="glyphicon glyphicon-pause" title="paused"></span>
+            {% endif %}
+            {% if parent.to_be_deleted %}
+            <span class="glyphicon glyphicon-trash" title="deleting"></span>
+            {% endif %}
+            <a href="{{ url_for('single_job_ui', job_id=parent.id) }}">{{ parent.title }}</a>
+          </td>
+          <td>{{ parent.jobtype_version.jobtype.name }}</td>
         </tr>
         {% endfor %}
       <table>
@@ -137,16 +153,32 @@
       <table class="table table-striped table-bordered model-list">
         <tr>
           <th>Title</th>
-          <th>User</th>
-          <th>Submitted</th>
-          <th>State</th>
+          <th>Jobtype</th>
         </tr>
         {% for child in job.children %}
         <tr>
-          <td><a href="{{ url_for('single_job_ui', job_id=child.id) }}">{{ child.title }}</a></td>
-          <td>{{ child.user.username }}</td>
-          <td class="timestamp">{{ child.time_submitted.isoformat() }}</td>
-          <td>{{ 'deleting' if child.to_be_deleted else child.state }}</td>
+          <td>
+            {% if not child.state %}
+            <span class="glyphicon glyphicon-time" title="queued"></span>
+            {% endif %}
+            {% if child.state == "running" %}
+            <span style="color:#337AB7" class="glyphicon glyphicon-play" title="running"></span>
+            {% endif %}
+            {% if child.state == "done" %}
+            <span style="color:#5CB85C" class="glyphicon glyphicon-ok" title="done"></span>
+            {% endif %}
+            {% if child.state == "failed" %}
+            <span style="color:#D9534F" class="glyphicon glyphicon-remove" title="failed"></span>
+            {% endif %}
+            {% if child.state == "paused" %}
+            <span class="glyphicon glyphicon-pause" title="paused"></span>
+            {% endif %}
+            {% if child.to_be_deleted %}
+            <span class="glyphicon glyphicon-trash" title="deleting"></span>
+            {% endif %}
+            <a href="{{ url_for('single_job_ui', job_id=child.id) }}">{{ child.title }}</a>
+          </td>
+          <td>{{ child.jobtype_version.jobtype.name }}</td>
         </tr>
         {% endfor %}
       <table>

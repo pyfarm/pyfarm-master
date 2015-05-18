@@ -241,8 +241,12 @@ class AgentIndexAPI(MethodView):
         except KeyError:
             return jsonify(error="`id` not provided"), BAD_REQUEST
 
-        # Set remote_ip if it did not come in with the request
-        g.json.setdefault("remote_ip", request.remote_addr)
+        # If the remote user agent is not "PyFarm/1.0 (agent)", this is not an
+        # announce by the agent itself. It could be some other client editing
+        # the agent.
+        if request.headers.get("User-Agent", "") == "PyFarm/1.0 (agent)":
+            # Set remote_ip if it did not come in with the request
+            g.json.setdefault("remote_ip", request.remote_addr)
 
         farm_name = g.json.pop("farm_name", None)
         if farm_name and farm_name != OUR_FARM_NAME:
@@ -653,7 +657,8 @@ class SingleAgentAPI(MethodView):
         if agent is None:
             return jsonify(error="Agent %s not found" % agent_id), NOT_FOUND
 
-        if "remote_ip" not in g.json:
+        if ("remote_ip" not in g.json and
+            request.headers.get("User-Agent", "") == "PyFarm/1.0 (agent)"):
             g.json["remote_ip"] = request.remote_addr
 
         farm_name = g.json.pop("farm_name", None)

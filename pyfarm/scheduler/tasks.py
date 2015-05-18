@@ -32,6 +32,7 @@ from os.path import isfile, join
 from os import remove, listdir
 from errno import ENOENT
 from gzip import GzipFile
+from uuid import UUID
 
 from sqlalchemy import or_, desc
 from sqlalchemy.exc import InvalidRequestError
@@ -203,16 +204,24 @@ def send_tasks_to_agent(self, agent_id):
             logger.debug("Return code after sending batch to agent: %s",
                          response.status_code)
             if response.status_code == requests.codes.service_unavailable:
-                logger.error("Agent %s, (id %s), answered SERVICE_UNAVAILABLE, "
-                             "marking it as offline", agent.hostname, agent.id)
-                agent.state = AgentState.OFFLINE
-                db.session.add(agent)
-                for task in tasks:
-                    task.agent = None
-                    task.attempts -= 1
-                    db.session.add(task)
-                db.session.commit()
-            if response.status_code == requests.codes.bad_request:
+                if self.request.retries < self.max_retries:
+                    logger.warning(
+                        "Agent %s, (id %s), answered SERVICE_UNAVAILABLE, "
+                        "retrying the request later", agent.hostname, agent.id)
+                    self.retry(exc=ValueError("Got return code "
+                                              "SERVICE_UNAVAILABLE"))
+                else:
+                    logger.error(
+                        "Agent %s, (id %s), answered SERVICE_UNAVAILABLE, "
+                        "marking it as offline", agent.hostname, agent.id)
+                    agent.state = AgentState.OFFLINE
+                    db.session.add(agent)
+                    for task in tasks:
+                        task.agent = None
+                        task.attempts -= 1
+                        db.session.add(task)
+                    db.session.commit()
+            elif response.status_code == requests.codes.bad_request:
                 logger.error("Agent %s, (id %s), answered BAD_REQUEST, "
                              "removing assignment", agent.hostname, agent.id)
                 for task in tasks:
@@ -220,10 +229,32 @@ def send_tasks_to_agent(self, agent_id):
                     task.attempts -= 1
                     db.session.add(task)
                 db.session.commit()
+            elif response.status_code == requests.codes.conflict:
+                logger.error("Agent %s, (id %s), answered CONFLICT, removing "
+                             "conflicting assignments", agent.hostname,
+                             agent.id)
+                response_data = response.json()
+                if "rejected_task_ids" in response_data:
+                    for task_id in response_data["rejected_task_ids"]:
+                        task = Task.query.filter_by(id=task_id).first()
+                        if task:
+                            logger.error("Removing assignment for task %s "
+                                         "(Frame %s from job %s) from agent %s "
+                                         "(id %s)", task_id, task.frame,
+                                         task.job.title, agent.hostname,
+                                         agent.id)
+                            task.agent = None
+                            task.attempts -= 1
+                            db.session.add(task)
+                    db.session.commit()
+                else:
+                    logger.error("CONFLICT response from agent %s (id %s) did "
+                                 "not contain a list of rejected task ids. "
+                                 "Please update the agent to 0.8.4 or higher.",
+                                 agent.hostname, agent.id)
             elif response.status_code not in [requests.codes.accepted,
                                               requests.codes.ok,
-                                              requests.codes.created,
-                                              requests.codes.conflict]:
+                                              requests.codes.created]:
                 raise ValueError("Unexpected return code on sending batch to "
                                  "agent: %s", response.status_code)
             else:
@@ -496,6 +527,12 @@ def poll_agent(self, agent_id):
                     agent.hostname, agent.id, status_response.status_code))
         status_json = status_response.json()
 
+        if UUID(status_json["agent_id"]) != agent_id:
+            logger.error("Wrong agent reached under %s. Expected id %s, got %s",
+                         agent.api_url(), agent_id, status_json["agent_id"])
+            raise ValueError("Wrong agent_id on polling. Expected: %s. Got %s" %
+                             (agent_id, status_json["agent_id"]))
+
         if ("farm_name" in status_json and
             status_json["farm_name"] != OUR_FARM_NAME):
             agent.last_polled = datetime.utcnow()
@@ -556,6 +593,23 @@ def poll_agent(self, agent_id):
             logger.debug("Agent %s does not have all the tasks it is supposed "
                          "to have. Registering task pusher", agent.hostname)
             send_tasks_to_agent.delay(agent_id)
+
+        superfluous_tasks = set(present_task_ids) - set(assigned_task_ids)
+        if superfluous_tasks:
+            for task_id in superfluous_tasks:
+                task = Task.query.filter_by(id=task_id).first()
+                if task:
+                    if task.agent_id != agent_id:
+                        logger.warning("Task %s belongs to agent %s (id %s), "
+                                       "but has been found running on %s "
+                                       "(id %s), stopping it.", task_id,
+                                       task.agent.hostname, task.agent_id,
+                                       agent.hostname, agent_id)
+                        stop_task.delay(task_id, agent_id,
+                                        dissociate_agent=False)
+                else:
+                    logger.warning("Superfluous task %s not found in db",
+                                   task_id)
 
         agent.last_heard_from = datetime.utcnow()
         db.session.add(agent)
@@ -894,14 +948,18 @@ def delete_task(self, task_id):
 
 
 @celery_app.task(ignore_results=True, bind=True)
-def stop_task(self, task_id):
+def stop_task(self, task_id, agent_id=None, dissociate_agent=True):
     db.session.rollback()
     task = Task.query.filter_by(id=task_id).one()
     job = task.job
 
-    if (task.agent is not None and
-        task.state not in [WorkState.DONE, WorkState.FAILED]):
-        agent = task.agent
+    if ((task.agent is not None and
+         task.state not in [WorkState.DONE, WorkState.FAILED]) or
+        agent_id is not None):
+        if agent_id is not None:
+            agent = Agent.query.filter_by(id=agent_id).one()
+        else:
+            agent = task.agent
         try:
             response = requests.delete("%s/tasks/%s" %
                                             (agent.api_url(), task.id),
@@ -917,7 +975,7 @@ def stop_task(self, task_id):
                 raise ValueError("Unexpected return code on stopping task %s on "
                                  "agent %s: %s",
                                  task.id, agent.id, response.status_code)
-            else:
+            elif dissociate_agent:
                 task.agent = None
                 task.state = None
                 db.session.add(task)
