@@ -430,14 +430,12 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                                                          countdown=5)
             db.session.add(self)
         elif self.state != _WorkState.PAUSED:
-            logger.debug("Got at least one active task")
             num_running_tasks = db.session.query(Task).\
                 filter(Task.job == self,
                        Task.agent_id != None,
                        or_(
                             Task.state == WorkState.RUNNING,
                             Task.state == None)).count()
-            logger.debug("Got %s running tasks", num_running_tasks)
             if num_running_tasks == 0:
                 logger.debug("No running tasks in job %s (id %s), setting it "
                              "to queued", self.title, self.id)
