@@ -175,6 +175,11 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             "Preferably this value will be the fully qualified "
             "name instead of the base hostname alone.")
 
+    notes = db.Column(
+        db.Text,
+        default="",
+        doc="Free form notes about this agent")
+
     remote_ip = db.Column(
         IPv4Address, nullable=True,
         doc="the remote address which came in with the request")

@@ -129,7 +129,8 @@ def load_index(app_instance):
 def load_user_interface(app_instance):
     from pyfarm.master.user_interface.agents import (
         agents, single_agent, delete_single_agent, agent_add_software,
-        agent_delete_software, restart_single_agent, restart_multiple_agents)
+        agent_delete_software, restart_single_agent, restart_multiple_agents,
+        update_notes_for_agent, update_tags_in_agent)
     from pyfarm.master.user_interface.jobs import (
         jobs, delete_single_job, rerun_single_job, single_job, pause_single_job,
         unpause_single_job, alter_frames_in_single_job,
@@ -176,6 +177,12 @@ def load_user_interface(app_instance):
         "/agents/<uuid:agent_id>/software/<int:version_id>/delete",
         "single_agent_remove_software_ui",
         agent_delete_software, methods=("POST", ))
+    app_instance.add_url_rule("/agents/<uuid:agent_id>/notes",
+                              "update_agent_notes_ui",
+                              update_notes_for_agent, methods=("POST", ))
+    app_instance.add_url_rule("/agents/<uuid:agent_id>/tags",
+                              "update_agent_tags_ui",
+                              update_tags_in_agent, methods=("POST", ))
 
     app_instance.add_url_rule("/jobs/", "jobs_index_ui", jobs,
                               methods=("GET", ))
