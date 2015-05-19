@@ -569,6 +569,9 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         self.completion_notify_sent = False
         db.session.add(self)
 
+        for child in self.children:
+            child.rerun()
+
     def rerun_failed(self):
         """
         Makes this job rerun all its failed tasks.  Tasks that are done or are
@@ -584,6 +587,9 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         self.state = None
         self.completion_notify_sent = False
         db.session.add(self)
+
+        for child in self.children:
+            child.rerun_failed()
 
     @validates("ram", "cpus")
     def validate_resource(self, key, value):
