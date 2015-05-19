@@ -548,6 +548,10 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                 self.state = None
 
     def rerun(self):
+        """
+        Makes this job rerun all its task.  Tasks that are currently running are
+        left untouched.
+        """
         running_tasks = False
         for task in self.tasks:
             if task.state != _WorkState.RUNNING and task.state is not None:
@@ -566,6 +570,10 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         db.session.add(self)
 
     def rerun_failed(self):
+        """
+        Makes this job rerun all its failed tasks.  Tasks that are done or are
+        currently running are left untouched
+        """
         for task in self.tasks:
             if task.state == _WorkState.FAILED:
                 task.state = None
