@@ -212,6 +212,18 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             "`end`.  This column may also sometimes be referred to "
             "as 'step' by other software.")
 
+    tiles_x = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="How many regions to split frames into horizontally. If this is "
+            "set, tiles_y needs to be set as well.")
+
+    tiles_y = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="How many regions to split frames into vertically. If this is "
+            "set, tiles_x needs to be set as well.")
+
     batch = db.Column(
         db.Integer,
         default=config.get("job_default_batch"),

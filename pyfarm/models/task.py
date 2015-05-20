@@ -90,6 +90,22 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         nullable=False,
         doc="The frame this :class:`Task` will be executing.")
 
+    tile_x = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="When using tiled rendering, the x-coordinate for the tile this "
+            "task refers to, starting with zero for the left-most row of "
+            "tiles. If tiles_x is set on the this task belongs to, this must "
+            "be set as well. Otherwise, it must be unset.")
+
+    tile_y = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="When using tiled rendering, the y-coordinate for the tile this "
+            "task refers to, starting with zero for the upper-most column of "
+            "tiles. If tiles_y is set on the this task belongs to, this must "
+            "be set as well. Otherwise, it must be unset.")
+
     last_error = db.Column(
         db.UnicodeText,
         nullable=True,
