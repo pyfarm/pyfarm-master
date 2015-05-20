@@ -42,7 +42,7 @@ from pyfarm.models.core.types import JSONDict, IDTypeWork
 from pyfarm.models.core.cfg import (
     TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
     TABLE_JOB_TAG_ASSOC, MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCY,
-    TABLE_JOB_QUEUE, TABLE_USER, TABLE_JOB_NOTIFIED_USER)
+    TABLE_JOB_QUEUE, TABLE_USER, TABLE_JOB_NOTIFIED_USER, TABLE_JOB_GROUP)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin, UtilityMixins)
@@ -170,6 +170,12 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         db.ForeignKey("%s.id" % TABLE_JOB_QUEUE),
         nullable=True,
         doc="The foreign key which stores :class:`JobQueue.id`")
+
+    job_group_id = db.Column(
+        IDTypeWork,
+        db.ForeignKey("%s.id" % TABLE_JOB_GROUP),
+        nullable=True,
+        doc="The foreign key which stores:class:`JobGroup.id`")
 
     user_id = db.Column(
         db.Integer,
@@ -342,6 +348,11 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         "JobQueue",
         backref=db.backref("jobs", lazy="dynamic"),
         doc="The queue for this job")
+
+    group = db.relationship(
+        "JobGroup",
+        backref=db.backref("jobs", lazy="dynamic"),
+        doc="The job group this job belongs to")
 
     user = db.relationship(
         "User",

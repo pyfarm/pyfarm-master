@@ -64,6 +64,7 @@ from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.gpu import GPU
 from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
+from pyfarm.models.jobgroup import JobGroup
 from pyfarm.master.application import db
 from pyfarm.master.utility import default_json_encoder
 
@@ -875,6 +876,7 @@ def delete_task(self, task_id):
     task = None
     agent = None
     job = None
+    job_group = None
 
     retries = TRANSACTION_RETRIES
     deleted = False
@@ -884,6 +886,7 @@ def delete_task(self, task_id):
             job = task.job
             job_id = task.job_id
             agent = task.agent
+            job_group = job.group
 
             logger.info("Deleting task %s (job %s - \"%s\")",task.id, job.id,
                         job.title)
@@ -907,6 +910,7 @@ def delete_task(self, task_id):
 
     retries = TRANSACTION_RETRIES
     done = False
+    job_deleted = False
     while not done and retries > 0:
         try:
             job = Job.query.filter_by(id=job_id).one()
@@ -925,6 +929,7 @@ def delete_task(self, task_id):
                         job.id, job.jobtype_version.jobtype.name,
                         job.title, to)
                     db.session.delete(job)
+                    job_deleted = True
                 db.session.commit()
             done = True
 
@@ -939,6 +944,13 @@ def delete_task(self, task_id):
                              "InvalidRequestError %s times, giving up",
                              job_id, TRANSACTION_RETRIES)
                 raise
+
+    if job_deleted and job_group:
+        if job_group.jobs.count() == 0:
+            logger.info("Job group %s (id %s) has no jobs left, deleting",
+                        job_group.name, job_group.id)
+            db.session.delete(job_group)
+            db.session.commit()
 
     if (agent is not None and
         task.state not in [WorkState.DONE, WorkState.FAILED]):
@@ -1042,6 +1054,8 @@ def delete_job(job_id):
                        job.id)
         return
 
+    job_group = job.group
+
     tasks_query = Task.query.filter_by(job=job)
     async_deletes = 0
     for task in tasks_query:
@@ -1066,6 +1080,12 @@ def delete_job(job_id):
 
     db.session.commit()
 
+    if async_deletes == 0 and job_group:
+        if job_group.jobs.count() == 0:
+            logger.info("Job group %s (id %s) has no jobs left, deleting",
+                        job_group.name, job_group.id)
+            db.session.delete(job_group)
+            db.session.commit()
 
 @celery_app.task(ignore_results=True)
 def clean_up_orphaned_task_logs():

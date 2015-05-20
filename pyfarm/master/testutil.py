@@ -176,6 +176,7 @@ class BaseTestCase(TestCase):
         from pyfarm.models.user import User
         from pyfarm.models.jobqueue import JobQueue
         from pyfarm.models.gpu import GPU
+        from pyfarm.models.jobgroup import JobGroup
 
         # set ENVIRONMENT_SETUP so the tests will run
         cls.ENVIRONMENT_SETUP = True
