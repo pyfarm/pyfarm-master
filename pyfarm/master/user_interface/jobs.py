@@ -553,7 +553,7 @@ def pause_multiple_jobs():
     db.session.commit()
 
     for task_id in task_ids_to_stop:
-        stop_task.delay(task.id)
+        stop_task.delay(task_id)
     assign_tasks.delay()
 
     flash("Selected jobs will be paused.")
