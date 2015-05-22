@@ -22,9 +22,9 @@ from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
 from pyfarm.master.application import get_api_blueprint
+from pyfarm.master.config import config
 from pyfarm.master.entrypoints import load_api
 from pyfarm.models.jobgroup import JobGroup
-from pyfarm.models.core.cfg import  MAX_USERNAME_LENGTH, MAX_JOBTYPE_LENGTH
 
 
 jobtype_code = """from pyfarm.jobtypes.core.jobtype import JobType
@@ -76,9 +76,10 @@ class TestJobGroupAPI(BaseTestCase):
         response = self.client.get("/api/v1/jobgroups/schema")
         self.assert_ok(response)
         schema = JobGroup.to_schema()
-        schema["user"] = "VARCHAR(%s)" % MAX_USERNAME_LENGTH
+        schema["user"] = "VARCHAR(%s)" % config.get("max_username_length")
         del schema["user_id"]
-        schema["main_jobtype"] = "VARCHAR(%s)" % MAX_JOBTYPE_LENGTH
+        schema["main_jobtype"] = \
+            "VARCHAR(%s)" % config.get("job_type_max_name_length")
         del schema["main_jobtype_id"]
         self.assertEqual(response.json, schema)
 
