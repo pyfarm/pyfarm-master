@@ -360,6 +360,57 @@ class SingleJobGroupAPI(MethodView):
 
 class JobsInJobGroupIndexAPI(MethodView):
     def get(self, group_id):
+        """
+        A ``GET`` to this endpoint will return all jobs in the speicfied
+        jobgroup.
+
+        .. http:get:: /api/v1/jobgroups/<int:id>/jobs HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobgroups/2/jobs HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "jobs":
+                        [
+                            {
+                            "id": "12345",
+                            "title": "Test Job",
+                            "state": "queued",
+                            "jobtype_id": 5,
+                            "jobtype": "Test Jobtype",
+                            "tasks_queued": 5,
+                            "tasks_running": 0,
+                            "tasks_done": 0,
+                            "tasks_failed": 0
+                            }
+                        ]
+                }
+
+        :statuscode 200: no error
+        :statuscode 404: the requested job group was not found
+        """
+        jobgroup = JobGroup.query.filter_by(id=group_id).first()
+
+        if not jobgroup:
+            return (jsonify(error="Requested job group %s not found" % group_id),
+                    NOT_FOUND)
+
+        jobgroup_data = jobgroup.to_dict()
+        jobgroup_data.pop("user_id", None)
+        jobgroup_data.pop("main_jobtype_id", None)
+
+        return jsonify(jobgroup_data), OK
         jobgroup = JobGroup.query.filter_by(id=group_id).first()
 
         if not jobgroup:
