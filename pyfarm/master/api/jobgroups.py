@@ -466,6 +466,6 @@ class JobsInJobGroupIndexAPI(MethodView):
                  "tasks_queued": t_queued,
                  "tasks_running": t_running,
                  "tasks_done": t_done,
-                 "tasks_failed": t_failed,})
+                 "tasks_failed": t_failed})
 
         return jsonify(out), OK
