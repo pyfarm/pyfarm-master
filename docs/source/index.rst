@@ -11,6 +11,7 @@ PyFarm.
     :maxdepth: 3
 
     commands
+    configuration
     environment
     modules/pyfarm.master
     modules/pyfarm.models
