@@ -310,7 +310,7 @@ class AgentIndexAPI(MethodView):
                 return jsonify(error=error), INTERNAL_SERVER_ERROR
 
             else:
-                agent_data = agent.to_dict(unpack_relationships=False)
+                agent_data = agent.to_dict(unpack_relationships=["tags"])
                 logger.info("Created agent %r: %r", agent.id, agent_data)
                 assign_tasks.delay()
                 return jsonify(agent_data), CREATED
@@ -392,7 +392,7 @@ class AgentIndexAPI(MethodView):
                            INTERNAL_SERVER_ERROR
 
                 else:
-                    agent_data = agent.to_dict(unpack_relationships=False)
+                    agent_data = agent.to_dict(unpack_relationships=["tags"])
                     logger.info("Updated agent %r: %r", agent.id, agent_data)
                     for task in failed_tasks:
                         task.job.update_state()
@@ -594,7 +594,7 @@ class SingleAgentAPI(MethodView):
         """
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is not None:
-            return jsonify(agent.to_dict(unpack_relationships=False))
+            return jsonify(agent.to_dict(unpack_relationships=["tags"]))
         else:
             return jsonify(error="Agent %s not found" % agent_id), NOT_FOUND
 
@@ -778,7 +778,7 @@ class SingleAgentAPI(MethodView):
 
         assign_tasks_to_agent.delay(agent_id)
 
-        return jsonify(agent.to_dict(unpack_relationships=False)), OK
+        return jsonify(agent.to_dict(unpack_relationships=["tags"])), OK
 
     def delete(self, agent_id):
         """
