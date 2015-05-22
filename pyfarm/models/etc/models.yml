@@ -125,6 +125,10 @@ max_tag_length: 64
 max_hostname_length: 255
 
 
+# The maximum length of a job group's name.
+max_jobgroup_name_length: 255
+
+
 # The maximum length of the operating system's name for an agent.
 max_osname_length: 128
 

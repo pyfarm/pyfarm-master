@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2015 Ambient Entertainment GmbH & Co. KG
+# Copyright 2015 Oliver Palmer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,27 +21,29 @@ Job Group Model
 
 Model for job groups
 """
+
 from pyfarm.master.application import db
-from pyfarm.models.core.cfg import (
-    TABLE_JOB_GROUP, TABLE_JOB_TYPE, TABLE_USER, MAX_JOBGROUP_NAME_LENGTH)
+from pyfarm.master.config import config
 from pyfarm.models.core.mixins import UtilityMixins
 from pyfarm.models.core.types import id_column, IDTypeWork
+
 
 class JobGroup(db.Model, UtilityMixins):
     """
     Used to group jobs together for better presentation in the UI
     """
-    __tablename__ = TABLE_JOB_GROUP
+    __tablename__ = config.get("table_job_group")
 
     id = id_column(IDTypeWork)
-    title = db.Column(db.String(MAX_JOBGROUP_NAME_LENGTH), nullable=False)
+    title = db.Column(
+        db.String(config.get("max_jobgroup_name_length")), nullable=False)
     main_jobtype_id = db.Column(IDTypeWork,
-                                db.ForeignKey("%s.id" % TABLE_JOB_TYPE),
+                                db.ForeignKey("%s.id" % config.get("table_user")),
                                 nullable=False,
                                 doc="ID of the jobtype of the main job in this "
                                     "group. Purely for display and "
                                     "filtering.")
-    user_id = db.Column(db.Integer, db.ForeignKey("%s.id" % TABLE_USER),
+    user_id = db.Column(db.Integer, db.ForeignKey("%s.id" % config.get("table_user")),
                         doc="The id of the user who owns these jobs")
     main_jobtype = db.relationship("JobType",
                                    backref=db.backref("jobgroups",
