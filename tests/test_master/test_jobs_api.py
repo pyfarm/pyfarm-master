@@ -190,6 +190,8 @@ class TestJobAPI(BaseTestCase):
                             "children": [],
                             "to_be_deleted": False,
                             "autodelete_time": None,
+                            "job_group_id": None,
+                            "jobgroup": None,
                             "completion_notify_sent": False
                          })
 
@@ -222,6 +224,8 @@ class TestJobAPI(BaseTestCase):
                         {
                             "id": id,
                             "jobqueue": None,
+                            "job_group_id": None,
+                            "jobgroup": None,
                             "time_finished": None,
                             "time_started": None,
                             "end": 2.0,
@@ -499,6 +503,8 @@ class TestJobAPI(BaseTestCase):
                         {
                             "id": id,
                             "jobqueue": None,
+                            "job_group_id": None,
+                            "jobgroup": None,
                             "time_finished": None,
                             "time_started": None,
                             "end": 2.0,
@@ -633,6 +639,8 @@ class TestJobAPI(BaseTestCase):
                             "time_finished": None,
                             "start": 1.0,
                             "id": id,
+                            "job_group_id": None,
+                            "jobgroup": None,
                             "notes": "",
                             "notified_users": [],
                             "output_link": None,
@@ -675,6 +683,8 @@ class TestJobAPI(BaseTestCase):
                             "time_finished": None,
                             "start": 1.0,
                             "id": id,
+                            "job_group_id": None,
+                            "jobgroup": None,
                             "notes": "",
                             "notified_users": [],
                             "output_link": None,
@@ -757,6 +767,8 @@ class TestJobAPI(BaseTestCase):
                             "time_finished": None,
                             "start": 2.0,
                             "id": id,
+                            "job_group_id": None,
+                            "jobgroup": None,
                             "notes": "",
                             "ram": 64,
                             "tags": [],

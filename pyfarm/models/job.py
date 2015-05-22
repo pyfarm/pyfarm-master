@@ -153,6 +153,12 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         nullable=True,
         doc="The foreign key which stores :class:`JobQueue.id`")
 
+    job_group_id = db.Column(
+        IDTypeWork,
+        db.ForeignKey("%s.id" % config.get("table_job_group")),
+        nullable=True,
+        doc="The foreign key which stores:class:`JobGroup.id`")
+
     user_id = db.Column(
         db.Integer,
         db.ForeignKey("%s.id" % config.get("table_user")),
@@ -324,6 +330,11 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         "JobQueue",
         backref=db.backref("jobs", lazy="dynamic"),
         doc="The queue for this job")
+
+    group = db.relationship(
+        "JobGroup",
+        backref=db.backref("jobs", lazy="dynamic"),
+        doc="The job group this job belongs to")
 
     user = db.relationship(
         "User",
@@ -529,6 +540,55 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         if frames_to_create:
             if self.state != WorkState.RUNNING:
                 self.state = None
+
+    def rerun(self):
+        """
+        Makes this job rerun all its task.  Tasks that are currently running are
+        left untouched.
+        """
+        running_tasks = False
+        for task in self.tasks:
+            if task.state != _WorkState.RUNNING and task.state is not None:
+                task.state = None
+                task.agent = None
+                task.failures = 0
+                db.session.add(task)
+            elif task.state == _WorkState.RUNNING or task.agent is not None:
+                running_tasks = True
+
+        if not running_tasks:
+            self.state = None
+        else:
+            self.state = WorkState.RUNNING
+        self.completion_notify_sent = False
+        db.session.add(self)
+
+        for child in self.children:
+            child.rerun()
+
+    def rerun_failed(self):
+        """
+        Makes this job rerun all its failed tasks.  Tasks that are done or are
+        currently running are left untouched
+        """
+        running_tasks = False
+        for task in self.tasks:
+            if task.state == _WorkState.FAILED:
+                task.state = None
+                task.agent = None
+                task.failures = 0
+                db.session.add(task)
+            elif (task.state == _WorkState.RUNNING or
+                  task.state is None and task.agent is not None):
+                running_tasks = True
+
+        if not running_tasks:
+            self.state = None
+        self.completion_notify_sent = False
+        db.session.add(self)
+
+        for child in self.children:
+            child.rerun_failed()
 
     @validates("ram", "cpus")
     def validate_resource(self, key, value):

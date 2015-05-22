@@ -58,6 +58,7 @@ from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.pathmap import PathMap
 from pyfarm.models.tasklog import TaskLog
 from pyfarm.models.gpu import GPU
+from pyfarm.models.jobgroup import JobGroup
 
 logger = getLogger("master.entrypoints")
 
@@ -129,7 +130,8 @@ def load_index(app_instance):
 def load_user_interface(app_instance):
     from pyfarm.master.user_interface.agents import (
         agents, single_agent, delete_single_agent, agent_add_software,
-        agent_delete_software, restart_single_agent, restart_multiple_agents)
+        agent_delete_software, restart_single_agent, restart_multiple_agents,
+        update_notes_for_agent, update_tags_in_agent)
     from pyfarm.master.user_interface.jobs import (
         jobs, delete_single_job, rerun_single_job, single_job, pause_single_job,
         unpause_single_job, alter_frames_in_single_job,
@@ -151,6 +153,7 @@ def load_user_interface(app_instance):
         software, software_item, update_version_rank, remove_software_version,
         add_software_version, add_software, remove_software,
         update_version_default_status)
+    from pyfarm.master.user_interface.jobgroups import jobgroups
 
     farm_name = config.get("farm_name")
     app_instance.jinja_env.globals.update({"farm_name": farm_name})
@@ -176,6 +179,12 @@ def load_user_interface(app_instance):
         "/agents/<uuid:agent_id>/software/<int:version_id>/delete",
         "single_agent_remove_software_ui",
         agent_delete_software, methods=("POST", ))
+    app_instance.add_url_rule("/agents/<uuid:agent_id>/notes",
+                              "update_agent_notes_ui",
+                              update_notes_for_agent, methods=("POST", ))
+    app_instance.add_url_rule("/agents/<uuid:agent_id>/tags",
+                              "update_agent_tags_ui",
+                              update_tags_in_agent, methods=("POST", ))
 
     app_instance.add_url_rule("/jobs/", "jobs_index_ui", jobs,
                               methods=("GET", ))
@@ -317,6 +326,8 @@ def load_user_interface(app_instance):
                               "delete_single_software_ui",
                               remove_software, methods=("POST", ))
 
+    app_instance.add_url_rule("/jobgroups/",
+                              "jobgroups_index_ui", jobgroups, methods=("GET", ))
 
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
@@ -341,6 +352,8 @@ def load_api(app_instance, api_instance):
         schema as pathmap_schema, PathMapIndexAPI, SinglePathMapAPI)
     from pyfarm.master.api.tasklogs import (
         LogsInTaskAttemptsIndexAPI, SingleLogInTaskAttempt, TaskLogfileAPI)
+    from pyfarm.master.api.jobgroups import (
+        schema as jobgroups_schema, JobGroupIndexAPI, SingleJobGroupAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -364,6 +377,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/pathmaps/",
         view_func=PathMapIndexAPI.as_view("pathmap_index_api"))
+    api_instance.add_url_rule(
+        "/jobgroups/",
+        view_func=JobGroupIndexAPI.as_view("jobgroup_index_api"))
 
     # schemas
     api_instance.add_url_rule(
@@ -387,6 +403,9 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/pathmaps/schema",
         "pathmap_schema", view_func=pathmap_schema, methods=("GET", ))
+    api_instance.add_url_rule(
+        "/jobgroups/schema",
+        "jobgroups_schema", view_func=jobgroups_schema, methods=("GET", ))
 
     # specific item access
     api_instance.add_url_rule(
@@ -429,6 +448,10 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/pathmaps/<int:pathmap_id>",
         view_func=SinglePathMapAPI.as_view("single_pathmap_by_id_api"))
+
+    api_instance.add_url_rule(
+        "/jobgroups/<int:group_id>",
+        view_func=SingleJobGroupAPI.as_view("single_jobgroup_api"))
 
     # special case for jobype/code
     api_instance.add_url_rule(

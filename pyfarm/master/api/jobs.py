@@ -468,6 +468,7 @@ class JobIndexAPI(MethodView):
         del job_data["user_id"]
         job_data["jobqueue"] = job.queue.path() if job.queue else None
         del job_data["job_queue_id"]
+        job_data["jobgroup"] = job.group.title if job.group else None
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()
@@ -655,6 +656,7 @@ class SingleJobAPI(MethodView):
         del job_data["user_id"]
         job_data["jobqueue"] = job.queue.path() if job.queue else None
         del job_data["job_queue_id"]
+        job_data["jobgroup"] = job.group.title if job.group else None
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()
@@ -843,6 +845,11 @@ class SingleJobAPI(MethodView):
                            "`jobtype_version_id` cannot be set manually"),
                     BAD_REQUEST)
 
+        if "jobgroup" in g.json:
+            return (jsonify(error=
+                           "`jobgroup` cannot be set directly, use "
+                           " job_group_id."), BAD_REQUEST)
+
         for name in Job.types().columns:
             if name in g.json:
                 type = Job.types().mappings[name]
@@ -885,6 +892,7 @@ class SingleJobAPI(MethodView):
         del job_data["user_id"]
         job_data["jobqueue"] = job.queue.path if job.queue else None
         del job_data["job_queue_id"]
+        job_data["jobgroup"] = job.group.title if job.group else None
         if job.state is None:
             num_assigned_tasks = Task.query.filter(Task.job == job,
                                                    Task.agent != None).count()

@@ -56,16 +56,10 @@ else:
 
 
 def get_package_data(*package_data_roots):
-    packge_data_roots = (
-        join("pyfarm", "master", "etc"),
-        join("pyfarm", "master", "static"),
-        join("pyfarm", "master", "templates"),
-        join("pyfarm", "master", "api", "templates"),
-        join("pyfarm", "master", "api", "static"))
     package_root = commonprefix(package_data_roots)
 
     output = []
-    for top in packge_data_roots:
+    for top in package_data_roots:
         for root, dirs, files in walk(top):
             for filename in files:
                 output.append(join(root, filename).split(package_root)[-1][1:])

@@ -231,6 +231,27 @@
       {% endfor %}
     </ul>
   </div>
+  <div class="btn-group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="priorities-dropdown-menu" aria-expanded="true">
+      Prio <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-form" role="menu" aria-labelledby="priorities-dropdown-menu">
+      {% for priority in priorities %}
+      <li>
+        <nobr>
+          <label class="checkbox">
+            {% if priority in filters.p %}
+            <input type="checkbox" name="p" value="{{ priority }}" checked/>
+            {% else %}
+            <input type="checkbox" name="p" value="{{ priority }}"/>
+            {% endif %}
+            {{ priority }}
+          </label>
+        </nobr>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
   <label for="per_page" title="Zero or negative values for no pagination">Per page</label>
   <input type="text" class="form-control" id="per_page" name="per_page" value="{{ filters.per_page }}" placeholder="Number" size="4" style="width: 5em;"/>
 
