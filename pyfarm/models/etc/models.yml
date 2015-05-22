@@ -83,7 +83,7 @@ table_user_role: ${table_prefix}user_roles
 table_job_queue: ${table_prefix}job_queues
 
 # The name of the table containing job groups
-table_job_group: ${table_prefix}
+table_job_group: ${table_prefix}job_groups
 
 # The name of the table containing path mappings
 table_path_map: ${table_prefix}path_maps
