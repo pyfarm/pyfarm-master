@@ -132,7 +132,8 @@ class JobGroupIndexAPI(MethodView):
         user = User.query.filter_by(username=username).first()
         if not user and AUTOCREATE_USERS:
             user = User(username=username)
-            user.email = AUTO_USER_EMAIL.format(username=username)
+            if AUTO_USER_EMAIL:
+                user.email = AUTO_USER_EMAIL.format(username=username)
             db.session.add(user)
             logger.warning("User %s was autocreated on job group create",
                            username)
