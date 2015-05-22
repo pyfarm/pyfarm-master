@@ -40,8 +40,7 @@ class JobGroup(db.Model, UtilityMixins):
     title = db.Column(
         db.String(MAX_JOBGROUP_NAME_LENGTH),
         nullable=False,
-        doc="The title of the job group's name"
-    )
+        doc="The title of the job group's name")
 
     main_jobtype_id = db.Column(
         IDTypeWork,
@@ -53,8 +52,7 @@ class JobGroup(db.Model, UtilityMixins):
     user_id = db.Column(
         db.Integer,
         db.ForeignKey("%s.id" % TABLE_USER),
-        doc="The id of the user who owns these jobs"
-    )
+        doc="The id of the user who owns these jobs")
 
     #
     # Relationships
@@ -67,5 +65,4 @@ class JobGroup(db.Model, UtilityMixins):
     user = db.relationship(
         "User",
         backref=db.backref("jobgroups", lazy="dynamic"),
-        doc="The user who owns these jobs"
-    )
+        doc="The user who owns these jobs")
