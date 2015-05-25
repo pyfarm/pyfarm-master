@@ -50,7 +50,7 @@ class JobGroup(db.Model, UtilityMixins):
 
     user_id = db.Column(
         db.Integer,
-        db.ForeignKey("%s.id" % "%s.id" % config.get("table_user")),
+        db.ForeignKey("%s.id" % config.get("table_user")),
         doc="The id of the user who owns these jobs")
 
     #
