@@ -35,22 +35,33 @@ class JobGroup(db.Model, UtilityMixins):
     __tablename__ = config.get("table_job_group")
 
     id = id_column(IDTypeWork)
+
     title = db.Column(
-        db.String(config.get("max_jobgroup_name_length")), nullable=False)
-    main_jobtype_id = db.Column(IDTypeWork,
-                                db.ForeignKey("%s.id" % config.get("table_job_type")),
-                                nullable=False,
-                                doc="ID of the jobtype of the main job in this "
-                                    "group. Purely for display and "
-                                    "filtering.")
-    user_id = db.Column(db.Integer, db.ForeignKey("%s.id" % config.get("table_user")),
-                        doc="The id of the user who owns these jobs")
-    main_jobtype = db.relationship("JobType",
-                                   backref=db.backref("jobgroups",
-                                                      lazy="dynamic"),
-                                   doc="The jobtype of the main job in this "
-                                       "group")
-    user = db.relationship("User",
-                           backref=db.backref("jobgroups",
-                                              lazy="dynamic"),
-                           doc="The user who owns these jobs")
+        db.String(config.get("max_jobgroup_name_length")),
+        nullable=False,
+        doc="The title of the job group's name")
+
+    main_jobtype_id = db.Column(
+        IDTypeWork,
+        db.ForeignKey("%s.id" % config.get("table_job_type")),
+        nullable=False,
+        doc="ID of the jobtype of the main job in this "
+            "group. Purely for display and filtering.")
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("%s.id" % "%s.id" % config.get("table_user")),
+        doc="The id of the user who owns these jobs")
+
+    #
+    # Relationships
+    #
+    main_jobtype = db.relationship(
+        "JobType",
+        backref=db.backref("jobgroups", lazy="dynamic"),
+        doc="The jobtype of the main job in this group")
+
+    user = db.relationship(
+        "User",
+        backref=db.backref("jobgroups", lazy="dynamic"),
+        doc="The user who owns these jobs")
