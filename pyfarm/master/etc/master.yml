@@ -76,7 +76,7 @@ api_prefix: /api/v1
 
 
 # The URL template we use to communicate with the agent.
-agent_api_url_template: http://${host}:${port}/api/v1
+agent_api_url_template: http://{host}:{port}/api/v1
 
 
 
