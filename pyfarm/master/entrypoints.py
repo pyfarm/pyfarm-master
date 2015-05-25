@@ -674,7 +674,10 @@ def run_master():  # pragma: no cover
 
     load_setup(app)
     load_master(app, api)
-    app.run(host=config.get("flask_listen_address"))
+    app.run(
+        host=config.get("flask_listen_address"),
+        debug=config.get("debug")
+    )
 
 
 def create_app():
