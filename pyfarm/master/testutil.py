@@ -52,73 +52,8 @@ except ImportError:
 from flask import Response, json_available
 from sqlalchemy.exc import SAWarning
 from werkzeug.utils import cached_property
-from werkzeug.datastructures import ImmutableDict
 
 from pyfarm.master.application import get_application, db, before_request
-
-TEST_ENVIRONMENT = ImmutableDict({
-    "PYFARM_DB_PREFIX": "test%s_" % time.strftime("%M%d%Y%H%M%S"),
-    "PYFARM_DB_MAX_USERNAME_LENGTH": "254",
-
-    # agent port
-    "PYFARM_AGENT_MIN_PORT": "1024",
-    "PYFARM_AGENT_MAX_PORT": "65535",
-
-    # agent cpus
-    "PYFARM_AGENT_MIN_CPUS": "1",
-    "PYFARM_AGENT_MAX_CPUS": "256",
-    "PYFARM_AGENT_SPECIAL_CPUS": "[0]",
-
-    # agent ram
-    "PYFARM_AGENT_MIN_RAM": "16",
-    "PYFARM_AGENT_MAX_RAM": "262144",
-    "PYFARM_AGENT_SPECIAL_RAM": "[0]",
-
-    # priority
-    "PYFARM_QUEUE_DEFAULT_PRIORITY": "0",
-    "PYFARM_QUEUE_MIN_PRIORITY": "-1000",
-    "PYFARM_QUEUE_MAX_PRIORITY": "1000",
-
-    # batching
-    "PYFARM_QUEUE_DEFAULT_BATCH": "1",
-    "PYFARM_QUEUE_MIN_BATCH": "1",
-    "PYFARM_QUEUE_MAX_BATCH": "64",
-
-    # requeue
-    "PYFARM_QUEUE_DEFAULT_REQUEUE": "3",
-    "PYFARM_QUEUE_MIN_REQUEUE": "0",
-    "PYFARM_QUEUE_MAX_REQUEUE": "10",
-
-    # cpus
-    "PYFARM_QUEUE_DEFAULT_CPUS": "1",
-    "PYFARM_QUEUE_MIN_CPUS": "1",  # copied from above
-    "PYFARM_QUEUE_MAX_CPUS": "256",  # copied from above
-
-    # ram
-    "PYFARM_QUEUE_DEFAULT_RAM": "32",
-    "PYFARM_QUEUE_MIN_RAM": "16",  # copied from above
-    "PYFARM_QUEUE_MAX_RAM": "262144"  # copied from above
-})
-
-
-def get_test_environment(**environment):
-    """
-    Returns a dictionary that can be used to simulate a working
-    environment.  Any key/value pairs passed in as keyword arguments
-    will override the defaults.
-    """
-    assert isinstance(environment, (dict, UserDict))
-    environment = environment.copy()
-
-    for key, value in TEST_ENVIRONMENT.items():
-        environment.setdefault(key, value)
-
-    # if "PYFARM_DATABASE_URI" not in os.environ:
-    environment.setdefault(
-        "PYFARM_DATABASE_URI",
-        os.environ.get("PYFARM_DATABASE_URI", "sqlite:///:memory:"))
-
-    return environment
 
 
 class JsonResponseMixin(object):
@@ -158,10 +93,7 @@ class BaseTestCase(TestCase):
         .. warning::
             This classmethod should not be used outside of a testing context
         """
-        # populate the environment
-        environment = get_test_environment(**cls.ORIGINAL_ENVIRONMENT)
-        for key, value in environment.items():
-            os.environ.setdefault(key, value)
+        
 
         # import all the models we have so the relationships
         # can be setup properly
