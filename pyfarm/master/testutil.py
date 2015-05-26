@@ -93,6 +93,10 @@ class BaseTestCase(TestCase):
         .. warning::
             This classmethod should not be used outside of a testing context
         """
+        # Override the table prefix so tests are not done in the same table
+        # namespace as other tests.  Note that although 'db' is imported
+        # up above the table prefix itself is not used until the models
+        # are initially imported (below).
         from pyfarm.master.config import config
         config["table_prefix"] = "test%s_" % time.strftime("%M%d%Y%H%M%S")
 
