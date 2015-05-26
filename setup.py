@@ -61,7 +61,6 @@ def get_package_data(*package_data_roots):
     output = []
     for top in package_data_roots:
         for root, dirs, files in walk(top):
-            print("root: %s" % root)
             for filename in files:
                 output.append(relpath(join(root, filename), package_root))
 
