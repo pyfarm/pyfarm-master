@@ -30,11 +30,15 @@ except ImportError:  # pragma: no cover
 from flask.views import MethodView
 from flask import g
 
+from sqlalchemy import func, asc
+
 from pyfarm.core.config import read_env_bool, read_env
 from pyfarm.core.logger import getLogger
+from pyfarm.core.enums import WorkState
 from pyfarm.models.user import User
 from pyfarm.models.jobtype import JobType
 from pyfarm.models.job import Job
+from pyfarm.models.task import Task
 from pyfarm.models.jobgroup import JobGroup
 from pyfarm.models.core.cfg import  MAX_USERNAME_LENGTH, MAX_JOBTYPE_LENGTH
 from pyfarm.master.utility import jsonify, validate_with_model
@@ -353,3 +357,115 @@ class SingleJobGroupAPI(MethodView):
         logger.info("Deleted job group %s", jobgroup.title)
 
         return jsonify(), NO_CONTENT
+
+class JobsInJobGroupIndexAPI(MethodView):
+    def get(self, group_id):
+        """
+        A ``GET`` to this endpoint will return all jobs in the speicfied
+        jobgroup.
+
+        .. http:get:: /api/v1/jobgroups/<int:id>/jobs HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobgroups/2/jobs HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "jobs":
+                        [
+                            {
+                            "id": "12345",
+                            "title": "Test Job",
+                            "state": "queued",
+                            "jobtype_id": 5,
+                            "jobtype": "Test Jobtype",
+                            "tasks_queued": 5,
+                            "tasks_running": 0,
+                            "tasks_done": 0,
+                            "tasks_failed": 0
+                            }
+                        ]
+                }
+
+        :statuscode 200: no error
+        :statuscode 404: the requested job group was not found
+        """
+        jobgroup = JobGroup.query.filter_by(id=group_id).first()
+
+        if not jobgroup:
+            return (jsonify(error="Requested job group %s not found" % group_id),
+                    NOT_FOUND)
+
+        jobgroup_data = jobgroup.to_dict()
+        jobgroup_data.pop("user_id", None)
+        jobgroup_data.pop("main_jobtype_id", None)
+
+        return jsonify(jobgroup_data), OK
+        jobgroup = JobGroup.query.filter_by(id=group_id).first()
+
+        if not jobgroup:
+            return (jsonify(error="Requested job group %s not found" % group_id),
+                    NOT_FOUND)
+
+        queued_count_query = db.session.query(
+            Task.job_id, func.count('*').label('t_queued')).\
+                filter(Task.state == None).group_by(Task.job_id).subquery()
+        running_count_query = db.session.query(
+            Task.job_id, func.count('*').label('t_running')).\
+                filter(Task.state == WorkState.RUNNING).\
+                    group_by(Task.job_id).subquery()
+        done_count_query = db.session.query(
+            Task.job_id, func.count('*').label('t_done')).\
+                filter(Task.state == WorkState.DONE).\
+                    group_by(Task.job_id).subquery()
+        failed_count_query = db.session.query(
+            Task.job_id, func.count('*').label('t_failed')).\
+                filter(Task.state == WorkState.FAILED).\
+                    group_by(Task.job_id).subquery()
+        jobs_query = db.session.query(
+            Job,
+            func.coalesce(
+                queued_count_query.c.t_queued,
+                0).label('t_queued'),
+            func.coalesce(
+                running_count_query.c.t_running,
+                0).label('t_running'),
+            func.coalesce(
+                done_count_query.c.t_done,
+                0).label('t_done'),
+            func.coalesce(
+                failed_count_query.c.t_failed,
+                0).label('t_failed')).\
+            outerjoin(queued_count_query,
+                      Job.id == queued_count_query.c.job_id).\
+            outerjoin(running_count_query,
+                      Job.id == running_count_query.c.job_id).\
+            outerjoin(done_count_query, Job.id == done_count_query.c.job_id).\
+            outerjoin(failed_count_query, Job.id == failed_count_query.c.job_id).\
+            filter(Job.group == jobgroup).\
+            order_by(asc(Job.time_submitted)).all()
+
+        out = {"jobs": []}
+        for job, t_queued, t_running, t_done, t_failed in jobs_query:
+            out["jobs"].append(
+                {"id": job.id,
+                 "title": job.title,
+                 "state": str(job.state) or "queued",
+                 "jobtype_id": job.jobtype_version.jobtype_id,
+                 "jobtype": job.jobtype_version.jobtype.name,
+                 "tasks_queued": t_queued,
+                 "tasks_running": t_running,
+                 "tasks_done": t_done,
+                 "tasks_failed": t_failed})
+
+        return jsonify(out), OK

@@ -353,7 +353,8 @@ def load_api(app_instance, api_instance):
     from pyfarm.master.api.tasklogs import (
         LogsInTaskAttemptsIndexAPI, SingleLogInTaskAttempt, TaskLogfileAPI)
     from pyfarm.master.api.jobgroups import (
-        schema as jobgroups_schema, JobGroupIndexAPI, SingleJobGroupAPI)
+        schema as jobgroups_schema, JobGroupIndexAPI, SingleJobGroupAPI,
+        JobsInJobGroupIndexAPI)
 
     # top level types
     api_instance.add_url_rule(
@@ -595,6 +596,11 @@ def load_api(app_instance, api_instance):
         "/jobs/<int:job_id>/tasks/<int:task_id>/attempts/<int:attempt>/logs/"
         "<string:log_identifier>/logfile",
         view_func=TaskLogfileAPI.as_view("task_log_file_api"))
+
+    # Jobs in job groups
+    api_instance.add_url_rule(
+        "/jobgroups/<int:group_id>/jobs",
+        view_func=JobsInJobGroupIndexAPI.as_view("jobs_in_group_index_api"))
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)
