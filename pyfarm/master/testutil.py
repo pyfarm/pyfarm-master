@@ -93,7 +93,8 @@ class BaseTestCase(TestCase):
         .. warning::
             This classmethod should not be used outside of a testing context
         """
-        
+        from pyfarm.master.config import config
+        config["table_prefix"] = "test%s_" % time.strftime("%M%d%Y%H%M%S")
 
         # import all the models we have so the relationships
         # can be setup properly
