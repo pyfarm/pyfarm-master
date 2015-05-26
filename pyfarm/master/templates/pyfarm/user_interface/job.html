@@ -57,11 +57,21 @@
             <td>
               Output
             </td>
-            <td class="timestamp">
+            <td>
               {% if job.output_link %}
               <a href="{{ job.output_link }}">
                 {{ job.output_link if job.output_link }}
               </a>
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>
+              User
+            </td>
+            <td>
+              {% if job.user %}
+              {{ job.user.username }}
               {% endif %}
             </td>
           </tr>
@@ -352,6 +362,14 @@
             </td>
             <td>
               <input type="text" class="form-control" name="requeue" value="{{ job.requeue }}"/>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Minimum RAM (KB)
+            </td>
+            <td>
+              <input type="text" class="form-control" name="minimum_ram" value="{{ job.ram }}"/>
             </td>
           </tr>
           <tr>
