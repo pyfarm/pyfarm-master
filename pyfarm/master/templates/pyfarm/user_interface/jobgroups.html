@@ -4,6 +4,9 @@
 {% block additional_styles %}
 <link href="{{ url_for('static', filename='css/jobgroups.css') }}" rel="stylesheet">
 {% endblock %}
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/jobgroups.js') }}" type="text/javascript"></script>
+{% endblock %}
 {% block content %}
 
 <form method="GET" action="{{ url_for('jobgroups_index_ui') }}" class="form-inline" role="form" style="margin-top: 15px;">
@@ -255,6 +258,7 @@
   <tr>
     <td>
       {{ jobgroup.title }}
+      <span class="glyphicon glyphicon-circle-arrow-down clickable-icon jobs_toggle" data-jobgroupid="{{ jobgroup.id }}" data-open=false></span>
     </td>
     <td><a href="{{ url_for('single_jobtype_ui', jobtype_id=jobgroup.main_jobtype_id) }}">{{ main_jobtype_name }}</a></td>
     <td>
