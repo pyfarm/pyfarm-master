@@ -18,7 +18,7 @@ $(document).ready(function() {
                         var subjob_row = $(
                             "<tr>"+
                               "<td>"+
-                                "<span class='glyphicon' title='failed'></span>"+
+                                "<span class='glyphicon' title='failed'></span> "+
                                 "<a href='/jobs/"+s["id"]+"'>"+s["title"]+"</td>"+
                               "<td>"+s["jobtype"]+"</td>"+
                             "</tr>");
