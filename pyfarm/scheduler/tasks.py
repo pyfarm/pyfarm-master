@@ -289,6 +289,7 @@ def send_tasks_to_agent(self, agent_id):
             else:
                 for task in tasks:
                     task.sent_to_agent = True
+                    task.last_error = None
                     db.session.add(task)
                 db.session.commit()
 
