@@ -517,7 +517,7 @@
               <span class="glyphicon glyphicon-pause" title="paused"></span>
               {% endif %}
               {{ task.frame }}
-              {% if task.tile %}
+              {% if task.tile != None %}
               / {{ task.tile }}
               {% endif %}
             </td>
