@@ -193,8 +193,7 @@ class TestJobAPI(BaseTestCase):
                             "job_group_id": None,
                             "jobgroup": None,
                             "completion_notify_sent": False,
-                            "tiles_x": None,
-                            "tiles_y": None
+                            "num_tiles": None
                          })
 
     def test_job_post_with_notified_users(self):
@@ -271,8 +270,7 @@ class TestJobAPI(BaseTestCase):
                             "to_be_deleted": False,
                             "autodelete_time": None,
                             "completion_notify_sent": False,
-                            "tiles_x": None,
-                            "tiles_y": None
+                            "num_tiles": None
                          })
 
     def test_job_post_bad_requirements(self):
@@ -543,8 +541,7 @@ class TestJobAPI(BaseTestCase):
                             "to_be_deleted": False,
                             "autodelete_time": None,
                             "completion_notify_sent": False,
-                            "tiles_x": None,
-                            "tiles_y": None
+                            "num_tiles": None
                          })
 
     def test_job_post_unknown_type(self):
@@ -668,8 +665,7 @@ class TestJobAPI(BaseTestCase):
                             "to_be_deleted": False,
                             "autodelete_time": None,
                             "completion_notify_sent": False,
-                            "tiles_x": None,
-                            "tiles_y": None
+                            "num_tiles": None
                         })
 
         response4 = self.client.get("/api/v1/jobs/%s" % id)
@@ -714,8 +710,7 @@ class TestJobAPI(BaseTestCase):
                             "to_be_deleted": False,
                             "autodelete_time": None,
                             "completion_notify_sent": False,
-                            "tiles_x": None,
-                            "tiles_y": None
+                            "num_tiles": None
                         })
 
     def test_job_get_unknown(self):
@@ -798,8 +793,7 @@ class TestJobAPI(BaseTestCase):
                             "to_be_deleted": False,
                             "autodelete_time": None,
                             "completion_notify_sent": False,
-                            "tiles_x": None,
-                            "tiles_y": None
+                            "num_tiles": None
                         })
 
         response4 = self.client.post(
@@ -1080,8 +1074,7 @@ class TestJobAPI(BaseTestCase):
                                 "agent_id": None,
                                 "last_error": None,
                                 "sent_to_agent": False,
-                                "tile_x": None,
-                                "tile_y": None
+                                "tile": None
 
                              },
                              {
@@ -1100,8 +1093,7 @@ class TestJobAPI(BaseTestCase):
                                 "agent_id": None,
                                 "last_error": None,
                                 "sent_to_agent": False,
-                                "tile_x": None,
-                                "tile_y": None
+                                "tile": None
                              }
                          ])
 
@@ -1159,8 +1151,7 @@ class TestJobAPI(BaseTestCase):
                                 "agent_id": None,
                                 "last_error": None,
                                 "sent_to_agent": False,
-                                "tile_x": None,
-                                "tile_y": None
+                                "tile": None
                              },
                              {
                                 "hidden": False,
@@ -1178,8 +1169,7 @@ class TestJobAPI(BaseTestCase):
                                 "agent_id": None,
                                 "last_error": None,
                                 "sent_to_agent": False,
-                                "tile_x": None,
-                                "tile_y": None
+                                "tile": None
                              }
                          ])
 
@@ -1250,8 +1240,7 @@ class TestJobAPI(BaseTestCase):
                             "agent_id": None,
                             "last_error": None,
                             "sent_to_agent": False,
-                            "tile_x": None,
-                            "tile_y": None
+                            "tile": None
                          })
 
         response5 = self.client.post(
@@ -1393,8 +1382,7 @@ class TestJobAPI(BaseTestCase):
                             "agent_id": None,
                             "last_error": None,
                             "sent_to_agent": False,
-                            "tile_x": None,
-                            "tile_y": None
+                            "tile": None
                          })
 
         response5 = self.client.get("/api/v1/jobs/%s/tasks/%s" %
@@ -1419,8 +1407,7 @@ class TestJobAPI(BaseTestCase):
                             "agent_id": None,
                             "last_error": None,
                             "sent_to_agent": False,
-                            "tile_x": None,
-                            "tile_y": None
+                            "tile": None
                          })
 
     def test_job_get_unknown_single_task(self):

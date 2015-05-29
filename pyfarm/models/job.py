@@ -212,17 +212,10 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             "`end`.  This column may also sometimes be referred to "
             "as 'step' by other software.")
 
-    tiles_x = db.Column(
+    num_tiles = db.Column(
         db.Integer,
         nullable=True,
-        doc="How many regions to split frames into horizontally. If this is "
-            "set, tiles_y needs to be set as well.")
-
-    tiles_y = db.Column(
-        db.Integer,
-        nullable=True,
-        doc="How many regions to split frames into vertically. If this is "
-            "set, tiles_x needs to be set as well.")
+        doc="How many regions to split frames into for rendering.")
 
     batch = db.Column(
         db.Integer,
@@ -543,11 +536,20 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                 frames_to_create.remove(task.frame)
 
         for frame in frames_to_create:
-            task = Task()
-            task.job = self
-            task.frame = frame
-            task.priority = self.priority
-            db.session.add(task)
+            if self.num_tiles:
+                for tile in range(0, self.num_tiles - 1):
+                    task = Task()
+                    task.job = self
+                    task.frame = frame
+                    task.tile = tile
+                    task.priority = self.priority
+                    db.session.add(task)
+            else:
+                task = Task()
+                task.job = self
+                task.frame = frame
+                task.priority = self.priority
+                db.session.add(task)
 
         if frames_to_create:
             if self.state != WorkState.RUNNING:

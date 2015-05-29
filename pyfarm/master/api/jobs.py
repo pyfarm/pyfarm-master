@@ -442,31 +442,22 @@ class JobIndexAPI(MethodView):
                     BAD_REQUEST)
         job.by = by
 
-        tiles_x = g.json.get("tiles_x", None)
-        tiles_y = g.json.get("tiles_y", None)
-        if (not jobtype_version.supports_tiling and
-            (tiles_x is not None or tiles_y is not None)):
-            return (jsonify(error="`tiles_x` and/or `tiles_y` is set, but this "
+        num_tiles = g.json.get("num_tiles", None)
+        if not jobtype_version.supports_tiling and num_tiles is not None:
+            return (jsonify(error="`num_tiles` is set, but this "
                                   "jobtype does not support tiling."),
                     BAD_REQUEST)
 
-        if ((tiles_x is not None and tiles_y is None) or
-            (tiles_x is None and tiles_y is not None)):
-            return (jsonify(error="If `tiles_x` is set, `tiles_y` needs to be "
-                                  "set, and vice versa."), BAD_REQUEST)
-
         current_frame = start
         while current_frame <= end:
-            if tiles_x:
-                for tile_x in range(0, tiles_x):
-                    for tile_y in range(0, tiles_y):
-                        task = Task()
-                        task.job = job
-                        task.frame = current_frame
-                        task.tile_x = tile_x
-                        task.tile_y = tile_y
-                        task.priority = job.priority
-                        db.session.add(task)
+            if num_tiles:
+                for tile in range(0, num_tiles - 1):
+                    task = Task()
+                    task.job = job
+                    task.frame = current_frame
+                    task.tile = tile
+                    task.priority = job.priority
+                    db.session.add(task)
             else:
                 task = Task()
                 task.job = job
@@ -777,7 +768,7 @@ class SingleJobAPI(MethodView):
         if not job:
             return jsonify(error="Job not found"), NOT_FOUND
 
-        if "tiles_x" in g.json or "tiles_y" in g.json:
+        if "tiles" in g.json:
             return (jsonify(error="Frame tiling cannot be updated after job "
                                   "creation."), BAD_REQUEST)
 
@@ -818,16 +809,14 @@ class SingleJobAPI(MethodView):
                     frames_to_create.remove(task.frame)
 
             for frame in frames_to_create:
-                if job.tiles_x:
-                    for tile_x in range(0, job.tiles_x):
-                        for tile_y in range(0, job.tiles_y):
-                            task = Task()
-                            task.job = job
-                            task.frame = current_frame
-                            task.tile_x = tile_x
-                            task.tile_y = tile_y
-                            task.priority = job.priority
-                            db.session.add(task)
+                if job.num_tiles:
+                    for tile in range(0, job.num_tiles - 1):
+                        task = Task()
+                        task.job = job
+                        task.frame = current_frame
+                        task.tile = tile
+                        task.priority = job.priority
+                        db.session.add(task)
                 else:
                     task = Task()
                     task.job = job
