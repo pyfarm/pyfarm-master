@@ -168,7 +168,8 @@ def send_tasks_to_agent(self, agent_id):
                            "notified_users": [],
                            "priority": job.priority,
                            "notes": job.notes,
-                           "tags": []
+                           "tags": [],
+                           "num_tiles": job.num_tiles
                            },
                    "jobtype": {"name": job.jobtype_version.jobtype.name,
                                "version": job.jobtype_version.version},
@@ -190,7 +191,8 @@ def send_tasks_to_agent(self, agent_id):
         for task in tasks:
             message["tasks"].append({"id": task.id,
                                      "frame": task.frame,
-                                     "attempt": task.attempts})
+                                     "attempt": task.attempts,
+                                     "tile": task.tile})
 
         logger.info("Sending a batch of %s tasks for job %s (%s) to agent %s",
                     len(tasks), job.title, job.id, agent.hostname)
