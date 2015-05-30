@@ -102,10 +102,6 @@ agent_request_timeout: 10
 ## BEGIN Email Server Settings
 ##
 
-##
-## END Email Server Settings
-##
-
 # The smtp server used to send email notifications.  Note that setting
 # this value to null or leaving it blank will disable email notifications.
 smtp_server: localhost
@@ -124,6 +120,10 @@ smtp_login: [null, null]
 # The default address from which all emails from the scheduler will
 # originate.
 from_email: pyfarm@localhost
+
+##
+## END Email Server Settings
+##
 
 ##
 ## BEGIN Email Template Settings
