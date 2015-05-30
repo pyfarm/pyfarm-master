@@ -98,8 +98,8 @@ DEFAULT_SUCCESS_SUBJECT = Template(config.get("success_subject"))
 DEFAULT_SUCCESS_BODY = Template(config.get("success_body"))
 DEFAULT_FAIL_SUBJECT = Template(config.get("failed_subject"))
 DEFAULT_FAIL_BODY = Template(config.get("failed_body"))
-DEFAULT_DELETE_SUBJECT = config.get("deleted_subject")
-DEFAULT_DELETE_BODY = config.get("deleted_body")
+DEFAULT_DELETE_SUBJECT = Template(config.get("deleted_subject"))
+DEFAULT_DELETE_BODY = Template(config.get("deleted_body"))
 OUR_FARM_NAME = config.get("farm_name")
 
 def send_email(to, message):
