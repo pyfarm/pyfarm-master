@@ -17,7 +17,7 @@ $(document).ready(function() {
                     var job_div = $(
                         "<div class='panel'>"+
                           "<div class='panel-body'>"+
-                            "<span class='glyphicon' title='failed'></span>"+
+                            "<span class='glyphicon' title='failed'></span> "+
                             "<a href='/jobs/"+job["id"]+"'>"+job["title"]+"</a> ("+job["jobtype"]+")<br/>"+
                             "<div class='progress job_progress'>"+
                             "</div>"+

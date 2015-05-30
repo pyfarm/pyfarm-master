@@ -430,13 +430,13 @@
       <span class="glyphicon glyphicon-time" title="queued"></span>
       {% endif %}
       {% if job[0].state == "running" %}
-      <span class="glyphicon glyphicon-play" title="running"></span>
+      <span style="color:#337AB7" class="glyphicon glyphicon-play" title="running"></span>
       {% endif %}
       {% if job[0].state == "done" %}
-      <span class="glyphicon glyphicon-ok" title="done"></span>
+      <span style="color:#5CB85C" class="glyphicon glyphicon-ok" title="done"></span>
       {% endif %}
       {% if job[0].state == "failed" %}
-      <span class="glyphicon glyphicon-remove" title="failed"></span>
+      <span style="color:#D9534F" class="glyphicon glyphicon-remove" title="failed"></span>
       {% endif %}
       {% if job[0].state == "paused" %}
       <span class="glyphicon glyphicon-pause" title="paused"></span>

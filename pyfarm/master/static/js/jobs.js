@@ -17,19 +17,32 @@ $(document).ready(function() {
                     $.getJSON("/api/v1/jobs/" + child["id"], function(s) {
                         var subjob_row = $(
                             "<tr>"+
-                              "<td><a href='/jobs/"+s["id"]+"'>"+s["title"]+"</td>"+
+                              "<td>"+
+                                "<span class='glyphicon' title='failed'></span> "+
+                                "<a href='/jobs/"+s["id"]+"'>"+s["title"]+"</td>"+
                               "<td>"+s["jobtype"]+"</td>"+
-                              "<td>"+s["state"]+"</td>"+
                             "</tr>");
                         subjob_table.append(subjob_row);
+                        if(s["state"] == "queued") {
+                            subjob_table.find("span.glyphicon").addClass("glyphicon-time");
+                        }
+                        if(s["state"] == "running") {
+                            subjob_table.find("span.glyphicon").addClass("glyphicon-play").css("color", "#337AB7");
+                        }
+                        if(s["state"] == "failed") {
+                            subjob_table.find("span.glyphicon").addClass("glyphicon-remove").css("color", "#D9534F");
+                        }
+                        if(s["state"] == "done") {
+                            subjob_table.find("span.glyphicon").addClass("glyphicon-ok").css("color", "#5CB85C");
+                        }
                     });
                 }
             });
         }
         else {
             $(this).data("open", "false");
-            $(this).removeClass("glyphicon-circle-arrow-up")
-            $(this).addClass("glyphicon-circle-arrow-down")
+            $(this).removeClass("glyphicon-circle-arrow-up");
+            $(this).addClass("glyphicon-circle-arrow-down");
             $(this).closest("tr").find("table.subjob-table").remove();
         }
     });
