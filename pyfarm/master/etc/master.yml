@@ -111,7 +111,7 @@ autocreate_users: true
 
 
 # When autocreating users, use this email address as a template.  For example:
-#   {username}@example.com
+#   "{username}@example.com"
 # Not setting this value and setting `autocreate_users` to true will result
 # in a users's email address not being set on a newly created user.
 autocreate_user_email: null
