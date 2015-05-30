@@ -796,7 +796,7 @@ def send_job_deletion_mail(job_id, jobtype_name, job_title, to):
     )
 
     message = MIMEText(message_text)
-    message["Subject"] = DEFAULT_DELETE_SUBJECT.format(title=job_title)
+    message["Subject"] = DEFAULT_DELETE_SUBJECT.format(job_title=job_title)
     message["From"] = FROM_ADDRESS
     message["To"] = ",".join(to)
 
