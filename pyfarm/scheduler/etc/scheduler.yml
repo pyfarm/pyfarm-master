@@ -94,6 +94,10 @@ transaction_retries: 10
 # exception is raised if we exceed this amount.
 agent_request_timeout: 10
 
+# When true the queue will prefer to assign work
+# for jobs which are already running.
+queue_prefer_running_jobs: true
+
 ##
 ## END Scheduler Settings
 ##

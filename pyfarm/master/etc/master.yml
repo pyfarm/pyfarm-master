@@ -177,10 +177,6 @@ instance_application: false
 ## BEGIN Queue defaults
 ##
 
-# When true the queue will prefer to assign work
-# for jobs which are already running.
-queue_prefer_running_jobs: true
-
 
 # The default priority for a newly created job queue.
 queue_default_priority: 0
