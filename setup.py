@@ -21,7 +21,7 @@ assert sys.version_info[0:2] >= (2, 7), "Python 2.7 or higher is required"
 
 import os
 from os import walk
-from os.path import isfile, join, commonprefix
+from os.path import isfile, join, relpath
 from setuptools import setup
 
 # Version requirements explanations:
@@ -55,14 +55,12 @@ else:
     long_description = ""
 
 
-def get_package_data(*package_data_roots):
-    package_root = commonprefix(package_data_roots)
-
+def get_package_data(package_root, *package_data_roots):
     output = []
     for top in package_data_roots:
         for root, dirs, files in walk(top):
             for filename in files:
-                output.append(join(root, filename).split(package_root)[-1][1:])
+                output.append(relpath(join(root, filename), package_root))
 
     return output
 
@@ -81,27 +79,20 @@ setup(
     include_package_data=True,
     package_data={
         "pyfarm.master": get_package_data(
+            join("pyfarm", "master"),
             join("pyfarm", "master", "etc"),
             join("pyfarm", "master", "static"),
-            join("pyfarm", "master", "templates"),
-            join("pyfarm", "master", "api", "templates"),
-            join("pyfarm", "master", "api", "static")
+            join("pyfarm", "master", "templates")
         ),
-        "pyfarm-models": get_package_data(
-            join("pyfarm", "models", "core"),
+        "pyfarm.models": get_package_data(
+            join("pyfarm", "models"),
             join("pyfarm", "models", "etc")
         ),
-        "pyfarm-scheduler": get_package_data(
+        "pyfarm.scheduler": get_package_data(
+            join("pyfarm", "scheduler"),
             join("pyfarm", "scheduler", "etc")
         )
     },
-    data_files=[
-        ("etc/pyfarm", [
-            "pyfarm/master/etc/master.yml",
-            "pyfarm/models/etc/models.yml",
-            "pyfarm/scheduler/etc/scheduler.yml"
-        ])
-    ],
     entry_points={
         "console_scripts": [
             "pyfarm-master = pyfarm.master.entrypoints:run_master",
