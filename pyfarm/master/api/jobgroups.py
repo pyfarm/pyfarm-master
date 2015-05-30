@@ -407,17 +407,6 @@ class JobsInJobGroupIndexAPI(MethodView):
             return (jsonify(error="Requested job group %s not found" % group_id),
                     NOT_FOUND)
 
-        jobgroup_data = jobgroup.to_dict()
-        jobgroup_data.pop("user_id", None)
-        jobgroup_data.pop("main_jobtype_id", None)
-
-        return jsonify(jobgroup_data), OK
-        jobgroup = JobGroup.query.filter_by(id=group_id).first()
-
-        if not jobgroup:
-            return (jsonify(error="Requested job group %s not found" % group_id),
-                    NOT_FOUND)
-
         queued_count_query = db.session.query(
             Task.job_id, func.count('*').label('t_queued')).\
                 filter(Task.state == None).group_by(Task.job_id).subquery()
