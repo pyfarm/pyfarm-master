@@ -92,7 +92,7 @@ cookie_duration:
   hours: 16
 
 
-# When true json output from te APIs will be reformatted to
+# When true json output from the APIs will be reformatted to
 # be more human readable.
 pretty_json: false
 
