@@ -76,8 +76,6 @@ class Configuration(_Configuration):
         "scheduler_broker": ("PYFARM_SCHEDULER_BROKER", read_env),
         "scheduler_lockfile_base": (
             "PYFARM_SCHEDULER_LOCKFILE_BASE", read_env),
-        "task_logs_dir": (
-            "PYFARM_LOGFILES_DIR", read_env),
         "transaction_retries": ("PYFARM_TRANSACTION_RETRIES", read_env_int),
         "agent_request_timeout": (
             "PYFARM_AGENT_REQUEST_TIMEOUT", read_env_int),

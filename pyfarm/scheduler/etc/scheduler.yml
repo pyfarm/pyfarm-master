@@ -87,11 +87,6 @@ poll_offline_agents_interval:
 # A directory where lock files for the scheuler can be found.
 scheduler_lockfile_base: ${temp}/scheduler_lock
 
-
-# The directory where all task logs should be stored.
-task_logs_dir: ${temp}/task_logs
-
-
 # The number of times an SQL transation error should be retried.
 transaction_retries: 10
 

@@ -84,7 +84,7 @@ POLL_IDLE_AGENTS_INTERVAL = timedelta(**config.get("poll_idle_agents_interval"))
 POLL_OFFLINE_AGENTS_INTERVAL = \
     timedelta(**config.get("poll_offline_agents_interval"))
 SCHEDULER_LOCKFILE_BASE = config.get("scheduler_lockfile_base")
-LOGFILES_DIR = config.get("task_logs_dir")
+LOGFILES_DIR = config.get("tasklogs_dir")
 TRANSACTION_RETRIES = config.get("transaction_retries")
 AGENT_REQUEST_TIMEOUT = config.get("agent_request_timeout")
 BASE_URL = config.get("base_url")
