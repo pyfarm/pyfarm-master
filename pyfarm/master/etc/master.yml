@@ -25,11 +25,12 @@ debug_queue: false
 
 
 # The URL to access the database.  For debugging and development
-# a local SQLite database is used.  For production access should be
-# configured to a more standard SQL database.  MySQL or Postgres are
-# the two primary databases PyFarm is regurarly tested against.  For
-# more information on the expected format of this variable see
-# SQLAlchemy's documentation:
+# a local SQLite database is used but for production other databases,
+# such as MySQL or PostgreSQL which PyFarm runs tests against, should
+# be used.
+#
+# For more information on the expected format of this variable
+# see SQLAlchemy's documentation:
 #   https://sqlalchemy.readthedocs.org/en/latest/core/engines.html#database-urls
 database: "sqlite:///pyfarm.sqlite"
 
