@@ -20,7 +20,11 @@
     {% for log in logs %}
     <tr>
       <td class="timestamp">{{ log.log.created_on.isoformat() }}</td>
-      <td><a href="{{ url_for('single_agent_ui', agent_id=log.log.agent.id) }}">{{ log.log.agent.hostname }}</a></td>
+      <td>
+        {% if log.log.agent %}
+        <a href="{{ url_for('single_agent_ui', agent_id=log.log.agent.id) }}">{{ log.log.agent.hostname }}</a>
+        {% endif %}
+      </td>
       <td>
         <a href="/api/v1/jobs/{{ task.job.id }}/tasks/{{ task.id }}/attempts/{{ attempt }}/logs/{{ log.log.identifier }}/logfile">{{ log.log.identifier }}</a>
       </td>
