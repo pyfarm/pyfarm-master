@@ -130,7 +130,7 @@ from_email: pyfarm@localhost
 ##
 
 # General note about the settings below.  The brackets, {{ }}
-# are used by the tempating system for string substitution.  For example,
+# are used by the templating system for string substitution.  For example,
 # {{ job.title }} would substitute in the string found on the `title` column
 # of a job model.  For more information on template formatting, see Jinja's
 # documentation: http://jinja.pocoo.org/docs/
