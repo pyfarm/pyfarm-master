@@ -498,7 +498,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             or_(Task.agent == None,
                 Task.agent.has(Agent.state.in_(
                     [AgentState.OFFLINE, AgentState.DISABLED])))).\
-                        order_by("frame asc")
+                        order_by("frame asc, tile asc")
 
         batch = []
         for task in tasks_query:
