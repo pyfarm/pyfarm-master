@@ -24,6 +24,7 @@ This module defines an API for managing and querying jobs
 
 from decimal import Decimal
 from json import loads
+from datetime import datetime
 
 try:
     from httplib import (
@@ -1099,9 +1100,11 @@ class JobSingleTaskAPI(MethodView):
         if not task:
             return jsonify(error="Task not found"), NOT_FOUND
 
-        if "time_started" in g.json:
+        if "time_started" in g.json and g.json["time_started"] != "now":
             return (jsonify(error="`time_started` cannot be set manually"),
                     BAD_REQUEST)
+        elif "time_started" in g.json and g.json["time_started"] == "now":
+            g.json["time_started"] = datetime.utcnow()
 
         if "time_finished" in g.json:
             return (jsonify(error="`time_finished` cannot be set manually"),
