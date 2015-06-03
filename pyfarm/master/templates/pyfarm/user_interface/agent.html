@@ -175,15 +175,30 @@
           <th>ID</th>
           <th>Frame</th>
           <th>Job</th>
-          <th>State</th>
         </thead>
         <tbody>
           {% for task in tasks %}
           <tr>
             <td>{{ task.id }}</td>
-            <td>{{ task.frame }}</td>
+            <td>
+              {% if not task.state %}
+              <span class="glyphicon glyphicon-time" title="queued"></span>
+              {% endif %}
+              {% if task.state == "running" %}
+              <span style="color:#337AB7" class="glyphicon glyphicon-play" title="running"></span>
+              {% endif %}
+              {% if task.state == "done" %}
+              <span style="color:#5CB85C" class="glyphicon glyphicon-ok" title="done"></span>
+              {% endif %}
+              {% if task.state == "failed" %}
+              <span style="color:#D9534F" class="glyphicon glyphicon-remove" title="failed"></span>
+              {% endif %}
+              {% if task.state == "paused" %}
+              <span class="glyphicon glyphicon-pause" title="paused"></span>
+              {% endif %}
+              {{ task.frame }}
+            </td>
             <td><a href="{{ url_for('single_job_ui', job_id=task.job.id) }}"> {{ task.job.title }} (ID {{ task.job.id }})</a></td>
-            <td>{{ task.state }}</td>
           </tr>
           {% endfor %}
         </tbody>
