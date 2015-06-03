@@ -289,8 +289,6 @@ def update_notes_for_agent(agent_id):
                     "pyfarm/error.html", error="Agent %s not found" % agent_id),
                 NOT_FOUND)
 
-    print("Notes: %s" % request.form["notes"])
-
     agent.notes = request.form["notes"]
 
     db.session.add(agent)
