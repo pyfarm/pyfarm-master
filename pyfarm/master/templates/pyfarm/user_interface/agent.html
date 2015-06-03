@@ -220,7 +220,7 @@
       <h4>Recent Tasklogs</h4>
       <table class="table">
         <thead>
-          <th>Identifier</th>
+          <th>Log</th>
           <th>Created On</th>
           <th>Tasks (Queued / Running / Failed / Done)</th>
           <th>Job</th>
@@ -229,7 +229,15 @@
         <tbody>
           {% for tasklog in tasklogs %}
           <tr>
-            <td>{% if tasklog.task %}<a href="/api/v1/jobs/{{ tasklog.task.job.id }}/tasks/{{ tasklog.task.id }}/attempts/{{ tasklog.attempt }}/logs/{{ tasklog.identifier }}/logfile">{% endif %}{{ tasklog.identifier }}{% if tasklog.task %}</a>{% endif %}</td>
+            <td>
+              {% if tasklog.task %}
+              <a href="/api/v1/jobs/{{ tasklog.task.job.id }}/tasks/{{ tasklog.task.id }}/attempts/{{ tasklog.attempt }}/logs/{{ tasklog.identifier }}/logfile">
+              {% endif %}
+                <span class="glyphicon glyphicon-list"></span>
+              {% if tasklog.task %}
+              </a>
+              {% endif %}
+            </td>
             <td class="timestamp">{{ tasklog.created_on.isoformat() }}</td>
             <td>
               {{ tasklog.num_queued_tasks() }} /
