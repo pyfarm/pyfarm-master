@@ -174,16 +174,44 @@
         <thead>
           <th>ID</th>
           <th>Frame</th>
+          <th>Progress</th>
           <th>Job</th>
-          <th>State</th>
         </thead>
         <tbody>
           {% for task in tasks %}
           <tr>
             <td>{{ task.id }}</td>
-            <td>{{ task.frame }}</td>
+            <td>
+              {% if not task.state %}
+              <span class="glyphicon glyphicon-time" title="queued"></span>
+              {% endif %}
+              {% if task.state == "running" %}
+              <span style="color:#337AB7" class="glyphicon glyphicon-play" title="running"></span>
+              {% endif %}
+              {% if task.state == "done" %}
+              <span style="color:#5CB85C" class="glyphicon glyphicon-ok" title="done"></span>
+              {% endif %}
+              {% if task.state == "failed" %}
+              <span style="color:#D9534F" class="glyphicon glyphicon-remove" title="failed"></span>
+              {% endif %}
+              {% if task.state == "paused" %}
+              <span class="glyphicon glyphicon-pause" title="paused"></span>
+              {% endif %}
+              {{ task.frame }}
+            </td>
+            <td>
+              <div class="progress job_progress">
+                <div class="progress-bar progress-bar-success" style="width:{{ 100 * task.progress }}%">
+                  {{ (100 * task.progress)|round(1) }}%
+                </div>
+                {% if task.running() %}
+                <div class="progress-bar progress-bar-striped" style="width:{{ 100 * (1.0 - task.progress) }}%"></div>
+                {% elif task.failed() %}
+                <div class="progress-bar progress-bar-danger" style="width:{{ 100 * (1.0 - task.progress) }}%"></div>
+                {% endif %}
+              </div>
+            </td>
             <td><a href="{{ url_for('single_job_ui', job_id=task.job.id) }}"> {{ task.job.title }} (ID {{ task.job.id }})</a></td>
-            <td>{{ task.state }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -192,7 +220,7 @@
       <h4>Recent Tasklogs</h4>
       <table class="table">
         <thead>
-          <th>Identifier</th>
+          <th>Log</th>
           <th>Created On</th>
           <th>Tasks (Queued / Running / Failed / Done)</th>
           <th>Job</th>
@@ -201,7 +229,15 @@
         <tbody>
           {% for tasklog in tasklogs %}
           <tr>
-            <td>{% if tasklog.task %}<a href="/api/v1/jobs/{{ tasklog.task.job.id }}/tasks/{{ tasklog.task.id }}/attempts/{{ tasklog.attempt }}/logs/{{ tasklog.identifier }}/logfile">{% endif %}{{ tasklog.identifier }}{% if tasklog.task %}</a>{% endif %}</td>
+            <td>
+              {% if tasklog.task %}
+              <a href="/api/v1/jobs/{{ tasklog.task.job.id }}/tasks/{{ tasklog.task.id }}/attempts/{{ tasklog.attempt }}/logs/{{ tasklog.identifier }}/logfile">
+              {% endif %}
+                <span class="glyphicon glyphicon-list"></span>
+              {% if tasklog.task %}
+              </a>
+              {% endif %}
+            </td>
             <td class="timestamp">{{ tasklog.created_on.isoformat() }}</td>
             <td>
               {{ tasklog.num_queued_tasks() }} /
