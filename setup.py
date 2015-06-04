@@ -30,7 +30,7 @@ from setuptools import setup
 #   configuration loader changes
 #   sqlalchemy: Post-1.x release there were a few regressions that broke tests
 install_requires = [
-    "pyfarm.core>=0.9.1",
+    "pyfarm.core>=0.9.3",
     "sqlalchemy>=0.9.9,!=1.0.0,!=1.0.1,!=1.0.2",
     "flask",
     "flask-login",
