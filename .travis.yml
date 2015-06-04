@@ -20,7 +20,7 @@ services:
   - redis-server
 
 before_install:
-  - curl https://raw.githubusercontent.com/pyfarm/pyfarm/master/misc/retry.sh -o retry.sh
+  - curl -o retry.sh https://raw.githubusercontent.com/pyfarm/pyfarm-build/master/travis/retry.sh
   - source retry.sh
   - if [[ $TDB_DRIVER != "" ]]; then retry pip install $TDB_DRIVER --quiet; fi
   - if [[ $PYLINT == "1" ]]; then retry pip install pylint; fi
