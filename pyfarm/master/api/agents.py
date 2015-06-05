@@ -52,6 +52,7 @@ from pyfarm.models.task import Task
 from pyfarm.models.software import Software, SoftwareVersion
 from pyfarm.master.config import config
 from pyfarm.models.tag import Tag
+from pyfarm.models.disk import AgentDisk
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     jsonify, validate_with_model, get_ipaddr_argument, get_integer_argument,
@@ -260,6 +261,8 @@ class AgentIndexAPI(MethodView):
 
         gpus = g.json.pop("gpus", None)
 
+        disks = g.json.pop("disks", None)
+
         agent = Agent.query.filter_by(
             port=g.json["port"], id=g.json["id"]).first()
 
@@ -290,6 +293,14 @@ class AgentIndexAPI(MethodView):
                         gpu = GPU(fullname=gpu_name)
                         db.session.add(gpu)
                     agent.gpus.append(gpu)
+
+            if disks is not None:
+                for disk_dict in disks:
+                    disk = AgentDisk(agent=agent,
+                                     mountpoint=disk_dict["mountpoint"],
+                                     size=disk_dict["size"],
+                                     free=disk_dict["free"])
+                    db.session.add(disk)
 
             db.session.add(agent)
 
@@ -373,6 +384,16 @@ class AgentIndexAPI(MethodView):
                         gpu = GPU(fullname=gpu_name)
                         db.session.add(gpu)
                     agent.gpus.append(gpu)
+
+            if disks is not None:
+                for old_disk in agent.disks:
+                    db.session.delete(old_disk)
+                for disk_dict in disks:
+                    disk = AgentDisk(agent=agent,
+                                     mountpoint=disk_dict["mountpoint"],
+                                     size=disk_dict["size"],
+                                     free=disk_dict["free"])
+                    db.session.add(disk)
 
             # TODO Only do that if this is really the agent speaking to us.
             failed_tasks = []
@@ -674,6 +695,8 @@ class SingleAgentAPI(MethodView):
 
         gpus = g.json.pop("gpus", None)
 
+        disks = g.json.pop("disks", None)
+
         tags = g.json.pop("tags", None)
 
         try:
@@ -735,6 +758,16 @@ class SingleAgentAPI(MethodView):
                     gpu = GPU(fullname=gpu_name)
                     db.session.add(gpu)
                 agent.gpus.append(gpu)
+
+        if disks is not None:
+            for old_disk in agent.disks:
+                    db.session.delete(old_disk)
+            for disk_dict in disks:
+                disk = AgentDisk(agent=agent,
+                                    mountpoint=disk_dict["mountpoint"],
+                                    size=disk_dict["size"],
+                                    free=disk_dict["free"])
+                db.session.add(disk)
 
         if tags is not None:
             modified["tags"] = tags

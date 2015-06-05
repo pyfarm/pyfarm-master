@@ -319,6 +319,12 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         lazy="dynamic",
         doc="The graphics cards that are installed in this agent")
 
+    disks = db.relationship(
+        "AgentDisk",
+        backref=db.backref("agent"),
+        lazy="dynamic",
+        doc="The known disks available to this agent")
+
     def is_offline(self):
         return self.state == AgentState.OFFLINE
 
