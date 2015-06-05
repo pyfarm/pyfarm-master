@@ -48,11 +48,11 @@ class AgentDisk(db.Model, UtilityMixins, ReprMixin):
             "(Drive letter for Windows agents)")
 
     size = db.Column(
-        db.Integer,
+        db.BigInteger,
         nullable=False,
         doc="The total capacity of this disk in bytes")
 
     free = db.Column(
-        db.Integer,
+        db.BigInteger,
         nullable=False,
         doc="Available space on the disk in bytes.")
