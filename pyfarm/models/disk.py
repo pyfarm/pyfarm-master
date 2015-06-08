@@ -32,6 +32,10 @@ from pyfarm.models.core.cfg import (
     TABLE_AGENT_DISK, MAX_MOUNTPOINT_LENGTH, TABLE_AGENT)
 
 class AgentDisk(db.Model, UtilityMixins, ReprMixin):
+    """
+    Stores information about a single disk belonging to an agent, including
+    usage information.
+    """
     __tablename__ = TABLE_AGENT_DISK
 
     id = id_column(db.Integer)
