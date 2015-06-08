@@ -17,7 +17,7 @@
 
 """
 Disk Model
-===========
+==========
 
 Model describing a given disk, with size and free space.
 """
