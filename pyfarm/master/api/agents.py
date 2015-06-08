@@ -761,7 +761,7 @@ class SingleAgentAPI(MethodView):
 
         if disks is not None:
             for old_disk in agent.disks:
-                    db.session.delete(old_disk)
+                db.session.delete(old_disk)
             for disk_dict in disks:
                 disk = AgentDisk(agent=agent,
                                     mountpoint=disk_dict["mountpoint"],
