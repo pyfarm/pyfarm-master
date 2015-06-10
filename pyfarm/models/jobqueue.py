@@ -268,7 +268,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                                 ((float(x.num_assigned_agents()) / total_assigned)
                                     if total_assigned else 0) /
                                 ((float(x.weight) / weight_sum)
-                                    if weight_sum else 1)))
+                                    if weight_sum and x.weight else 1)))
 
             selected_job = None
             for item in objects:
