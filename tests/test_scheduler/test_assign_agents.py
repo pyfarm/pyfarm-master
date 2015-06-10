@@ -91,11 +91,11 @@ class TestAssignAgent(BaseTestCase):
     def test_assign_by_weight_additional_queues(self):
         jobtype_version = self.create_jobtype_version()
         high_queue = self.create_queue_with_job("heavyweight", jobtype_version)
-        high_queue.weight = 60
+        high_queue.weight = 6
         mid_queue = self.create_queue_with_job("mediumweight", jobtype_version)
-        mid_queue.weight = 30
+        mid_queue.weight = 3
         low_queue = self.create_queue_with_job("lightweight", jobtype_version)
-        low_queue.weight = 10
+        low_queue.weight = 1
         db.session.add_all([high_queue, mid_queue, low_queue])
 
         # The presence of additional queues with arbitrary weights should not
@@ -103,6 +103,8 @@ class TestAssignAgent(BaseTestCase):
         additional_queue1 = JobQueue(name="additional1", weight=10)
         additional_queue2 = JobQueue(name="additional2", weight=10)
         additional_queue3 = JobQueue(name="additional3", weight=10)
+        db.session.add_all([additional_queue1, additional_queue2,
+                            additional_queue3])
 
         db.session.commit()
 
