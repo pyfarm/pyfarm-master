@@ -102,7 +102,7 @@ table_gpu: ${table_prefix}gpus
 table_gpu_in_agent: ${table_prefix}gpu_agent_associations
 
 # The name of the table containing the disks of the agents
-table_agent_disks: ${table_prefix}agent_disks
+table_agent_disk: ${table_prefix}agent_disks
 
 ##
 ## END Database Table Names
