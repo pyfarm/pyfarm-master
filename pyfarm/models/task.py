@@ -28,10 +28,9 @@ from sqlalchemy import event
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
 from pyfarm.master.application import db
+from pyfarm.master.config import config
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
 from pyfarm.models.core.functions import work_columns, repr_enum
-from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_TASK, TABLE_AGENT)
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, UtilityMixins, ReprMixin,
     ValidateWorkStateMixin)
@@ -47,7 +46,7 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     Defines a task which a child of a :class:`Job`.  This table represents
     rows which contain the individual work unit(s) for a job.
     """
-    __tablename__ = TABLE_TASK
+    __tablename__ = config.get("table_task")
     STATE_ENUM = list(WorkState) + [None]
     STATE_DEFAULT = None
     REPR_COLUMNS = ("id", "state", "frame", "project")
@@ -59,11 +58,11 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     agent_id = db.Column(
         IDTypeAgent,
-        db.ForeignKey("%s.id" % TABLE_AGENT),
+        db.ForeignKey("%s.id" % config.get("table_agent")),
         doc="Foreign key which stores :attr:`Job.id`")
 
     job_id = db.Column(
-        IDTypeWork, db.ForeignKey("%s.id" % TABLE_JOB),
+        IDTypeWork, db.ForeignKey("%s.id" % config.get("table_job")),
         nullable=False,
         doc="Foreign key which stores :attr:`Job.id`")
 

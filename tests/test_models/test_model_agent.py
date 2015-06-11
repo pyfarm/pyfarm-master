@@ -16,7 +16,6 @@
 
 from __future__ import with_statement
 import uuid
-from random import randint
 
 from sqlalchemy.exc import DatabaseError
 
@@ -239,7 +238,6 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
         self.assertEqual(
             model.api_url(),
             model.URL_TEMPLATE.format(
-                scheme="http",
                 host=model.remote_ip,
                 port=model.port
             )
@@ -254,7 +252,6 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
         self.assertEqual(
             model.api_url(),
             model.URL_TEMPLATE.format(
-                scheme="http",
                 host=model.hostname,
                 port=model.port
             )
@@ -269,19 +266,6 @@ class TestAgentModel(AgentTestCase, BaseTestCase):
         # Shouldn't have access to api_url if we're operating under PASSIVE
         with self.assertRaises(ValueError):
             model.api_url()
-
-    def test_api_url_errors(self):
-        model = Agent(
-            hostname="foo", port=12345, remote_ip="10.56.0.1",
-            ram=1024, free_ram=128, cpus=4)
-
-        # Shouldn't have access to api_url if we're operating under PASSIVE
-        model.use_address = UseAgentAddress.PASSIVE
-        with self.assertRaises(ValueError):
-            model.api_url()
-
-        with self.assertRaises(AssertionError):
-            model.api_url(scheme="ftp")
 
 
 class TestModelValidation(AgentTestCase):

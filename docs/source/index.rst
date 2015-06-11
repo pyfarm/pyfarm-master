@@ -12,7 +12,6 @@ PyFarm.
 
     commands
     configuration
-    environment
     modules/pyfarm.master
     modules/pyfarm.models
     modules/pyfarm.scheduler

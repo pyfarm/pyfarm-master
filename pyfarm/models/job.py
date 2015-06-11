@@ -27,22 +27,18 @@ try:
 except ImportError:  # pragma: no cover
     pwd = None
 
-
 from sys import maxsize
 
 from sqlalchemy import event, distinct, or_, and_
 from sqlalchemy.orm import validates
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.config import read_env, read_env_int
 from pyfarm.core.enums import WorkState, DBWorkState, _WorkState, AgentState
 from pyfarm.master.application import db
+from pyfarm.master.config import config
 from pyfarm.models.core.functions import work_columns
 from pyfarm.models.core.types import JSONDict, IDTypeWork
-from pyfarm.models.core.cfg import (
-    TABLE_JOB, TABLE_JOB_TYPE_VERSION, TABLE_TAG,
-    TABLE_JOB_TAG_ASSOC, MAX_JOBTITLE_LENGTH, TABLE_JOB_DEPENDENCY,
-    TABLE_JOB_QUEUE, TABLE_USER, TABLE_JOB_NOTIFIED_USER, TABLE_JOB_GROUP)
+
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin, UtilityMixins)
@@ -55,34 +51,35 @@ logger = getLogger("models.job")
 
 
 JobTagAssociation = db.Table(
-    TABLE_JOB_TAG_ASSOC, db.metadata,
+    config.get("table_job_tag_assoc"),
+    db.metadata,
     db.Column(
         "job_id",
         IDTypeWork,
-        db.ForeignKey("%s.id" % TABLE_JOB),
+        db.ForeignKey("%s.id" % config.get("table_job")),
         primary_key=True,
         doc="The id of the job associated with this task"),
     db.Column(
         "tag_id",
         db.Integer,
-        db.ForeignKey("%s.id" % TABLE_TAG),
+        db.ForeignKey("%s.id" % config.get("table_tag")),
         primary_key=True,
         doc="The id of the tag being associated with the job")
 )
 
 
 JobDependency = db.Table(
-    TABLE_JOB_DEPENDENCY, db.metadata,
+    config.get("table_job_dependency"), db.metadata,
     db.Column(
         "parentid",
         IDTypeWork,
-        db.ForeignKey("%s.id" % TABLE_JOB),
+        db.ForeignKey("%s.id" % config.get("table_job")),
         primary_key=True,
         doc="The parent job id of the job dependency"),
     db.Column(
         "childid",
         IDTypeWork,
-        db.ForeignKey("%s.id" % TABLE_JOB),
+        db.ForeignKey("%s.id" % config.get("table_job")),
         primary_key=True,
         doc="The child job id of the job dependency")
 )
@@ -93,17 +90,17 @@ class JobNotifiedUser(db.Model):
     Defines the table containing users to be notified of certain
     events pertaining to jobs.
     """
-    __tablename__ = TABLE_JOB_NOTIFIED_USER
+    __tablename__ = config.get("table_job_notified_users")
 
     user_id = db.Column(
         db.Integer,
-        db.ForeignKey("%s.id" % TABLE_USER),
+        db.ForeignKey("%s.id" % config.get("table_user")),
         primary_key=True,
         doc="The id of the user to be notified")
 
     job_id = db.Column(
         IDTypeWork,
-        db.ForeignKey("%s.id" % TABLE_JOB),
+        db.ForeignKey("%s.id" % config.get("table_job")),
         primary_key=True,
         doc="The id of the associated job")
 
@@ -129,31 +126,16 @@ class JobNotifiedUser(db.Model):
         backref=db.backref("subscribed_jobs", lazy="dynamic"))
 
 
-
 class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
           WorkStateChangedMixin, ReprMixin, UtilityMixins):
     """
     Defines the attributes and environment for a job.  Individual commands
     are kept track of by :class:`Task`
     """
-    __tablename__ = TABLE_JOB
+    __tablename__ = config.get("table_job")
     REPR_COLUMNS = ("id", "state", "project")
     REPR_CONVERT_COLUMN = {"state": repr}
     STATE_ENUM = list(WorkState) + [None]
-    MIN_CPUS = read_env_int("PYFARM_QUEUE_MIN_CPUS", 1)
-    MAX_CPUS = read_env_int("PYFARM_QUEUE_MAX_CPUS", 256)
-    MIN_RAM = read_env_int("PYFARM_QUEUE_MIN_RAM", 16)
-    MAX_RAM = read_env_int("PYFARM_QUEUE_MAX_RAM", 262144)
-    SPECIAL_RAM = read_env("PYFARM_AGENT_SPECIAL_RAM", [0], eval_literal=True)
-    SPECIAL_CPUS = read_env("PYFARM_AGENT_SPECIAL_CPUS", [0], eval_literal=True)
-
-    # quick check of the configured data
-    assert MIN_CPUS >= 1, "$PYFARM_QUEUE_MIN_CPUS must be > 0"
-    assert MAX_CPUS >= 1, "$PYFARM_QUEUE_MAX_CPUS must be > 0"
-    assert MAX_CPUS >= MIN_CPUS, "MIN_CPUS must be <= MAX_CPUS"
-    assert MIN_RAM >= 1, "$PYFARM_QUEUE_MIN_RAM must be > 0"
-    assert MAX_RAM >= 1, "$PYFARM_QUEUE_MAX_RAM must be > 0"
-    assert MAX_RAM >= MIN_RAM, "MIN_RAM must be <= MAX_RAM"
 
     # shared work columns
     id, state, priority, time_submitted, time_started, time_finished = \
@@ -161,25 +143,25 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     jobtype_version_id = db.Column(
         IDTypeWork,
-        db.ForeignKey("%s.id" % TABLE_JOB_TYPE_VERSION),
+        db.ForeignKey("%s.id" % config.get("table_job_type_version")),
         nullable=False,
         doc="The foreign key which stores :class:`JobTypeVersion.id`")
 
     job_queue_id = db.Column(
         IDTypeWork,
-        db.ForeignKey("%s.id" % TABLE_JOB_QUEUE),
+        db.ForeignKey("%s.id" % config.get("table_job_queue")),
         nullable=True,
         doc="The foreign key which stores :class:`JobQueue.id`")
 
     job_group_id = db.Column(
         IDTypeWork,
-        db.ForeignKey("%s.id" % TABLE_JOB_GROUP),
+        db.ForeignKey("%s.id" % config.get("table_job_group")),
         nullable=True,
         doc="The foreign key which stores:class:`JobGroup.id`")
 
     user_id = db.Column(
         db.Integer,
-        db.ForeignKey("%s.id" % TABLE_USER),
+        db.ForeignKey("%s.id" % config.get("table_user")),
         doc="The id of the user who owns this job")
 
     minimum_agents = db.Column(
@@ -198,13 +180,13 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     weight = db.Column(
         db.Integer,
         nullable=False,
-        default=read_env_int("PYFARM_QUEUE_DEFAULT_WEIGHT", 10),
+        default=config.get("queue_default_weight"),
         doc="The weight of this job. The scheduler will distribute "
             "available agents between jobs and job queues in the "
             "same queue in proportion to their weights.")
 
     title = db.Column(
-        db.String(MAX_JOBTITLE_LENGTH),
+        db.String(config.get("jobtitle_max_length")),
         nullable=False,
         doc="The title of this job")
 
@@ -232,7 +214,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     batch = db.Column(
         db.Integer,
-        default=read_env_int("PYFARM_QUEUE_DEFAULT_BATCH", 1),
+        default=config.get("job_default_batch"),
         doc="Number of tasks to run on a single agent at once. Depending "
             "on the capabilities of the software being run this will "
             "either cause a single process to execute on the agent "
@@ -240,7 +222,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     requeue = db.Column(
         db.Integer,
-        default=read_env_int("PYFARM_QUEUE_DEFAULT_REQUEUE", 3),
+        default=config.get("job_requeue_default"),
         doc="Number of times to requeue failed tasks "
             ""
             ".. csv-table:: **Special Values**"
@@ -252,7 +234,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     cpus = db.Column(
         db.Integer,
-        default=read_env_int("PYFARM_QUEUE_DEFAULT_CPUS", 1),
+        default=config.get("job_default_cpus"),
         doc="Number of cpus or threads each task should consume on"
             "each agent.  Depending on the job type being executed "
             "this may result in additional cpu consumption, longer "
@@ -268,7 +250,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     ram = db.Column(
         db.Integer,
-        default=read_env_int("PYFARM_QUEUE_DEFAULT_RAM", 32),
+        default=config.get("job_default_ram"),
         doc="Amount of ram a task from this job will require to be "
             "free in order to run.  A task exceeding this value will "
             "not result in any special behavior."
@@ -401,6 +383,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         doc="Relationship between this job and any :class:`Task` objects "
             "which have failed.")
 
+    # resource relationships
     tags = db.relationship(
         "Tag",
         backref="jobs", lazy="dynamic",
@@ -613,20 +596,9 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         Validation that ensures that the value provided for either
         :attr:`.ram` or :attr:`.cpus` is a valid value with a given range
         """
-        key_upper = key.upper()
-        special = getattr(self, "SPECIAL_%s" % key_upper)
-
-        if value is None or value in special:
-            return value
-
-        min_value = getattr(self, "MIN_%s" % key_upper)
-        max_value = getattr(self, "MAX_%s" % key_upper)
-
-        # quick sanity check of the incoming config
-        assert isinstance(min_value, int), "db.min_%s must be an integer" % key
-        assert isinstance(max_value, int), "db.max_%s must be an integer" % key
-        assert min_value >= 1, "db.min_%s must be > 0" % key
-        assert max_value >= 1, "db.max_%s must be > 0" % key
+        assert isinstance(value, int), "%s must be an integer" % key
+        min_value = config.get("agent_min_%s" % key)
+        max_value = config.get("agent_max_%s" % key)
 
         # check the provided input
         if min_value > value or value > max_value:

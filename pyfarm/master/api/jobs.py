@@ -36,15 +36,12 @@ except ImportError:  # pragma: no cover
 from flask.views import MethodView
 from flask import g, request
 
-from sqlalchemy.sql import func, or_, and_
+from sqlalchemy.sql import func, or_
 
-from pyfarm.core.config import read_env_bool, read_env
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES, WorkState, _WorkState
 from pyfarm.scheduler.tasks import (
-    assign_tasks_to_agent, assign_tasks, send_job_completion_mail, delete_job)
-from pyfarm.models.core.cfg import (
-    MAX_JOBTYPE_LENGTH, MAX_USERNAME_LENGTH, MAX_JOBQUEUE_NAME_LENGTH)
+    assign_tasks_to_agent, assign_tasks, delete_job)
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 from pyfarm.models.user import User
@@ -56,6 +53,7 @@ from pyfarm.models.jobqueue import JobQueue
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     jsonify, validate_with_model, get_request_argument)
+from pyfarm.master.config import config
 
 RANGE_TYPES = NUMERIC_TYPES[:-1] + (Decimal, )
 
@@ -63,12 +61,10 @@ logger = getLogger("api.jobs")
 
 # Load model mappings once per process
 TASK_MODEL_MAPPINGS = Task.types().mappings
+AUTOCREATE_USERS = config.get("autocreate_users")
+AUTO_USER_EMAIL = config.get("autocreate_user_email")
+DEFAULT_JOB_DELETE_TIME = config.get("default_job_delete_time")
 
-AUTOCREATE_USERS = read_env_bool("PYFARM_AUTOCREATE_USERS", True)
-AUTO_USERS_DEFAULT_DOMAIN = read_env("PYFARM_AUTO_USERS_DEFAULT_DOMAIN", None)
-DEFAULT_JOB_DELETE_TIME = read_env("PYFARM_DEFAULT_JOB_DELETE_TIME", None)
-if DEFAULT_JOB_DELETE_TIME is not None:
-    DEFAULT_JOB_DELETE_TIME = int(DEFAULT_JOB_DELETE_TIME)
 
 class ObjectNotFound(Exception):
     pass
@@ -198,8 +194,9 @@ def schema():
     # dynamically computed by the api
     schema_dict["start"] = "NUMERIC(10,4)"
     schema_dict["end"] = "NUMERIC(10,4)"
-    schema_dict["user"] = "VARCHAR(%s)" % MAX_USERNAME_LENGTH
-    schema_dict["jobqueue"] = "VARCHAR(%s)" % MAX_JOBQUEUE_NAME_LENGTH
+    schema_dict["user"] = "VARCHAR(%s)" % config.get("max_username_length")
+    schema_dict["jobqueue"] = \
+        "VARCHAR(%s)" % config.get("max_queue_name_length")
 
     # In the database, we are storing the jobtype_version_id, but over the wire,
     # we are using the jobtype's name plus version to identify it
@@ -208,7 +205,8 @@ def schema():
     del schema_dict["user_id"]
     # jobqueue too
     del schema_dict["job_queue_id"]
-    schema_dict["jobtype"] = "VARCHAR(%s)" % MAX_JOBTYPE_LENGTH
+    schema_dict["jobtype"] = \
+        "VARCHAR(%s)" % config.get("job_type_max_name_length")
     schema_dict["jobtype_version"] = "INTEGER"
     return jsonify(schema_dict), OK
 
@@ -364,8 +362,8 @@ class JobIndexAPI(MethodView):
             user = User.query.filter_by(username=username).first()
             if not user and AUTOCREATE_USERS:
                 user = User(username=username)
-                if AUTO_USERS_DEFAULT_DOMAIN:
-                    user.email = username + "@" + AUTO_USERS_DEFAULT_DOMAIN
+                if AUTO_USER_EMAIL:
+                    user.email = AUTO_USER_EMAIL.format(username=username)
                 db.session.add(user)
                 logger.warning("User %s was autocreated on job submit", username)
             elif not user:
@@ -404,8 +402,8 @@ class JobIndexAPI(MethodView):
                 if not user and AUTOCREATE_USERS:
                     username = entry["username"]
                     user = User(username=username)
-                    if AUTO_USERS_DEFAULT_DOMAIN:
-                        user.email = username + "@" + AUTO_USERS_DEFAULT_DOMAIN
+                    if AUTO_USER_EMAIL:
+                        user.email = AUTO_USER_EMAIL.format(username=username)
                     db.session.add(user)
                     db.session.flush()
                     logger.warning("User %s was autocreated on job submit",

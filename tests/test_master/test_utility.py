@@ -32,16 +32,16 @@ BaseTestCase.build_environment()
 
 from pyfarm.core.enums import PY3, NOTSET
 from pyfarm.models.core.mixins import UtilityMixins
+from pyfarm.master.config import config
 from pyfarm.master.entrypoints import load_error_handlers
 from pyfarm.master.application import db
-from pyfarm.models.core.cfg import TABLE_PREFIX
 from pyfarm.master.utility import (
     validate_with_model, error_handler, assert_mimetypes, inside_request,
     get_g, validate_json, jsonify, get_request_argument, isuuid)
 
 
 class ColumnSetTest(db.Model):
-    __tablename__ = "%s_column_set_test" % TABLE_PREFIX
+    __tablename__ = "%s_column_set_test" % config.get("table_prefix")
     a = db.Column(db.Integer, primary_key=True)
     b = db.Column(db.Integer, nullable=True)
     c = db.Column(db.Integer, nullable=False)
@@ -49,7 +49,7 @@ class ColumnSetTest(db.Model):
 
 
 class ValidationTestModel(db.Model, UtilityMixins):
-    __tablename__ = "%s_validate_with_model_test" % TABLE_PREFIX
+    __tablename__ = "%s_validate_with_model_test" % config.get("table_prefix")
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     a = db.Column(db.Integer, nullable=False)
     b = db.Column(db.Integer, nullable=False, default=1)

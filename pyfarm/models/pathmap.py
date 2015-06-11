@@ -24,38 +24,38 @@ path prefixes.
 """
 
 from pyfarm.master.application import db
+from pyfarm.master.config import config
 from pyfarm.models.core.mixins import ReprMixin, UtilityMixins
 from pyfarm.models.core.types import id_column
-from pyfarm.models.core.cfg import (
-    TABLE_PATH_MAP, MAX_PATH_LENGTH, TABLE_TAG)
+
 
 class PathMap(db.Model, ReprMixin, UtilityMixins):
     """
     Defines a table which is used for cross-platform
     file path mappings.
     """
-    __tablename__ = TABLE_PATH_MAP
+    __tablename__ = config.get("table_path_map")
 
     id = id_column(db.Integer)
 
     path_linux = db.Column(
-        db.String(MAX_PATH_LENGTH),
+        db.String(config.get("max_path_length")),
         nullable=False,
         doc="The path on linux platforms")
 
     path_windows = db.Column(
-        db.String(MAX_PATH_LENGTH),
+        db.String(config.get("max_path_length")),
         nullable=False,
         doc="The path on Windows platforms")
 
     path_osx = db.Column(
-        db.String(MAX_PATH_LENGTH),
+        db.String(config.get("max_path_length")),
         nullable=False,
         doc="The path on Mac OS X platforms")
 
     tag_id = db.Column(
         db.Integer,
-        db.ForeignKey("%s.id" % TABLE_TAG),
+        db.ForeignKey("%s.id" % config.get("table_tag")),
         nullable=True,
         doc="The tag an agent needs to have for this path map "
             "to apply to it. "

@@ -24,14 +24,18 @@ compatibility for some environment variables.
 """
 
 import os
+from functools import partial
 
-from pyfarm.core.config import Configuration as _Configuration
+from pyfarm.core.config import (
+    Configuration as _Configuration, read_env_int, read_env, read_env_bool)
 
 try:
     WindowsError
 except NameError:  # pragma: no cover
     WindowsError = OSError
 
+read_env_no_log = partial(read_env, log_result=False)
+env_bool_false = partial(read_env_bool, default=False)
 
 class Configuration(_Configuration):
     """
@@ -46,7 +50,40 @@ class Configuration(_Configuration):
         where an environment override would be preferred over a
         config.
     """
-    ENVIRONMENT_OVERRIDES = {}
+    ENVIRONMENT_OVERRIDES = {
+        "secret_key": ("PYFARM_SECRET_KEY", read_env_no_log),
+        "autocreate_users": ("PYFARM_AUTOCREATE_USERS", read_env_bool),
+        "default_job_delete_time": (
+            "PYFARM_DEFAULT_JOB_DELETE_TIME", read_env_int),
+        "base_url": (
+            "PYFARM_BASE_URL", read_env),
+        "login_disabled": ("PYFARM_LOGIN_DISABLED", read_env_bool),
+        "pretty_json": ("PYFARM_JSON_PRETTY", read_env_bool),
+        "echo_sql": ("PYFARM_SQL_ECHO", read_env_bool),
+        "database": ("PYFARM_DATABASE_URI", read_env_no_log),
+        "timestamp_format": ("PYFARM_TIMESTAMP_FORMAT", read_env),
+        "allow_agents_from_loopback": (
+            "PYFARM_DEV_ALLOW_AGENT_LOOPBACK_ADDRESSES", read_env_bool),
+        "agent_updates_dir": ("PYFARM_AGENT_UPDATES_DIR", read_env),
+        "agent_updates_webdir": ("PYFARM_AGENT_UPDATES_WEBDIR", read_env),
+        "farm_name": ("PYFARM_FARM_NAME", read_env),
+        "tasklogs_dir": ("PYFARM_LOGFILES_DIR", read_env),
+        "dev_db_drop_all": (
+            "PYFARM_DEV_APP_DB_DROP_ALL", env_bool_false),
+        "dev_db_create_all": (
+            "PYFARM_DEV_APP_DB_CREATE_ALL", env_bool_false),
+        "instance_application": ("PYFARM_APP_INSTANCE", env_bool_false),
+        "scheduler_broker": ("PYFARM_SCHEDULER_BROKER", read_env),
+        "scheduler_lockfile_base": (
+            "PYFARM_SCHEDULER_LOCKFILE_BASE", read_env),
+        "transaction_retries": ("PYFARM_TRANSACTION_RETRIES", read_env_int),
+        "agent_request_timeout": (
+            "PYFARM_AGENT_REQUEST_TIMEOUT", read_env_int),
+        "smtp_server": (
+            "PYFARM_MAIL_SERVER", read_env),
+        "from_email": (
+            "PYFARM_FROM_ADDRESS", read_env)
+    }
 
     def __init__(self):  # pylint: disable=super-on-old-class
         super(Configuration, self).__init__("pyfarm.master")
@@ -75,8 +112,11 @@ class Configuration(_Configuration):
             if envvar in os.environ:
                 overrides[config_var] = load_func(envvar)
 
+        if ("PYFARM_DEV_LISTEN_ON_WILDCARD" in os.environ
+                and read_env_bool("PYFARM_DEV_LISTEN_ON_WILDCARD")):
+            self.update(flask_listen_address="0.0.0.0")
+
         self.update(overrides)
-        self.loaded = tuple(self.loaded)
 
 try:
     config

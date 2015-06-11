@@ -32,63 +32,59 @@ from netaddr import AddrFormatError, IPAddress
 
 from pyfarm.core.enums import (
     AgentState, STRING_TYPES, UseAgentAddress, INTEGER_TYPES, WorkState)
-from pyfarm.core.config import read_env_number, read_env_int, read_env
-from pyfarm.master.application import db, app
+from pyfarm.master.config import config
+from pyfarm.master.application import db
 from pyfarm.models.core.functions import repr_ip
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, UtilityMixins, ReprMixin, ValidateWorkStateMixin)
 from pyfarm.models.core.types import (
     id_column, IPv4Address, IDTypeAgent, UseAgentAddressEnum,
     OperatingSystemEnum, AgentStateEnum, MACAddress)
-from pyfarm.models.core.cfg import (
-    TABLE_AGENT, TABLE_SOFTWARE_VERSION, TABLE_TAG, TABLE_AGENT_MAC_ADDRESS,
-    TABLE_AGENT_TAG_ASSOC, MAX_HOSTNAME_LENGTH, MAX_CPUNAME_LENGTH,
-    TABLE_AGENT_SOFTWARE_VERSION_ASSOC, MAX_OSNAME_LENGTH, TABLE_GPU_IN_AGENT,
-    TABLE_GPU)
 from pyfarm.models.jobtype import JobTypeVersion
 from pyfarm.models.job import Job
 
 
 __all__ = ("Agent", )
 
+ALLOW_AGENT_LOOPBACK = config.get("allow_agents_from_loopback")
 REGEX_HOSTNAME = re.compile("^(?!-)[A-Z\d-]{1,63}(?<!-)"
                             "(\.(?!-)[A-Z\d-]{1,63}(?<!-))*\.?$",
                             re.IGNORECASE)
 
 
 AgentSoftwareVersionAssociation = db.Table(
-    TABLE_AGENT_SOFTWARE_VERSION_ASSOC, db.metadata,
+    config.get("table_agent_software_version_assoc"), db.metadata,
     db.Column(
         "agent_id", IDTypeAgent,
-        db.ForeignKey("%s.id" % TABLE_AGENT),
+        db.ForeignKey("%s.id" % config.get("table_agent")),
         primary_key=True),
     db.Column(
         "software_version_id", db.Integer,
-        db.ForeignKey("%s.id" % TABLE_SOFTWARE_VERSION),
+        db.ForeignKey("%s.id" % config.get("table_software_version")),
         primary_key=True))
 
 
 AgentTagAssociation = db.Table(
-    TABLE_AGENT_TAG_ASSOC, db.metadata,
+    config.get("table_agent_tag_assoc"), db.metadata,
     db.Column(
         "agent_id", IDTypeAgent,
-        db.ForeignKey("%s.id" % TABLE_AGENT),
+        db.ForeignKey("%s.id" % config.get("table_agent")),
         primary_key=True),
     db.Column(
         "tag_id", db.Integer,
-        db.ForeignKey("%s.id" % TABLE_TAG),
+        db.ForeignKey("%s.id" % config.get("table_tag")),
         primary_key=True))
 
 
 GPUInAgent = db.Table(
-    TABLE_GPU_IN_AGENT, db.metadata,
+    config.get("table_gpu_in_agent"), db.metadata,
     db.Column(
         "agent_id", IDTypeAgent,
-        db.ForeignKey("%s.id" % TABLE_AGENT),
+        db.ForeignKey("%s.id" % config.get("table_agent")),
         primary_key=True),
     db.Column(
         "gpu_id", db.Integer,
-        db.ForeignKey("%s.id" % TABLE_GPU),
+        db.ForeignKey("%s.id" % config.get("table_gpu")),
         primary_key=True))
 
 
@@ -112,13 +108,16 @@ class AgentTaggingMixin(object):
 
 
 class AgentMacAddress(db.Model):
-    __tablename__ = TABLE_AGENT_MAC_ADDRESS
+    __tablename__ = config.get("table_agent_mac_address")
     __table_args__ = (UniqueConstraint("agent_id", "mac_address"), )
 
-    agent_id = db.Column(IDTypeAgent, db.ForeignKey("%s.id" % TABLE_AGENT),
-                         primary_key=True, nullable=False)
-    mac_address = db.Column(MACAddress, primary_key=True, nullable=False,
-                            autoincrement=False)
+    agent_id = db.Column(
+        IDTypeAgent,
+        db.ForeignKey("%s.id" % config.get("table_agent")),
+        primary_key=True, nullable=False)
+    mac_address = db.Column(
+        MACAddress,
+        primary_key=True, nullable=False, autoincrement=False)
 
 
 class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
@@ -137,7 +136,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             * :attr:`id`
 
     """
-    __tablename__ = TABLE_AGENT
+    __tablename__ = config.get("table_agent")
     __table_args__ = (UniqueConstraint("hostname", "port", "id"), )
     STATE_ENUM = AgentState
     STATE_DEFAULT = "online"
@@ -145,31 +144,31 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         "id", "hostname", "port", "state", "remote_ip",
         "cpus", "ram", "free_ram")
     REPR_CONVERT_COLUMN = {"remote_ip": repr_ip}
-    URL_TEMPLATE = "{scheme}://{host}:{port}/api/v1"
+    URL_TEMPLATE = config.get("agent_api_url_template")
 
-    MIN_PORT = read_env_int("PYFARM_AGENT_MIN_PORT", 1024)
-    MAX_PORT = read_env_int("PYFARM_AGENT_MAX_PORT", 65535)
-    MIN_CPUS = read_env_int("PYFARM_AGENT_MIN_CPUS", 1)
-    MAX_CPUS = read_env_int("PYFARM_AGENT_MAX_CPUS", 256)
-    MIN_RAM = read_env_int("PYFARM_AGENT_MIN_RAM", 16)
-    MAX_RAM = read_env_int("PYFARM_AGENT_MAX_RAM", 262144)
+    MIN_PORT = config.get("agent_min_port")
+    MAX_PORT = config.get("agent_max_port")
+    MIN_CPUS = config.get("agent_min_cpus")
+    MAX_CPUS = config.get("agent_max_cpus")
+    MIN_RAM = config.get("agent_min_ram")
+    MAX_RAM = config.get("agent_max_ram")
 
     # quick check of the configured data
-    assert MIN_PORT >= 1, "$PYFARM_AGENT_MIN_PORT must be > 0"
-    assert MAX_PORT >= 1, "$PYFARM_AGENT_MAX_PORT must be > 0"
+    assert MIN_PORT >= 1, "`agent_min_port` must be > 0"
+    assert MAX_PORT >= 1, "`agent_max_port` must be > 0"
     assert MAX_PORT >= MIN_PORT, "MIN_PORT must be <= MAX_PORT"
-    assert MIN_CPUS >= 1, "$PYFARM_AGENT_MIN_CPUS must be > 0"
-    assert MAX_CPUS >= 1, "$PYFARM_AGENT_MAX_CPUS must be > 0"
+    assert MIN_CPUS >= 1, "`agent_min_cpus` must be > 0"
+    assert MAX_CPUS >= 1, "`agent_max_cpus` must be > 0"
     assert MAX_CPUS >= MIN_CPUS, "MIN_CPUS must be <= MAX_CPUS"
-    assert MIN_RAM >= 1, "$PYFARM_AGENT_MIN_RAM must be > 0"
-    assert MAX_RAM >= 1, "$PYFARM_AGENT_MAX_RAM must be > 0"
-    assert MAX_RAM >= MIN_RAM, "MIN_RAM must be <= MAX_RAM"
+    assert MIN_RAM >= 1, "`agent_min_ram` must be > 0"
+    assert MAX_RAM >= 1, "`agent_max_ram` must be > 0"
+    assert MAX_RAM >= MIN_RAM, "`agent_min_ram` must be <= `agent_max_ram`"
 
     id = id_column(IDTypeAgent, default=uuid.uuid4, autoincrement=False)
 
     # basic host attribute information
     hostname = db.Column(
-        db.String(MAX_HOSTNAME_LENGTH),
+        db.String(config.get("max_hostname_length")),
         nullable=False,
         doc="The hostname we should use to talk to this host. "
             "Preferably this value will be the fully qualified "
@@ -196,7 +195,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             "agent; 'linux', 'windows', or 'mac'.")
 
     os_fullname = db.Column(
-        db.String(MAX_OSNAME_LENGTH),
+        db.String(config.get("max_osname_length")),
         doc="The full human-readable name of the agent's OS, as returned "
             "by platform.platform()")
 
@@ -216,7 +215,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         doc="The number of logical CPU cores installed on the agent")
 
     cpu_name = db.Column(
-        db.String(MAX_CPUNAME_LENGTH),
+        db.String(config.get("max_cpuname_length")),
         doc="The make and model of CPUs in this agents")
 
     port = db.Column(
@@ -266,7 +265,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     # one task per cpu.
     ram_allocation = db.Column(
         db.Float,
-        default=read_env_number("PYFARM_AGENT_RAM_ALLOCATION", .8),
+        default=config.get("agent_ram_allocation"),
         doc="The amount of ram the agent is allowed to allocate "
             "towards work.  A value of 1.0 would mean to let the "
             "agent use all of the memory installed on the system "
@@ -274,7 +273,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     cpu_allocation = db.Column(
         db.Float,
-        default=read_env_number("PYFARM_AGENT_CPU_ALLOCATION", 1.0),
+        default=config.get("agent_cpu_allocation"),
         doc="The total amount of cpu space an agent is allowed to "
             "process work in.  A value of 1.0 would mean an agent "
             "can handle as much work as the system could handle "
@@ -408,7 +407,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             raise ValueError(
                 "%s is not a valid address format: %s" % (value, e))
 
-        if app.config.get("ALLOW_AGENT_LOOPBACK_ADDRESSES"):
+        if ALLOW_AGENT_LOOPBACK:
             loopback = lambda: False
         else:
             loopback = address.is_loopback
@@ -420,7 +419,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
         return value
 
-    def api_url(self, scheme=read_env("PYFARM_AGENT_API_SCHEME", "http")):
+    def api_url(self):
         """
         Returns the base url which should be used to access the api
         of this specific agent.
@@ -429,18 +428,14 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             Raised if this function is called while the agent's
             :attr:`use_address` column is set to ``PASSIVE``
         """
-        assert scheme in ("http", "https")
-
         if self.use_address == UseAgentAddress.REMOTE:
             return self.URL_TEMPLATE.format(
-                scheme=scheme,
                 host=self.remote_ip,
                 port=self.port
             )
 
         elif self.use_address == UseAgentAddress.HOSTNAME:
             return self.URL_TEMPLATE.format(
-                scheme=scheme,
                 host=self.hostname,
                 port=self.port
             )

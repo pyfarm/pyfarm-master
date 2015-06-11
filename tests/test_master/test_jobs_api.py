@@ -22,9 +22,8 @@ from json import dumps
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
-from pyfarm.models.core.cfg import (
-    MAX_JOBTYPE_LENGTH, MAX_USERNAME_LENGTH, MAX_JOBQUEUE_NAME_LENGTH)
 from pyfarm.master.application import get_api_blueprint
+from pyfarm.master.config import config
 from pyfarm.master.entrypoints import load_api
 from pyfarm.master.application import db
 from pyfarm.models.user import User
@@ -88,12 +87,13 @@ class TestJobAPI(BaseTestCase):
         schema["start"] = "NUMERIC(10,4)"
         schema["end"] = "NUMERIC(10,4)"
         del schema["jobtype_version_id"]
-        schema["jobtype"] = "VARCHAR(%s)" % MAX_JOBTYPE_LENGTH
+        schema["jobtype"] = \
+            "VARCHAR(%s)" % config.get("job_type_max_name_length")
         schema["jobtype_version"] = "INTEGER"
         del schema["user_id"]
-        schema["user"] = "VARCHAR(%s)" % MAX_USERNAME_LENGTH
+        schema["user"] = "VARCHAR(%s)" % config.get("max_username_length")
         del schema["job_queue_id"]
-        schema["jobqueue"] = "VARCHAR(%s)" % MAX_JOBQUEUE_NAME_LENGTH
+        schema["jobqueue"] = "VARCHAR(%s)" % config.get("max_queue_name_length")
         self.assertEqual(response.json, schema)
 
     def test_job_post(self):

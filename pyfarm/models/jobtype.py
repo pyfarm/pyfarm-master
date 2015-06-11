@@ -27,11 +27,9 @@ general implementation.
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import UniqueConstraint
 
-from pyfarm.core.config import read_env_int, read_env_bool
 from pyfarm.core.logger import getLogger
 from pyfarm.master.application import db
-from pyfarm.models.core.cfg import (
-    TABLE_JOB_TYPE, TABLE_JOB_TYPE_VERSION, MAX_JOBTYPE_LENGTH)
+from pyfarm.master.config import config
 from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
 from pyfarm.models.core.types import id_column, IDTypeWork
 
@@ -45,14 +43,14 @@ class JobType(db.Model, UtilityMixins, ReprMixin):
     """
     Stores the unique information necessary to execute a task
     """
-    __tablename__ = TABLE_JOB_TYPE
+    __tablename__ = config.get("table_job_type")
     __table_args__ = (UniqueConstraint("name"),)
     REPR_COLUMNS = ("id", "name")
 
     id = id_column(IDTypeWork)
 
     name = db.Column(
-        db.String(MAX_JOBTYPE_LENGTH),
+        db.String(config.get("job_type_max_name_length")),
         nullable=False,
         doc="The name of the job type.  This can be either a human "
             "readable name or the name of the job type class itself.")
@@ -103,7 +101,7 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
     """
     Defines a specific jobtype version.
     """
-    __tablename__ = TABLE_JOB_TYPE_VERSION
+    __tablename__ = config.get("table_job_type_version")
     __table_args__ = (UniqueConstraint("jobtype_id", "version"),)
 
     REPR_COLUMNS = ("id", "jobtype_id", "version")
@@ -112,7 +110,7 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
 
     jobtype_id = db.Column(
         IDTypeWork,
-        db.ForeignKey("%s.id" % TABLE_JOB_TYPE),
+        db.ForeignKey("%s.id" % config.get("table_job_type")),
         nullable=False,
         doc="The jobtype this version belongs to")
 
@@ -123,16 +121,14 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
 
     max_batch = db.Column(
         db.Integer,
-        default=read_env_int(
-            "JOBTYPE_DEFAULT_MAX_BATCH",
-            read_env_int("PYFARM_QUEUE_MAX_BATCH", 1)),
+        default=config.get("job_type_max_batch"),
         doc="When the queue runs, this is the maximum number of tasks "
             "that the queue can select to assign to a single"
             "agent.  If left empty, no maximum applies")
 
     batch_contiguous = db.Column(
         db.Boolean,
-        default=read_env_bool("JOBTYPE_DEFAULT_BATCH_CONTIGUOUS", True),
+        default=config.get("job_type_batch_contiguous"),
         doc="If True then the queue will be forced to batch"
             "numerically contiguous tasks only for this job type.  "
             "For example if True it would batch frames 1, 2, 3, 4 "
@@ -140,7 +136,7 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
             "however the queue will batch non-contiguous tasks too.")
 
     classname = db.Column(
-        db.String(MAX_JOBTYPE_LENGTH),
+        db.String(config.get("job_type_max_class_name_length")),
         nullable=True,
         doc="The name of the job class contained within the file being "
             "loaded.  This field may be null but when it's not provided "

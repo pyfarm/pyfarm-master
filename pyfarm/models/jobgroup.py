@@ -23,8 +23,7 @@ Model for job groups
 """
 
 from pyfarm.master.application import db
-from pyfarm.models.core.cfg import (
-    TABLE_JOB_GROUP, TABLE_JOB_TYPE, TABLE_USER, MAX_JOBGROUP_NAME_LENGTH)
+from pyfarm.master.config import config
 from pyfarm.models.core.mixins import UtilityMixins
 from pyfarm.models.core.types import id_column, IDTypeWork
 
@@ -33,25 +32,25 @@ class JobGroup(db.Model, UtilityMixins):
     """
     Used to group jobs together for better presentation in the UI
     """
-    __tablename__ = TABLE_JOB_GROUP
+    __tablename__ = config.get("table_job_group")
 
     id = id_column(IDTypeWork)
 
     title = db.Column(
-        db.String(MAX_JOBGROUP_NAME_LENGTH),
+        db.String(config.get("max_jobgroup_name_length")),
         nullable=False,
         doc="The title of the job group's name")
 
     main_jobtype_id = db.Column(
         IDTypeWork,
-        db.ForeignKey("%s.id" % TABLE_JOB_TYPE),
+        db.ForeignKey("%s.id" % config.get("table_job_type")),
         nullable=False,
         doc="ID of the jobtype of the main job in this "
             "group. Purely for display and filtering.")
 
     user_id = db.Column(
         db.Integer,
-        db.ForeignKey("%s.id" % TABLE_USER),
+        db.ForeignKey("%s.id" % config.get("table_user")),
         doc="The id of the user who owns these jobs")
 
     #

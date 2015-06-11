@@ -44,13 +44,13 @@ from sqlalchemy import or_, not_
 
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState, AgentState, _AgentState
-from pyfarm.core.config import read_env
 from pyfarm.scheduler.tasks import (
     assign_tasks, update_agent, assign_tasks_to_agent, send_tasks_to_agent)
 from pyfarm.models.agent import Agent, AgentMacAddress
 from pyfarm.models.gpu import GPU
 from pyfarm.models.task import Task
 from pyfarm.models.software import Software, SoftwareVersion
+from pyfarm.master.config import config
 from pyfarm.models.tag import Tag
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
@@ -60,7 +60,7 @@ from pyfarm.master.utility import (
 logger = getLogger("api.agents")
 
 MAC_RE = re.compile("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
-OUR_FARM_NAME = read_env("PYFARM_FARM_NAME", "")
+OUR_FARM_NAME = config.get("farm_name")
 
 
 def fail_missing_assignments(agent, current_assignments):

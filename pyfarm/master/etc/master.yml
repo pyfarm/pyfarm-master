@@ -12,7 +12,204 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The format for timestamps in the user interface.  When not set this
-# value is read from $PYFARM_TIMESTAMP_FORMAT which will default
-# to "YYYY-MM-DD HH:mm:ss"
-timestamp_format:
+# Configures if the underlying Flask application and other libraries
+# should run in debug mode.
+#
+# **Production Note**: This value should always be false.
+debug: true
+
+
+# Enables verbose output of loggers associated with the
+# job queue.
+debug_queue: false
+
+
+# The URL to access the database.  For debugging and development
+# a local SQLite database is used but for production other databases,
+# such as MySQL or PostgreSQL which PyFarm runs tests against, should
+# be used.
+#
+# For more information on the expected format of this variable
+# see SQLAlchemy's documentation:
+#   https://sqlalchemy.readthedocs.org/en/latest/core/engines.html#database-urls
+database: "sqlite:///pyfarm.sqlite"
+
+
+# The broker that PyFarm's scheduler should use.  For debugging and
+# development running Redis is the simplest.  For large deployments, or
+# to understand the format of this variable, see:
+#   http://celery.readthedocs.org/en/latest/configuration.html#broker-url
+scheduler_broker: "redis://"
+
+
+# The URL the master is running on.  This is used to form internal
+# urls and other information.
+base_url: http://127.0.0.1:5000/
+
+
+# The name of this render farm, normally this can remain the default value.  If
+# you're running multiple farms this allows you to only accept agents to your
+# master that match your current farm name.
+farm_name: ""
+
+
+# The secret key which is used by several components of Flask
+# for form validation, salting of secrets, etc.
+#
+# **Production Note**: This value should be random, consistent between
+# frontends, and kept secret.  Do not use the value below for
+# production.
+secret_key: pyfarm
+
+
+# The key used for signing the csrf token.
+#
+# **Production Note**: This value should be random, consistent between
+# frontends, and kept secret.  Do not use the value below for
+# production.
+csrf_session_key: pyfarm
+
+
+# The prefix of the URL from which the API will operate on.  This should
+# not generally be changed unless you are operating different versions
+# of the API at the same time from one web server.
+api_prefix: /api/v1
+
+
+# The URL template we use to communicate with the agent.
+agent_api_url_template: http://{host}:{port}/api/v1
+
+
+
+# Enables or disable the login functionality.  This can be used when
+# debugging or doing development but should not be changed for
+# production.
+login_disabled: false
+
+
+# The amount of time the 'remeber me' cookie should persist.  The keys
+# and values here are passed into a `timedelta` object as keywords.
+cookie_duration:
+  hours: 16
+
+
+# When true json output from the APIs will be reformatted to
+# be more human readable.
+pretty_json: false
+
+
+# When true all SQLAlchemy queries will be echoed.  This is useful
+# for debugging the SQL statements being run and to get an idea of
+# what the underlying ORM may be doing.
+echo_sql: false
+
+
+# When true the application will automatically create users in
+# PyFarm's database if they do not exist already.  Setting this
+# to false will cause an exception to be raised if the user in
+# question does not exist.
+autocreate_users: true
+
+
+# When autocreating users, use this email address as a template.  For example:
+#   "{username}@example.com"
+# Not setting this value and setting `autocreate_users` to true will result
+# in a users's email address not being set on a newly created user.
+autocreate_user_email: null
+
+
+# When provided an integer this many seconds will elapse after a job
+# has completed before it is deleted.
+default_job_delete_time: null
+
+
+# The format for timestamps in the user interface.
+timestamp_format: "YYYY-MM-DD HH:mm:ss"
+
+
+# The directory to store updates for agents.  This will use `temp` above
+# as the base directory.
+agent_updates_dir: ${temp}/pyfarm-updates
+
+
+# Optional directory to serve GET requests for agent updates
+# from.  This is different from `agent_updates_dir` in that it's
+# only used when an agent is requested a file to update from.  This
+# can be useful when you're caching requests or doing something with
+# the update files prior to them being requested by the agent.
+agent_updates_webdir: null
+
+
+# The directory to store downloaded logs in.
+#
+# **Production Note**: For production it's probably best if these are kept
+# in a persistent location rather than $temp.
+tasklogs_dir: ${temp}/task_logs
+
+
+# The address the Flask application should listen on.  This is only important
+# when running the application in a standalone mode of operation. By default
+# this will only listen locally but could be changed to listen on
+# a specific adatper or `0.0.0.0` for all addresses.
+flask_listen_address: 127.0.0.1
+
+
+# When true all database tables will be dropped prior to setting
+# up the application.  This is useful for development purposes only
+# and should not be used in production.  There's also the `pyfarm-tables`
+# command line tool which can be used to create or drop tables.
+dev_db_drop_all: false
+
+
+# When true we'll attempt to create any missing database tables
+# prior to the application starting.  This is useful for development
+# purposes only and should not be used in production.  There's also
+# the `pyfarm-tables` command line tool which can be used to create
+# or drop tables.
+dev_db_create_all: false
+
+
+# When true the application will be instanced as 'app' in the
+# pyfarm.master.entrypoints module.  When running behind something
+# like uwsgi this should be true.
+instance_application: false
+
+##
+## BEGIN Queue defaults
+##
+
+
+# The default priority for a newly created job queue.
+queue_default_priority: 0
+
+
+# The default weight of a newly created job queue.
+queue_default_weight: 10
+
+
+# The minimum and maxinum priority any queue can have.  This is
+# used by the models for validation purposes.
+queue_min_priority: -1000
+queue_max_priority: 1000
+
+##
+## END Queue defaults
+##
+
+##
+## BEGIN Job Type defaults
+##
+
+# The maximum number of tasks for the given job type
+# to send to an agent at once.
+job_type_max_batch: 1
+
+
+# When batching and this value is true frames will be batched
+# in contiguous groups.
+job_type_batch_contiguous: true
+
+##
+## END Job Type defaults
+##
+

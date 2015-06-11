@@ -26,17 +26,18 @@ Every agent can have zero or more GPUs associated with it.
 from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.master.application import db
+from pyfarm.master.config import config
 from pyfarm.models.core.mixins import ReprMixin, UtilityMixins
 from pyfarm.models.core.types import id_column
-from pyfarm.models.core.cfg import TABLE_GPU, MAX_GPUNAME_LENGTH
+
 
 class GPU(db.Model, UtilityMixins, ReprMixin):
-    __tablename__ = TABLE_GPU
+    __tablename__ = config.get("table_gpu")
     __table_args__ = (UniqueConstraint("fullname"),)
 
     id = id_column(db.Integer)
 
     fullname = db.Column(
-        db.String(MAX_GPUNAME_LENGTH),
+        db.String(config.get("max_gpu_name_length")),
         nullable=False,
         doc="The full name of this graphics card model")

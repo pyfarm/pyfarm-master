@@ -1,6 +1,7 @@
 # No shebang line, this module is meant to be imported
 #
 # Copyright 2015 Ambient Entertainment GmbH & Co. KG
+# Copyright 2015 Oliver Palmer
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,8 +32,6 @@ from flask.views import MethodView
 from flask import g
 
 from sqlalchemy import func, asc
-
-from pyfarm.core.config import read_env_bool, read_env
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import WorkState
 from pyfarm.models.user import User
@@ -40,14 +39,14 @@ from pyfarm.models.jobtype import JobType
 from pyfarm.models.job import Job
 from pyfarm.models.task import Task
 from pyfarm.models.jobgroup import JobGroup
-from pyfarm.models.core.cfg import  MAX_USERNAME_LENGTH, MAX_JOBTYPE_LENGTH
+from pyfarm.master.config import config
 from pyfarm.master.utility import jsonify, validate_with_model
 from pyfarm.master.application import db
 
 logger = getLogger("api.jobgroups")
 
-AUTOCREATE_USERS = read_env_bool("PYFARM_AUTOCREATE_USERS", True)
-AUTO_USERS_DEFAULT_DOMAIN = read_env("PYFARM_AUTO_USERS_DEFAULT_DOMAIN", None)
+AUTOCREATE_USERS = config.get("autocreate_users")
+AUTO_USER_EMAIL = config.get("autocreate_user_email")
 
 
 def schema():
@@ -80,11 +79,13 @@ def schema():
     :statuscode 200: no error
     """
     schema_dict = JobGroup.to_schema()
+
     # In the database, we are storing the user by id, but over the wire, we are
     # using the username to identify the user instead.
-    schema_dict["user"] = "VARCHAR(%s)" % MAX_USERNAME_LENGTH
+    schema_dict["user"] = "VARCHAR(%s)" % config.get("max_username_length")
     del schema_dict["user_id"]
-    schema_dict["main_jobtype"] = "VARCHAR(%s)" % MAX_JOBTYPE_LENGTH
+    schema_dict["main_jobtype"] = \
+        "VARCHAR(%s)" % config.get("job_type_max_name_length")
     del schema_dict["main_jobtype_id"]
     return jsonify(schema_dict), OK
 
@@ -134,8 +135,8 @@ class JobGroupIndexAPI(MethodView):
         user = User.query.filter_by(username=username).first()
         if not user and AUTOCREATE_USERS:
             user = User(username=username)
-            if AUTO_USERS_DEFAULT_DOMAIN:
-                user.email = username + "@" + AUTO_USERS_DEFAULT_DOMAIN
+            if AUTO_USER_EMAIL:
+                user.email = AUTO_USER_EMAIL.format(username=username)
             db.session.add(user)
             logger.warning("User %s was autocreated on job group create",
                            username)

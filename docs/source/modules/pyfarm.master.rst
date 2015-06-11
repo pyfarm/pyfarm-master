@@ -15,6 +15,7 @@ Submodules
 .. toctree::
 
    pyfarm.master.application
+   pyfarm.master.config
    pyfarm.master.entrypoints
    pyfarm.master.index
    pyfarm.master.initial

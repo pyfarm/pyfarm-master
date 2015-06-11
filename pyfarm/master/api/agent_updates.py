@@ -23,7 +23,7 @@ The API allows access to agent update packages, possibly through redirects
 import re
 import tempfile
 from os import makedirs
-from os.path import join, isdir, isfile
+from os.path import join, isfile
 from errno import EEXIST
 
 try:
@@ -31,12 +31,11 @@ try:
 except ImportError:  # pragma: no cover
     from http.client import BAD_REQUEST, CREATED, NOT_FOUND
 
-from werkzeug.utils import secure_filename
 from flask.views import MethodView
-from flask import request, g, redirect, send_file
+from flask import request, redirect, send_file
 
-from pyfarm.core.config import read_env
 from pyfarm.core.logger import getLogger
+from pyfarm.master.config import config
 from pyfarm.master.utility import jsonify
 
 logger = getLogger("api.agents")
@@ -44,9 +43,9 @@ logger = getLogger("api.agents")
 VERSION_REGEX = re.compile("\d+(\.\d+(\.\d+)?)?((-pre\d?)|(-dev\d?)|(-rc?\d?)|"
                            "(-alpha\d?)|(-beta\d?))?$")
 
-UPDATES_DIR = read_env(
-    "PYFARM_AGENT_UPDATES_DIR", join(tempfile.gettempdir(), "pyfarm-updates"))
-UPDATES_WEBDIR = read_env("PYFARM_AGENT_UPDATES_WEBDIR", None)
+UPDATES_DIR = config.get("agent_updates_dir")
+UPDATES_WEBDIR = config.get("agent_updates_webdir")
+
 
 try:
     makedirs(UPDATES_DIR)

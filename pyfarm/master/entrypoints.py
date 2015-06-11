@@ -30,15 +30,15 @@ try:
     from httplib import (
         responses, BAD_REQUEST, UNAUTHORIZED, NOT_FOUND, METHOD_NOT_ALLOWED,
         INTERNAL_SERVER_ERROR, UNSUPPORTED_MEDIA_TYPE)
-except ImportError:
+except ImportError:  # pragma: no cover
     from http.client import (
         responses, BAD_REQUEST, UNAUTHORIZED, NOT_FOUND, METHOD_NOT_ALLOWED,
         INTERNAL_SERVER_ERROR, UNSUPPORTED_MEDIA_TYPE)
 
 from flask import request
 
-from pyfarm.core.config import read_env_bool, read_env
 from pyfarm.core.logger import getLogger
+from pyfarm.master.config import config
 from pyfarm.master.application import db
 from pyfarm.master.utility import error_handler
 
@@ -155,7 +155,7 @@ def load_user_interface(app_instance):
         update_version_default_status)
     from pyfarm.master.user_interface.jobgroups import jobgroups
 
-    farm_name = read_env("PYFARM_FARM_NAME", "")
+    farm_name = config.get("farm_name")
     app_instance.jinja_env.globals.update({"farm_name": farm_name})
 
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
@@ -673,28 +673,27 @@ def run_master():  # pragma: no cover
         db.drop_all()
 
     if parsed.allow_agent_loopback_addresses:
-        app.config.update(ALLOW_AGENT_LOOPBACK_ADDRESSES=True)
+        config["allow_agents_from_loopback"] = True
 
     if parsed.create_all:
         db.create_all()
 
     load_setup(app)
     load_master(app, api)
-
-    if read_env_bool("PYFARM_DEV_LISTEN_ON_WILDCARD", False):
-        app.run(host='0.0.0.0', debug=True)
-    else:
-        app.run(debug=True)
+    app.run(
+        host=config.get("flask_listen_address"),
+        debug=config.get("debug")
+    )
 
 
 def create_app():
     """An entry point specifically for uWSGI or similar to use"""
     from pyfarm.master.application import app, api
 
-    if read_env_bool("PYFARM_DEV_APP_DB_DROP_ALL", False):
+    if config.get("dev_db_drop_all"):
         db.drop_all()
 
-    if read_env_bool("PYFARM_DEV_APP_DB_CREATE_ALL", False):
+    if config.get("dev_db_create_all"):
         db.create_all()
 
     load_setup(app)
@@ -702,5 +701,5 @@ def create_app():
     return app
 
 
-if read_env_bool("PYFARM_APP_INSTANCE", False):
+if config.get("instance_application"):
     app = create_app()

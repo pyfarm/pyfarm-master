@@ -28,7 +28,7 @@ BaseTestCase.build_environment()
 
 from pyfarm.core.enums import AgentState, DBAgentState, STRING_TYPES
 from pyfarm.master.application import db
-from pyfarm.models.core.cfg import TABLE_PREFIX
+from pyfarm.master.config import config
 from pyfarm.models.core.types import (
     IPv4Address, MACAddress, UseAgentAddressEnum, JSONDict, JSONList,
     JSONSerializable, id_column, AgentStateEnum,
@@ -36,7 +36,7 @@ from pyfarm.models.core.types import (
 
 
 class TypeModel(db.Model):
-    __tablename__ = "%s_test_types" % TABLE_PREFIX
+    __tablename__ = "%s_test_types" % config.get("table_prefix")
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     ipv4 = db.Column(IPv4Address)
     mac = db.Column(MACAddress)

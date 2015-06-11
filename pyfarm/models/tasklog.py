@@ -34,25 +34,26 @@ from sqlalchemy.schema import UniqueConstraint, PrimaryKeyConstraint
 from pyfarm.core.enums import WorkState
 from pyfarm.models.core.types import WorkStateEnum
 from pyfarm.master.application import db
+from pyfarm.master.config import config
 from pyfarm.models.core.mixins import ReprMixin, UtilityMixins
 from pyfarm.models.core.types import id_column, IDTypeAgent, IDTypeWork
-from pyfarm.models.core.cfg import (
-    TABLE_TASK_LOG, TABLE_AGENT, TABLE_TASK, TABLE_TASK_TASK_LOG_ASSOC)
+
 
 class TaskTaskLogAssociation(db.Model):
     """Stores an association between the task table and a task log"""
-    __tablename__ = TABLE_TASK_TASK_LOG_ASSOC
+    __tablename__ = config.get("table_task_log_assoc")
     __table_args__ = (
         PrimaryKeyConstraint("task_log_id", "task_id", "attempt"),)
 
     task_log_id = db.Column(
         db.Integer,
-        db.ForeignKey("%s.id" % TABLE_TASK_LOG, ondelete="CASCADE"),
+        db.ForeignKey(
+            "%s.id" % config.get("table_task_log"), ondelete="CASCADE"),
         doc="The ID of the task log")
 
     task_id = db.Column(
         IDTypeWork,
-        db.ForeignKey("%s.id" % TABLE_TASK, ondelete="CASCADE"),
+        db.ForeignKey("%s.id" % config.get("table_task"), ondelete="CASCADE"),
         doc="The ID of the job a task log is associated with")
 
     attempt = db.Column(
@@ -76,9 +77,10 @@ class TaskTaskLogAssociation(db.Model):
             passive_deletes=True))
 
 
+
 class TaskLog(db.Model, UtilityMixins, ReprMixin):
     """Table which represents a single task log entry"""
-    __tablename__ = TABLE_TASK_LOG
+    __tablename__ = config.get("table_task_log")
     __table_args__ = (UniqueConstraint("identifier"),)
 
     id = id_column(db.Integer)
@@ -90,7 +92,7 @@ class TaskLog(db.Model, UtilityMixins, ReprMixin):
 
     agent_id = db.Column(
         IDTypeAgent,
-        db.ForeignKey("%s.id" % TABLE_AGENT),
+        db.ForeignKey("%s.id" % config.get("table_agent")),
         nullable=True,
         doc="The agent this log was created on")
 
@@ -110,8 +112,7 @@ class TaskLog(db.Model, UtilityMixins, ReprMixin):
             "created on")
 
     task_associations = db.relationship(
-        TaskTaskLogAssociation,
-        backref="log",
+        TaskTaskLogAssociation, backref="log",
         doc="Relationship between tasks and their logs."
     )
 

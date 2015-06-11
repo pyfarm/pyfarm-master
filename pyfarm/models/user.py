@@ -28,25 +28,24 @@ from flask.ext.login import UserMixin
 
 from pyfarm.core.enums import STRING_TYPES, PY3
 from pyfarm.master.application import app, db, login_serializer
+from pyfarm.master.config import config
 from pyfarm.models.core.mixins import ReprMixin
 from pyfarm.models.core.functions import split_and_extend
-from pyfarm.models.core.cfg import (
-    TABLE_USER, TABLE_ROLE, TABLE_USER_ROLE,
-    MAX_USERNAME_LENGTH, SHA256_ASCII_LENGTH, MAX_EMAILADDR_LENGTH,
-    MAX_ROLE_LENGTH)
 
 __all__ = ("User", "Role")
 
+SHA256_ASCII_LENGTH = 64  # static length of a sha256 string
+
 # roles the user is a member of
 UserRole = db.Table(
-    TABLE_USER_ROLE,
+    config.get("table_user_role"),
     db.Column(
         "user_id", db.Integer,
-        db.ForeignKey("%s.id" % TABLE_USER),
+        db.ForeignKey("%s.id" % config.get("table_user")),
         doc="The id of the associated user"),
     db.Column(
         "role_id", db.Integer,
-        db.ForeignKey("%s.id" % TABLE_ROLE),
+        db.ForeignKey("%s.id" % config.get("table_role")),
         doc="The id of the associated role")
 )
 
@@ -55,7 +54,7 @@ class User(db.Model, UserMixin, ReprMixin):
     """
     Stores information about a user including the roles they belong to
     """
-    __tablename__ = TABLE_USER
+    __tablename__ = config.get("table_user")
     REPR_COLUMNS = ("id", "username")
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -67,7 +66,7 @@ class User(db.Model, UserMixin, ReprMixin):
             "system")
 
     username = db.Column(
-        db.String(MAX_USERNAME_LENGTH),
+        db.String(config.get("max_username_length")),
         unique=True, nullable=False,
         doc="The username used to login.")
 
@@ -76,7 +75,7 @@ class User(db.Model, UserMixin, ReprMixin):
         doc="The password used to login")
 
     email = db.Column(
-        db.String(MAX_EMAILADDR_LENGTH),
+        db.String(config.get("max_email_length")),
         unique=True,
         doc="Contact email for registration and possible "
             "notifications")
@@ -208,7 +207,7 @@ class Role(db.Model):
     Stores role information that can be used to give a user access
     to individual resources.
     """
-    __tablename__ = TABLE_ROLE
+    __tablename__ = config.get("table_role")
 
     id = db.Column(
         db.Integer,
@@ -223,7 +222,7 @@ class Role(db.Model):
             "PyFarm")
 
     name = db.Column(
-        db.String(MAX_ROLE_LENGTH),
+        db.String(config.get("max_role_length")),
         unique=True, nullable=False,
         doc="The name of the role")
 
