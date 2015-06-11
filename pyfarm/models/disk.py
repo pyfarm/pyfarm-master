@@ -28,25 +28,24 @@ from pyfarm.master.application import db
 from pyfarm.models.core.types import IDTypeAgent
 from pyfarm.models.core.mixins import ReprMixin, UtilityMixins
 from pyfarm.models.core.types import id_column
-from pyfarm.models.core.cfg import (
-    TABLE_AGENT_DISK, MAX_MOUNTPOINT_LENGTH, TABLE_AGENT)
+from pyfarm.master.config import config
 
 class AgentDisk(db.Model, UtilityMixins, ReprMixin):
     """
     Stores information about a single disk belonging to an agent, including
     usage information.
     """
-    __tablename__ = TABLE_AGENT_DISK
+    __tablename__ =  config.get("table_agent_disk")
 
     id = id_column(db.Integer)
 
     agent_id = db.Column(
         IDTypeAgent,
-        db.ForeignKey("%s.id" % TABLE_AGENT),
+        db.ForeignKey("%s.id" % config.get("table_agent")),
         nullable=False)
 
     mountpoint = db.Column(
-        db.String(MAX_MOUNTPOINT_LENGTH),
+        db.String(config.get("max_mountpoint_length")),
         nullable=False,
         doc="The mountpoint of this disk on the agent "
             "(Drive letter for Windows agents)")
