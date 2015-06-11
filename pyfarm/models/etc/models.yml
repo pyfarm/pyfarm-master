@@ -101,6 +101,9 @@ table_gpu: ${table_prefix}gpus
 # The name of the table containing MAC address information for agents
 table_gpu_in_agent: ${table_prefix}gpu_agent_associations
 
+# The name of the table containing the disks of the agents
+table_agent_disk: ${table_prefix}agent_disks
+
 ##
 ## END Database Table Names
 ##
@@ -230,6 +233,9 @@ max_email_length: 255
 
 # The maximum length of a role name
 max_role_length: 128
+
+# The maximum length of a mountpoint for agent disks
+max_mountpoint_length: 255
 
 ##
 ## END Database Model Constraints

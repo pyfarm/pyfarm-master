@@ -79,6 +79,25 @@
           </tr>
           <tr>
             <td>
+              Disks
+            </td>
+            <td>
+              <table class="table table-striped table-bordered">
+                {% for disk in agent.disks %}
+                <tr>
+                  <td>
+                    {{ disk.mountpoint }}
+                  </td>
+                  <td>
+                    {{ disk.free|filesizeformat(True) }} of {{ disk.size|filesizeformat(True) }} free
+                  </td>
+                </tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td>
               GPUs
             </td>
             <td>

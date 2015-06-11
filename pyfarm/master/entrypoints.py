@@ -52,6 +52,7 @@ from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
 from pyfarm.models.job import Job, JobDependency
 from pyfarm.models.jobtype import JobType
+from pyfarm.models.disk import AgentDisk
 from pyfarm.models.agent import Agent, AgentTagAssociation, GPUInAgent
 from pyfarm.models.user import User, Role
 from pyfarm.models.jobqueue import JobQueue

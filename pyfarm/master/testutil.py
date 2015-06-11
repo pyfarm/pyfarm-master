@@ -102,6 +102,7 @@ class BaseTestCase(TestCase):
 
         # import all the models we have so the relationships
         # can be setup properly
+        from pyfarm.models.disk import AgentDisk
         from pyfarm.models.agent import Agent
         from pyfarm.models.job import Job
         from pyfarm.models.jobtype import JobType

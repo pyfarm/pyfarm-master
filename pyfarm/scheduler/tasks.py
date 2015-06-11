@@ -59,6 +59,7 @@ from pyfarm.models.job import Job, JobNotifiedUser
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.gpu import GPU
+from pyfarm.models.disk import AgentDisk
 from pyfarm.models.agent import Agent, AgentTagAssociation
 from pyfarm.models.user import User, Role
 from pyfarm.models.jobgroup import JobGroup
