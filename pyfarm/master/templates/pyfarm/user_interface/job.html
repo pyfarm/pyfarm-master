@@ -542,9 +542,9 @@
             </td>
             <td>
               {% if task.time_finished and task.time_started %}
-              {{ task.time_finished - task.time_started }}
+              {{ (task.time_finished - task.time_started)|timedelta_format }}
               {% elif task.time_started %}
-              <em>{{ now - task.time_started }}</em>
+              <em>{{ (now - task.time_started)|timedelta_format }}</em>
               {% endif %}
             </td>
             <td>

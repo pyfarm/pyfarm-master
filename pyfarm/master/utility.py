@@ -26,6 +26,7 @@ from functools import wraps, partial
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
+from datetime import timedelta
 
 try:
     from httplib import (
@@ -66,6 +67,14 @@ class JSONEncoder(json.JSONEncoder):
             return result
         return super(JSONEncoder, self).encode(o)
 
+
+def timedelta_format(value):
+    """
+    Formats a timedelta object without the microseconds
+    """
+    return str(timedelta(
+        value.days,
+        int(round(value.seconds + value.microseconds / 1000000))))
 
 def dumps(obj, **kwargs):
     """
