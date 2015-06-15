@@ -60,6 +60,7 @@ from pyfarm.models.pathmap import PathMap
 from pyfarm.models.tasklog import TaskLog
 from pyfarm.models.gpu import GPU
 from pyfarm.models.jobgroup import JobGroup
+from pyfarm.master.utility import timedelta_format
 
 logger = getLogger("master.entrypoints")
 
@@ -127,7 +128,6 @@ def load_index(app_instance):
     app_instance.add_url_rule("/", "index_page", index_page)
     app_instance.add_url_rule("/favicon.ico", "favicon", favicon)
 
-
 def load_user_interface(app_instance):
     from pyfarm.master.user_interface.agents import (
         agents, single_agent, delete_single_agent, agent_add_software,
@@ -158,6 +158,7 @@ def load_user_interface(app_instance):
 
     farm_name = config.get("farm_name")
     app_instance.jinja_env.globals.update({"farm_name": farm_name})
+    app_instance.jinja_env.filters["timedelta_format"] = timedelta_format
 
     app_instance.add_url_rule("/agents/", "agents_index_ui", agents,
                               methods=("GET", ))
