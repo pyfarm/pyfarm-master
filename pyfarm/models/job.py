@@ -45,6 +45,11 @@ from pyfarm.models.core.mixins import (
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 
+try:
+  range_ = xrange
+except NameError:
+  range_ = range
+
 __all__ = ("Job", )
 
 logger = getLogger("models.job")
@@ -537,7 +542,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
         for frame in frames_to_create:
             if self.num_tiles:
-                for tile in range(0, self.num_tiles - 1):
+                for tile in range_(self.num_tiles - 1):
                     task = Task()
                     task.job = self
                     task.frame = frame

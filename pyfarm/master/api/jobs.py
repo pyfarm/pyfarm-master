@@ -57,6 +57,11 @@ from pyfarm.master.config import config
 
 RANGE_TYPES = NUMERIC_TYPES[:-1] + (Decimal, )
 
+try:
+  range_ = xrange
+except NameError:
+  range_ = range
+
 logger = getLogger("api.jobs")
 
 # Load model mappings once per process
@@ -451,7 +456,7 @@ class JobIndexAPI(MethodView):
         current_frame = start
         while current_frame <= end:
             if num_tiles:
-                for tile in range(0, num_tiles - 1):
+                for tile in range_(num_tiles - 1):
                     task = Task()
                     task.job = job
                     task.frame = current_frame
@@ -810,7 +815,7 @@ class SingleJobAPI(MethodView):
 
             for frame in frames_to_create:
                 if job.num_tiles:
-                    for tile in range(0, job.num_tiles - 1):
+                    for tile in range_(job.num_tiles - 1):
                         task = Task()
                         task.job = job
                         task.frame = current_frame
