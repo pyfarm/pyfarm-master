@@ -138,7 +138,7 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
     no_automatic_start_time = db.Column(
         db.Boolean,
         nullable=False,
-        default=True,
+        default=False,
         doc="If set, we will not automatically set `time_started_on` "
             "for the tasks in jobs of this type when  they are set "
             "to `running`.")
