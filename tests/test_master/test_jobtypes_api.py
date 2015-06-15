@@ -69,6 +69,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response2.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing inserts and queries",
@@ -88,6 +89,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response3.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing inserts and queries",
@@ -120,6 +122,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response2.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing inserts and queries",
@@ -173,6 +176,7 @@ class TestJobTypeAPI(BaseTestCase):
             response3.json, {
                 "batch_contiguous": True,
                 "classname": None,
+                "no_automatic_start_time": False,
                 "code": code,
                 "description": "Jobtype for testing inserts and queries",
                 "id": id,
@@ -321,6 +325,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response2.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing inserts and queries",
@@ -364,6 +369,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response3.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing (updated)",
@@ -443,6 +449,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response3.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing inserts and queries",
@@ -646,6 +653,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response4.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing (updated)",
@@ -819,6 +827,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response3.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing inserts and queries",
@@ -838,6 +847,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response4.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing inserts and queries",
@@ -857,6 +867,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response5.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing inserts and queries",
@@ -924,6 +935,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response5.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing inserts and queries",
@@ -975,6 +987,7 @@ class TestJobTypeAPI(BaseTestCase):
         self.assertEqual(
             response5.json, {
                 "batch_contiguous": True,
+                "no_automatic_start_time": False,
                 "classname": None,
                 "code": code,
                 "description": "Jobtype for testing inserts and queries",
