@@ -135,6 +135,14 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
             "together but not 2, 4, 6, 8.  If this column is False "
             "however the queue will batch non-contiguous tasks too.")
 
+    no_automatic_start_time = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        doc="If set, we will not automatically set `time_started_on` "
+            "for the tasks in jobs of this type when  they are set "
+            "to `running`.")
+
     classname = db.Column(
         db.String(config.get("job_type_max_class_name_length")),
         nullable=True,

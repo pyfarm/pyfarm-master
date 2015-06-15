@@ -59,6 +59,18 @@
     </tr>
     <tr>
       <td>
+        <label for="no_automatic_start_time">No Automatic Start Time</label>
+      </td>
+      <td>
+        {% if latest_version.no_automatic_start_time %}
+        <input type="checkbox" id="no_automatic_start_time" name="no_automatic_start_time" value="true" checked/>
+        {% else %}
+        <input type="checkbox" id="no_automatic_start_time" name="no_automatic_start_time" value="true"/>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td>
         <label for="classname">Class Name</label>
       </td>
       <td>

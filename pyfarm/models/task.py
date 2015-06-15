@@ -22,18 +22,18 @@ Models and interface classes related to tasks
 """
 
 from functools import partial
+from datetime import datetime
 
 from sqlalchemy import event
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState
+from pyfarm.core.enums import WorkState, _WorkState
 from pyfarm.master.application import db
 from pyfarm.master.config import config
 from pyfarm.models.core.types import IDTypeAgent, IDTypeWork
 from pyfarm.models.core.functions import work_columns, repr_enum
 from pyfarm.models.core.mixins import (
-    ValidatePriorityMixin, WorkStateChangedMixin, UtilityMixins, ReprMixin,
-    ValidateWorkStateMixin)
+    ValidatePriorityMixin, UtilityMixins, ReprMixin, ValidateWorkStateMixin)
 
 __all__ = ("Task", )
 
@@ -41,7 +41,7 @@ logger = getLogger("models.task")
 
 
 class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
-           WorkStateChangedMixin, UtilityMixins, ReprMixin):
+           UtilityMixins, ReprMixin):
     """
     Defines a task which a child of a :class:`Job`.  This table represents
     rows which contain the individual work unit(s) for a job.
@@ -170,8 +170,22 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         if new_value == WorkState.DONE and target.last_error is not None:
             target.last_error = None
 
+    @staticmethod
+    def set_times(target, new_value, old_value, initiator):
+        """update the datetime objects depending on the new value"""
+
+        if (new_value == _WorkState.RUNNING and
+            (old_value not in [_WorkState.RUNNING, _WorkState.PAUSED] or
+             target.time_started == None)):
+            if not target.job.jobtype_version.no_automatic_start_time:
+                target.time_started = datetime.utcnow()
+            target.time_finished = None
+
+        elif new_value in (_WorkState.DONE, _WorkState.FAILED):
+            target.time_finished = datetime.utcnow()
+
 event.listen(Task.state, "set", Task.clear_error_state)
-event.listen(Task.state, "set", Task.state_changed)
+event.listen(Task.state, "set", Task.set_times)
 event.listen(Task.state, "set", Task.update_failures)
 event.listen(Task.state, "set", Task.set_progress_on_success)
 event.listen(Task.agent_id, "set", Task.increment_attempts)

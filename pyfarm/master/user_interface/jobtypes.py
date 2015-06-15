@@ -60,6 +60,9 @@ def jobtype(jobtype_id):
             new_version.batch_contiguous =\
                 ("batch_contiguous" in request.form and
                  request.form["batch_contiguous"] == "true")
+            new_version.no_automatic_start_time =\
+                ("no_automatic_start_time" in request.form and
+                 request.form["no_automatic_start_time"] == "true")
             new_version.classname = request.form["classname"]
             new_version.code = request.form["code"]
 
@@ -119,6 +122,8 @@ def remove_jobtype_software_requirement(jobtype_id, software_id):
         new_version = JobTypeVersion(jobtype=jobtype)
         new_version.max_batch = previous_version.max_batch or sql.null()
         new_version.batch_contiguous = previous_version.batch_contiguous
+        new_version.no_automatic_start_time =\
+            previous_version.no_automatic_start_time
         new_version.classname = previous_version.classname
         new_version.code = previous_version.code
         new_version.version = previous_version.version + 1
@@ -158,6 +163,8 @@ def add_jobtype_software_requirement(jobtype_id):
         new_version = JobTypeVersion(jobtype=jobtype)
         new_version.max_batch = previous_version.max_batch or sql.null()
         new_version.batch_contiguous = previous_version.batch_contiguous
+        new_version.no_automatic_start_time =\
+            previous_version.no_automatic_start_time
         new_version.classname = previous_version.classname
         new_version.code = previous_version.code
         new_version.version = previous_version.version + 1
@@ -259,6 +266,9 @@ def create_jobtype():
             jobtype_version.batch_contiguous =\
                 ("batch_contiguous" in request.form and
                  request.form["batch_contiguous"] == "true")
+            jobtype_version.no_automatic_start_time =\
+                ("no_automatic_start_time" in request.form and
+                 request.form["no_automatic_start_time"] == "true")
             jobtype_version.classname = request.form["classname"]
             jobtype_version.code = request.form["code"]
 

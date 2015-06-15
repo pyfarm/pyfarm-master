@@ -147,6 +147,7 @@ def schema():
                 "id": "INTEGER",
                 "version": "INTEGER",
                 "max_batch": "INTEGER",
+                "no_automatic_start_time": "INTEGER",
                 "name": "VARCHAR(64)"
             }
 
@@ -243,6 +244,8 @@ class JobTypeIndexAPI(MethodView):
             jobtype_version.classname = g.json.pop("classname", None)
             jobtype_version.batch_contiguous = g.json.pop("batch_contiguous",
                                                           None)
+            jobtype_version.no_automatic_start_time = g.json.pop(
+                "no_automatic_start_time", None)
             if "max_batch" in g.json and g.json["max_batch"] is None:
                 g.json.pop("max_batch")
                 jobtype_version.max_batch = sql.null()
@@ -492,6 +495,8 @@ class SingleJobTypeAPI(MethodView):
             jobtype_version.classname = g.json.pop("classname", None)
             jobtype_version.batch_contiguous = g.json.pop("batch_contiguous",
                                                           None)
+            jobtype_version.no_automatic_start_time =\
+                g.json.pop("no_automatic_start_time", None)
             if "max_batch" in g.json and g.json["max_batch"] is None:
                 g.json.pop("max_batch")
                 jobtype_version.max_batch = sql.null()
