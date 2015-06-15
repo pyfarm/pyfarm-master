@@ -46,6 +46,7 @@ from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 
 try:
+  # pylint: disable=undefined-variable
   range_ = xrange
 except NameError:
   range_ = range

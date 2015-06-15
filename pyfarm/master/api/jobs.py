@@ -58,6 +58,7 @@ from pyfarm.master.config import config
 RANGE_TYPES = NUMERIC_TYPES[:-1] + (Decimal, )
 
 try:
+  # pylint: disable=undefined-variable
   range_ = xrange
 except NameError:
   range_ = range
