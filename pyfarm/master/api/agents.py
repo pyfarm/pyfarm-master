@@ -43,10 +43,11 @@ from flask.views import MethodView
 from sqlalchemy import or_, not_
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState, AgentState, _AgentState
+from pyfarm.core.enums import WorkState, AgentState, _AgentState, STRING_TYPES
 from pyfarm.scheduler.tasks import (
     assign_tasks, update_agent, assign_tasks_to_agent, send_tasks_to_agent)
-from pyfarm.models.agent import Agent, AgentMacAddress
+from pyfarm.models.agent import (
+    Agent, AgentMacAddress, AgentSoftwareVersionAssociation)
 from pyfarm.models.gpu import GPU
 from pyfarm.models.task import Task
 from pyfarm.models.software import Software, SoftwareVersion
@@ -993,3 +994,163 @@ class TasksInAgentAPI(MethodView):
         assign_tasks.delay()
 
         return jsonify(task.to_dict()), OK
+
+
+class SoftwareInAgentIndexAPI(MethodView):
+    def get(self, agent_id):
+        """
+        A ``GET`` to this endpoint will return a list of all software versions
+        available on this agent.
+
+        .. http:get:: /api/v1/agents/<str:agent_id>/software/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/agents/bbf55143-f2b1-4c15-9d41-139bd8057931/software/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "software": "Blender",
+                        "version": "2.72"
+                    }
+                ]
+
+        :statuscode 200: no error
+        :statuscode 404: agent not found
+        """
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if agent is None:
+            return jsonify(error="Agent %r not found" % agent_id), NOT_FOUND
+
+        out = []
+        for version in agent.software_versions:
+            software_dict = {"software": version.software.software,
+                             "version": version.version}
+            out.append(software_dict)
+        return jsonify(out), OK
+
+    def post(self, agent_id):
+        """
+        A ``POST`` to this endpoint will mark the given version of the given
+        software as available on this agent.
+
+        .. http:post:: /api/v1/agents/<str:agent_id>/software/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/agents/bbf55143-f2b1-4c15-9d41-139bd8057931/software/ HTTP/1.1
+                Accept: application/json
+
+                {
+                    "software": "Blender",
+                    "version": "2.72"
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "software": "Blender",
+                    "version": "2.72"
+                }
+
+        :statuscode 200: no error
+        :statuscode 400: the request contained unknown keys or required keys
+                         were missing.
+        :statuscode 404: agent not found
+        """
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if agent is None:
+            return jsonify(error="Agent %r not found" % agent_id), NOT_FOUND
+
+        software_name = g.json.pop("software", None)
+        if not software_name:
+            return jsonify(error="`Software` not specified"), BAD_REQUEST
+        if not isinstance(software_name, STRING_TYPES):
+            return jsonify(error="`Software` is not a string"), BAD_REQUEST
+
+        version_name = g.json.pop("version", None)
+        if not version_name:
+            return jsonify(error="`Version` not specified"), BAD_REQUEST
+        if not isinstance(version_name, STRING_TYPES):
+            return jsonify(error="`Version` is not a string"), BAD_REQUEST
+
+        software = Software.query.filter_by(software=software_name).first()
+        if not software:
+            return (jsonify(error="Software %s not found" % software_name),
+                    NOT_FOUND)
+        version = SoftwareVersion.query.filter_by(
+            software=software, version=version_name).first()
+        if not version:
+            return (jsonify(error="Version %s not found" % version_name),
+                    NOT_FOUND)
+
+        agent.software_versions.append(version)
+
+        out = {"software": software.software,
+               "version": version.version}
+        return jsonify(out), OK
+
+
+class SingleSoftwareInAgentAPI(MethodView):
+    def delete(self, agent_id, software_name, version_name):
+        """
+        A ``DELETE`` to this endpoint will remove the specified software version
+        from the list of supported software in this agent
+
+        .. http:delete:: /api/v1/agents/<str:agent_id>/software/<str:software>/versions/<str:version> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/agents/bbf55143-f2b1-4c15-9d41-139bd8057931/software/Blender/versions/2.72 HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 NO CONTENT
+
+        :statuscode 204: the software version has been removed from the
+                         supported versions on this agent or has not been on the
+                         list in the first place
+        :statuscode 404: agent not found
+        """
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if agent is None:
+            return jsonify(error="Agent %r not found" % agent_id), NOT_FOUND
+
+        software = Software.query.filter_by(software=software_name).first()
+        if not software:
+            return (jsonify(error="Software %s not found" % software_name),
+                    NOT_FOUND)
+        version = SoftwareVersion.query.filter_by(
+            software=software, version=version_name).first()
+        if not version:
+            return (jsonify(error="Version %s not found" % version_name),
+                    NOT_FOUND)
+
+        agent.software_versions.remove(version)
+
+        db.session.add(agent)
+        db.session.commit()
+
+        return jsonify(), NO_CONTENT

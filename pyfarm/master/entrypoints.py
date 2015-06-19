@@ -334,7 +334,8 @@ def load_user_interface(app_instance):
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
     from pyfarm.master.api.agents import (
-        SingleAgentAPI, AgentIndexAPI, schema as agent_schema, TasksInAgentAPI)
+        SingleAgentAPI, AgentIndexAPI, schema as agent_schema, TasksInAgentAPI,
+        SoftwareInAgentIndexAPI, SingleSoftwareInAgentAPI)
     from pyfarm.master.api.software import (
         schema as software_schema, SoftwareIndexAPI, SingleSoftwareAPI,
         SoftwareVersionsIndexAPI, SingleSoftwareVersionAPI)
@@ -603,6 +604,19 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobgroups/<int:group_id>/jobs",
         view_func=JobsInJobGroupIndexAPI.as_view("jobs_in_group_index_api"))
+
+    # Software in Agents
+    api_instance.add_url_rule(
+        "/agents/<uuid:agent_id>/software/",
+        view_func=SoftwareInAgentIndexAPI.as_view(
+            "software_in_agent_index_api"))
+    # Software in Agents
+    api_instance.add_url_rule(
+        "/agents/<uuid:agent_id>/software/<string:software_name>/versions/"
+        "<string:version_name>",
+        view_func=SingleSoftwareInAgentAPI.as_view(
+            "single_software_in_agent_api"))
+
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)
