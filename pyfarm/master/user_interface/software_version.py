@@ -19,6 +19,8 @@ try:
 except ImportError:  # pragma: no cover
     from http.client import NOT_FOUND, SEE_OTHER, BAD_REQUEST
 
+from sqlalchemy import sql
+
 from flask import render_template, request, flash, redirect, url_for
 
 from pyfarm.models.software import Software, SoftwareVersion
