@@ -1,0 +1,20 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Software {{software.software}} Version {{version.version}}{% endblock %}
+{% block software_nb_class %}active{% endblock %}
+{% block content %}
+
+<h1><a href="{{ url_for('single_software_ui', software_id=software.id) }}">{{software.software}}</a> Version {{version.version}}</h1>
+
+<form role="form" method="POST" action="{{ url_for('single_software_version_ui', software_id=software.id, version_id=version.id) }}">
+  <div class="form-group">
+    <label for="discovery_function">Function</label>
+    <input type="text" id="discovery_function" name="discovery_function" class="form-control" value="{{ version.discovery_function_name or '' }}"/>
+  </div>
+  <div class="form-group">
+    <label for="discovery_code">Discovery Code</label>
+    <textarea id="discovery_code" name="discovery_code" class="form-control">{{ version.discovery_code or "" }}</textarea>
+  </div>
+  <input class="btn" id="update_discovery_code-submit" type="submit" value="Update Discovery Code" />
+</form>
+
+{% endblock %}

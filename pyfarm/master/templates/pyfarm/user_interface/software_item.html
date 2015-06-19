@@ -28,10 +28,12 @@
       </form>
     </td>
     <td>
-      {{ version.version }}
+      <a href="{{ url_for('single_software_version_ui', software_id=software.id, version_id=version.id) }}">
+        {{ version.version }}
+      </a>
     </td>
     <td>
-      <form method="post" action="/software/{{software.id}}/versions/{{version.id}}/default_status">
+      <form method="post" action="{{ url_for('version_update_default_ui', software_id=software.id, version_id=version.id) }}">
         {{ version.default }}
         <input type="hidden" name="default" value="{{ 'false' if version.default else 'true' }}"/>
         <input type="submit" class="btn" value="Make{{' Not' if version.default }} Default"/>

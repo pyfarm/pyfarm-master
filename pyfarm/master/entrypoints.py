@@ -154,6 +154,7 @@ def load_user_interface(app_instance):
         software, software_item, update_version_rank, remove_software_version,
         add_software_version, add_software, remove_software,
         update_version_default_status)
+    from pyfarm.master.user_interface.software_version import software_version
     from pyfarm.master.user_interface.jobgroups import jobgroups
 
     farm_name = config.get("farm_name")
@@ -306,6 +307,10 @@ def load_user_interface(app_instance):
                               "single_software_ui", software_item,
                               methods=("GET", ))
     app_instance.add_url_rule("/software/<int:software_id>/versions/"
+                              "<int:version_id>",
+                              "single_software_version_ui", software_version,
+                              methods=("GET", "POST"))
+    app_instance.add_url_rule("/software/<int:software_id>/versions/"
                               "<int:version_id>/update_rank",
                               "version_update_rank_ui", update_version_rank,
                               methods=("POST", ))
@@ -338,7 +343,8 @@ def load_api(app_instance, api_instance):
         SoftwareInAgentIndexAPI, SingleSoftwareInAgentAPI)
     from pyfarm.master.api.software import (
         schema as software_schema, SoftwareIndexAPI, SingleSoftwareAPI,
-        SoftwareVersionsIndexAPI, SingleSoftwareVersionAPI)
+        SoftwareVersionsIndexAPI, SingleSoftwareVersionAPI,
+        SoftwareVersionDiscoveryCodeAPI)
     from pyfarm.master.api.tags import (
         schema as tag_schema, TagIndexAPI, SingleTagAPI, AgentsInTagIndexAPI)
     from pyfarm.master.api.jobtypes import (
@@ -506,6 +512,11 @@ def load_api(app_instance, api_instance):
         "/software/<int:software_rq>/versions/<int:version_name>",
         view_func=SingleSoftwareVersionAPI.as_view(
             "software_by_id_version_by_id_index_api"))
+    api_instance.add_url_rule(
+        "/software/<string:software_rq>/versions/<string:version_name>/"
+        "discovery_code",
+        view_func=SoftwareVersionDiscoveryCodeAPI.as_view(
+            "software_version_discovery_code_api"))
 
     # Jobtype versions
     api_instance.add_url_rule("/jobtypes/<int:jobtype_name>/versions/",
