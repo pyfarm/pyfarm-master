@@ -140,7 +140,7 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
         nullable=False,
         default=False,
         doc="If set, we will not automatically set `time_started_on` "
-            "for the tasks in jobs of this type when  they are set "
+            "for the tasks in jobs of this type when they are set "
             "to `running`.")
 
     classname = db.Column(
