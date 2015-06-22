@@ -1103,6 +1103,8 @@ class SoftwareInAgentIndexAPI(MethodView):
 
         agent.software_versions.append(version)
 
+        db.session.commit()
+
         out = {"software": software.software,
                "version": version.version}
         return jsonify(out), OK
