@@ -435,6 +435,8 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                              "to queued", self.title, self.id)
                 self.state = None
                 db.session.add(self)
+            elif self.state != _WorkState.RUNNING:
+                self.state = WorkState.RUNNING
 
     # Methods used by the scheduler
     def num_assigned_agents(self):
@@ -546,21 +548,15 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         Makes this job rerun all its task.  Tasks that are currently running are
         left untouched.
         """
-        running_tasks = False
         for task in self.tasks:
             if task.state != _WorkState.RUNNING and task.state is not None:
                 task.state = None
                 task.agent = None
                 task.failures = 0
                 db.session.add(task)
-            elif task.state == _WorkState.RUNNING or task.agent is not None:
-                running_tasks = True
 
-        if not running_tasks:
-            self.state = None
-        else:
-            self.state = WorkState.RUNNING
         self.completion_notify_sent = False
+        self.update_state()
         db.session.add(self)
 
         for child in self.children:
@@ -571,20 +567,15 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         Makes this job rerun all its failed tasks.  Tasks that are done or are
         currently running are left untouched
         """
-        running_tasks = False
         for task in self.tasks:
             if task.state == _WorkState.FAILED:
                 task.state = None
                 task.agent = None
                 task.failures = 0
                 db.session.add(task)
-            elif (task.state == _WorkState.RUNNING or
-                  task.state is None and task.agent is not None):
-                running_tasks = True
 
-        if not running_tasks:
-            self.state = None
         self.completion_notify_sent = False
+        self.update_state()
         db.session.add(self)
 
         for child in self.children:
