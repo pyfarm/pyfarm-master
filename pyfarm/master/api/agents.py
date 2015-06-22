@@ -1150,6 +1150,9 @@ class SingleSoftwareInAgentAPI(MethodView):
             return (jsonify(error="Version %s not found" % version_name),
                     NOT_FOUND)
 
+        if version not in agent.software_versions:
+            return jsonify(), NO_CONTENT
+
         agent.software_versions.remove(version)
 
         db.session.add(agent)
