@@ -1179,8 +1179,8 @@ def cache_jobqueue_path(jobqueue_id):
     db.session.commit()
 
 
-@celery_app.task(ignore_results=True)
-def check_software_version_on_agent(agent_id, version_id):
+@celery_app.task(ignore_results=True, bind=True)
+def check_software_version_on_agent(self, agent_id, version_id):
     db.session.rollback()
 
     agent = Agent.query.filter_by(id=agent_id).one()
