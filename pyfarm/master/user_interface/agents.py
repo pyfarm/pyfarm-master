@@ -23,7 +23,8 @@ from flask import render_template, request, url_for, redirect, flash
 from sqlalchemy import or_, desc
 
 from pyfarm.core.enums import WorkState, AgentState
-from pyfarm.scheduler.tasks import restart_agent, assign_tasks_to_agent
+from pyfarm.scheduler.tasks import (
+    restart_agent, assign_tasks_to_agent, check_all_software_on_agent)
 from pyfarm.models.agent import Agent
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
@@ -321,5 +322,18 @@ def update_tags_in_agent(agent_id):
     db.session.commit()
 
     flash("Tags for agent %s have been updated." % agent.hostname)
+
+    return redirect(url_for("single_agent_ui", agent_id=agent.id), SEE_OTHER)
+
+def check_software_in_single_agent(agent_id):
+    agent = Agent.query.filter_by(id=agent_id).first()
+    if not agent:
+        return (render_template(
+                    "pyfarm/error.html", error="Agent %s not found" % agent_id),
+                NOT_FOUND)
+
+    check_all_software_on_agent.delay(agent.id)
+
+    flash("Checking available software on agent %s" % agent.hostname)
 
     return redirect(url_for("single_agent_ui", agent_id=agent.id), SEE_OTHER)

@@ -171,6 +171,9 @@
           </tr>
         </tbody>
       </table>
+      <form method="POST" action="{{ url_for('single_agent_check_all_software_ui', agent_id=agent.id) }}">
+        <input type="submit" class="btn" value="Check All Software"/>
+      </form>
 
       <h4>Notes</h4>
       <form method="POST" action="{{ url_for('update_agent_notes_ui', agent_id=agent.id) }}">
