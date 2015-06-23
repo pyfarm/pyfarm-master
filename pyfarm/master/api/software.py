@@ -725,4 +725,4 @@ class SoftwareVersionDiscoveryCodeAPI(MethodView):
             return jsonify(error="Specified software version has no discovery "
                                  "code"), NOT_FOUND
 
-        return Response(version.discovery_code, OK, mimetype="text/x-python")
+        return version.discovery_code, OK, {"Content-Type": "text/x-python"}
