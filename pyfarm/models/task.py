@@ -90,6 +90,14 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         nullable=False,
         doc="The frame this :class:`Task` will be executing.")
 
+    tile = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="When using tiled rendering, the number of the tile this task "
+            "refers to. The jobtype will have to translate that into an "
+            "actual image region. This will be NULL if the job doesn't use "
+            "tiled rendering.")
+
     last_error = db.Column(
         db.UnicodeText,
         nullable=True,

@@ -45,6 +45,12 @@ from pyfarm.models.core.mixins import (
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 
+try:
+  # pylint: disable=undefined-variable
+  range_ = xrange
+except NameError:
+  range_ = range
+
 __all__ = ("Job", )
 
 logger = getLogger("models.job")
@@ -211,6 +217,11 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         doc="The number of frames to count by between `start` and "
             "`end`.  This column may also sometimes be referred to "
             "as 'step' by other software.")
+
+    num_tiles = db.Column(
+        db.Integer,
+        nullable=True,
+        doc="How many regions to split frames into for rendering.")
 
     batch = db.Column(
         db.Integer,
@@ -495,7 +506,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             or_(Task.agent == None,
                 Task.agent.has(Agent.state.in_(
                     [AgentState.OFFLINE, AgentState.DISABLED])))).\
-                        order_by("frame asc")
+                        order_by("frame asc, tile asc")
 
         batch = []
         for task in tasks_query:
@@ -533,11 +544,20 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                 frames_to_create.remove(task.frame)
 
         for frame in frames_to_create:
-            task = Task()
-            task.job = self
-            task.frame = frame
-            task.priority = self.priority
-            db.session.add(task)
+            if self.num_tiles:
+                for tile in range_(self.num_tiles - 1):
+                    task = Task()
+                    task.job = self
+                    task.frame = frame
+                    task.tile = tile
+                    task.priority = self.priority
+                    db.session.add(task)
+            else:
+                task = Task()
+                task.job = self
+                task.frame = frame
+                task.priority = self.priority
+                db.session.add(task)
 
         if frames_to_create:
             if self.state != WorkState.RUNNING:

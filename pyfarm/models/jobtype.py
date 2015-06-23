@@ -143,6 +143,13 @@ class JobTypeVersion(db.Model, UtilityMixins, ReprMixin):
             "for the tasks in jobs of this type when they are set "
             "to `running`.")
 
+    supports_tiling = db.Column(
+        db.Boolean,
+        default=False,
+        doc="Whether or not the jobtype supports tiling, i.e. splitting single "
+            "frames into regions and then rendering those independently from "
+            "each other.")
+
     classname = db.Column(
         db.String(config.get("job_type_max_class_name_length")),
         nullable=True,

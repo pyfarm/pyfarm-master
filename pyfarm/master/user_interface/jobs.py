@@ -348,7 +348,7 @@ def single_job(job_id):
     first_task = Task.query.filter_by(job=job).order_by("frame asc").first()
     last_task = Task.query.filter_by(job=job).order_by("frame desc").first()
 
-    tasks = job.tasks.order_by(Task.frame)
+    tasks = job.tasks.order_by(Task.frame).order_by(Task.tile)
 
     jobqueues = JobQueue.query.all()
 

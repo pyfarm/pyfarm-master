@@ -192,7 +192,8 @@ class TestJobAPI(BaseTestCase):
                             "autodelete_time": None,
                             "job_group_id": None,
                             "jobgroup": None,
-                            "completion_notify_sent": False
+                            "completion_notify_sent": False,
+                            "num_tiles": None
                          })
 
     def test_job_post_with_notified_users(self):
@@ -268,7 +269,8 @@ class TestJobAPI(BaseTestCase):
                             "children": [],
                             "to_be_deleted": False,
                             "autodelete_time": None,
-                            "completion_notify_sent": False
+                            "completion_notify_sent": False,
+                            "num_tiles": None
                          })
 
     def test_job_post_bad_requirements(self):
@@ -538,7 +540,8 @@ class TestJobAPI(BaseTestCase):
                             "children": [],
                             "to_be_deleted": False,
                             "autodelete_time": None,
-                            "completion_notify_sent": False
+                            "completion_notify_sent": False,
+                            "num_tiles": None
                          })
 
     def test_job_post_unknown_type(self):
@@ -632,7 +635,7 @@ class TestJobAPI(BaseTestCase):
                             "jobtype": "TestJobType",
                             "maximum_agents": None,
                             "minimum_agents": None,
-                            'weight': 10,
+                            "weight": 10,
                             "environ": None,
                             "user": None,
                             "priority": 0,
@@ -661,7 +664,8 @@ class TestJobAPI(BaseTestCase):
                             "by": 1.0,
                             "to_be_deleted": False,
                             "autodelete_time": None,
-                            "completion_notify_sent": False
+                            "completion_notify_sent": False,
+                            "num_tiles": None
                         })
 
         response4 = self.client.get("/api/v1/jobs/%s" % id)
@@ -705,7 +709,8 @@ class TestJobAPI(BaseTestCase):
                             "by": 1.0,
                             "to_be_deleted": False,
                             "autodelete_time": None,
-                            "completion_notify_sent": False
+                            "completion_notify_sent": False,
+                            "num_tiles": None
                         })
 
     def test_job_get_unknown(self):
@@ -787,7 +792,8 @@ class TestJobAPI(BaseTestCase):
                             "by": 1.0,
                             "to_be_deleted": False,
                             "autodelete_time": None,
-                            "completion_notify_sent": False
+                            "completion_notify_sent": False,
+                            "num_tiles": None
                         })
 
         response4 = self.client.post(
@@ -1067,7 +1073,9 @@ class TestJobAPI(BaseTestCase):
                                 "state": "queued",
                                 "agent_id": None,
                                 "last_error": None,
-                                "sent_to_agent": False
+                                "sent_to_agent": False,
+                                "tile": None
+
                              },
                              {
                                 "hidden": False,
@@ -1084,7 +1092,8 @@ class TestJobAPI(BaseTestCase):
                                 "state": "queued",
                                 "agent_id": None,
                                 "last_error": None,
-                                "sent_to_agent": False
+                                "sent_to_agent": False,
+                                "tile": None
                              }
                          ])
 
@@ -1141,7 +1150,8 @@ class TestJobAPI(BaseTestCase):
                                 "state": "queued",
                                 "agent_id": None,
                                 "last_error": None,
-                                "sent_to_agent": False
+                                "sent_to_agent": False,
+                                "tile": None
                              },
                              {
                                 "hidden": False,
@@ -1158,7 +1168,8 @@ class TestJobAPI(BaseTestCase):
                                 "state": "queued",
                                 "agent_id": None,
                                 "last_error": None,
-                                "sent_to_agent": False
+                                "sent_to_agent": False,
+                                "tile": None
                              }
                          ])
 
@@ -1228,7 +1239,8 @@ class TestJobAPI(BaseTestCase):
                             "state": "done",
                             "agent_id": None,
                             "last_error": None,
-                            "sent_to_agent": False
+                            "sent_to_agent": False,
+                            "tile": None
                          })
 
         response5 = self.client.post(
@@ -1369,7 +1381,8 @@ class TestJobAPI(BaseTestCase):
                             "state": "queued",
                             "agent_id": None,
                             "last_error": None,
-                            "sent_to_agent": False
+                            "sent_to_agent": False,
+                            "tile": None
                          })
 
         response5 = self.client.get("/api/v1/jobs/%s/tasks/%s" %
@@ -1393,7 +1406,8 @@ class TestJobAPI(BaseTestCase):
                             "state": "queued",
                             "agent_id": None,
                             "last_error": None,
-                            "sent_to_agent": False
+                            "sent_to_agent": False,
+                            "tile": None
                          })
 
     def test_job_get_unknown_single_task(self):

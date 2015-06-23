@@ -57,6 +57,12 @@ from pyfarm.master.config import config
 
 RANGE_TYPES = NUMERIC_TYPES[:-1] + (Decimal, )
 
+try:
+  # pylint: disable=undefined-variable
+  range_ = xrange
+except NameError:
+  range_ = range
+
 logger = getLogger("api.jobs")
 
 # Load model mappings once per process
@@ -442,13 +448,28 @@ class JobIndexAPI(MethodView):
                     BAD_REQUEST)
         job.by = by
 
+        num_tiles = g.json.get("num_tiles", None)
+        if not jobtype_version.supports_tiling and num_tiles is not None:
+            return (jsonify(error="`num_tiles` is set, but this "
+                                  "jobtype does not support tiling."),
+                    BAD_REQUEST)
+
         current_frame = start
         while current_frame <= end:
-            task = Task()
-            task.job = job
-            task.frame = current_frame
-            task.priority = job.priority
-            db.session.add(task)
+            if num_tiles:
+                for tile in range_(num_tiles - 1):
+                    task = Task()
+                    task.job = job
+                    task.frame = current_frame
+                    task.tile = tile
+                    task.priority = job.priority
+                    db.session.add(task)
+            else:
+                task = Task()
+                task.job = job
+                task.frame = current_frame
+                task.priority = job.priority
+                db.session.add(task)
             current_frame += by
 
         db.session.add(job)
@@ -753,6 +774,10 @@ class SingleJobAPI(MethodView):
         if not job:
             return jsonify(error="Job not found"), NOT_FOUND
 
+        if "tiles" in g.json:
+            return (jsonify(error="Frame tiling cannot be updated after job "
+                                  "creation."), BAD_REQUEST)
+
         old_first_task = Task.query.filter_by(job=job).order_by(
             "frame asc").first()
         old_last_task = Task.query.filter_by(job=job).order_by(
@@ -790,11 +815,20 @@ class SingleJobAPI(MethodView):
                     frames_to_create.remove(task.frame)
 
             for frame in frames_to_create:
-                task = Task()
-                task.job = job
-                task.frame = frame
-                task.priority = job.priority
-                db.session.add(task)
+                if job.num_tiles:
+                    for tile in range_(job.num_tiles - 1):
+                        task = Task()
+                        task.job = job
+                        task.frame = current_frame
+                        task.tile = tile
+                        task.priority = job.priority
+                        db.session.add(task)
+                else:
+                    task = Task()
+                    task.job = job
+                    task.frame = current_frame
+                    task.priority = job.priority
+                    db.session.add(task)
 
         if "parents" in g.json:
             parents = []
@@ -814,7 +848,6 @@ class SingleJobAPI(MethodView):
                 return (jsonify(
                     error="User %s not found" % username), NOT_FOUND)
             job.user = user
-
 
         jobqueue_name = g.json.pop("jobqueue", None)
         if jobqueue_name:
