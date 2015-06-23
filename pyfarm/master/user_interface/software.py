@@ -125,7 +125,7 @@ def update_version_rank(software_id, version_id):
     db.session.add(version)
     db.session.commit()
 
-    flash("Rank for verson %s has been updated." % version.version)
+    flash("Rank for version %s has been updated." % version.version)
 
     return redirect(url_for("single_software_ui", software_id=software.id),
                     SEE_OTHER)

@@ -237,6 +237,10 @@ max_role_length: 128
 # The maximum length of a mountpoint for agent disks
 max_mountpoint_length: 255
 
+# The maximum lenght of the function name to discover the presence of a
+# software version on an agent
+max_discovery_function_name_length: 255
+
 ##
 ## END Database Model Constraints
 ##

@@ -1179,3 +1179,77 @@ def cache_jobqueue_path(jobqueue_id):
 
     db.session.add(jobqueue)
     db.session.commit()
+
+
+@celery_app.task(ignore_results=True, bind=True)
+def check_software_version_on_agent(self, agent_id, version_id):
+    db.session.rollback()
+
+    agent = Agent.query.filter_by(id=agent_id).one()
+    software_version = SoftwareVersion.query.filter_by(id=version_id).one()
+
+    logger.debug("Checking availability of software %s, version %s on agent %s "
+                 "(id %s)",
+                 software_version.software.software, software_version.version,
+                 agent.hostname, agent_id)
+
+    data = {"software": software_version.software.software,
+            "version": software_version.version}
+
+    try:
+        response = requests.post(
+            agent.api_url() + "/check_software",
+            data=dumps(data),
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": USERAGENT},
+            timeout=AGENT_REQUEST_TIMEOUT)
+
+        if response.status_code == requests.codes.bad_request:
+            logger.error("On requesting check for software %s, version %s, "
+                         "agent %s, (id %s), answered BAD_REQUEST, ",
+                         software_version.software.software,
+                         software_version.version,
+                         agent.hostname, agent.id)
+        elif response.status_code not in [requests.codes.accepted,
+                                          requests.codes.ok]:
+            raise ValueError("Unexpected return code on checking software "
+                             "on agent: %s", response.status_code)
+        else:
+            logger.info("Instructed agent %s (id %s) to check availability of "
+                        "software %s, version %s",
+                        agent.hostname, agent_id,
+                        software_version.software.software,
+                        software_version.version)
+
+    except (ConnectionError, Timeout) as e:
+        if self.request.retries < self.max_retries:
+            logger.warning("Caught %s trying to contact agent "
+                           "%s (id %s), retry %s of %s: %s",
+                           type(e).__name__,
+                           agent.hostname,
+                           agent.id,
+                           self.request.retries,
+                           self.max_retries,
+                           e)
+            self.retry(exc=e)
+        else:
+            logger.error("Could not contact agent %s, (id %s), marking as "
+                         "offline", agent.hostname, agent.id)
+            agent.state = AgentState.OFFLINE
+            db.session.add(agent)
+            db.session.commit()
+            raise
+
+
+@celery_app.task(ignore_results=True)
+def check_all_software_on_agent(agent_id):
+    db.session.rollback()
+
+    agent = Agent.query.filter_by(id=agent_id).one()
+
+    software_versions_query = SoftwareVersion.query
+
+    for version in software_versions_query:
+        if version.discovery_code and version.discovery_function_name:
+            check_software_version_on_agent.delay(agent_id, version.id)

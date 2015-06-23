@@ -97,6 +97,21 @@ class SoftwareVersion(db.Model, UtilityMixins):
         doc="If true, this software version will be registered"
             "on new nodes by default.")
 
+    discovery_code = db.Column(
+        db.UnicodeText,
+        nullable=True,
+        doc="Python code to discover if this software version is installed "
+            "on a node")
+
+    discovery_function_name = db.Column(
+        db.String(config.get("max_discovery_function_name_length")),
+        nullable=True,
+        doc="The name of a function in `discovery_code` to call when "
+            "checking for the presence of this software version on an agent.\n"
+            "The function should return either a boolean (true if present, "
+            "false if not) or a tuple of a boolean and a dict of named "
+            "parameters describing this installation.")
+
 
 class JobSoftwareRequirement(db.Model, UtilityMixins):
     """

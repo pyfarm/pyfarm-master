@@ -132,7 +132,8 @@ def load_user_interface(app_instance):
     from pyfarm.master.user_interface.agents import (
         agents, single_agent, delete_single_agent, agent_add_software,
         agent_delete_software, restart_single_agent, restart_multiple_agents,
-        update_notes_for_agent, update_tags_in_agent)
+        update_notes_for_agent, update_tags_in_agent,
+        check_software_in_single_agent)
     from pyfarm.master.user_interface.jobs import (
         jobs, delete_single_job, rerun_single_job, single_job, pause_single_job,
         unpause_single_job, alter_frames_in_single_job,
@@ -154,6 +155,7 @@ def load_user_interface(app_instance):
         software, software_item, update_version_rank, remove_software_version,
         add_software_version, add_software, remove_software,
         update_version_default_status)
+    from pyfarm.master.user_interface.software_version import software_version
     from pyfarm.master.user_interface.jobgroups import jobgroups
 
     farm_name = config.get("farm_name")
@@ -187,6 +189,9 @@ def load_user_interface(app_instance):
     app_instance.add_url_rule("/agents/<uuid:agent_id>/tags",
                               "update_agent_tags_ui",
                               update_tags_in_agent, methods=("POST", ))
+    app_instance.add_url_rule("/agents/<uuid:agent_id>/check_all_software",
+                              "single_agent_check_all_software_ui",
+                              check_software_in_single_agent, methods=("POST", ))
 
     app_instance.add_url_rule("/jobs/", "jobs_index_ui", jobs,
                               methods=("GET", ))
@@ -306,6 +311,10 @@ def load_user_interface(app_instance):
                               "single_software_ui", software_item,
                               methods=("GET", ))
     app_instance.add_url_rule("/software/<int:software_id>/versions/"
+                              "<int:version_id>",
+                              "single_software_version_ui", software_version,
+                              methods=("GET", "POST"))
+    app_instance.add_url_rule("/software/<int:software_id>/versions/"
                               "<int:version_id>/update_rank",
                               "version_update_rank_ui", update_version_rank,
                               methods=("POST", ))
@@ -334,10 +343,12 @@ def load_user_interface(app_instance):
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""
     from pyfarm.master.api.agents import (
-        SingleAgentAPI, AgentIndexAPI, schema as agent_schema, TasksInAgentAPI)
+        SingleAgentAPI, AgentIndexAPI, schema as agent_schema, TasksInAgentAPI,
+        SoftwareInAgentIndexAPI, SingleSoftwareInAgentAPI)
     from pyfarm.master.api.software import (
         schema as software_schema, SoftwareIndexAPI, SingleSoftwareAPI,
-        SoftwareVersionsIndexAPI, SingleSoftwareVersionAPI)
+        SoftwareVersionsIndexAPI, SingleSoftwareVersionAPI,
+        SoftwareVersionDiscoveryCodeAPI)
     from pyfarm.master.api.tags import (
         schema as tag_schema, TagIndexAPI, SingleTagAPI, AgentsInTagIndexAPI)
     from pyfarm.master.api.jobtypes import (
@@ -505,6 +516,11 @@ def load_api(app_instance, api_instance):
         "/software/<int:software_rq>/versions/<int:version_name>",
         view_func=SingleSoftwareVersionAPI.as_view(
             "software_by_id_version_by_id_index_api"))
+    api_instance.add_url_rule(
+        "/software/<string:software_rq>/versions/<string:version_name>/"
+        "discovery_code",
+        view_func=SoftwareVersionDiscoveryCodeAPI.as_view(
+            "software_version_discovery_code_api"))
 
     # Jobtype versions
     api_instance.add_url_rule("/jobtypes/<int:jobtype_name>/versions/",
@@ -603,6 +619,19 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/jobgroups/<int:group_id>/jobs",
         view_func=JobsInJobGroupIndexAPI.as_view("jobs_in_group_index_api"))
+
+    # Software in Agents
+    api_instance.add_url_rule(
+        "/agents/<uuid:agent_id>/software/",
+        view_func=SoftwareInAgentIndexAPI.as_view(
+            "software_in_agent_index_api"))
+    # Software in Agents
+    api_instance.add_url_rule(
+        "/agents/<uuid:agent_id>/software/<string:software_name>/versions/"
+        "<string:version_name>",
+        view_func=SingleSoftwareInAgentAPI.as_view(
+            "single_software_in_agent_api"))
+
 
     # register the api blueprint
     app_instance.register_blueprint(api_instance)

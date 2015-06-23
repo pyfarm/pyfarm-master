@@ -32,7 +32,7 @@ except ImportError:  # pragma: no cover
         NOT_FOUND, NO_CONTENT, OK, CREATED, BAD_REQUEST, INTERNAL_SERVER_ERROR,
         CONFLICT)
 
-from flask import g
+from flask import g, Response
 from flask.views import MethodView
 
 from sqlalchemy import func
@@ -669,5 +669,60 @@ class SingleSoftwareVersionAPI(MethodView):
         out = {
             "id": version.id,
             "version": version.version,
-            "rank": version.rank}
+            "rank": version.rank,
+            "discovery_function_name": version.discovery_function_name}
         return jsonify(out), OK
+
+
+class SoftwareVersionDiscoveryCodeAPI(MethodView):
+    def get(self, software_rq, version_name):
+        """
+        A ``GET`` to this endpoint will return just the python code for
+        detecting whether this software version is installed on an agent.
+
+        .. http:get:: /api/v1/software/[<str:software_name>|<int:software_id>]/versions/<str:version>/code HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/software/Blender/versions/2.72/code HTTP/1.1
+                Accept: text/x-python
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: text/x-python
+
+                def blender_2_72_installed()
+                    return True
+
+        :statuscode 200:
+            no error
+
+        :statuscode 404:
+            software or version not found or this software version has no
+            discovery code defined
+        """
+        if isinstance(software_rq, STRING_TYPES):
+            software = Software.query.filter_by(software=software_rq).first()
+        else:
+            software = Software.query.filter_by(id=software_rq).first()
+
+        if not software:
+            return jsonify(error="Requested software not found"), NOT_FOUND
+
+        version = SoftwareVersion.query.filter(
+            SoftwareVersion.software==software,
+            SoftwareVersion.version==version_name).first()
+
+        if not version:
+            return jsonify(error="Requested version not found"), NOT_FOUND
+
+        if not version.discovery_code:
+            return jsonify(error="Specified software version has no discovery "
+                                 "code"), NOT_FOUND
+
+        return version.discovery_code, OK, {"Content-Type": "text/x-python"}
