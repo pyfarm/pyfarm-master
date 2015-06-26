@@ -438,7 +438,7 @@ class JobIndexAPI(MethodView):
             for entry in tag_requirements:
                 tag = Tag.query.filter_by(tag=entry["tag"]).first()
                 if not tag:
-                    tag = Tag(tag=tag_name)
+                    tag = Tag(tag=entry["tag"])
                     db.session.add(tag)
                 tag_requirement = JobTagRequirement(job=job, tag=tag)
                 if entry["negate"]:
@@ -943,7 +943,7 @@ class SingleJobAPI(MethodView):
             for entry in tag_requirements:
                 tag = Tag.query.filter_by(tag=entry["tag"]).first()
                 if not tag:
-                    tag = Tag(tag=tag_name)
+                    tag = Tag(tag=entry["tag"])
                     db.session.add(tag)
                 tag_requirement = JobTagRequirement(job=job, tag=tag)
                 if entry["negate"]:
