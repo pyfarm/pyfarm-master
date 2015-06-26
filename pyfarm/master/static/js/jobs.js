@@ -131,4 +131,30 @@ $(document).ready(function() {
     $("#set-prio-weight-submit").click(function() {
         $("#set-prio-weight-multiple-form").submit();
     });
+
+    $('#selected-add-tag').click(function() {
+        var form = $("#add-tag-multiple-form");
+        $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                form.append(job_input);
+        });
+        $('#selected-add-tag-modal').modal('toggle');
+    });
+
+    $("#add-tag-submit").click(function() {
+        $("#add-tag-multiple-form").submit();
+    });
+
+    $('#selected-remove-tag').click(function() {
+        var form = $("#remove-tag-multiple-form");
+        $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                form.append(job_input);
+        });
+        $('#selected-remove-tag-modal').modal('toggle');
+    });
+
+    $("#remove-tag-submit").click(function() {
+        $("#remove-tag-multiple-form").submit();
+    });
 });

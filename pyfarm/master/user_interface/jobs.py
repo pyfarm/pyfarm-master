@@ -729,6 +729,68 @@ def set_prio_weight_on_jobs():
     else:
         return redirect(url_for("jobs_index_ui"), SEE_OTHER)
 
+def add_tag_on_jobs():
+    job_ids = request.form.getlist("job_id")
+
+    tag_name = request.form["tag"].strip()
+
+    tag = Tag.query.filter_by(tag=tag_name).first()
+    if not tag:
+        tag = Tag(tag=tag_name)
+        db.session.add(tag)
+
+    for job_id in job_ids:
+        job = Job.query.filter_by(id=job_id).first()
+        if not job:
+            return (render_template(
+                        "pyfarm/error.html", error="Job %s not found" % job_id),
+                    NOT_FOUND)
+
+        if tag not in job.tags:
+            job.tags.append(tag)
+        db.session.add(job)
+
+    db.session.commit()
+
+    flash("Tag %s has been added to selected jobs." % tag_name)
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
+def remove_tag_from_jobs():
+    job_ids = request.form.getlist("job_id")
+
+    tag_name = request.form["tag"].strip()
+
+    tag = Tag.query.filter_by(tag=tag_name).first()
+    if not tag:
+        return (render_template(
+                        "pyfarm/error.html",
+                        error="Tag %s not found" % tag_name),
+                    NOT_FOUND)
+
+    for job_id in job_ids:
+        job = Job.query.filter_by(id=job_id).first()
+        if not job:
+            return (render_template(
+                        "pyfarm/error.html", error="Job %s not found" % job_id),
+                    NOT_FOUND)
+
+        if tag in job.tags:
+            job.tags.remove(tag)
+        db.session.add(job)
+
+    db.session.commit()
+
+    flash("Tag %s has been removed from selected jobs." % tag_name)
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("jobs_index_ui"), SEE_OTHER)
+
 def alter_autodeletion_for_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
     if not job:
