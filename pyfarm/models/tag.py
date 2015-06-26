@@ -28,6 +28,7 @@ from pyfarm.master.application import db
 from pyfarm.master.config import config
 from pyfarm.models.core.types import id_column
 from pyfarm.models.core.mixins import UtilityMixins
+from pyfarm.models.core.types import IDTypeWork
 
 __all__ = ("Tag", )
 
@@ -44,3 +45,40 @@ class Tag(db.Model, UtilityMixins):
     tag = db.Column(
         db.String(config.get("max_tag_length")),
         nullable=False, doc="The actual value of the tag")
+
+
+class JobTagRequirement(db.Model, UtilityMixins):
+    """
+    Model representing a dependency of a job on a tag
+
+    If a job has a tag requirement, it will only run on agents that have that
+    tag.
+    """
+    __tablename__ = config.get("table_job_tag_req")
+    __table_args__ = (UniqueConstraint("tag_id", "job_id"), )
+
+    id = id_column()
+
+    tag_id = db.Column(
+        db.Integer,
+        db.ForeignKey("%s.id" % config.get("table_tag")),
+        nullable=False, doc="Reference to the required tag")
+
+    job_id = db.Column(
+        IDTypeWork,
+        db.ForeignKey("%s.id" % config.get("table_job")),
+        nullable=False, doc="Foreign key to :class:`Job.id`")
+
+    negate = db.Column(
+        db.Boolean,
+        nullable=False, default=False,
+        doc="If true, an agent that has this tag can not work on this job")
+
+    job = db.relationship(
+        "Job",
+        backref=db.backref(
+            "tag_requirements",
+            lazy="dynamic",
+            cascade="all, delete-orphan"))
+
+    tag = db.relationship("Tag")

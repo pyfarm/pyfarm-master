@@ -464,6 +464,11 @@
       </a>
       {% endif %}
       {% endfor %}
+      {% for tag_requirement in job[0].tag_requirements %}
+      <span class="label label-warning" style="margin:3px;">
+        {{ "-" if tag_requirement.negate }}{{ tag_requirement.tag.tag }}
+      </span>
+      {% endfor %}
     </td>
     <td><a href="{{ url_for('single_jobtype_ui', jobtype_id=job['jobtype_id']) }}">{{ job["jobtype_name"] }}</a></td>
     <td>
