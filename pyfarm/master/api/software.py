@@ -642,7 +642,8 @@ class SingleSoftwareVersionAPI(MethodView):
                 {
                     "version": "2013",
                     "id": 1,
-                    "rank": 100
+                    "rank": 100,
+                    "discovery_function_name": null
                 }
 
         :statuscode 200: no error
