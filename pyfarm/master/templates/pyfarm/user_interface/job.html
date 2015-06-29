@@ -99,8 +99,8 @@
               </form>
               {% else %}
               <form style="display: inline;" method="POST" action="{{ url_for('unpause_single_job_ui', job_id=job.id, next=url_for('single_job_ui', job_id=job.id)) }}">
-                <label for="unpause-job-submit" class="clickable-icon" title="Unpause job"><span class="glyphicon glyphicon-play"></span> Unpause</label>
-                <input id="unpause-job-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to unpause this job?');" title="Unpause job">
+                <label for="unpause-job-submit" class="clickable-icon" title="Resume job"><span class="glyphicon glyphicon-play"></span> Resume</label>
+                <input id="unpause-job-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to resume this job?');" title="Unpause job">
               </form>
               {% endif %}
             </td>
