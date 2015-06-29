@@ -22,6 +22,9 @@
       <li role="presentation"><a href="#" id="selected-resume">Resume</a></li>
       <li role="presentation"><a href="#" id="selected-delete">Delete</a></li>
       <li role="presentation" class="divider"></li>
+      <li role="presentation"><a href="#" id="selected-add-tag">Add Tag...</a></li>
+      <li role="presentation"><a href="#" id="selected-remove-tag">Remove Tag...</a></li>
+      <li role="presentation" class="divider"></li>
       <li role="presentation">
         <a href="#" id="selected-move">Move To Queue...</a>
       </li>
@@ -571,6 +574,52 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" id="set-prio-weight-submit">Set Priority And Weight</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="selected-add-tag-modal" role="dialog" aria-labelledby="selected-add-tag-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="selected-add-tag-label">Add a Tag to Selected Jobs</h4>
+      </div>
+      <div class="modal-body">
+        <form method="post" id="add-tag-multiple-form" action="{{ url_for('add_tag_on_jobs', next=url_for('jobs_index_ui', **filters_and_order)) }}">
+          <div class="form-group">
+            <label for="selected-tag">Tag</label>
+            <input type="text" class="form-control" id="selected-tag" name="tag"/>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="add-tag-submit">Add Tag</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="selected-remove-tag-modal" role="dialog" aria-labelledby="selected-remove-tag-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="selected-remove-tag-label">Remove a Tag From Selected Jobs</h4>
+      </div>
+      <div class="modal-body">
+        <form method="post" id="remove-tag-multiple-form" action="{{ url_for('remove_tag_from_jobs', next=url_for('jobs_index_ui', **filters_and_order)) }}">
+          <div class="form-group">
+            <label for="selected-tag">Tag</label>
+            <input type="text" class="form-control" id="selected-tag" name="tag"/>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="remove-tag-submit">Remove Tag</button>
       </div>
     </div>
   </div>
