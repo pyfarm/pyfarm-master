@@ -108,6 +108,7 @@ $(document).ready(function() {
 
     $('#selected-move').click(function() {
         var move_form = $("#move-multiple-form");
+        move_form.children("input[name='job_id']").remove();
         $("input.job-selector:checked").each(function() {
                 var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
                 move_form.append(job_input);
@@ -121,6 +122,7 @@ $(document).ready(function() {
 
     $('#selected-set-prio-weight').click(function() {
         var form = $("#set-prio-weight-multiple-form");
+        form.children("input[name='job_id']").remove();
         $("input.job-selector:checked").each(function() {
                 var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
                 form.append(job_input);
@@ -134,6 +136,7 @@ $(document).ready(function() {
 
     $('#selected-add-tag').click(function() {
         var form = $("#add-tag-multiple-form");
+        form.children("input[name='job_id']").remove();
         $("input.job-selector:checked").each(function() {
                 var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
                 form.append(job_input);
@@ -147,6 +150,7 @@ $(document).ready(function() {
 
     $('#selected-remove-tag').click(function() {
         var form = $("#remove-tag-multiple-form");
+        form.children("input[name='job_id']").remove();
         $("input.job-selector:checked").each(function() {
                 var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
                 form.append(job_input);
