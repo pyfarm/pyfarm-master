@@ -352,7 +352,7 @@ def single_job(job_id):
 
     jobqueues = JobQueue.query.all()
 
-    users_query = User.query.filter(User.email != None)
+    users_query = User.query.filter(User.email != None).order_by(User.username)
 
     latest_jobtype_version = db.session.query(JobTypeVersion.version).filter_by(
             jobtype=job.jobtype_version.jobtype).\
