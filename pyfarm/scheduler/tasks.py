@@ -793,14 +793,14 @@ def send_job_completion_mail(job_id, successful=True):
 def send_job_deletion_mail(job_id, jobtype_name, job_title, to):
     logger.debug("In send_job_deletion_mail(), job_id: %s, jobtype_name: %s, "
                  "job_title: %s, to: %s", job_id, jobtype_name, job_title, to)
-    message_text = DEFAULT_DELETE_BODY.format(
+    message_text = DEFAULT_DELETE_BODY.render(
         job_title=job_title,
         jobtype_name=jobtype_name,
         job_id=job_id
     )
 
     message = MIMEText(message_text)
-    message["Subject"] = DEFAULT_DELETE_SUBJECT.format(job_title=job_title)
+    message["Subject"] = DEFAULT_DELETE_SUBJECT.render(job_title=job_title)
     message["From"] = FROM_ADDRESS
     message["To"] = ",".join(to)
 
