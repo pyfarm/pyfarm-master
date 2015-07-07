@@ -222,3 +222,19 @@ deleted_body:
 ##
 ## END Email Template Settings
 ##
+
+
+##
+## BEGIN Statistics Gathering Settings
+##
+
+# Whether or not to gather data for runtime statistics
+enable_statistics: true
+
+
+agent_count_interval:
+    hours: 1
+
+##
+## END Statistics Gathering Settings
+##

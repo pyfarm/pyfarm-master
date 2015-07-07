@@ -34,7 +34,7 @@ install_requires = [
     "sqlalchemy>=0.9.9,!=1.0.0,!=1.0.1,!=1.0.2",
     "flask",
     "flask-login",
-    "flask-sqlalchemy",
+    "flask-sqlalchemy>=0.12",
     "itsdangerous",
     "blinker",
     "voluptuous",

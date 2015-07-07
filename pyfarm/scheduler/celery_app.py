@@ -34,7 +34,7 @@ from pyfarm.master.config import config
 celery_app = Celery(
     "pyfarm.tasks",
     broker=config.get("scheduler_broker"),
-    include=["pyfarm.scheduler.tasks"])
+    include=["pyfarm.scheduler.tasks", "pyfarm.scheduler.statistics_tasks"])
 
 celery_app.conf.CELERYBEAT_SCHEDULE = {
     "periodically_poll_agents": {
@@ -62,6 +62,12 @@ celery_app.conf.CELERYBEAT_SCHEDULE = {
         "schedule": timedelta(**config.get("delete_job_interval")),
     }
 }
+
+if config.get("enable_statistics"):
+    celery_app.conf.CELERYBEAT_SCHEDULE["periodically_count_agents"] = {
+        "task": "pyfarm.scheduler.statistics_tasks.count_agents",
+        "schedule": timedelta(**config.get("agent_count_interval"))
+        }
 
 if __name__ == '__main__':
     celery_app.start()

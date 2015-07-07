@@ -125,6 +125,10 @@ def get_application(**configuration_keywords):
         "TIMESTAMP_FORMAT": config.get("timestamp_format")
     }
 
+    if config.get("enable_statistics"):
+        app_config["SQLALCHEMY_BINDS"] = {
+            "statistics": config.get("statistics_database")}
+
     static_folder = configuration_keywords.pop("static_folder", None)
     if static_folder is None:  # static folder not provided
         import pyfarm.master

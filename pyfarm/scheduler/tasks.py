@@ -19,7 +19,7 @@
 Tasks
 -----
 
-This module is responsible for finding and allocating tasks on agents.
+This module contains various asynchronous tasks to be run by celery.
 """
 
 from datetime import timedelta, datetime
