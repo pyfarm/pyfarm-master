@@ -1,0 +1,9 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Statistics {% endblock %}
+{% block statistics_nb_class %}active{% endblock %}
+{% block content %}
+<h1>Statistics</h1>
+
+<a href="{{ url_for('agent_counts_ui') }}">Agent Counts</a>
+
+{% endblock %}
