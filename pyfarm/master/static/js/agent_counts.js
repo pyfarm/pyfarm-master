@@ -1,14 +1,19 @@
 $(document).ready(function() {
     nv.addGraph(function() {
-    var chart = nv.models.multiBarChart()
-                    .margin({left: 100})
-                    .stacked(true)
-                    .x(function(d) { return d[0] })
-                    .y(function(d) { return d[1] })
-                    .showLegend(true)
-                    .showControls(true)
-                    .showYAxis(true)
-                    .showXAxis(true);
+    if(area_chart) {
+        var chart = nv.models.stackedAreaChart();
+        }
+    else {
+        var chart = nv.models.multiBarChart()
+                        .stacked(true);
+        }
+        chart.margin({left: 100})
+             .x(function(d) { return d[0] })
+             .y(function(d) { return d[1] })
+             .showLegend(true)
+             .showControls(true)
+             .showYAxis(true)
+             .showXAxis(true);
 
     chart.xAxis
         .axisLabel('Time ('+timezone+')')

@@ -18,6 +18,8 @@
 </div>
 
 <script>
+var area_chart = {{ "true" if area_chart else "false" }}
+
 var online_agent_counts = {{ online_agent_counts_json }};
 var running_agent_counts = {{ running_agent_counts_json }};
 var offline_agent_counts = {{ offline_agent_counts_json }};

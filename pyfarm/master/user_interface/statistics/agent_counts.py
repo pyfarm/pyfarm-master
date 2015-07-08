@@ -17,7 +17,7 @@
 import json
 from calendar import timegm
 
-from flask import render_template
+from flask import render_template, request
 
 from pyfarm.models.statistics.agent_count import AgentCount
 
@@ -36,9 +36,13 @@ def agent_counts():
         offline_agent_counts.append([timestamp, sample.num_offline])
         disabled_agent_counts.append([timestamp, sample.num_disabled])
 
+    area_chart = ("area_chart" in request.args and
+                  request.args["area_chart"].lower() == "true")
+
     return render_template(
         "pyfarm/statistics/agent_counts.html",
         online_agent_counts_json=json.dumps(online_agent_counts),
         running_agent_counts_json=json.dumps(running_agent_counts),
         offline_agent_counts_json=json.dumps(offline_agent_counts),
-        disabled_agent_counts_json=json.dumps(disabled_agent_counts))
+        disabled_agent_counts_json=json.dumps(disabled_agent_counts),
+        area_chart=area_chart)

@@ -4,6 +4,6 @@
 {% block content %}
 <h1>Statistics</h1>
 
-<a href="{{ url_for('agent_counts_ui') }}">Agent Counts</a>
+Agent Counts: <a href="{{ url_for('agent_counts_ui') }}">Bar Chart</a> / <a href="{{ url_for('agent_counts_ui', area_chart=True) }}">Area Chart</a>
 
 {% endblock %}
