@@ -357,6 +357,26 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
         return len(requirements_to_satisfy) == 0
 
+    def satisfies_job_requirements(self, job):
+        if not self.satisfies_jobtype_requirements(job.jobtype_version):
+            return False
+
+        if self.cpus < job.cpus:
+            return False
+
+        if self.free_ram < job.ram:
+            return False
+
+        for tag_requirement in job.tag_requirements:
+            if (not tag_requirement.negate and
+                tag_requirement.tag not in self.tags):
+                return False
+            if (tag_requirement.negate and
+                tag_requirement.tag in self.tags):
+                return False
+
+        return True
+
     @classmethod
     def validate_hostname(cls, key, value):
         """

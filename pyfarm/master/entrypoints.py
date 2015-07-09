@@ -143,7 +143,8 @@ def load_user_interface(app_instance):
         rerun_failed_in_job, alter_autodeletion_for_job, rerun_multiple_jobs,
         rerun_failed_in_multiple_jobs, pause_multiple_jobs,
         unpause_multiple_jobs, delete_multiple_jobs, move_multiple_jobs,
-        set_prio_weight_on_jobs, add_tag_on_jobs, remove_tag_from_jobs)
+        set_prio_weight_on_jobs, add_tag_on_jobs, remove_tag_from_jobs,
+        update_tag_requirements_in_job)
     from pyfarm.master.user_interface.jobqueues import (
         jobqueues, jobqueue_create, jobqueue, delete_jobqueue)
     from pyfarm.master.user_interface.jobtypes import (
@@ -255,6 +256,9 @@ def load_user_interface(app_instance):
     app_instance.add_url_rule("/jobs/<int:job_id>/update_tags",
                               "update_job_tags_ui", update_tags_in_job,
                               methods=("POST", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/update_tag_requirements",
+                              "update_job_tag_requirements_ui",
+                              update_tag_requirements_in_job, methods=("POST", ))
     app_instance.add_url_rule("/jobs/<int:job_id>/upgrade_jobtype",
                               "upgrade_jobtype_for_job",
                               upgrade_job_to_latest_jobtype_version,

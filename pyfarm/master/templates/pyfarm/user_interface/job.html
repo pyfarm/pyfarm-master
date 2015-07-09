@@ -122,6 +122,14 @@
         <input type="submit" class="btn" value="Update Tags"/>
       </form>
 
+      <h4 title="This job will only run on nodes that have all the required tags">Required Tags in Agent</h4>
+      <form method="POST" action="{{ url_for('update_job_tag_requirements_ui', job_id=job.id) }}">
+        <p>
+          <textarea name="tag_requirements" class="form-control" title="This job will only run on nodes that have all the required tags">{% for requirement in job.tag_requirements %}{{ '-' if requirement.negate }}{{ requirement.tag.tag }} {% endfor %}</textarea>
+        </p>
+        <input type="submit" class="btn" value="Update Tag Requirements"/>
+      </form>
+
       {% if job.parents %}
       <h4>Parent jobs</h4>
       <table class="table table-striped table-bordered model-list">

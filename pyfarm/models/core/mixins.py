@@ -202,6 +202,9 @@ class UtilityMixins(object):
                 elif name == "children":
                     out.append({"id": relationship.id,
                                 "title": relationship.title})
+                elif name == "tag_requirements":
+                    out.append({"tag": relationship.tag.tag,
+                                "negate": relationship.negate})
                 else:
                     raise NotImplementedError(
                         "don't know how to unpack relationships for `%s`" % name)

@@ -33,7 +33,7 @@ from pyfarm.core.enums import WorkState, _WorkState, AgentState
 from pyfarm.scheduler.tasks import delete_job, stop_task, assign_tasks
 from pyfarm.models.job import (
     Job, JobDependency, JobTagAssociation, JobNotifiedUser)
-from pyfarm.models.tag import Tag
+from pyfarm.models.tag import Tag, JobTagRequirement
 from pyfarm.models.task import Task
 from pyfarm.models.agent import Agent
 from pyfarm.models.jobqueue import JobQueue
@@ -934,6 +934,38 @@ def update_tags_in_job(job_id):
     db.session.commit()
 
     flash("Tags for job %s have been updated." % job.title)
+
+    return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
+
+def update_tag_requirements_in_job(job_id):
+    job = Job.query.filter_by(id=job_id).first()
+    if not job:
+        return (render_template(
+                    "pyfarm/error.html", error="Job %s not found" % job_id),
+                NOT_FOUND)
+
+    tagnames = request.form["tag_requirements"].split(" ")
+    tagnames = filter(bool, map(str.strip, tagnames))
+    job.tag_requirements = []
+    for name in tagnames:
+        negate = False
+        if name.startswith("-"):
+            if len(name) < 2:
+                return (render_template(
+                    "pyfarm/error.html", error="Tag too short: %s" % name),
+                NOT_FOUND)
+            negate = True
+            name = name[1:]
+        tag = Tag.query.filter_by(tag=name).first()
+        if not tag:
+            tag = Tag(tag=name)
+            db.session.add(tag)
+        tag_requirement = JobTagRequirement(job=job, tag=tag, negate=negate)
+        db.session.add(tag_requirement)
+
+    db.session.commit()
+
+    flash("Tag Requirements for job %s have been updated." % job.title)
 
     return redirect(url_for("single_job_ui", job_id=job.id), SEE_OTHER)
 

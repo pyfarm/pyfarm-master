@@ -54,6 +54,9 @@ table_job_type_version: ${table_prefix}jobtype_versions
 # The name of the table which associates jobs and tags.
 table_job_tag_assoc: ${table_prefix}job_tag_associations
 
+# The name of the table which associates job and tag requirements
+table_job_tag_req: ${table_prefix}job_tag_requirements
+
 # The name of the table which associates inter-job dependencies
 table_job_dependency: ${table_prefix}job_dependencies
 

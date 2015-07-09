@@ -48,7 +48,7 @@ from pyfarm.models.user import User
 from pyfarm.models.job import Job, JobNotifiedUser
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement)
-from pyfarm.models.tag import Tag
+from pyfarm.models.tag import Tag, JobTagRequirement
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
@@ -222,7 +222,7 @@ class JobIndexAPI(MethodView):
                          type_checks={"by": lambda x: isinstance(
                              x, RANGE_TYPES)},
                          ignore=["start", "end", "jobtype", "jobtype_version",
-                                 "user", "jobqueue"],
+                                 "user", "jobqueue", "tag_requirements"],
                          disallow=["jobtype_version_id", "time_submitted",
                                    "time_started", "time_finished",
                                    "job_queue_id"])
@@ -297,6 +297,12 @@ class JobIndexAPI(MethodView):
                             "software_id": 1,
                             "min_version_id": null,
                             "software": "blender"
+                        }
+                    ],
+                    "tag_requirements": [
+                        {
+                            "tag": "workstation",
+                            "negate": true
                         }
                     ],
                     "id": 2,
@@ -389,6 +395,7 @@ class JobIndexAPI(MethodView):
                             NOT_FOUND)
 
         notified_usernames = g.json.pop("notified_users", None)
+        tag_requirements = g.json.pop("tag_requirements", None)
 
         g.json.pop("start", None)
         g.json.pop("end", None)
@@ -426,6 +433,17 @@ class JobIndexAPI(MethodView):
                 if "on_deletion" in entry:
                     notified_user.on_deletion = entry["on_deletion"]
                 db.session.add(notified_user)
+
+        if tag_requirements:
+            for entry in tag_requirements:
+                tag = Tag.query.filter_by(tag=entry["tag"]).first()
+                if not tag:
+                    tag = Tag(tag=entry["tag"])
+                    db.session.add(tag)
+                tag_requirement = JobTagRequirement(job=job, tag=tag)
+                if entry["negate"]:
+                    tag_requirement.negate = True
+                db.session.add(tag_requirement)
 
         custom_json = loads(request.data.decode(), parse_float=Decimal)
         if "end" in custom_json and "start" not in custom_json:
@@ -480,7 +498,8 @@ class JobIndexAPI(MethodView):
                                                      "software_requirements",
                                                      "parents",
                                                      "children",
-                                                     "notified_users"])
+                                                     "notified_users",
+                                                     "tag_requirements"])
         job_data["start"] = start
         job_data["end"] = min(current_frame, end)
         del job_data["jobtype_version_id"]
@@ -632,6 +651,12 @@ class SingleJobAPI(MethodView):
                             "max_version_id": null
                         }
                     ],
+                    "tag_requirements": [
+                        {
+                            "tag": "workstation",
+                            "negate": true
+                        }
+                    ],
                     "batch": 1,
                     "time_started": null,
                     "time_submitted": "2014-03-06T15:40:58.335259",
@@ -661,7 +686,8 @@ class SingleJobAPI(MethodView):
                                                      "software_requirements",
                                                      "parents",
                                                      "children",
-                                                     "notified_users"])
+                                                     "notified_users",
+                                                     "tag_requirements"])
 
         first_task = Task.query.filter_by(job=job).order_by("frame asc").first()
         last_task = Task.query.filter_by(job=job).order_by("frame desc").first()
@@ -752,6 +778,12 @@ class SingleJobAPI(MethodView):
                     "data": {
                         "foo": "bar"
                     },
+                    "tag_requirements": [
+                        {
+                            "tag": "workstation",
+                            "negate": true
+                        }
+                    ],
                     "ram": 32,
                     "parents": [],
                     "hidden": false,
@@ -905,6 +937,19 @@ class SingleJobAPI(MethodView):
                 return jsonify(error=e.args), NOT_FOUND
             del g.json["software_requirements"]
 
+        tag_requirements = g.json.pop("tag_requirements", None)
+        if tag_requirements:
+            job.tag_requirements = []
+            for entry in tag_requirements:
+                tag = Tag.query.filter_by(tag=entry["tag"]).first()
+                if not tag:
+                    tag = Tag(tag=entry["tag"])
+                    db.session.add(tag)
+                tag_requirement = JobTagRequirement(job=job, tag=tag)
+                if entry["negate"]:
+                    tag_requirement.negate = True
+                db.session.add(tag_requirement)
+
         g.json.pop("start", None)
         g.json.pop("end", None)
         if g.json:
@@ -916,7 +961,8 @@ class SingleJobAPI(MethodView):
                                                      "data",
                                                      "software_requirements",
                                                      "parents",
-                                                     "children"])
+                                                     "children",
+                                                     "tag_requirements"])
         job_data["start"] = start
         job_data["end"] = end
         del job_data["jobtype_version_id"]
