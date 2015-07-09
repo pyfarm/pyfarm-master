@@ -358,7 +358,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         return len(requirements_to_satisfy) == 0
 
     def satisfies_job_requirements(self, job):
-        if not self.satisfies_jobtype_requirements( job.jobtype_version):
+        if not self.satisfies_jobtype_requirements(job.jobtype_version):
             return False
 
         if self.cpus < job.cpus:
