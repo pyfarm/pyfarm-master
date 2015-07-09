@@ -945,7 +945,7 @@ def update_tag_requirements_in_job(job_id):
                 NOT_FOUND)
 
     tagnames = request.form["tag_requirements"].split(" ")
-    tagnames = [x.strip() for x in tagnames if not x == ""]
+    tagnames = filter(bool, map(str.strip, tagnames))
     job.tag_requirements = []
     for name in tagnames:
         negate = False
