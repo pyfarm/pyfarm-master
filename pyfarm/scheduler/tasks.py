@@ -250,6 +250,8 @@ def send_tasks_to_agent(self, agent_id):
                             task.agent = None
                             task.attempts -= 1
                             db.session.add(task)
+                    db.session.flush()
+                    job.update_state()
                     db.session.commit()
                 else:
                     logger.error("CONFLICT response from agent %s (id %s) did "
