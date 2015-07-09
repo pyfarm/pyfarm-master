@@ -952,7 +952,7 @@ def update_tag_requirements_in_job(job_id):
         if name.startswith("-"):
             if len(name) < 2:
                 return (render_template(
-                    "pyfarm/error.html", error="Tag too short: " % name),
+                    "pyfarm/error.html", error="Tag too short: %s" % name),
                 NOT_FOUND)
             negate = True
             name = name[1:]
