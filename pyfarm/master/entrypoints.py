@@ -61,6 +61,7 @@ from pyfarm.models.tasklog import TaskLog
 from pyfarm.models.gpu import GPU
 from pyfarm.models.jobgroup import JobGroup
 from pyfarm.models.statistics.agent_count import AgentCount
+from pyfarm.models.statistics.task_event_count import TaskEventCount
 from pyfarm.master.utility import timedelta_format
 
 logger = getLogger("master.entrypoints")
