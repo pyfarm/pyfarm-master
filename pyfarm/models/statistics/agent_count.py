@@ -16,9 +16,9 @@
 
 """
 AgentCount Model
-=========
+================
 
-Model describing a the counts for agents in various states at a given point
+Model describing the counts for agents in various states at a given point
 in time.
 """
 
