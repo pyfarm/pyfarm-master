@@ -144,7 +144,8 @@ def load_user_interface(app_instance):
         rerun_failed_in_multiple_jobs, pause_multiple_jobs,
         unpause_multiple_jobs, delete_multiple_jobs, move_multiple_jobs,
         set_prio_weight_on_jobs, add_tag_on_jobs, remove_tag_from_jobs,
-        update_tag_requirements_in_job)
+        update_tag_requirements_in_job, add_tag_requirement_on_jobs,
+        remove_tag_requirement_from_jobs)
     from pyfarm.master.user_interface.jobqueues import (
         jobqueues, jobqueue_create, jobqueue, delete_jobqueue)
     from pyfarm.master.user_interface.jobtypes import (
@@ -243,6 +244,13 @@ def load_user_interface(app_instance):
     app_instance.add_url_rule("/jobs/add_tag_multiple",
                               "add_tag_on_jobs",
                               add_tag_on_jobs, methods=("POST", ))
+    app_instance.add_url_rule("/jobs/remove_tag_requirement_multiple",
+                              "remove_tag_requirement_from_jobs",
+                              remove_tag_requirement_from_jobs,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/jobs/add_tag_requirement_multiple",
+                              "add_tag_requirement_on_jobs",
+                              add_tag_requirement_on_jobs, methods=("POST", ))
     app_instance.add_url_rule("/jobs/remove_tag_multiple",
                               "remove_tag_from_jobs",
                               remove_tag_from_jobs, methods=("POST", ))

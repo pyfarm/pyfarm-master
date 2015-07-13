@@ -25,6 +25,9 @@
       <li role="presentation"><a href="#" id="selected-add-tag">Add Tag...</a></li>
       <li role="presentation"><a href="#" id="selected-remove-tag">Remove Tag...</a></li>
       <li role="presentation" class="divider"></li>
+      <li role="presentation"><a href="#" id="selected-add-tag-requirement">Add Tag Requirement...</a></li>
+      <li role="presentation"><a href="#" id="selected-remove-tag-requirement">Remove Tag Requirement...</a></li>
+      <li role="presentation" class="divider"></li>
       <li role="presentation">
         <a href="#" id="selected-move">Move To Queue...</a>
       </li>
@@ -625,6 +628,52 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" id="remove-tag-submit">Remove Tag</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="selected-add-tag-requirement-modal" role="dialog" aria-labelledby="selected-add-tag-requirement-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="selected-add-tag-requirement-label">Add a Tag Requirement to Selected Jobs</h4>
+      </div>
+      <div class="modal-body">
+        <form method="post" id="add-tag-requirement-multiple-form" action="{{ url_for('add_tag_requirement_on_jobs', next=url_for('jobs_index_ui', **filters_and_order)) }}">
+          <div class="form-group">
+            <label for="selected-tag">Required Tag</label>
+            <input type="text" class="form-control" id="selected-tag" name="tag"/>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="add-tag-requirement-submit">Add Tag Requirement</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="selected-remove-tag-requirement-modal" role="dialog" aria-labelledby="selected-remove-tag-requirement-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="selected-remove-tag-requirement-label">Remove a Tag Requirement From Selected Jobs</h4>
+      </div>
+      <div class="modal-body">
+        <form method="post" id="remove-tag-requirement-multiple-form" action="{{ url_for('remove_tag_requirement_from_jobs', next=url_for('jobs_index_ui', **filters_and_order)) }}">
+          <div class="form-group">
+            <label for="selected-tag">Tag</label>
+            <input type="text" class="form-control" id="selected-tag" name="tag"/>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="remove-tag-requirement-submit">Remove Tag Requirement</button>
       </div>
     </div>
   </div>

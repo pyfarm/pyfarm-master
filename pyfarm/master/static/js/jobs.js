@@ -161,4 +161,32 @@ $(document).ready(function() {
     $("#remove-tag-submit").click(function() {
         $("#remove-tag-multiple-form").submit();
     });
+
+    $('#selected-add-tag-requirement').click(function() {
+        var form = $("#add-tag-requirement-multiple-form");
+        form.children("input[name='job_id']").remove();
+        $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                form.append(job_input);
+        });
+        $('#selected-add-tag-requirement-modal').modal('toggle');
+    });
+
+    $("#add-tag-requirement-submit").click(function() {
+        $("#add-tag-requirement-multiple-form").submit();
+    });
+
+    $('#selected-remove-tag-requirement').click(function() {
+        var form = $("#remove-tag-requirement-multiple-form");
+        form.children("input[name='job_id']").remove();
+        $("input.job-selector:checked").each(function() {
+                var job_input = $("<input type='hidden' name='job_id' value='"+$(this).attr('value')+"'>");
+                form.append(job_input);
+        });
+        $('#selected-remove-tag-requirement-modal').modal('toggle');
+    });
+
+    $("#remove-tag-requirement-submit").click(function() {
+        $("#remove-tag-requirement-multiple-form").submit();
+    });
 });
