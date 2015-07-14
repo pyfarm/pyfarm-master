@@ -24,16 +24,16 @@ $(document).ready(function() {
                             "</tr>");
                         subjob_table.append(subjob_row);
                         if(s["state"] == "queued") {
-                            subjob_table.find("span.glyphicon").addClass("glyphicon-time");
+                            subjob_row.find("span.glyphicon").addClass("glyphicon-time");
                         }
                         if(s["state"] == "running") {
-                            subjob_table.find("span.glyphicon").addClass("glyphicon-play").css("color", "#337AB7");
+                            subjob_row.find("span.glyphicon").addClass("glyphicon-play").css("color", "#337AB7");
                         }
                         if(s["state"] == "failed") {
-                            subjob_table.find("span.glyphicon").addClass("glyphicon-remove").css("color", "#D9534F");
+                            subjob_row.find("span.glyphicon").addClass("glyphicon-remove").css("color", "#D9534F");
                         }
                         if(s["state"] == "done") {
-                            subjob_table.find("span.glyphicon").addClass("glyphicon-ok").css("color", "#5CB85C");
+                            subjob_row.find("span.glyphicon").addClass("glyphicon-ok").css("color", "#5CB85C");
                         }
                     });
                 }
