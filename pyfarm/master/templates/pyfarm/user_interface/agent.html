@@ -220,6 +220,9 @@
               <span class="glyphicon glyphicon-pause" title="paused"></span>
               {% endif %}
               {{ task.frame }}
+              {% if task.tile != None %}
+              / {{ task.tile }}
+              {% endif %}
             </td>
             <td>
               <div class="progress job_progress">
@@ -236,9 +239,6 @@
             <td><a href="{{ url_for('single_job_ui', job_id=task.job.id) }}"> {{ task.job.title }} (ID {{ task.job.id }})</a></td>
             <td>
               {{ task.state }}
-              {% if task.tile != None %}
-              / {{ task.tile }}
-              {% endif %}
             </td>
           </tr>
           {% endfor %}
