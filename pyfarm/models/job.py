@@ -22,6 +22,8 @@ Models and interface classes related to jobs.
 
 """
 
+from datetime import datetime
+
 try:
     import pwd
 except ImportError:  # pragma: no cover
@@ -42,6 +44,7 @@ from pyfarm.models.core.types import JSONDict, IDTypeWork
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, WorkStateChangedMixin, ReprMixin,
     ValidateWorkStateMixin, UtilityMixins)
+from pyfarm.models.statistics.task_event_count import TaskEventCount
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 
@@ -538,6 +541,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
         existing_tasks = Task.query.filter_by(job=self).all()
         frames_to_create = required_frames
+        num_created = 0
         for task in existing_tasks:
             if task.frame not in required_frames:
                 delete_task.delay(task.id)
@@ -547,6 +551,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         for frame in frames_to_create:
             if self.num_tiles:
                 for tile in range_(self.num_tiles - 1):
+                    num_created += 1
                     task = Task()
                     task.job = self
                     task.frame = frame
@@ -564,21 +569,62 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             if self.state != WorkState.RUNNING:
                 self.state = None
 
+        if config.get("enable_statistics"):
+            task_event_count = TaskEventCount(num_new=num_created,
+                                              job_queue_id=self.job_queue_id)
+            task_event_count.time_start = datetime.utcnow()
+            task_event_count.time_end = datetime.utcnow()
+            task_event_count.avg_queued = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == None).count()
+            task_event_count.avg_running = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == WorkState.RUNNING).count()
+            task_event_count.avg_done = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == WorkState.DONE).count()
+            task_event_count.avg_failed = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == WorkState.FAILED).count()
+            db.session.add(task_event_count)
+
     def rerun(self):
         """
         Makes this job rerun all its task.  Tasks that are currently running are
         left untouched.
         """
+        num_restarted = 0
         for task in self.tasks:
             if task.state != _WorkState.RUNNING and task.state is not None:
                 task.state = None
                 task.agent = None
                 task.failures = 0
                 db.session.add(task)
+                num_restarted += 1
 
         self.completion_notify_sent = False
         self.update_state()
         db.session.add(self)
+
+        if config.get("enable_statistics"):
+            task_event_count = TaskEventCount(job_queue_id=self.job_queue_id,
+                                              num_restarted=num_restarted)
+            task_event_count.time_start = datetime.utcnow()
+            task_event_count.time_end = datetime.utcnow()
+            task_event_count.avg_queued = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == None).count()
+            task_event_count.avg_running = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == WorkState.RUNNING).count()
+            task_event_count.avg_done = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == WorkState.DONE).count()
+            task_event_count.avg_failed = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == WorkState.FAILED).count()
+            db.session.add(task_event_count)
+            db.session.commit()
 
         for child in self.children:
             child.rerun()
@@ -588,16 +634,39 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         Makes this job rerun all its failed tasks.  Tasks that are done or are
         currently running are left untouched
         """
+        num_restarted = 0
         for task in self.tasks:
             if task.state == _WorkState.FAILED:
                 task.state = None
                 task.agent = None
                 task.failures = 0
                 db.session.add(task)
+                num_restarted += 1
 
         self.completion_notify_sent = False
         self.update_state()
         db.session.add(self)
+
+
+        if config.get("enable_statistics"):
+            task_event_count = TaskEventCount(job_queue_id=self.job_queue_id,
+                                              num_restarted=num_restarted)
+            task_event_count.time_start = datetime.utcnow()
+            task_event_count.time_end = datetime.utcnow()
+            task_event_count.avg_queued = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == None).count()
+            task_event_count.avg_running = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == WorkState.RUNNING).count()
+            task_event_count.avg_done = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == WorkState.DONE).count()
+            task_event_count.avg_failed = Task.query.filter(
+                Task.job.has(Job.job_queue_id == self.job_queue_id),
+                Task.state == WorkState.FAILED).count()
+            db.session.add(task_event_count)
+            db.session.commit()
 
         for child in self.children:
             child.rerun_failed()

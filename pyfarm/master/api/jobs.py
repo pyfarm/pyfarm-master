@@ -42,6 +42,7 @@ from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES, WorkState, _WorkState
 from pyfarm.scheduler.tasks import (
     assign_tasks_to_agent, assign_tasks, delete_job)
+from pyfarm.models.statistics.task_event_count import TaskEventCount
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 from pyfarm.models.user import User
@@ -1261,6 +1262,34 @@ class JobSingleTaskAPI(MethodView):
             db.session.commit()
             if task.job.state != old_state and task.job.state == WorkState.DONE:
                 assign_tasks.delay()
+
+        if config.get("enable_statistics") and task.job and state_transition:
+            task_event_count = TaskEventCount(
+                job_queue_id=task.job.job_queue_id)
+            if new_state == "queued":
+                task_event_count.num_restarted = 1
+            elif new_state == "running":
+                task_event_count.num_started = 1
+            elif new_state == "done":
+                task_event_count.num_done = 1
+            elif new_state == "failed":
+                task_event_count.num_failed = 1
+            task_event_count.time_start = datetime.utcnow()
+            task_event_count.time_end = datetime.utcnow()
+            task_event_count.avg_queued = Task.query.filter(
+                Task.job.has(Job.job_queue_id == task.job.job_queue_id),
+                Task.state == None).count()
+            task_event_count.avg_running = Task.query.filter(
+                Task.job.has(Job.job_queue_id == task.job.job_queue_id),
+                Task.state == WorkState.RUNNING).count()
+            task_event_count.avg_done = Task.query.filter(
+                Task.job.has(Job.job_queue_id == task.job.job_queue_id),
+                Task.state == WorkState.DONE).count()
+            task_event_count.avg_failed = Task.query.filter(
+                Task.job.has(Job.job_queue_id == task.job.job_queue_id),
+                Task.state == WorkState.FAILED).count()
+            db.session.add(task_event_count)
+            db.session.commit()
 
         return jsonify(task_data), OK
 

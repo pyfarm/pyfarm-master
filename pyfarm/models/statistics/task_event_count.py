@@ -48,7 +48,7 @@ class TaskEventCount(db.Model):
 
     # No foreign key reference, because this table is stored in a separate db
     # Code reading it will have to check for referential integrity manually.
-    jobqueue_id = db.Column(
+    job_queue_id = db.Column(
         db.Integer,
         nullable=True,
         doc="ID of the jobqueue these stats refer to")
@@ -58,6 +58,12 @@ class TaskEventCount(db.Model):
         nullable=False,
         default=0,
         doc="Number of tasks that were newly created during the time period")
+
+    num_deleted = db.Column(
+        db.Integer,
+        nullable=False,
+        default=0,
+        doc="Number of tasks that were deleted during the time period")
 
     num_restarted = db.Column(
         db.Integer,

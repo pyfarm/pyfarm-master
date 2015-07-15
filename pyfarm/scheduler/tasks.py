@@ -49,6 +49,7 @@ from lockfile import LockFile, AlreadyLocked
 from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import (
     AgentState, _AgentState, WorkState, _WorkState, UseAgentAddress)
+from pyfarm.models.statistics.task_event_count import TaskEventCount
 from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement,
     JobTypeSoftwareRequirement)
@@ -905,6 +906,26 @@ def delete_task(self, task_id):
     job.update_state()
     db.session.commit()
 
+    if config.get("enable_statistics"):
+        task_event_count = TaskEventCount(job_queue_id=job.job_queue_id,
+                                          num_deleted=1)
+        task_event_count.time_start = datetime.utcnow()
+        task_event_count.time_end = datetime.utcnow()
+        task_event_count.avg_queued = Task.query.filter(
+            Task.job.has(Job.job_queue_id == self.job_queue_id),
+            Task.state == None).count()
+        task_event_count.avg_running = Task.query.filter(
+            Task.job.has(Job.job_queue_id == self.job_queue_id),
+            Task.state == WorkState.RUNNING).count()
+        task_event_count.avg_done = Task.query.filter(
+            Task.job.has(Job.job_queue_id == self.job_queue_id),
+            Task.state == WorkState.DONE).count()
+        task_event_count.avg_failed = Task.query.filter(
+            Task.job.has(Job.job_queue_id == self.job_queue_id),
+            Task.state == WorkState.FAILED).count()
+        db.session.add(task_event_count)
+        db.session.commit()
+
     retries = TRANSACTION_RETRIES
     done = False
     job_deleted = False
@@ -1055,12 +1076,14 @@ def delete_job(job_id):
 
     tasks_query = Task.query.filter_by(job=job)
     async_deletes = 0
+    immediate_deletes = 0
     for task in tasks_query:
         if task.agent and task.state not in [_WorkState.DONE, _WorkState.FAILED]:
             delete_task.delay(task.id)
             async_deletes += 1
         else:
             db.session.delete(task)
+            immediate_deletes += 1
 
     if async_deletes == 0:
         logger.info("Job %s (%s) is marked for deletion and has no tasks "
@@ -1083,6 +1106,27 @@ def delete_job(job_id):
                         job_group.name, job_group.id)
             db.session.delete(job_group)
             db.session.commit()
+
+    if immediate_deletes and config.get("enable_statistics"):
+        task_event_count = TaskEventCount(job_queue_id=job.job_queue_id,
+                                          num_deleted=immediate_deletes)
+        task_event_count.time_start = datetime.utcnow()
+        task_event_count.time_end = datetime.utcnow()
+        task_event_count.avg_queued = Task.query.filter(
+            Task.job.has(Job.job_queue_id == self.job_queue_id),
+            Task.state == None).count()
+        task_event_count.avg_running = Task.query.filter(
+            Task.job.has(Job.job_queue_id == self.job_queue_id),
+            Task.state == WorkState.RUNNING).count()
+        task_event_count.avg_done = Task.query.filter(
+            Task.job.has(Job.job_queue_id == self.job_queue_id),
+            Task.state == WorkState.DONE).count()
+        task_event_count.avg_failed = Task.query.filter(
+            Task.job.has(Job.job_queue_id == self.job_queue_id),
+            Task.state == WorkState.FAILED).count()
+        db.session.add(task_event_count)
+        db.session.commit()
+
 
 @celery_app.task(ignore_results=True)
 def clean_up_orphaned_task_logs():
