@@ -323,7 +323,8 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         "AgentDisk",
         backref=db.backref("agent"),
         lazy="dynamic",
-        doc="The known disks available to this agent")
+        doc="The known disks available to this agent",
+        cascade="save-update, merge, delete, delete-orphan")
 
     def is_offline(self):
         return self.state == AgentState.OFFLINE
