@@ -833,7 +833,11 @@ class SingleJobAPI(MethodView):
             end = Decimal(json.pop("end", old_last_task.frame))
             by = Decimal(json.pop("by", job.by))
 
-            job.alter_frame_range(start, end, by)
+            try:
+                job.alter_frame_range(start, end, by)
+            except ValueError as e:
+                return (jsonify(
+                        error=str(e)), BAD_REQUEST)
 
         if "parents" in g.json:
             parents = []
