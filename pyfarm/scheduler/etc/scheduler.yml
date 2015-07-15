@@ -235,6 +235,8 @@ enable_statistics: true
 agent_count_interval:
     hours: 1
 
+task_event_count_consolidate_interval:
+    minutes: 15
 ##
 ## END Statistics Gathering Settings
 ##

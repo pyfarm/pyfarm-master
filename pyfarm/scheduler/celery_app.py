@@ -68,6 +68,12 @@ if config.get("enable_statistics"):
         "task": "pyfarm.scheduler.statistics_tasks.count_agents",
         "schedule": timedelta(**config.get("agent_count_interval"))
         }
+    celery_app.conf.CELERYBEAT_SCHEDULE\
+        ["periodically_consolidate_task_events"] = {
+        "task": "pyfarm.scheduler.statistics_tasks.consolidate_task_events",
+        "schedule": timedelta(**config.get(
+            "task_event_count_consolidate_interval"))
+        }
 
 if __name__ == '__main__':
     celery_app.start()

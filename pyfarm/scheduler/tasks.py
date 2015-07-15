@@ -776,7 +776,7 @@ def send_job_completion_mail(job_id, successful=True):
 
     except AlreadyLocked:
         logger.debug("The job lockfile is locked, something is already working "
-                     " on job %s", job_id)
+                     "on job %s", job_id)
         try:
             with open(job_lockfile_name, "r") as lockfile:
                 locktime = float(lockfile.read())
