@@ -35,7 +35,7 @@ def task_events():
         no_queue = ("no_queue" in request.args and
             request.args["no_queue"].lower() == "true")
         if "queue" in request.args or no_queue:
-            jobqueue_ids = request.args.getlist("q")
+            jobqueue_ids = request.args.getlist("queue")
             jobqueue_ids = [int(x) for x in jobqueue_ids]
             if no_queue:
                 task_event_count_query = task_event_count_query.filter(or_(
