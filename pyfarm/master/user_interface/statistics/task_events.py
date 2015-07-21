@@ -16,6 +16,7 @@
 
 import json
 from calendar import timegm
+from datetime import timedelta
 
 from flask import render_template, request
 
@@ -23,10 +24,14 @@ from sqlalchemy import or_
 
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.statistics.task_event_count import TaskEventCount
+from pyfarm.master.config import config
 from pyfarm.master.application import db
 
 
 def task_events():
+    consolidate_interval = timedelta(**config.get(
+        "task_event_count_consolidate_interval"))
+
     with db.session.no_autoflush:
         task_event_count_query = TaskEventCount.query.order_by(
             TaskEventCount.time_start)
@@ -60,7 +65,8 @@ def task_events():
             if not open_sample:
                 open_sample = sample
             elif (sample.time_start >= open_sample.time_start and
-                sample.time_start < open_sample.time_end):
+                sample.time_start <
+                    (open_sample.time_start + consolidate_interval)):
                 open_sample.num_new += sample.num_new
                 open_sample.num_deleted += sample.num_deleted
                 open_sample.num_restarted += sample.num_restarted
