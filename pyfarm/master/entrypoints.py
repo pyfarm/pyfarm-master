@@ -165,6 +165,8 @@ def load_user_interface(app_instance):
     from pyfarm.master.user_interface.statistics.index import statistics_index
     from pyfarm.master.user_interface.statistics.agent_counts import (
         agent_counts)
+    from pyfarm.master.user_interface.statistics.task_events import (
+        task_events)
 
     farm_name = config.get("farm_name")
     app_instance.jinja_env.globals.update({"farm_name": farm_name})
@@ -386,6 +388,9 @@ def load_user_interface(app_instance):
 
     app_instance.add_url_rule("/statistics/agent_counts",
                               "agent_counts_ui", agent_counts,
+                              methods=("GET", ))
+    app_instance.add_url_rule("/statistics/task_events",
+                              "task_events_ui", task_events,
                               methods=("GET", ))
 
 def load_api(app_instance, api_instance):

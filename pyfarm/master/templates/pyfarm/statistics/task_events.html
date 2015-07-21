@@ -1,0 +1,83 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Task Events {% endblock %}
+{% block statistics_nb_class %}active{% endblock %}
+{% block additional_styles %}
+<link href="{{ url_for('static', filename='css/nv.d3.css') }}" rel="stylesheet">
+{% endblock %}
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/vendor/d3.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='js/vendor/nv.d3.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='js/task_events.js') }}" type="text/javascript"></script>
+{% endblock %}
+{% block content %}
+<h1>Task Events</h1>
+
+<div id="event_chart">
+  <svg style="height:800px;">
+  </svg>
+</div>
+
+<div id="avg_chart">
+  <svg style="height:800px;">
+  </svg>
+</div>
+
+<script>
+var new_tasks = {{ tasks_new_json }};
+var deleted_tasks = {{ tasks_deleted_json }};
+var restarted_tasks = {{ tasks_restarted_json }};
+var failed_tasks = {{ tasks_failed_json }};
+var done_tasks = {{ tasks_done_json }};
+
+var task_events_data = [
+    {
+    values: new_tasks,
+    key: 'New Tasks'
+    },
+    {
+    values: deleted_tasks,
+    key: 'Deleted Tasks'
+    },
+    {
+    values: restarted_tasks,
+    key: 'Restarted Tasks'
+    },
+    {
+    values: failed_tasks,
+    key: 'Failed Tasks'
+    },
+    {
+    values: done_tasks,
+    key: 'Done Tasks'
+    }
+    ];
+
+d3.select('#event_chart svg').datum(task_events_data);
+
+var avg_queued = {{ avg_queued_json }};
+var avg_running = {{ avg_running_json }};
+var avg_done = {{ avg_done_json }};
+var avg_failed = {{ avg_failed_json }};
+
+var task_avgs_data = [
+    {
+    values: avg_queued,
+    key: 'Queued Tasks'
+    },
+    {
+    values: avg_running,
+    key: 'Running Tasks'
+    },
+    {
+    values: avg_done,
+    key: 'Done Tasks'
+    },
+    {
+    values: avg_failed,
+    key: 'Failed Tasks'
+    }
+    ];
+
+d3.select('#avg_chart svg').datum(task_avgs_data);
+</script>
+{% endblock %}
