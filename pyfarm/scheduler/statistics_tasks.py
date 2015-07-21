@@ -106,8 +106,10 @@ def consolidate_task_events_for_queue(self, job_queue_id):
                 min(event_count.time_end, consolidation_count.time_end) -
                 consolidation_count.time_start)
 
-        new_period_part = new_period / (old_period + new_period)
-        old_period_part = old_period / (old_period + new_period)
+        new_period_part = (new_period.total_seconds() /
+                           (old_period + new_period).total_seconds())
+        old_period_part = (old_period.total_seconds() /
+                           (old_period + new_period).total_seconds())
 
         consolidation_count.avg_queued = (
             event_count.avg_queued * new_period_part +
