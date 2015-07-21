@@ -43,7 +43,7 @@ def task_events():
                     TaskEventCount.job_queue_id == None))
             else:
                 task_event_count_query = task_event_count_query.filter(
-                    TaskEventCount().job_queue_id.in_(jobqueue_ids))
+                    TaskEventCount.job_queue_id.in_(jobqueue_ids))
 
         tasks_new = []
         tasks_deleted = []
