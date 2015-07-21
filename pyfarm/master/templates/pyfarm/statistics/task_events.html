@@ -12,6 +12,40 @@
 {% block content %}
 <h1>Task Events</h1>
 
+<form method="GET" action="{{ url_for('task_events_ui') }}" class="form-inline" role="form" style="margin-top: 15px;">
+  <div class="btn-group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="jobqueue-dropdown-menu" aria-expanded="true">
+      Queue <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-form" role="menu" aria-labelledby="jobqueue-dropdown-menu">
+      <li>
+        <label class="checkbox">
+          {% if no_queue %}
+          <input type="checkbox" name="no_queue" value="true" checked/>
+          {% else %}
+          <input type="checkbox" name="no_queue" value="true"/>
+          {% endif %}
+        </label>
+      </li>
+      {% for jobqueue in jobqueues %}
+      <li>
+        <nobr>
+          <label class="checkbox">
+            {% if jobqueue.id in jobqueue_ids %}
+            <input type="checkbox" name="queue" value="{{ jobqueue.id }}" checked/>
+            {% else %}
+            <input type="checkbox" name="queue" value="{{ jobqueue.id }}"/>
+            {% endif %}
+            {{ jobqueue.path() }}
+          </label>
+        </nobr>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <input type="submit" class="btn" value="Filter">
+</form>
+
 <div id="event_chart">
   <svg style="height:800px;">
   </svg>

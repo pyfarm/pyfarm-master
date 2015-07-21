@@ -19,6 +19,9 @@ from calendar import timegm
 
 from flask import render_template, request
 
+from sqlalchemy import or_
+
+from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.statistics.task_event_count import TaskEventCount
 from pyfarm.master.application import db
 
@@ -28,10 +31,19 @@ def task_events():
         task_event_count_query = TaskEventCount.query.order_by(
             TaskEventCount.time_start)
 
-        if "queue" in request.args:
-            queue = int(request.args.get("queue"))
-            task_event_count_query = task_event_count_query.filter_by(
-                job_queue_id=queue)
+        jobqueue_ids = []
+        no_queue = ("no_queue" in request.args and
+            request.args["no_queue"].lower() == "true")
+        if "queue" in request.args or no_queue:
+            jobqueue_ids = request.args.getlist("q")
+            jobqueue_ids = [int(x) for x in jobqueue_ids]
+            if no_queue:
+                task_event_count_query = task_event_count_query.filter(or_(
+                    TaskEventCount.job_queue_id.in_(jobqueue_ids),
+                    TaskEventCount.job_queue_id == None))
+            else:
+                task_event_count_query = task_event_count_query.filter(
+                    TaskEventCount().job_queue_id.in_(jobqueue_ids))
 
         tasks_new = []
         tasks_deleted = []
@@ -87,6 +99,8 @@ def task_events():
             avg_done.append([timestamp, open_sample.avg_done])
             avg_failed.append([timestamp, open_sample.avg_failed])
 
+        jobqueues = JobQueue.query.order_by(JobQueue.fullpath).all()
+
         return render_template(
             "pyfarm/statistics/task_events.html",
             tasks_new_json=json.dumps(tasks_new),
@@ -97,4 +111,7 @@ def task_events():
             avg_queued_json=json.dumps(avg_queued),
             avg_running_json=json.dumps(avg_running),
             avg_done_json=json.dumps(avg_done),
-            avg_failed_json=json.dumps(avg_failed))
+            avg_failed_json=json.dumps(avg_failed),
+            no_queue=no_queue,
+            jobqueue_ids=jobqueue_ids,
+            jobqueues=jobqueues)
