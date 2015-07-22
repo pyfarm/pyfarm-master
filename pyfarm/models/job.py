@@ -559,6 +559,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                     task.priority = self.priority
                     db.session.add(task)
             else:
+                num_created += 1
                 task = Task()
                 task.job = self
                 task.frame = frame
