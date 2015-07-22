@@ -65,7 +65,7 @@ def task_events():
             if not open_sample:
                 open_sample = sample
             elif (sample.time_start >= open_sample.time_start and
-                sample.time_start <
+                  sample.time_start <
                     (open_sample.time_start + consolidate_interval)):
                 open_sample.num_new += sample.num_new
                 open_sample.num_deleted += sample.num_deleted
