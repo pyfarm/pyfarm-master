@@ -531,7 +531,7 @@
             </td>
             <td>
               {% if task.agent %}
-              <a href="{{ url_for('single_agent_ui', agent_id=task.agent_id) }}">
+              <a href="{{ url_for('single_agent_ui', agent_id=task.agent_id) }}" title="{{ task.agent.hostname }}, Cores: {{ task.agent.cpus}}, RAM: {{ task.agent.ram }} MiB">
                 {{ task.agent.hostname }}
               </a>
               {%endif%}
