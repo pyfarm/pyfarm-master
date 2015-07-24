@@ -192,4 +192,7 @@ def consolidate_task_events_for_queue(self, job_queue_id):
                     db.session.add(open_consolidation_count)
                     open_consolidation_count = event_count
 
+    if open_consolidation_count:
+        db.session.add(open_consolidation_count)
+
     db.session.commit()
