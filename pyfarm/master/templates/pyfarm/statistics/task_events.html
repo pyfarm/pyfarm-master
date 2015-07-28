@@ -46,15 +46,23 @@
   <input type="submit" class="btn" value="Filter">
 </form>
 
+<h2>Events</h2>
 <div id="event_chart">
   <svg style="height:800px;">
   </svg>
 </div>
 
+<h2>Totals</h2>
 <div id="avg_chart">
   <svg style="height:800px;">
   </svg>
 </div>
+
+<a href="{{ url_for('task_events_ui', days_back=730, minutes_resolution=2880) }}">Last two years</a> -
+<a href="{{ url_for('task_events_ui', days_back=365, minutes_resolution=1440) }}">Last year</a> -
+<a href="{{ url_for('task_events_ui', days_back=30, minutes_resolution=120) }}">Last month</a> -
+<a href="{{ url_for('task_events_ui', days_back=14, minutes_resolution=60) }}">Last two weeks</a> -
+<a href="{{ url_for('task_events_ui', days_back=7, minutes_resolution=30) }}">Last week</a>
 
 <script>
 var new_tasks = {{ tasks_new_json }};

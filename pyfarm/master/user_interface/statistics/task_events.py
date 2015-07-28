@@ -16,7 +16,7 @@
 
 import json
 from calendar import timegm
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from flask import render_template, request
 
@@ -61,7 +61,7 @@ class SampleSum(object):
     def add_sample(self, sample):
         self.num_new += sample.num_new
         self.num_deleted += sample.num_deleted
-        self.num_restarted + sample.num_restarted
+        self.num_restarted += sample.num_restarted
         self.num_failed += sample.num_failed
         self.num_done += sample.num_done
 
@@ -87,8 +87,15 @@ def task_events():
     consolidate_interval = timedelta(**config.get(
         "task_event_count_consolidate_interval"))
 
+    if "minutes_resolution" in request.args:
+        consolidate_interval = timedelta(
+            minutes=int(request.args.get("minutes_resolution")))
+
+    time_back = timedelta(days=int(request.args.get("days_back", 7)))
+
     task_event_count_query = TaskEventCount.query.order_by(
-        TaskEventCount.time_start)
+        TaskEventCount.time_start).filter(
+            TaskEventCount.time_start > datetime.utcnow() - time_back)
 
     jobqueue_ids = []
     no_queue = ("no_queue" in request.args and
