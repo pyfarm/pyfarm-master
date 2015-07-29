@@ -950,6 +950,17 @@ class SingleJobAPI(MethodView):
                     tag_requirement.negate = True
                 db.session.add(tag_requirement)
 
+        jobtype_version_number = g.json.pop("jobtype_version", None)
+        if jobtype_version_number:
+            jobtype_version = JobTypeVersion.query.filter_by(
+                jobtype=job.jobtype_version.jobtype,
+                version=jobtype_version_number).first()
+            if not jobtype_version:
+                return (jsonify(error="Unknown jobtype version: %s" %
+                                      jobtype_version),
+                        BAD_REQUEST)
+            job.jobtype_version = jobtype_version
+
         g.json.pop("start", None)
         g.json.pop("end", None)
         if g.json:
