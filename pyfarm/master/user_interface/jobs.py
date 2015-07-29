@@ -310,7 +310,7 @@ def jobs():
         else:
             tags_by_job_id[association[0]] += [association[1]]
 
-    jobqueues = JobQueue.query.all()
+    jobqueues = JobQueue.query.order_by(JobQueue.fullpath).all()
 
     available_priorities = db.session.query(distinct(Job.priority)).all()
     available_priorities = set(x[0] for x in available_priorities)
