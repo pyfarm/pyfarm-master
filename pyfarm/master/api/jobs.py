@@ -601,7 +601,6 @@ class JobIndexAPI(MethodView):
                         jsonify(error="Jobqueue %s not found" % jobqueue_name),
                         NOT_FOUND)
                 jobqueue_ids.append(jobqueue.id)
-            logger.debug("Got the following jobqueue ids: %s", jobqueue_ids)
             q = q.filter(Job.job_queue_id.in_(jobqueue_ids))
 
         for id, title, state, assigned_tasks_count in q:
