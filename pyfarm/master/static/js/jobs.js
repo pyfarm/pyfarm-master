@@ -35,6 +35,13 @@ $(document).ready(function() {
                         if(s["state"] == "done") {
                             subjob_row.find("span.glyphicon").addClass("glyphicon-ok").css("color", "#5CB85C");
                         }
+
+                        if(s["output_link"] != null) {
+                            var output_link = $("<a href="+s["output_link"]+" style='margin-left:5px;'>"+
+                                                  "<span class='glyphicon glyphicon-folder-open'></span>"+
+                                                "</a>");
+                            subjob_row.find("td:first").append(output_link);
+                        }
                     });
                 }
             });
