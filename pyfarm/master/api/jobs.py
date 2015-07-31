@@ -561,6 +561,7 @@ class JobIndexAPI(MethodView):
 
         jobtype_name = get_request_argument("jobtype")
         user_name = get_request_argument("user")
+        job_title = get_request_argument("title")
 
         jobqueue_names = []
         if "jobqueue" in request.args:
@@ -602,6 +603,9 @@ class JobIndexAPI(MethodView):
                         NOT_FOUND)
                 jobqueue_ids.append(jobqueue.id)
             q = q.filter(Job.job_queue_id.in_(jobqueue_ids))
+
+        if job_title:
+            q = q.filter(Job.title.ilike("%%%s%%" % job_title))
 
         for id, title, state, assigned_tasks_count in q:
             data = {"id": id, "title": title}
