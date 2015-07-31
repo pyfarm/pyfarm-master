@@ -655,6 +655,10 @@ def alter_scheduling_parameters_for_job(job_id):
         job.ram = int(request.form['minimum_ram'])
     else:
         job.ram = None
+    if request.form['minimum_cpus']:
+        job.cpus = int(request.form['minimum_cpus'])
+    else:
+        job.cpus = None
 
     if request.form['queue']:
         queue_id = int(request.form['queue'])
