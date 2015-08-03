@@ -64,7 +64,8 @@
 <a href="{{ url_for('task_events_ui', days_back=365, minutes_resolution=1440, queue=jobqueue_ids) }}">Last year</a> -
 <a href="{{ url_for('task_events_ui', days_back=30, minutes_resolution=120, queue=jobqueue_ids) }}">Last month</a> -
 <a href="{{ url_for('task_events_ui', days_back=14, minutes_resolution=60, queue=jobqueue_ids) }}">Last two weeks</a> -
-<a href="{{ url_for('task_events_ui', days_back=7, minutes_resolution=30, queue=jobqueue_ids) }}">Last week</a>
+<a href="{{ url_for('task_events_ui', days_back=7, minutes_resolution=30, queue=jobqueue_ids) }}">Last week</a> -
+<a href="{{ url_for('task_events_ui', days_back=1, queue=jobqueue_ids) }}">Last 24 hours</a>
 
 <script>
 var new_tasks = {{ tasks_new_json }};
