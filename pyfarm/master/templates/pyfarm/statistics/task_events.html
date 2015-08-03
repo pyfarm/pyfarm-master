@@ -13,6 +13,8 @@
 <h1>Task Events</h1>
 
 <form method="GET" action="{{ url_for('task_events_ui') }}" class="form-inline" role="form" style="margin-top: 15px;">
+  <input type="hidden" name="days_back" value="{{ days_back }}">
+  <input type="hidden" name="minutes_resolution" value="{{ minutes_resolution }}">
   <div class="btn-group">
     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="jobqueue-dropdown-menu" aria-expanded="true">
       Queue <span class="caret"></span>
@@ -58,11 +60,11 @@
   </svg>
 </div>
 
-<a href="{{ url_for('task_events_ui', days_back=730, minutes_resolution=2880) }}">Last two years</a> -
-<a href="{{ url_for('task_events_ui', days_back=365, minutes_resolution=1440) }}">Last year</a> -
-<a href="{{ url_for('task_events_ui', days_back=30, minutes_resolution=120) }}">Last month</a> -
-<a href="{{ url_for('task_events_ui', days_back=14, minutes_resolution=60) }}">Last two weeks</a> -
-<a href="{{ url_for('task_events_ui', days_back=7, minutes_resolution=30) }}">Last week</a>
+<a href="{{ url_for('task_events_ui', days_back=730, minutes_resolution=2880, queue=jobqueue_ids) }}">Last two years</a> -
+<a href="{{ url_for('task_events_ui', days_back=365, minutes_resolution=1440, queue=jobqueue_ids) }}">Last year</a> -
+<a href="{{ url_for('task_events_ui', days_back=30, minutes_resolution=120, queue=jobqueue_ids) }}">Last month</a> -
+<a href="{{ url_for('task_events_ui', days_back=14, minutes_resolution=60, queue=jobqueue_ids) }}">Last two weeks</a> -
+<a href="{{ url_for('task_events_ui', days_back=7, minutes_resolution=30, queue=jobqueue_ids) }}">Last week</a>
 
 <script>
 var new_tasks = {{ tasks_new_json }};

@@ -87,11 +87,13 @@ def task_events():
     consolidate_interval = timedelta(**config.get(
         "task_event_count_consolidate_interval"))
 
+    minutes_resolution = consolidate_interval.total_seconds() / 60
     if "minutes_resolution" in request.args:
-        consolidate_interval = timedelta(
-            minutes=int(request.args.get("minutes_resolution")))
+        minutes_resolution = int(request.args.get("minutes_resolution"))
+        consolidate_interval = timedelta(minutes=minutes_resolution)
 
-    time_back = timedelta(days=int(request.args.get("days_back", 7)))
+    days_back = int(request.args.get("days_back", 7))
+    time_back = timedelta(days=days_back)
 
     task_event_count_query = TaskEventCount.query.order_by(
         TaskEventCount.time_start).filter(
@@ -169,4 +171,6 @@ def task_events():
         avg_failed_json=json.dumps(avg_failed),
         no_queue=no_queue,
         jobqueue_ids=jobqueue_ids,
-        jobqueues=jobqueues)
+        jobqueues=jobqueues,
+        minutes_resolution=minutes_resolution,
+        days_back=days_back)
