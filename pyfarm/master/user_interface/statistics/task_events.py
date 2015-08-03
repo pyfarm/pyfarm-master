@@ -87,7 +87,7 @@ def task_events():
     consolidate_interval = timedelta(**config.get(
         "task_event_count_consolidate_interval"))
 
-    minutes_resolution = consolidate_interval.total_seconds() / 60
+    minutes_resolution = int(consolidate_interval.total_seconds() / 60)
     if "minutes_resolution" in request.args:
         minutes_resolution = int(request.args.get("minutes_resolution"))
         consolidate_interval = timedelta(minutes=minutes_resolution)
