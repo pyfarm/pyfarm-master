@@ -23,7 +23,7 @@ from pyfarm.models.statistics.agent_count import AgentCount
 
 
 def agent_counts():
-    agent_count_query = AgentCount.query
+    agent_count_query = AgentCount.query.order_by(AgentCount.counted_time)
 
     online_agent_counts = []
     running_agent_counts = []
