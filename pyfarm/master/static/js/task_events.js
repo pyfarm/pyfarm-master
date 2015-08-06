@@ -28,7 +28,7 @@ $(document).ready(function() {
         return moment.unix(d).format('YYYY-MM-DD HH:mm');
     });
 
-    d3.select('#avg_chart svg')
+    d3.select('#totals_chart svg')
         .call(chart);
 
     nv.utils.windowResize(chart.update);

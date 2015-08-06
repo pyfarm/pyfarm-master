@@ -26,12 +26,15 @@ from datetime import datetime, timedelta
 from logging import DEBUG
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import AgentState
+from pyfarm.core.enums import AgentState, WorkState
 
 from pyfarm.models.agent import Agent
 from pyfarm.models.jobqueue import JobQueue
+from pyfarm.models.task import Task
+from pyfarm.models.job import Job
 from pyfarm.models.statistics.agent_count import AgentCount
 from pyfarm.models.statistics.task_event_count import TaskEventCount
+from pyfarm.models.statistics.task_count import TaskCount
 
 from pyfarm.master.config import config
 from pyfarm.master.application import db
@@ -43,8 +46,8 @@ logger = getLogger("pf.scheduler.statistics_tasks")
 logger.setLevel(DEBUG)
 
 
-@celery_app.task(ignore_result=True, bind=True)
-def count_agents(self):
+@celery_app.task(ignore_result=True)
+def count_agents():
     logger.debug("Counting known agents now")
     num_online = Agent.query.filter_by(state=AgentState.ONLINE).count()
     num_offline = Agent.query.filter_by(state=AgentState.OFFLINE).count()
@@ -67,8 +70,8 @@ def count_agents(self):
     db.session.add(agent_count)
     db.session.commit()
 
-@celery_app.task(ignore_result=True, bind=True)
-def consolidate_task_events(self):
+@celery_app.task(ignore_result=True)
+def consolidate_task_events():
     logger.debug("Consolidating task events now")
 
     queues_query = JobQueue.query
@@ -77,8 +80,33 @@ def consolidate_task_events(self):
         consolidate_task_events_for_queue.delay(job_queue.id)
     consolidate_task_events_for_queue.delay(None)
 
-@celery_app.task(ignore_result=True, bind=True)
-def consolidate_task_events_for_queue(self, job_queue_id):
+@celery_app.task(ignore_result=True)
+def count_tasks():
+    logger.debug("Counting tasks in all queues now")
+
+    job_queues_query = JobQueue.query
+
+    for job_queue in job_queues_query:
+        task_count = TaskCount(job_queue_id=job_queue.id)
+        task_count.total_queued = Task.query.filter(
+            Task.job.has(Job.job_queue_id == job_queue.id),
+            Task.state == None).count()
+        task_count.total_running = Task.query.filter(
+            Task.job.has(Job.job_queue_id == job_queue.id),
+            Task.state == WorkState.RUNNING).count()
+        task_count.total_done = Task.query.filter(
+            Task.job.has(Job.job_queue_id == job_queue.id),
+            Task.state == WorkState.DONE).count()
+        task_count.total_failed = Task.query.filter(
+            Task.job.has(Job.job_queue_id == job_queue.id),
+            Task.state == WorkState.FAILED).count()
+
+        db.session.add(task_count)
+
+    db.session.commit()
+
+@celery_app.task(ignore_result=True)
+def consolidate_task_events_for_queue(job_queue_id):
     logger.debug("Consolidating task events for queue %s now", job_queue_id)
 
     consolidate_interval = timedelta(**config.get(
@@ -91,38 +119,6 @@ def consolidate_task_events_for_queue(self, job_queue_id):
         consolidation_count.num_started += event_count.num_started
         consolidation_count.num_failed += event_count.num_failed
         consolidation_count.num_done += event_count.num_done
-
-        if (last_count and
-            last_count.time_end > consolidation_count.time_start and
-            last_count.time_end < consolidation_count.time_end and
-            last_count.time_end < event_count.time_end):
-            old_period = last_count.time_end - consolidation_count.time_start
-            new_period = (
-                min(event_count.time_end, consolidation_count.time_end) -
-                last_count.time_end)
-        else:
-            old_period = timedelta()
-            new_period = (
-                min(event_count.time_end, consolidation_count.time_end) -
-                consolidation_count.time_start)
-
-        new_period_part = (new_period.total_seconds() /
-                           (old_period + new_period).total_seconds())
-        old_period_part = (old_period.total_seconds() /
-                           (old_period + new_period).total_seconds())
-
-        consolidation_count.avg_queued = (
-            event_count.avg_queued * new_period_part +
-            consolidation_count.avg_queued * old_period_part)
-        consolidation_count.avg_running = (
-            event_count.avg_running * new_period_part +
-            consolidation_count.avg_running * old_period_part)
-        consolidation_count.avg_done = (
-            event_count.avg_done * new_period_part +
-            consolidation_count.avg_done * old_period_part)
-        consolidation_count.avg_failed = (
-            event_count.avg_failed * new_period_part +
-            consolidation_count.avg_failed * old_period_part)
 
     event_counts_query = TaskEventCount.query.filter_by(
         job_queue_id=job_queue_id).order_by(TaskEventCount.time_start)
@@ -140,11 +136,7 @@ def consolidate_task_events_for_queue(self, job_queue_id):
                     num_restarted=0,
                     num_started=0,
                     num_failed=0,
-                    num_done=0,
-                    avg_queued=0.0,
-                    avg_running=0.0,
-                    avg_done=0.0,
-                    avg_failed=0.0)
+                    num_done=0)
                 open_consolidation_count.time_start = event_count.time_start
                 open_consolidation_count.time_end = (event_count.time_start +
                                                      consolidate_interval)
@@ -166,11 +158,7 @@ def consolidate_task_events_for_queue(self, job_queue_id):
                         num_restarted=0,
                         num_started=0,
                         num_failed=0,
-                        num_done=0,
-                        avg_queued=open_consolidation_count.avg_queued,
-                        avg_running=open_consolidation_count.avg_running,
-                        avg_done=open_consolidation_count.avg_done,
-                        avg_failed=open_consolidation_count.avg_failed)
+                        num_done=0)
                     new_consolidation_count.time_start = (
                         open_consolidation_count.time_end)
                     new_consolidation_count.time_end = (

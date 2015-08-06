@@ -15,11 +15,11 @@
 # limitations under the License.
 
 """
-TaskEventCount Model
+TaskCount Model
 ====================
 
-Model describing the number of events that happened for tasks over a time
-period
+Model describing the number of tasks in a given queue in a given state at a
+point in time
 """
 
 from datetime import datetime
@@ -30,21 +30,17 @@ from pyfarm.master.config import config
 from pyfarm.models.core.types import id_column
 
 
-class TaskEventCount(db.Model):
+class TaskCount(db.Model):
     __bind_key__ = 'statistics'
-    __tablename__ = config.get("table_statistics_task_event_count")
+    __tablename__ = config.get("table_statistics_task_count")
 
     id = id_column(db.Integer)
 
-    time_start = db.Column(
+    counted_time = db.Column(
         db.DateTime,
         nullable=False,
-        default=datetime.utcnow)
-
-    time_end = db.Column(
-        db.DateTime,
-        nullable=False,
-        default=datetime.utcnow)
+        default=datetime.utcnow,
+        doc="The point in time at which these counts were done")
 
     # No foreign key reference, because this table is stored in a separate db
     # Code reading it will have to check for referential integrity manually.
@@ -53,39 +49,22 @@ class TaskEventCount(db.Model):
         nullable=True,
         doc="ID of the jobqueue these stats refer to")
 
-    num_new = db.Column(
+    total_queued = db.Column(
         db.Integer,
         nullable=False,
-        default=0,
-        doc="Number of tasks that were newly created during the time period")
+        doc="Number of queued tasks at `counted_time`")
 
-    num_deleted = db.Column(
+    total_running = db.Column(
         db.Integer,
         nullable=False,
-        default=0,
-        doc="Number of tasks that were deleted during the time period")
+        doc="Number of running tasks at `counted_time`")
 
-    num_restarted = db.Column(
+    total_done = db.Column(
         db.Integer,
         nullable=False,
-        default=0,
-        doc="Number of tasks that were restarted during the time period")
+        doc="Number of done tasks at `counted_time`")
 
-    num_started = db.Column(
+    total_failed = db.Column(
         db.Integer,
         nullable=False,
-        default=0,
-        doc="Number of tasks that work was started on during the time period")
-
-    num_failed = db.Column(
-        db.Integer,
-        nullable=False,
-        default=0,
-        doc="Number of tasks that failed during the time period")
-
-    num_done = db.Column(
-        db.Integer,
-        nullable=False,
-        default=0,
-        doc="Number of tasks that were finished successfully during the time "
-            "period")
+        doc="Number of failed tasks at `counted_time`")

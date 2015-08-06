@@ -1280,18 +1280,6 @@ class JobSingleTaskAPI(MethodView):
                 task_event_count.num_failed = 1
             task_event_count.time_start = datetime.utcnow()
             task_event_count.time_end = datetime.utcnow()
-            task_event_count.avg_queued = Task.query.filter(
-                Task.job.has(Job.job_queue_id == task.job.job_queue_id),
-                Task.state == None).count()
-            task_event_count.avg_running = Task.query.filter(
-                Task.job.has(Job.job_queue_id == task.job.job_queue_id),
-                Task.state == WorkState.RUNNING).count()
-            task_event_count.avg_done = Task.query.filter(
-                Task.job.has(Job.job_queue_id == task.job.job_queue_id),
-                Task.state == WorkState.DONE).count()
-            task_event_count.avg_failed = Task.query.filter(
-                Task.job.has(Job.job_queue_id == task.job.job_queue_id),
-                Task.state == WorkState.FAILED).count()
             db.session.add(task_event_count)
             db.session.commit()
 

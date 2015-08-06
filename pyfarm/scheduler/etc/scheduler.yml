@@ -237,6 +237,10 @@ agent_count_interval:
 
 task_event_count_consolidate_interval:
     minutes: 15
+
+task_count_interval:
+    minutes: 15
+
 ##
 ## END Statistics Gathering Settings
 ##

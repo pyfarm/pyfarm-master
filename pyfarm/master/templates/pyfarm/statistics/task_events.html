@@ -55,7 +55,7 @@
 </div>
 
 <h2>Totals</h2>
-<div id="avg_chart">
+<div id="totals_chart">
   <svg style="height:800px;">
   </svg>
 </div>
@@ -99,30 +99,30 @@ var task_events_data = [
 
 d3.select('#event_chart svg').datum(task_events_data);
 
-var avg_queued = {{ avg_queued_json }};
-var avg_running = {{ avg_running_json }};
-var avg_done = {{ avg_done_json }};
-var avg_failed = {{ avg_failed_json }};
+var total_queued = {{ total_queued_json }};
+var total_running = {{ total_running_json }};
+var total_done = {{ total_done_json }};
+var total_failed = {{ total_failed_json }};
 
-var task_avgs_data = [
+var task_totals_data = [
     {
-    values: avg_queued,
+    values: total_queued,
     key: 'Queued Tasks'
     },
     {
-    values: avg_running,
+    values: total_running,
     key: 'Running Tasks'
     },
     {
-    values: avg_done,
+    values: total_done,
     key: 'Done Tasks'
     },
     {
-    values: avg_failed,
+    values: total_failed,
     key: 'Failed Tasks'
     }
     ];
 
-d3.select('#avg_chart svg').datum(task_avgs_data);
+d3.select('#totals_chart svg').datum(task_totals_data);
 </script>
 {% endblock %}

@@ -22,53 +22,65 @@ from flask import render_template, request
 
 from sqlalchemy import or_
 
+from pyfarm.core.logger import getLogger
 from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.statistics.task_event_count import TaskEventCount
+from pyfarm.models.statistics.task_count import TaskCount
 from pyfarm.master.config import config
 from pyfarm.master.application import db
 
+logger = getLogger("ui.task_events")
 
-class SampleSum(object):
+
+class TotalsAverage(object):
     def __init__(self, first_sample, last_sum=None):
-        self.time_start = first_sample.time_start
-
-        self.num_new = first_sample.num_new
-        self.num_deleted = first_sample.num_deleted
-        self.num_restarted = first_sample.num_restarted
-        self.num_failed = first_sample.num_failed
-        self.num_done = first_sample.num_done
+        self.time_start = first_sample.counted_time
+        self.num_samples_by_queue = {first_sample.job_queue_id: 1}
 
         self.avg_queued_by_queue = (
             last_sum.avg_queued_by_queue if last_sum else {})
         self.avg_queued_by_queue[first_sample.job_queue_id] =\
-            first_sample.avg_queued
+            first_sample.total_queued
 
         self.avg_running_by_queue = (
             last_sum.avg_running_by_queue if last_sum else {})
         self.avg_running_by_queue[first_sample.job_queue_id] =\
-            first_sample.avg_running
+            first_sample.total_running
 
         self.avg_done_by_queue = (
             last_sum.avg_done_by_queue if last_sum else {})
         self.avg_done_by_queue[first_sample.job_queue_id] =\
-            first_sample.avg_done
+            first_sample.total_done
 
         self.avg_failed_by_queue = (
             last_sum.avg_failed_by_queue if last_sum else {})
         self.avg_failed_by_queue[first_sample.job_queue_id] =\
-            first_sample.avg_failed
+            first_sample.total_failed
 
     def add_sample(self, sample):
-        self.num_new += sample.num_new
-        self.num_deleted += sample.num_deleted
-        self.num_restarted += sample.num_restarted
-        self.num_failed += sample.num_failed
-        self.num_done += sample.num_done
+        self.num_samples_by_queue[sample.job_queue_id] =\
+            self.num_samples_by_queue.get(sample.job_queue_id, 0) + 1
+        num_samples = self.num_samples_by_queue[sample.job_queue_id]
 
-        self.avg_queued_by_queue[sample.job_queue_id] = sample.avg_queued
-        self.avg_running_by_queue[sample.job_queue_id] = sample.avg_running
-        self.avg_done_by_queue[sample.job_queue_id] = sample.avg_done
-        self.avg_failed_by_queue[sample.job_queue_id] = sample.avg_failed
+        self.avg_queued_by_queue[sample.job_queue_id] =\
+            (sample.total_queued / num_samples +
+             ((num_samples - 1) / num_samples) *
+                self.avg_queued_by_queue.get(sample.job_queue_id, 0.0))
+
+        self.avg_running_by_queue[sample.job_queue_id] =\
+            (sample.total_running / num_samples +
+             ((num_samples - 1) / num_samples) *
+                self.avg_running_by_queue.get(sample.job_queue_id, 0.0))
+
+        self.avg_done_by_queue[sample.job_queue_id] =\
+            (sample.total_done / num_samples +
+             ((num_samples - 1) / num_samples) *
+                self.avg_done_by_queue.get(sample.job_queue_id, 0.0))
+
+        self.avg_failed_by_queue[sample.job_queue_id] =\
+            (sample.total_failed / num_samples +
+             ((num_samples - 1) / num_samples) *
+                self.avg_failed_by_queue.get(sample.job_queue_id, 0.0))
 
     def avg_queued(self):
         return sum(self.avg_queued_by_queue.values())
@@ -99,6 +111,10 @@ def task_events():
         TaskEventCount.time_start).filter(
             TaskEventCount.time_start > datetime.utcnow() - time_back)
 
+    task_count_query = TaskCount.query.order_by(
+        TaskCount.counted_time).filter(
+            TaskCount.counted_time > datetime.utcnow() - time_back)
+
     jobqueue_ids = []
     no_queue = ("no_queue" in request.args and
         request.args["no_queue"].lower() == "true")
@@ -109,52 +125,80 @@ def task_events():
             task_event_count_query = task_event_count_query.filter(or_(
                 TaskEventCount.job_queue_id.in_(jobqueue_ids),
                 TaskEventCount.job_queue_id == None))
+            task_count_query = task_count_query.filter(or_(
+                TaskCount.job_queue_id.in_(jobqueue_ids),
+                TaskCount.job_queue_id == None))
         else:
             task_event_count_query = task_event_count_query.filter(
                 TaskEventCount.job_queue_id.in_(jobqueue_ids))
+            task_count_query = task_count_query.filter(
+                TaskCount.job_queue_id.in_(jobqueue_ids))
 
     tasks_new = []
     tasks_deleted = []
     tasks_restarted = []
     tasks_failed = []
     tasks_done = []
-    avg_queued = []
-    avg_running = []
-    avg_done = []
-    avg_failed = []
-    open_sample = None
+    current_period_start = None
     for sample in task_event_count_query:
-        if not open_sample:
-            open_sample = SampleSum(sample)
-        elif (sample.time_start >= open_sample.time_start and
-                sample.time_start <
-                (open_sample.time_start + consolidate_interval)):
-            open_sample.add_sample(sample)
+        if not current_period_start:
+            current_period_start = sample.time_start
+            timestamp = timegm(current_period_start.utctimetuple())
+            tasks_new.append([timestamp, sample.num_new])
+            tasks_deleted.append([timestamp, -sample.num_deleted])
+            tasks_restarted.append([timestamp, sample.num_restarted])
+            tasks_failed.append([timestamp, -sample.num_failed])
+            tasks_done.append([timestamp, -sample.num_done])
+        elif (sample.time_start <
+              (current_period_start + consolidate_interval)):
+            tasks_new[-1][-1] += sample.num_new
+            tasks_deleted[-1][-1] -= sample.num_deleted
+            tasks_restarted[-1][-1] += sample.num_restarted
+            tasks_failed[-1][-1] -= sample.num_failed
+            tasks_done[-1][-1] -= sample.num_done
         else:
-            timestamp = timegm(open_sample.time_start.utctimetuple())
-            tasks_new.append([timestamp, open_sample.num_new])
-            tasks_deleted.append([timestamp, -open_sample.num_deleted])
-            tasks_restarted.append([timestamp, open_sample.num_restarted])
-            tasks_failed.append([timestamp, -open_sample.num_failed])
-            tasks_done.append([timestamp, -open_sample.num_done])
-            avg_queued.append([timestamp, open_sample.avg_queued()])
-            avg_running.append([timestamp, open_sample.avg_running()])
-            avg_done.append([timestamp, open_sample.avg_done()])
-            avg_failed.append([timestamp, open_sample.avg_failed()])
+            while (sample.time_start >=
+                   (current_period_start + consolidate_interval)):
+                current_period_start += consolidate_interval
+                timestamp = timegm(current_period_start.utctimetuple())
+                tasks_new.append([timestamp, 0])
+                tasks_deleted.append([timestamp, 0])
+                tasks_restarted.append([timestamp, 0])
+                tasks_failed.append([timestamp, 0])
+                tasks_done.append([timestamp, 0])
 
-            open_sample = SampleSum(sample, open_sample)
+            tasks_new[-1][-1] += sample.num_new
+            tasks_deleted[-1][-1] -= sample.num_deleted
+            tasks_restarted[-1][-1] += sample.num_restarted
+            tasks_failed[-1][-1] -= sample.num_failed
+            tasks_done[-1][-1] -= sample.num_done
 
-    if open_sample:
-        timestamp = timegm(open_sample.time_start.utctimetuple())
-        tasks_new.append([timestamp, open_sample.num_new])
-        tasks_deleted.append([timestamp, -open_sample.num_deleted])
-        tasks_restarted.append([timestamp, open_sample.num_restarted])
-        tasks_failed.append([timestamp, -open_sample.num_failed])
-        tasks_done.append([timestamp, -open_sample.num_done])
-        avg_queued.append([timestamp, open_sample.avg_queued()])
-        avg_running.append([timestamp, open_sample.avg_running()])
-        avg_done.append([timestamp, open_sample.avg_done()])
-        avg_failed.append([timestamp, open_sample.avg_failed()])
+    total_queued = []
+    total_running = []
+    total_done = []
+    total_failed = []
+    current_average = None
+    for sample in task_count_query:
+        if not current_average:
+            current_average = TotalsAverage(sample)
+        elif (sample.counted_time <
+              (current_average.time_start + consolidate_interval)):
+            current_average.add_sample(sample)
+        else:
+            timestamp = timegm(current_average.time_start.utctimetuple())
+            total_queued.append([timestamp, current_average.avg_queued()])
+            total_running.append([timestamp, current_average.avg_running()])
+            total_done.append([timestamp, current_average.avg_done()])
+            total_failed.append([timestamp, current_average.avg_done()])
+            current_average = TotalsAverage(sample, current_average)
+
+    if current_average:
+        timestamp = timegm(current_average.time_start.utctimetuple())
+        total_queued.append([timestamp, current_average.avg_queued()])
+        total_running.append([timestamp, current_average.avg_running()])
+        total_done.append([timestamp, current_average.avg_done()])
+        total_failed.append([timestamp, current_average.avg_done()])
+        current_average = TotalsAverage(sample, current_average)
 
     jobqueues = JobQueue.query.order_by(JobQueue.fullpath).all()
 
@@ -165,10 +209,10 @@ def task_events():
         tasks_restarted_json=json.dumps(tasks_restarted),
         tasks_failed_json=json.dumps(tasks_failed),
         tasks_done_json=json.dumps(tasks_done),
-        avg_queued_json=json.dumps(avg_queued),
-        avg_running_json=json.dumps(avg_running),
-        avg_done_json=json.dumps(avg_done),
-        avg_failed_json=json.dumps(avg_failed),
+        total_queued_json=json.dumps(total_queued),
+        total_running_json=json.dumps(total_running),
+        total_done_json=json.dumps(total_done),
+        total_failed_json=json.dumps(total_failed),
         no_queue=no_queue,
         jobqueue_ids=jobqueue_ids,
         jobqueues=jobqueues,
