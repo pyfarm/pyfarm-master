@@ -16,6 +16,7 @@
 
 import json
 from calendar import timegm
+from datetime import timedelta, datetime
 
 from flask import render_template, request
 
@@ -23,7 +24,12 @@ from pyfarm.models.statistics.agent_count import AgentCount
 
 
 def agent_counts():
-    agent_count_query = AgentCount.query.order_by(AgentCount.counted_time)
+    days_back = int(request.args.get("days_back", 7))
+    time_back = timedelta(days=days_back)
+
+    agent_count_query = AgentCount.query.order_by(
+        AgentCount.counted_time).filter(
+            AgentCount.counted_time > datetime.utcnow() - time_back)
 
     online_agent_counts = []
     running_agent_counts = []
