@@ -561,6 +561,11 @@ class JobIndexAPI(MethodView):
 
         jobtype_name = get_request_argument("jobtype")
         user_name = get_request_argument("user")
+        job_title = get_request_argument("title")
+
+        jobqueue_names = []
+        if "jobqueue" in request.args:
+            jobqueue_names = request.args.getlist("jobqueue")
 
         out = []
         subq = db.session.query(
@@ -586,6 +591,21 @@ class JobIndexAPI(MethodView):
                 return (jsonify(error="User %s not found" % user_name),
                         NOT_FOUND)
             q = q.filter(Job.user == user)
+
+        if jobqueue_names:
+            jobqueue_ids = []
+            for jobqueue_name in jobqueue_names:
+                jobqueue = JobQueue.query.filter_by(
+                    fullpath=jobqueue_name).first()
+                if not jobqueue:
+                    return (
+                        jsonify(error="Jobqueue %s not found" % jobqueue_name),
+                        NOT_FOUND)
+                jobqueue_ids.append(jobqueue.id)
+            q = q.filter(Job.job_queue_id.in_(jobqueue_ids))
+
+        if job_title:
+            q = q.filter(Job.title.ilike("%%%s%%" % job_title))
 
         for id, title, state, assigned_tasks_count in q:
             data = {"id": id, "title": title}
