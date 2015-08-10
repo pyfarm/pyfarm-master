@@ -189,7 +189,7 @@ def task_events():
             total_queued.append([timestamp, current_average.avg_queued()])
             total_running.append([timestamp, current_average.avg_running()])
             total_done.append([timestamp, current_average.avg_done()])
-            total_failed.append([timestamp, current_average.avg_done()])
+            total_failed.append([timestamp, current_average.avg_failed()])
             current_average = TotalsAverage(sample, current_average)
 
     if current_average:
@@ -197,7 +197,7 @@ def task_events():
         total_queued.append([timestamp, current_average.avg_queued()])
         total_running.append([timestamp, current_average.avg_running()])
         total_done.append([timestamp, current_average.avg_done()])
-        total_failed.append([timestamp, current_average.avg_done()])
+        total_failed.append([timestamp, current_average.avg_failed()])
         current_average = TotalsAverage(sample, current_average)
 
     jobqueues = JobQueue.query.order_by(JobQueue.fullpath).all()
