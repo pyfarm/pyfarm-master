@@ -84,21 +84,21 @@ def consolidate_task_events():
 def count_tasks():
     logger.debug("Counting tasks in all queues now")
 
-    job_queues_query = JobQueue.query
+    job_queues_ids = db.session.query(JobQueue.id).all()
 
-    for job_queue in job_queues_query:
-        task_count = TaskCount(job_queue_id=job_queue.id)
+    for job_queue_id in job_queues_ids + [None]:
+        task_count = TaskCount(job_queue_id=job_queue_id)
         task_count.total_queued = Task.query.filter(
-            Task.job.has(Job.job_queue_id == job_queue.id),
+            Task.job.has(Job.job_queue_id == job_queue_id),
             Task.state == None).count()
         task_count.total_running = Task.query.filter(
-            Task.job.has(Job.job_queue_id == job_queue.id),
+            Task.job.has(Job.job_queue_id == job_queue_id),
             Task.state == WorkState.RUNNING).count()
         task_count.total_done = Task.query.filter(
-            Task.job.has(Job.job_queue_id == job_queue.id),
+            Task.job.has(Job.job_queue_id == job_queue_id),
             Task.state == WorkState.DONE).count()
         task_count.total_failed = Task.query.filter(
-            Task.job.has(Job.job_queue_id == job_queue.id),
+            Task.job.has(Job.job_queue_id == job_queue_id),
             Task.state == WorkState.FAILED).count()
 
         db.session.add(task_count)
