@@ -17,12 +17,12 @@
   </svg>
 </div>
 
-<a href="{{ url_for('agent_counts_ui', days_back=730) }}">Last two years</a> -
-<a href="{{ url_for('agent_counts_ui', days_back=365) }}">Last year</a> -
-<a href="{{ url_for('agent_counts_ui', days_back=30) }}">Last month</a> -
-<a href="{{ url_for('agent_counts_ui', days_back=14) }}">Last two weeks</a> -
-<a href="{{ url_for('agent_counts_ui', days_back=7) }}">Last week</a> -
-<a href="{{ url_for('agent_counts_ui', days_back=1) }}">Last 24 hours</a>
+<a href="{{ url_for('agent_counts_ui', days_back=730, area_chart=area_chart) }}">Last two years</a> -
+<a href="{{ url_for('agent_counts_ui', days_back=365, area_chart=area_chart) }}">Last year</a> -
+<a href="{{ url_for('agent_counts_ui', days_back=30, area_chart=area_chart) }}">Last month</a> -
+<a href="{{ url_for('agent_counts_ui', days_back=14, area_chart=area_chart) }}">Last two weeks</a> -
+<a href="{{ url_for('agent_counts_ui', days_back=7, area_chart=area_chart) }}">Last week</a> -
+<a href="{{ url_for('agent_counts_ui', days_back=1, area_chart=area_chart) }}">Last 24 hours</a>
 
 <script>
 var area_chart = {{ "true" if area_chart else "false" }}
