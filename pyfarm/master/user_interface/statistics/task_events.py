@@ -63,23 +63,23 @@ class TotalsAverage(object):
         num_samples = self.num_samples_by_queue[sample.job_queue_id]
 
         self.avg_queued_by_queue[sample.job_queue_id] =\
-            (sample.total_queued / num_samples +
-             ((num_samples - 1) / num_samples) *
+            (float(sample.total_queued) / num_samples +
+             ((float(num_samples) - 1) / num_samples) *
                 self.avg_queued_by_queue.get(sample.job_queue_id, 0.0))
 
         self.avg_running_by_queue[sample.job_queue_id] =\
-            (sample.total_running / num_samples +
-             ((num_samples - 1) / num_samples) *
+            (float(sample.total_running) / num_samples +
+             ((float(num_samples) - 1) / num_samples) *
                 self.avg_running_by_queue.get(sample.job_queue_id, 0.0))
 
         self.avg_done_by_queue[sample.job_queue_id] =\
-            (sample.total_done / num_samples +
-             ((num_samples - 1) / num_samples) *
+            (float(sample.total_done) / num_samples +
+             ((float(num_samples) - 1) / num_samples) *
                 self.avg_done_by_queue.get(sample.job_queue_id, 0.0))
 
         self.avg_failed_by_queue[sample.job_queue_id] =\
-            (sample.total_failed / num_samples +
-             ((num_samples - 1) / num_samples) *
+            (float(sample.total_failed) / num_samples +
+             ((float(num_samples) - 1) / num_samples) *
                 self.avg_failed_by_queue.get(sample.job_queue_id, 0.0))
 
     def avg_queued(self):
