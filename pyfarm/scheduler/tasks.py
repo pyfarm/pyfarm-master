@@ -384,6 +384,9 @@ def assign_tasks_to_agent(agent_id):
             if agent.state == _AgentState.OFFLINE:
                 raise ValueError("Agent %s (id %s) is offline" %
                                  (agent.hostname, agent_id))
+            if agent.state == _AgentState.DISABLED:
+                raise ValueError("Agent %s (id %s) is disabled" %
+                                 (agent.hostname, agent_id))
 
             task_count = Task.query.filter(Task.agent == agent,
                                         or_(Task.state == None,
@@ -628,6 +631,7 @@ def poll_agents():
     db.session.rollback()
     idle_agents_to_poll_query = Agent.query.filter(
         Agent.state != AgentState.OFFLINE,
+        Agent.state != AgentState.DISABLED,
         or_(Agent.last_heard_from == None,
             Agent.last_heard_from +
                 POLL_IDLE_AGENTS_INTERVAL < datetime.utcnow()),

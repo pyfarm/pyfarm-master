@@ -24,7 +24,8 @@ from sqlalchemy import or_, desc
 
 from pyfarm.core.enums import WorkState, AgentState
 from pyfarm.scheduler.tasks import (
-    restart_agent, assign_tasks_to_agent, check_all_software_on_agent)
+    restart_agent, assign_tasks_to_agent, check_all_software_on_agent,
+    poll_agent)
 from pyfarm.models.agent import Agent
 from pyfarm.models.tag import Tag
 from pyfarm.models.task import Task
@@ -206,6 +207,59 @@ def restart_multiple_agents():
         restart_agent.delay(agent.id)
 
     flash("Selected agents will be restarted.")
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("agents_index_ui"), SEE_OTHER)
+
+def disable_multiple_agents():
+    agent_ids = request.form.getlist("agent_id")
+
+    agents = []
+    for agent_id in agent_ids:
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if not agent:
+            return (render_template(
+                        "pyfarm/error.html",
+                        error="Agent %s not found" % agent_id),
+                    NOT_FOUND)
+
+        agent.state = AgentState.DISABLED
+        db.session.add(agent)
+        agents.append(agent)
+
+    db.session.commit()
+
+    flash("Selected agents are now disabled.")
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("agents_index_ui"), SEE_OTHER)
+
+def enable_multiple_agents():
+    agent_ids = request.form.getlist("agent_id")
+
+    agents = []
+    for agent_id in agent_ids:
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if not agent:
+            return (render_template(
+                        "pyfarm/error.html",
+                        error="Agent %s not found" % agent_id),
+                    NOT_FOUND)
+
+        agent.state = AgentState.OFFLINE
+        db.session.add(agent)
+        agents.append(agent)
+
+    db.session.commit()
+
+    for agent in agents:
+        poll_agent.delay(agent.id)
+
+    flash("Selected agents are now enabled.")
 
     if "next" in request.args:
         return redirect(request.args.get("next"), SEE_OTHER)

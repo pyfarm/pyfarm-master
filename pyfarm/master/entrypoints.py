@@ -133,7 +133,8 @@ def load_user_interface(app_instance):
         agents, single_agent, delete_single_agent, agent_add_software,
         agent_delete_software, restart_single_agent, restart_multiple_agents,
         update_notes_for_agent, update_tags_in_agent,
-        check_software_in_single_agent)
+        check_software_in_single_agent, disable_multiple_agents,
+        enable_multiple_agents)
     from pyfarm.master.user_interface.jobs import (
         jobs, delete_single_job, rerun_single_job, single_job, pause_single_job,
         unpause_single_job, alter_frames_in_single_job,
@@ -175,6 +176,14 @@ def load_user_interface(app_instance):
     app_instance.add_url_rule("/agents/restart_multiple",
                               "restart_multiple_agents_ui",
                               restart_multiple_agents,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/agents/disable_multiple",
+                              "disable_multiple_agents_ui",
+                              disable_multiple_agents,
+                              methods=("POST", ))
+    app_instance.add_url_rule("/agents/enable_multiple",
+                              "enable_multiple_agents_ui",
+                              enable_multiple_agents,
                               methods=("POST", ))
     app_instance.add_url_rule("/agents/<uuid:agent_id>", "single_agent_ui",
                               single_agent, methods=("GET", ))

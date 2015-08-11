@@ -14,6 +14,8 @@
     </a>
     <ul class="dropdown-menu" role="menu">
       <li role="presentation"><a href="#" id="selected-restart">Restart</a></li>
+      <li role="presentation"><a href="#" id="selected-disable">Disable</a></li>
+      <li role="presentation"><a href="#" id="selected-enable">Enable</a></li>
     </ul>
   </li>
 </ul>
@@ -244,5 +246,9 @@
 </nav>
 
 <form method="post" action="{{ url_for('restart_multiple_agents_ui', next=url_for('agents_index_ui', **filters_and_order)) }}" id="restart_multiple_form"></form>
+
+<form method="post" action="{{ url_for('disable_multiple_agents_ui', next=url_for('agents_index_ui', **filters_and_order)) }}" id="disable_multiple_form"></form>
+
+<form method="post" action="{{ url_for('enable_multiple_agents_ui', next=url_for('agents_index_ui', **filters_and_order)) }}" id="enable_multiple_form"></form>
 
 {% endblock %}

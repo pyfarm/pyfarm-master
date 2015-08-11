@@ -396,6 +396,10 @@ class AgentIndexAPI(MethodView):
                                      free=disk_dict["free"])
                     db.session.add(disk)
 
+            state = g.json.pop("state", None)
+            if state is not None and agent.state != _AgentState.DISABLED:
+                agent.state = state
+
             # TODO Only do that if this is really the agent speaking to us.
             failed_tasks = []
             if (current_assignments is not None and
@@ -700,12 +704,18 @@ class SingleAgentAPI(MethodView):
 
         tags = g.json.pop("tags", None)
 
+        modified = {}
+
         try:
             items = g.json.iteritems
         except AttributeError:
             items = g.json.items
 
-        modified = {}
+        state = g.json.pop("state", None)
+        if state and agent.state != _AgentState.DISABLED:
+            agent.state = state
+            modified["state"] = state
+
         for key, value in items():
             if value != getattr(agent, key):
                 try:
