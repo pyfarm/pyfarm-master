@@ -397,10 +397,17 @@ def assign_tasks_to_agent(agent_id):
                 return
 
             queue = JobQueue()
-            job = queue.get_job_for_agent(agent)
-            db.session.commit()
+            unwanted_job_ids = []
+            assigned_job = False
+            while not assigned_job:
+                job = queue.get_job_for_agent(agent, unwanted_job_ids)
+                db.session.commit()
 
-            if job:
+                if not job:
+                    logger.debug("Did not find a job for agent %s",
+                                 agent.hostname)
+                    return
+
                 job_lockfile_name = SCHEDULER_LOCKFILE_BASE + "-job-" +\
                     str(job.id)
                 job_lock = LockFile(job_lockfile_name)
@@ -410,24 +417,28 @@ def assign_tasks_to_agent(agent_id):
                         with open(job_lockfile_name, "w") as lockfile:
                              lockfile.write(str(time()))
 
-                        batch = job.get_batch()
-                        for task in batch:
-                            task.agent = agent
-                            task.sent_to_agent = False
-                            task.time_started = None
-                            logger.info("Assigned agent %s (id %s) to task %s "
-                                        "(frame %s) from job %s (id %s)",
-                                        agent.hostname, agent.id, task.id,
-                                        task.frame, job.title, job.id)
-                            db.session.add(task)
+                        batch = job.get_batch(agent)
+                        if batch:
+                            for task in batch:
+                                task.agent = agent
+                                task.sent_to_agent = False
+                                task.time_started = None
+                                logger.info("Assigned agent %s (id %s) to task "
+                                            "%s (frame %s) from job %s (id %s)",
+                                            agent.hostname, agent.id, task.id,
+                                            task.frame, job.title, job.id)
+                                db.session.add(task)
 
-                        if job.state != _WorkState.RUNNING:
-                            job.state = WorkState.RUNNING
-                            db.session.add(job)
-                        job.clear_assigned_counts()
-                        db.session.commit()
+                            if job.state != _WorkState.RUNNING:
+                                job.state = WorkState.RUNNING
+                                db.session.add(job)
+                            job.clear_assigned_counts()
+                            db.session.commit()
+                            assigned_job = True
 
-                        send_tasks_to_agent.delay(agent.id)
+                            send_tasks_to_agent.delay(agent.id)
+                        else:
+                            unwanted_job_ids.append(job.id)
                 except AlreadyLocked:
                     logger.debug("The lockfile for job %s is locked", job.id)
                     try:
@@ -456,14 +467,14 @@ def assign_tasks_to_agent(agent_id):
                                 agent_lock.break_lock()
                             assign_tasks_to_agent.apply_async(args=[agent_id],
                                                               countdown=1)
+                            return
                     except(IOError, OSError, ValueError):
                         logger.error("Could not read a time value from the "
                                      "lockfile even after waiting 1s. Breaking "
                                      "the lock.")
                         agent_lock.break_lock()
                         assign_tasks_to_agent.delay(agent_id)
-            else:
-                logger.debug("Did not find a job for agent %s", agent.hostname)
+                        return
 
     except AlreadyLocked:
         logger.debug("The scheduler lockfile is locked, the scheduler seems to "
