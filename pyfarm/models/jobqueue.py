@@ -197,7 +197,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
         if self.parent:
             self.parent.clear_assigned_counts()
 
-    def get_job_for_agent(self, agent, unwanted_job_ids=[]):
+    def get_job_for_agent(self, agent, unwanted_job_ids=None):
         # Import down here instead of at the top to avoid circular import
         from pyfarm.models.job import Job
 
@@ -217,6 +217,8 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
         child_jobs = [x for x in child_jobs if
                       (agent.satisfies_job_requirements(x) and
                        x.id not in unwanted_job_ids)]
+        if unwanted_job_ids:
+            child_jobs = [x for x in child_jobs if x.id not in unwanted_job_ids]
         child_queues = JobQueue.query.filter(
             JobQueue.parent_jobqueue_id == self.id).all()
 
