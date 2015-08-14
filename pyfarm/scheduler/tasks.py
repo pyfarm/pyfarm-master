@@ -995,8 +995,8 @@ def stop_task(self, task_id, agent_id=None, dissociate_agent=True):
                                             requests.codes.no_content,
                                             requests.codes.not_found]:
                 raise ValueError("Unexpected return code on stopping task %s on "
-                                 "agent %s: %s",
-                                 task.id, agent.id, response.status_code)
+                                 "agent %s: %s" %
+                                 (task.id, agent.id, response.status_code))
             elif dissociate_agent:
                 task.agent = None
                 task.state = None
