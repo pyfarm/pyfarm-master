@@ -1378,6 +1378,150 @@ class JobSingleTaskAPI(MethodView):
         return jsonify(task_data), OK
 
 
+class TaskFailedOnAgentsIndexAPI(MethodView):
+    def get(self, job_id, task_id):
+        """
+        A ``GET`` to this endpoint will return a list of all agents that failed
+        to execute this task
+
+        .. http:get:: /api/v1/jobs/<int:id>/tasks/<int:task_id>/failed_on_agents/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                GET /api/v1/jobs/12/tasks/1234/failed_on_agents/ HTTP/1.1
+                Accept: application/json
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                [
+                    {
+                        "id": "02f08241-c556-4355-9e5e-33243d8c4577",
+                        "hostname": "agent1"
+                    }
+                ]
+
+        :statuscode 200: no error
+        :statuscode 404: job or task not found
+        """
+        task_query = Task.query.filter_by(id=task_id)
+        task_query.filter(Task.job.has(Job.id == job_id))
+        task = task_query.first()
+
+        if not task:
+            return jsonify(error="Task not found"), NOT_FOUND
+
+        out = []
+        for agent in task.failed_in_agents:
+            out.append({"hostname": agent.hostname,
+                        "id": agent.id})
+
+        return jsonify(out), OK
+
+    def post(self, job_id, task_id):
+        """
+        A ``POST`` to this endpoint will add the specified agent to the list
+        of agents that failed to execute this task
+
+        .. http:post:: /api/v1/jobs/<int:id>/tasks/<int:task_id>/failed_on_agents/ HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                POST /api/v1/jobs/12/tasks/1234/failed_on_agents/ HTTP/1.1
+                Accept: application/json
+                Content-Type: application/json
+
+                {
+                    "agent_id": "02f08241-c556-4355-9e5e-33243d8c4577"
+                }
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 CREATED
+                Content-Type: application/json
+
+                {
+                    "id": "02f08241-c556-4355-9e5e-33243d8c4577",
+                    "hostname": "agent1"
+                }
+
+        :statuscode 201: a new entry was created
+        :statuscode 400: there was something wrong with the request (such as
+                         invalid columns being included)
+        :statuscode 404: the job, task or agent specified does not exist
+        """
+        task_query = Task.query.filter_by(id=task_id)
+        task_query.filter(Task.job.has(Job.id == job_id))
+        task = task_query.first()
+
+        if not task:
+            return jsonify(error="Task not found"), NOT_FOUND
+
+        agent_id = g.json.get("agent_id")
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if not agent:
+            return jsonify(error="Agent not found"), NOT_FOUND
+
+        if agent not in task.failed_in_agents:
+            task.failed_in_agents.append(agent)
+
+        db.session.add(task)
+        db.session.commit()
+
+        return jsonify({"id": agent_id, "hostname": agent.hostname}), OK
+
+
+class SingleTaskOnAgentFailureAPI(MethodView):
+    def delete(self, job_id, task_id, agent_id):
+        """
+        A ``DELETE`` to this endpoint will remove the specified agent from the
+        list of agents that failed to execute this task
+
+        .. http:delete:: /api/v1/jobs/<int:id>/tasks/<int:task_id>/failed_on_agents/<str:agent_id> HTTP/1.1
+
+            **Request**
+
+            .. sourcecode:: http
+
+                DELETE /api/v1/jobs/12/tasks/1234/failed_on_agents/02f08241-c556-4355-9e5e-33243d8c4577 HTTP/1.1
+
+            **Response**
+
+            .. sourcecode:: http
+
+                HTTP/1.1 204 NO_CONTENT
+
+        :statuscode 204: the given agent was removed from the list of agents
+                         that failed to execute this task
+        :statuscode 404: the job, task or agent does not exist
+        """
+        task_query = Task.query.filter_by(id=task_id)
+        task_query.filter(Task.job.has(Job.id == job_id))
+        task = task_query.first()
+
+        if not task:
+            return jsonify(error="Task not found"), NOT_FOUND
+
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if not agent:
+            return jsonify(error="Agent not found"), NOT_FOUND
+
+        if agent in task.failed_in_agents:
+            task.failed_in_agents.remove(agent)
+
+        return jsonify(), NO_CONTENT
+
+
 class JobNotifiedUsersIndexAPI(MethodView):
     def get(self, job_name):
         """
