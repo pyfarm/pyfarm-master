@@ -50,6 +50,7 @@ from pyfarm.models.software import (
     Software, SoftwareVersion, JobSoftwareRequirement)
 from pyfarm.models.tag import Tag, JobTagRequirement
 from pyfarm.models.jobqueue import JobQueue
+from pyfarm.models.agent import Agent
 from pyfarm.master.application import db
 from pyfarm.master.utility import (
     jsonify, validate_with_model, get_request_argument)
