@@ -1479,7 +1479,7 @@ class TaskFailedOnAgentsIndexAPI(MethodView):
         db.session.add(task)
         db.session.commit()
 
-        return jsonify({"id": agent_id, "hostname": agent.hostname}), OK
+        return jsonify({"id": agent_id, "hostname": agent.hostname}), CREATED
 
 
 class SingleTaskOnAgentFailureAPI(MethodView):
