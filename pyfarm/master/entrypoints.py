@@ -600,11 +600,12 @@ def load_api(app_instance, api_instance):
 
     # Agents that failed a task
     api_instance.add_url_rule(
-        "/jobs/<int:job_id>/tasks/<int:task_id>/failed_on_agents",
+        "/jobs/<int:job_id>/tasks/<int:task_id>/failed_on_agents/",
         view_func=TaskFailedOnAgentsIndexAPI.as_view(
             "task_failed_on_agent_api"))
     api_instance.add_url_rule(
-        "/jobs/<int:job_id>/tasks/<int:task_id>/failed_on_agents/<int:agent_id>",
+        "/jobs/<int:job_id>/tasks/<int:task_id>/failed_on_agents/"
+        "<string:agent_id>",
         view_func=SingleTaskOnAgentFailureAPI.as_view(
             "single_task_failure_on_agent_api"))
 
