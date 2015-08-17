@@ -15,13 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from json import dumps
-
+import uuid
 
 # test class must be loaded first
 from pyfarm.master.testutil import BaseTestCase
 BaseTestCase.build_environment()
 
+from pyfarm.master.utility import dumps
 from pyfarm.master.application import get_api_blueprint
 from pyfarm.master.config import config
 from pyfarm.master.entrypoints import load_api
@@ -1595,3 +1595,82 @@ class TestJobAPI(BaseTestCase):
         response6 = self.client.get("/api/v1/jobs/%s/notified_users/" % job_name)
         self.assert_ok(response6)
         self.assertEqual(response6.json, [])
+
+    def test_task_failed_on_agent_add(self):
+        jobtype_name, jobtype_id = self.create_a_jobtype()
+        job_name, job_id = self.create_a_job(jobtype_name)
+
+        tasks_response = self.client.get("/api/v1/jobs/%s/tasks/" % job_id)
+        self.assert_ok(tasks_response)
+        task_id = tasks_response.json[0]["id"]
+
+        agent_id = uuid.uuid4()
+        agent_create_response = self.client.post(
+            "/api/v1/agents/",
+            content_type="application/json",
+            data=dumps({
+                "id": agent_id,
+                "cpus": 16,
+                "hostname": "testagent1",
+                "remote_ip": "10.0.200.1",
+                "port": 64994,
+                "ram": 2048,
+                "free_ram": 2048,
+                "state": "online"}))
+        self.assert_created(agent_create_response)
+
+        post_failure_response = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s/failed_on_agents/" % (job_id, task_id),
+            content_type="application/json",
+            data=dumps({"agent_id": agent_id}))
+        self.assert_created(post_failure_response)
+
+        failed_on_agents_response = self.client.get(
+            "/api/v1/jobs/%s/tasks/%s/failed_on_agents/" % (job_id, task_id))
+        self.assert_ok(failed_on_agents_response)
+        self.assertEqual(failed_on_agents_response.json,
+                         [
+                             {
+                                "id" : str(agent_id),
+                                "hostname": "testagent1"
+                             }
+                         ])
+
+    def test_task_failed_on_agent_delete(self):
+        jobtype_name, jobtype_id = self.create_a_jobtype()
+        job_name, job_id = self.create_a_job(jobtype_name)
+
+        tasks_response = self.client.get("/api/v1/jobs/%s/tasks/" % job_id)
+        self.assert_ok(tasks_response)
+        task_id = tasks_response.json[0]["id"]
+
+        agent_id = uuid.uuid4()
+        agent_create_response = self.client.post(
+            "/api/v1/agents/",
+            content_type="application/json",
+            data=dumps({
+                "id": agent_id,
+                "cpus": 16,
+                "hostname": "testagent1",
+                "remote_ip": "10.0.200.1",
+                "port": 64994,
+                "ram": 2048,
+                "free_ram": 2048,
+                "state": "online"}))
+        self.assert_created(agent_create_response)
+
+        post_failure_response = self.client.post(
+            "/api/v1/jobs/%s/tasks/%s/failed_on_agents/" % (job_id, task_id),
+            content_type="application/json",
+            data=dumps({"agent_id": agent_id}))
+        self.assert_created(post_failure_response)
+
+        delete_response = self.client.delete(
+            "/api/v1/jobs/%s/tasks/%s/failed_on_agents/%s" %
+            (job_id, task_id, str(agent_id)))
+        self.assert_no_content(delete_response)
+
+        failed_on_agents_response = self.client.get(
+            "/api/v1/jobs/%s/tasks/%s/failed_on_agents/" % (job_id, task_id))
+        self.assert_ok(failed_on_agents_response)
+        self.assertEqual(failed_on_agents_response.json, [])
