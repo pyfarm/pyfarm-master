@@ -189,7 +189,8 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                 target.time_started = datetime.utcnow()
             target.time_finished = None
 
-        elif new_value in (_WorkState.DONE, _WorkState.FAILED):
+        elif (new_value in (_WorkState.DONE, _WorkState.FAILED) and
+              not target.time_finished):
             target.time_finished = datetime.utcnow()
 
 event.listen(Task.state, "set", Task.clear_error_state)
