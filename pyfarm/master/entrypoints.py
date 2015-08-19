@@ -384,7 +384,8 @@ def load_api(app_instance, api_instance):
         JobTypeSoftwareRequirementAPI, JobTypeVersionsIndexAPI)
     from pyfarm.master.api.jobs import (
         schema as job_schema, JobIndexAPI, SingleJobAPI, JobTasksIndexAPI,
-        JobSingleTaskAPI, JobNotifiedUsersIndexAPI, JobSingleNotifiedUserAPI)
+        JobSingleTaskAPI, JobNotifiedUsersIndexAPI, JobSingleNotifiedUserAPI,
+        TaskFailedOnAgentsIndexAPI, SingleTaskOnAgentFailureAPI)
     from pyfarm.master.api.jobqueues import (
         schema as jobqueues_schema, JobQueueIndexAPI, SingleJobQueueAPI)
     from pyfarm.master.api.agent_updates import AgentUpdatesAPI
@@ -605,6 +606,17 @@ def load_api(app_instance, api_instance):
     api_instance.add_url_rule(
         "/agents/<uuid:agent_id>/tasks/",
         view_func=TasksInAgentAPI.as_view("tasks_in_agent_api"))
+
+    # Agents that failed a task
+    api_instance.add_url_rule(
+        "/jobs/<int:job_id>/tasks/<int:task_id>/failed_on_agents/",
+        view_func=TaskFailedOnAgentsIndexAPI.as_view(
+            "task_failed_on_agent_api"))
+    api_instance.add_url_rule(
+        "/jobs/<int:job_id>/tasks/<int:task_id>/failed_on_agents/"
+        "<string:agent_id>",
+        view_func=SingleTaskOnAgentFailureAPI.as_view(
+            "single_task_failure_on_agent_api"))
 
     # Agent updates
     api_instance.add_url_rule(

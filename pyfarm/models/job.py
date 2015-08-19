@@ -495,12 +495,13 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
         return unassigned_tasks > 0
 
-    def get_batch(self):
+    def get_batch(self, agent):
         # Import here instead of at the top of the file to avoid circular import
         from pyfarm.models.agent import Agent
 
         tasks_query = Task.query.filter(
             Task.job == self,
+            ~Task.failed_in_agents.any(id=agent.id),
             or_(Task.state == None,
                 ~Task.state.in_([WorkState.DONE, WorkState.FAILED])),
             or_(Task.agent == None,

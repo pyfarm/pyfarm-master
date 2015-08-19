@@ -147,6 +147,8 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     def update_failures(target, new_value, old_value, initiator):
         if new_value == WorkState.FAILED and new_value != old_value:
             target.failures += 1
+            if target not in target.agent.failed_tasks:
+                target.agent.failed_tasks.append(target)
 
     @staticmethod
     def set_progress_on_success(target, new_value, old_value, initiator):

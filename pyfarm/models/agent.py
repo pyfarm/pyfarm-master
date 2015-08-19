@@ -38,7 +38,7 @@ from pyfarm.models.core.functions import repr_ip
 from pyfarm.models.core.mixins import (
     ValidatePriorityMixin, UtilityMixins, ReprMixin, ValidateWorkStateMixin)
 from pyfarm.models.core.types import (
-    id_column, IPv4Address, IDTypeAgent, UseAgentAddressEnum,
+    id_column, IPv4Address, IDTypeAgent, IDTypeWork, UseAgentAddressEnum,
     OperatingSystemEnum, AgentStateEnum, MACAddress)
 from pyfarm.models.jobtype import JobTypeVersion
 from pyfarm.models.job import Job
@@ -73,6 +73,18 @@ AgentTagAssociation = db.Table(
     db.Column(
         "tag_id", db.Integer,
         db.ForeignKey("%s.id" % config.get("table_tag")),
+        primary_key=True))
+
+
+FailedTaskInAgent = db.Table(
+    config.get("table_failed_task_in_agent"), db.metadata,
+    db.Column(
+        "agent_id", IDTypeAgent,
+        db.ForeignKey("%s.id" % config.get("table_agent")),
+        primary_key=True),
+    db.Column(
+        "task_id", IDTypeWork,
+        db.ForeignKey("%s.id" % config.get("table_task")),
         primary_key=True))
 
 
@@ -325,6 +337,13 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         lazy="dynamic",
         doc="The known disks available to this agent",
         cascade="save-update, merge, delete, delete-orphan")
+
+    failed_tasks = db.relationship(
+        "Task",
+        secondary=FailedTaskInAgent,
+        backref=db.backref("failed_in_agents", lazy="dynamic"),
+        lazy="dynamic",
+        doc="The tasks this agents failed to execute")
 
     def is_offline(self):
         return self.state == AgentState.OFFLINE

@@ -101,8 +101,11 @@ table_task_log_assoc: ${table_prefix}task_log_associations
 # The name of the table containing GPU information for agents
 table_gpu: ${table_prefix}gpus
 
-# The name of the table containing MAC address information for agents
+# The name of the table containing associations between agents and GPUs
 table_gpu_in_agent: ${table_prefix}gpu_agent_associations
+
+# The name of the table storing which tasks where failed on an agent
+table_failed_task_in_agent: ${table_prefix}failed_tasks_in_agents
 
 # The name of the table containing the disks of the agents
 table_agent_disk: ${table_prefix}agent_disks
