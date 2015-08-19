@@ -417,7 +417,6 @@ def assign_tasks_to_agent(agent_id):
                         for task in batch:
                             task.agent = agent
                             task.sent_to_agent = False
-                            task.time_started = None
                             logger.info("Assigned agent %s (id %s) to task %s "
                                         "(frame %s) from job %s (id %s)",
                                         agent.hostname, agent.id, task.id,
