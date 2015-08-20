@@ -348,6 +348,9 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
     def is_offline(self):
         return self.state == AgentState.OFFLINE
 
+    def is_disabled(self):
+        return self.state == AgentState.DISABLED
+
     def get_supported_types(self):
         try:
             return self.support_jobtype_versions

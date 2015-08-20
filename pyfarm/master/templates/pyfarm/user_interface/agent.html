@@ -124,6 +124,24 @@
               {% endfor %}
             </td>
           </tr>
+          <tr>
+            <td>
+              Actions
+            </td>
+            <td>
+              {% if not agent.is_disabled() %}
+              <form style="display: inline;" role="form" method="POST" action="{{ url_for('disable_single_agent_ui', agent_id=agent.id, next=url_for('single_agent_ui', agent_id=agent.id)) }}">
+                <label for="disable-agent-submit" class="clickable-icon" title="Disable agent"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span> Disable</label>
+                <input id="disable-agent-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to disable this agent?');"/>
+              </form>
+              {% else %}
+              <form style="display: inline;" role="form" method="POST" action="{{ url_for('enable_single_agent_ui', agent_id=agent.id, next=url_for('single_agent_ui', agent_id=agent.id)) }}">
+                <label for="enable-agent-submit" class="clickable-icon" title="Enable agent"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Enable</label>
+                <input id="enable-agent-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to enable this agent?');"/>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
         </tbody>
       </table>
 

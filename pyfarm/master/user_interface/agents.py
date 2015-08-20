@@ -213,10 +213,49 @@ def restart_multiple_agents():
     else:
         return redirect(url_for("agents_index_ui"), SEE_OTHER)
 
+def disable_single_agent(agent_id):
+    agent = Agent.query.filter_by(id=agent_id).first()
+    if not agent:
+        return (render_template(
+                    "pyfarm/error.html",
+                    error="Agent %s not found" % agent_id),
+                NOT_FOUND)
+
+    agent.state = AgentState.DISABLED
+    db.session.add(agent)
+    db.session.commit()
+
+    flash("Agent %s is now disabled." % agent.hostname)
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("agents_index_ui"), SEE_OTHER)
+
+def enable_single_agent(agent_id):
+    agent = Agent.query.filter_by(id=agent_id).first()
+    if not agent:
+        return (render_template(
+                    "pyfarm/error.html",
+                    error="Agent %s not found" % agent_id),
+                NOT_FOUND)
+
+    agent.state = AgentState.OFFLINE
+    db.session.add(agent)
+    db.session.commit()
+
+    poll_agent.delay(agent.id)
+
+    flash("Agent %s is now enabled." % agent.hostname)
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("agents_index_ui"), SEE_OTHER)
+
 def disable_multiple_agents():
     agent_ids = request.form.getlist("agent_id")
 
-    agents = []
     for agent_id in agent_ids:
         agent = Agent.query.filter_by(id=agent_id).first()
         if not agent:
@@ -227,7 +266,6 @@ def disable_multiple_agents():
 
         agent.state = AgentState.DISABLED
         db.session.add(agent)
-        agents.append(agent)
 
     db.session.commit()
 
