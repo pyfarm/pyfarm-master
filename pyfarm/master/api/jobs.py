@@ -1385,7 +1385,7 @@ class TaskFailedOnAgentsIndexAPI(MethodView):
         A ``GET`` to this endpoint will return a list of all agents that failed
         to execute this task
 
-        .. http:get:: /api/v1/jobs/<int:id>/tasks/<int:task_id>/failed_on_agents/ HTTP/1.1
+        .. http:get:: /api/v1/jobs/<int:job_id>/tasks/<int:task_id>/failed_on_agents/ HTTP/1.1
 
             **Request**
 
@@ -1441,7 +1441,7 @@ class TaskFailedOnAgentsIndexAPI(MethodView):
                 Content-Type: application/json
 
                 {
-                    "agent_id": "02f08241-c556-4355-9e5e-33243d8c4577"
+                    "id": "02f08241-c556-4355-9e5e-33243d8c4577"
                 }
 
             **Response**
@@ -1468,7 +1468,7 @@ class TaskFailedOnAgentsIndexAPI(MethodView):
         if not task:
             return jsonify(error="Task not found"), NOT_FOUND
 
-        agent_id = g.json.get("agent_id")
+        agent_id = g.json.get("id")
         agent = Agent.query.filter_by(id=agent_id).first()
         if not agent:
             return jsonify(error="Agent not found"), NOT_FOUND
