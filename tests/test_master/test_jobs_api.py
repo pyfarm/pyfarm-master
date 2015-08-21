@@ -1622,7 +1622,7 @@ class TestJobAPI(BaseTestCase):
         post_failure_response = self.client.post(
             "/api/v1/jobs/%s/tasks/%s/failed_on_agents/" % (job_id, task_id),
             content_type="application/json",
-            data=dumps({"agent_id": agent_id}))
+            data=dumps({"id": agent_id}))
         self.assert_created(post_failure_response)
 
         failed_on_agents_response = self.client.get(
@@ -1662,7 +1662,7 @@ class TestJobAPI(BaseTestCase):
         post_failure_response = self.client.post(
             "/api/v1/jobs/%s/tasks/%s/failed_on_agents/" % (job_id, task_id),
             content_type="application/json",
-            data=dumps({"agent_id": agent_id}))
+            data=dumps({"id": agent_id}))
         self.assert_created(post_failure_response)
 
         delete_response = self.client.delete(
