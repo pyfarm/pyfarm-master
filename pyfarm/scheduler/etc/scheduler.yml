@@ -98,6 +98,10 @@ agent_request_timeout: 10
 # for jobs which are already running.
 queue_prefer_running_jobs: true
 
+# Whether to use an agents total RAM instead of reported free RAM to determine
+# whether or not it can run a task.
+use_total_ram_for_scheduling: false
+
 ##
 ## END Scheduler Settings
 ##

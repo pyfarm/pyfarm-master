@@ -37,6 +37,7 @@ from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
 from pyfarm.models.core.types import id_column, IDTypeWork
 
 PREFER_RUNNING_JOBS = config.get("queue_prefer_running_jobs")
+USE_TOTAL_RAM = config.get("use_total_ram_for_scheduling")
 logger = getLogger("pf.models.jobqueue")
 
 if config.get("debug_queue"):
@@ -205,6 +206,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
         if not supported_types:
             return None
 
+        available_ram = agent.ram if USE_TOTAL_RAM else agent.free_ram
         child_jobs = Job.query.filter(or_(Job.state == WorkState.RUNNING,
                                           Job.state == None),
                                       Job.job_queue_id == self.id,
@@ -213,7 +215,7 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                                           Job.state != WorkState.DONE)),
                                       Job.jobtype_version_id.in_(
                                             supported_types),
-                                      Job.ram <= agent.free_ram).all()
+                                      Job.ram <= available_ram).all()
         child_jobs = [x for x in child_jobs if
                       (agent.satisfies_job_requirements(x) and
                        x.id not in unwanted_job_ids)]
