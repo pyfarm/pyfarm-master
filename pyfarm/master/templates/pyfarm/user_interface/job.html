@@ -469,15 +469,18 @@
       </form>
 
       <h4>Auto Deletion</h4>
-      <form method="POST" action="{{ url_for('alter_autodelete_parameters_in_job_ui', job_id=job.id) }}">
+      <form method="POST" action="{{ url_for('alter_autodelete_parameters_in_job_ui', job_id=job.id) }}" class="form-inline">
         <table class="table">
           <tbody>
             <tr>
-              <td title="In seconds, leave blank to disable autodelete">
-                Autodelete After Seconds
+              <td title="Leave blank to disable autodelete">
+                Autodelete After
               </td>
               <td>
-                <input class="form-control" type="text" name="autodelete_time" value="{{ job.autodelete_time if job.autodelete_time else '' }}"/>
+                <input class="form-control" type="text" name="days" value="{{ autodelete_time.days if autodelete_time else '' }}" style="width:3em;"/> d
+                <input class="form-control" type="text" name="hours" value="{{ autodelete_time.hours if autodelete_time else '' }}" style="width:3em;"/> h
+                <input class="form-control" type="text" name="minutes" value="{{ autodelete_time.minutes if autodelete_time else '' }}" style="width:3em;"/> m
+                <input class="form-control" type="text" name="seconds" value="{{ autodelete_time.seconds if autodelete_time else '' }}" style="width:3em;"/> s
               </td>
             </tr>
             <tr>

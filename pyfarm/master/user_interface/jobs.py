@@ -15,7 +15,7 @@
 # limitations under the License.
 
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 
 try:
     from httplib import (
@@ -358,12 +358,22 @@ def single_job(job_id):
             jobtype=job.jobtype_version.jobtype).\
                 order_by(desc(JobTypeVersion.version)).first()
 
+    autodelete_time = None
+    if job.autodelete_time:
+        autodelete_timedelta = timedelta(seconds=job.autodelete_time)
+        autodelete_time = {"days": autodelete_timedelta.days}
+        seconds = autodelete_timedelta.seconds
+        autodelete_time["hours"], remainder = divmod(seconds, 3600)
+        autodelete_time["minutes"], autodelete_time["seconds"] =\
+            divmod(remainder, 60)
+
     return render_template("pyfarm/user_interface/job.html", job=job,
                            tasks=tasks, first_task=first_task,
                            last_task=last_task, queues=jobqueues,
                            users=users_query,
                            latest_jobtype_version=latest_jobtype_version[0],
-                           now=datetime.utcnow())
+                           now=datetime.utcnow(),
+                           autodelete_time=autodelete_time)
 
 def delete_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
@@ -892,8 +902,17 @@ def alter_autodeletion_for_job(job_id):
                     "pyfarm/error.html", error="Job %s not found" % job_id),
                 NOT_FOUND)
 
-    if request.form['autodelete_time']:
-        job.autodelete_time = int(request.form['autodelete_time'])
+    days = int(request.form["days"] or 0)
+    hours = int(request.form["hours"] or 0)
+    minutes = int(request.form["minutes"] or 0)
+    seconds = int(request.form["seconds"] or 0)
+
+    autodelete_time = timedelta(days=days, hours=hours, minutes=minutes,
+                                seconds=seconds)
+    if autodelete_time.total_seconds() > 0:
+        job.autodelete_time = autodelete_time.total_seconds()
+    else:
+        job.autodelete_time = None
 
     db.session.add(job)
     db.session.commit()
