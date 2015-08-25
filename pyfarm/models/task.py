@@ -189,11 +189,15 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
              target.time_started == None)):
             if not target.job.jobtype_version.no_automatic_start_time:
                 target.time_started = datetime.utcnow()
-            target.time_finished = None
+                target.time_finished = None
 
         elif (new_value in (_WorkState.DONE, _WorkState.FAILED) and
               not target.time_finished):
             target.time_finished = datetime.utcnow()
+
+    @staticmethod
+    def reset_finished_time(target, new_value, old_value, initiator):
+        target.time_finished = None
 
 event.listen(Task.state, "set", Task.clear_error_state)
 event.listen(Task.state, "set", Task.set_times)
@@ -203,3 +207,4 @@ event.listen(Task.agent_id, "set", Task.increment_attempts)
 event.listen(Task.agent_id, "set", Task.log_assign_change)
 event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry,
              retval=True)
+event.listen(Task.time_started, "set", Task.reset_finished_time)
