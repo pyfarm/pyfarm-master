@@ -197,7 +197,8 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
 
     @staticmethod
     def reset_finished_time(target, new_value, old_value, initiator):
-        target.time_finished = None
+        if target.state not in (_WorkState.DONE, _WorkState.FAILED):
+            target.time_finished = None
 
 event.listen(Task.state, "set", Task.clear_error_state)
 event.listen(Task.state, "set", Task.set_times)
