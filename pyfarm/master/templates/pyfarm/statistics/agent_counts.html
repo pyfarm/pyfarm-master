@@ -25,7 +25,8 @@
 <a href="{{ url_for('agent_counts_ui', days_back=1, area_chart=area_chart) }}">Last 24 hours</a>
 
 <script>
-var area_chart = {{ "true" if area_chart else "false" }}
+var area_chart = {{ "true" if area_chart else "false" }};
+var days_back = {{ days_back }};
 
 var online_agent_counts = {{ online_agent_counts_json }};
 var running_agent_counts = {{ running_agent_counts_json }};

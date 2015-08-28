@@ -18,7 +18,22 @@ $(document).ready(function() {
     chart.xAxis
         .axisLabel('Time ('+timezone+')')
         .tickFormat(function(d) {
-            return moment.unix(d).format('YYYY-MM-DD HH:mm');
+        if(days_back < 3)
+            {
+            return moment.unix(d).format('HH:mm');
+            }
+        else if(days_back < 15)
+            {
+            return moment.unix(d).format('ddd HH:mm');
+            }
+        else if(days_back < 366)
+            {
+            return moment.unix(d).format('MMM Do');
+            }
+        else
+            {
+            return moment.unix(d).format('MMM YYYY');
+            }
         });
 
     chart.yAxis

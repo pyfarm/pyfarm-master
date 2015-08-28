@@ -68,6 +68,8 @@
 <a href="{{ url_for('task_events_ui', days_back=1, queue=jobqueue_ids) }}">Last 24 hours</a>
 
 <script>
+var days_back = {{ days_back }};
+
 var new_tasks = {{ tasks_new_json }};
 var deleted_tasks = {{ tasks_deleted_json }};
 var restarted_tasks = {{ tasks_restarted_json }};

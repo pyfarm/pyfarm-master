@@ -51,4 +51,5 @@ def agent_counts():
         running_agent_counts_json=json.dumps(running_agent_counts),
         offline_agent_counts_json=json.dumps(offline_agent_counts),
         disabled_agent_counts_json=json.dumps(disabled_agent_counts),
-        area_chart=area_chart)
+        area_chart=area_chart,
+        days_back=days_back)
