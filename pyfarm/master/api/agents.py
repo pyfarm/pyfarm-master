@@ -261,8 +261,8 @@ class AgentIndexAPI(MethodView):
             mac_addresses = [x.lower() for x in mac_addresses if MAC_RE.match(x)]
 
         gpus = g.json.pop("gpus", None)
-
         disks = g.json.pop("disks", None)
+        state = g.json.pop("state", None)
 
         agent = Agent.query.filter_by(
             port=g.json["port"], id=g.json["id"]).first()
@@ -302,6 +302,9 @@ class AgentIndexAPI(MethodView):
                                      size=disk_dict["size"],
                                      free=disk_dict["free"])
                     db.session.add(disk)
+
+            if state is not None:
+                agent.state = state
 
             db.session.add(agent)
 
@@ -396,7 +399,6 @@ class AgentIndexAPI(MethodView):
                                      free=disk_dict["free"])
                     db.session.add(disk)
 
-            state = g.json.pop("state", None)
             if state is not None and agent.state != _AgentState.DISABLED:
                 agent.state = state
 
