@@ -42,6 +42,7 @@ from pyfarm.core.logger import getLogger
 from pyfarm.core.enums import STRING_TYPES, NUMERIC_TYPES, WorkState, _WorkState
 from pyfarm.scheduler.tasks import (
     assign_tasks_to_agent, assign_tasks, delete_job)
+from pyfarm.models.statistics.task_event_count import TaskEventCount
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.task import Task
 from pyfarm.models.user import User
@@ -465,7 +466,6 @@ class JobIndexAPI(MethodView):
         if not isinstance(by, RANGE_TYPES):
             return (jsonify(error="`by` needs to be of type decimal or int"),
                     BAD_REQUEST)
-        job.by = by
 
         num_tiles = g.json.get("num_tiles", None)
         if not jobtype_version.supports_tiling and num_tiles is not None:
@@ -473,23 +473,7 @@ class JobIndexAPI(MethodView):
                                   "jobtype does not support tiling."),
                     BAD_REQUEST)
 
-        current_frame = start
-        while current_frame <= end:
-            if num_tiles:
-                for tile in range_(num_tiles - 1):
-                    task = Task()
-                    task.job = job
-                    task.frame = current_frame
-                    task.tile = tile
-                    task.priority = job.priority
-                    db.session.add(task)
-            else:
-                task = Task()
-                task.job = job
-                task.frame = current_frame
-                task.priority = job.priority
-                db.session.add(task)
-            current_frame += by
+        job.alter_frame_range(start, end, by)
 
         db.session.add(job)
         db.session.add_all(software_requirements)
@@ -502,7 +486,7 @@ class JobIndexAPI(MethodView):
                                                      "notified_users",
                                                      "tag_requirements"])
         job_data["start"] = start
-        job_data["end"] = min(current_frame, end)
+        job_data["end"] = end
         del job_data["jobtype_version_id"]
         job_data["jobtype"] = job.jobtype_version.jobtype.name
         job_data["jobtype_version"] = job.jobtype_version.version
@@ -849,39 +833,11 @@ class SingleJobAPI(MethodView):
             end = Decimal(json.pop("end", old_last_task.frame))
             by = Decimal(json.pop("by", job.by))
 
-            if end < start:
-                return jsonify(error="`end` must be greater than or equal to "
-                                     "`start`"), BAD_REQUEST
-
-            required_frames = []
-            current_frame = start
-            while current_frame <= end:
-                required_frames.append(current_frame)
-                current_frame += by
-
-            existing_tasks = Task.query.filter_by(job=job).all()
-            frames_to_create = required_frames
-            for task in existing_tasks:
-                if task.frame not in required_frames:
-                    db.session.delete(task)
-                else:
-                    frames_to_create.remove(task.frame)
-
-            for frame in frames_to_create:
-                if job.num_tiles:
-                    for tile in range_(job.num_tiles - 1):
-                        task = Task()
-                        task.job = job
-                        task.frame = current_frame
-                        task.tile = tile
-                        task.priority = job.priority
-                        db.session.add(task)
-                else:
-                    task = Task()
-                    task.job = job
-                    task.frame = current_frame
-                    task.priority = job.priority
-                    db.session.add(task)
+            try:
+                job.alter_frame_range(start, end, by)
+            except ValueError as e:
+                return (jsonify(
+                        error=str(e)), BAD_REQUEST)
 
         if "parents" in g.json:
             parents = []
@@ -1310,6 +1266,22 @@ class JobSingleTaskAPI(MethodView):
             db.session.commit()
             if task.job.state != old_state and task.job.state == WorkState.DONE:
                 assign_tasks.delay()
+
+        if config.get("enable_statistics") and task.job and state_transition:
+            task_event_count = TaskEventCount(
+                job_queue_id=task.job.job_queue_id)
+            if new_state == "queued":
+                task_event_count.num_restarted = 1
+            elif new_state == "running":
+                task_event_count.num_started = 1
+            elif new_state == "done":
+                task_event_count.num_done = 1
+            elif new_state == "failed":
+                task_event_count.num_failed = 1
+            task_event_count.time_start = datetime.utcnow()
+            task_event_count.time_end = datetime.utcnow()
+            db.session.add(task_event_count)
+            db.session.commit()
 
         return jsonify(task_data), OK
 

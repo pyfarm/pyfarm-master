@@ -41,6 +41,7 @@
               <li class="{% block jobqueues_nb_class %}{% endblock %}"><a href="{{ url_for('jobqueues_index_ui')}}">Queues</a></li>
               <li class="{% block jobtypes_nb_class %}{% endblock %}"><a href="{{ url_for('jobtypes_index_ui')}}">Jobtypes</a></li>
               <li class="{% block software_nb_class %}{% endblock %}"><a href="{{ url_for('software_index_ui')}}">Software</a></li>
+              <li class="{% block statistics_nb_class %}{% endblock %}"><a href="{{ url_for('statistics_index_ui')}}">Statistics</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
               {% if current_user.is_anonymous() %}

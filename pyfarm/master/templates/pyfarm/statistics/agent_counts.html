@@ -1,0 +1,57 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Agent Counts {% endblock %}
+{% block statistics_nb_class %}active{% endblock %}
+{% block additional_styles %}
+<link href="{{ url_for('static', filename='css/nv.d3.css') }}" rel="stylesheet">
+{% endblock %}
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/vendor/d3.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='js/vendor/nv.d3.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='js/agent_counts.js') }}" type="text/javascript"></script>
+{% endblock %}
+{% block content %}
+<h1>Agent Counts</h1>
+
+<div id="chart">
+  <svg style="height:800px;">
+  </svg>
+</div>
+
+<a href="{{ url_for('agent_counts_ui', days_back=730, area_chart=area_chart) }}">Last two years</a> -
+<a href="{{ url_for('agent_counts_ui', days_back=365, area_chart=area_chart) }}">Last year</a> -
+<a href="{{ url_for('agent_counts_ui', days_back=30, area_chart=area_chart) }}">Last month</a> -
+<a href="{{ url_for('agent_counts_ui', days_back=14, area_chart=area_chart) }}">Last two weeks</a> -
+<a href="{{ url_for('agent_counts_ui', days_back=7, area_chart=area_chart) }}">Last week</a> -
+<a href="{{ url_for('agent_counts_ui', days_back=1, area_chart=area_chart) }}">Last 24 hours</a>
+
+<script>
+var area_chart = {{ "true" if area_chart else "false" }};
+var days_back = {{ days_back }};
+
+var online_agent_counts = {{ online_agent_counts_json }};
+var running_agent_counts = {{ running_agent_counts_json }};
+var offline_agent_counts = {{ offline_agent_counts_json }};
+var disabled_agent_counts = {{ disabled_agent_counts_json }};
+
+var agent_count_data = [
+    {
+    values: online_agent_counts,
+    key: 'Online'
+    },
+    {
+    values: running_agent_counts,
+    key: 'Running'
+    },
+    {
+    values: offline_agent_counts,
+    key: 'Offline'
+    },
+    {
+    values: disabled_agent_counts,
+    key: 'Disabled'
+    }
+    ];
+
+d3.select('#chart svg').datum(agent_count_data);
+</script>
+{% endblock %}

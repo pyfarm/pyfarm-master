@@ -60,6 +60,9 @@ from pyfarm.models.pathmap import PathMap
 from pyfarm.models.tasklog import TaskLog
 from pyfarm.models.gpu import GPU
 from pyfarm.models.jobgroup import JobGroup
+from pyfarm.models.statistics.agent_count import AgentCount
+from pyfarm.models.statistics.task_event_count import TaskEventCount
+from pyfarm.models.statistics.task_count import TaskCount
 from pyfarm.master.utility import timedelta_format
 
 logger = getLogger("master.entrypoints")
@@ -160,6 +163,11 @@ def load_user_interface(app_instance):
         update_version_default_status)
     from pyfarm.master.user_interface.software_version import software_version
     from pyfarm.master.user_interface.jobgroups import jobgroups
+    from pyfarm.master.user_interface.statistics.index import statistics_index
+    from pyfarm.master.user_interface.statistics.agent_counts import (
+        agent_counts)
+    from pyfarm.master.user_interface.statistics.task_events import (
+        task_events)
 
     farm_name = config.get("farm_name")
     app_instance.jinja_env.globals.update({"farm_name": farm_name})
@@ -374,6 +382,17 @@ def load_user_interface(app_instance):
 
     app_instance.add_url_rule("/jobgroups/",
                               "jobgroups_index_ui", jobgroups, methods=("GET", ))
+
+    app_instance.add_url_rule("/statistics/",
+                              "statistics_index_ui", statistics_index,
+                              methods=("GET", ))
+
+    app_instance.add_url_rule("/statistics/agent_counts",
+                              "agent_counts_ui", agent_counts,
+                              methods=("GET", ))
+    app_instance.add_url_rule("/statistics/task_events",
+                              "task_events_ui", task_events,
+                              methods=("GET", ))
 
 def load_api(app_instance, api_instance):
     """configures flask to serve the api endpoints"""

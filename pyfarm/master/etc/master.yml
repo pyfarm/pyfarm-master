@@ -35,6 +35,10 @@ debug_queue: false
 database: "sqlite:///pyfarm.sqlite"
 
 
+# Where to store runtime statistics. Same format as "database"
+statistics_database: "sqlite:///pyfarm-statistics.sqlite"
+
+
 # The broker that PyFarm's scheduler should use.  For debugging and
 # development running Redis is the simplest.  For large deployments, or
 # to understand the format of this variable, see:
@@ -78,7 +82,6 @@ api_prefix: /api/v1
 
 # The URL template we use to communicate with the agent.
 agent_api_url_template: http://{host}:{port}/api/v1
-
 
 
 # Enables or disable the login functionality.  This can be used when
@@ -212,4 +215,3 @@ job_type_batch_contiguous: true
 ##
 ## END Job Type defaults
 ##
-

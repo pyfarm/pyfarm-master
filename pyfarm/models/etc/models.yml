@@ -110,6 +110,12 @@ table_failed_task_in_agent: ${table_prefix}failed_tasks_in_agents
 # The name of the table containing the disks of the agents
 table_agent_disk: ${table_prefix}agent_disks
 
+table_statistics_agent_count: ${table_prefix}agent_counts
+
+table_statistics_task_event_count: ${table_prefix}task_event_counts
+
+table_statistics_task_count: ${table_prefix}task_counts
+
 ##
 ## END Database Table Names
 ##

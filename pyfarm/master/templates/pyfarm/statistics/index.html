@@ -1,0 +1,11 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Statistics {% endblock %}
+{% block statistics_nb_class %}active{% endblock %}
+{% block content %}
+<h1>Statistics</h1>
+
+<p>Agent Counts: <a href="{{ url_for('agent_counts_ui') }}">Bar Chart</a> / <a href="{{ url_for('agent_counts_ui', area_chart=True) }}">Area Chart</a></p>
+
+<p>Task Events: <a href="{{ url_for('task_events_ui') }}">Bar/Line Chart</a></p>
+
+{% endblock %}
