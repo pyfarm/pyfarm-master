@@ -449,6 +449,9 @@ def rerun_single_job(job_id):
     db.session.commit()
     assign_tasks.delay()
 
+    logger.info("Job %s (job id: %s) is being rerun by request from %s",
+                job.title, job.id, request.remote_addr)
+
     flash("Job %s will be run again." % job.title)
 
     if "next" in request.args:
@@ -466,6 +469,8 @@ def rerun_multiple_jobs():
                         "pyfarm/error.html", error="Job %s not found" % job_id),
                     NOT_FOUND)
         job.rerun()
+        logger.info("Job %s (job id: %s) is being rerun by request from %s",
+                    job.title, job.id, request.remote_addr)
 
     db.session.commit()
     assign_tasks.delay()
@@ -489,6 +494,10 @@ def rerun_failed_in_job(job_id):
 
     assign_tasks.delay()
 
+    logger.info("Failed tasks from job %s (job id: %s) are being rerun by "
+                "request from %s",
+                job.title, job.id, request.remote_addr)
+
     flash("Failed tasks in job %s will be run again." % job.title)
 
     if "next" in request.args:
@@ -506,6 +515,9 @@ def rerun_failed_in_multiple_jobs():
                         "pyfarm/error.html", error="Job %s not found" % job_id),
                     NOT_FOUND)
 
+        logger.info("Failed tasks from job %s (job id: %s) are being rerun by "
+                    "request from %s",
+                    job.title, job.id, request.remote_addr)
         job.rerun_failed()
         db.session.commit()
 
