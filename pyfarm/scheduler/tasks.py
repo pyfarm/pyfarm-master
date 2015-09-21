@@ -601,8 +601,7 @@ def poll_agent(self, agent_id):
             agent.last_polled = datetime.utcnow()
             tasks_query = Task.query.filter(
                 Task.agent == agent,
-                or_(Task.state == None,
-                    Task.state == WorkState.RUNNING))
+                Task.state == WorkState.RUNNING)
             jobs_to_check = set()
             for task in tasks_query:
                 task.state = None
