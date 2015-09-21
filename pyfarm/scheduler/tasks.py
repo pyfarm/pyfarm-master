@@ -608,9 +608,11 @@ def poll_agent(self, agent_id):
                 task.state = None
                 db.session.add(task)
                 jobs_to_check.add(task.job)
+            db.session.add(agent)
+            db.session.commit()
             for job in jobs_to_check:
                 job.update_state()
-            db.session.add(agent)
+                db.session.add(job)
             db.session.commit()
 
     else:
