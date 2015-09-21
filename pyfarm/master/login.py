@@ -122,7 +122,7 @@ def login_page():
 
 def logout_page():
     """log out the user then redirect them"""
-    logged_in = current_user.is_authenticated()
+    logged_in = current_user.is_authenticated
     if logged_in:
         logout_user()
 
