@@ -268,6 +268,11 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         default=datetime.utcnow,
         doc="Time we last had contact with this agent")
 
+    last_success_on = db.Column(
+        db.DateTime,
+        nullable=True,
+        doc="The last time this agent has set a task to `done`")
+
     last_polled = db.Column(
         db.DateTime,
         doc="Time we last tried to contact the agent")

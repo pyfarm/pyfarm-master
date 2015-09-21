@@ -172,6 +172,16 @@
         {% endif %}
       </a>
     </th>
+    <th>
+      <a href="{{ url_for('agents_index_ui', order_by='last_success_on', order_dir='asc' if order_dir == 'desc' else 'desc', **filters) }}">
+        Last Success
+        {% if order_by == 'last_success_on' and order_dir == 'desc' %}
+        <span class="glyphicon glyphicon-chevron-down"></span>
+        {% elif order_by == 'last_success_on' %}
+        <span class="glyphicon glyphicon-chevron-up"></span>
+        {% endif %}
+      </a>
+    </th>
   </tr>
   {% for agent in agents %}
   <tr>
@@ -220,7 +230,8 @@
     <td>{{ agent.cpus }}</td>
     <td>{{ agent.ram }} MiB</td>
     <td>{{ agent.version }}</td>
-    <td class="timestamp">{{ agent.last_heard_from }}</td>
+    <td class="timestamp" title="Last heard from">{{ agent.last_heard_from }}</td>
+    <td class="timestamp" title="Last success on">{{ agent.last_success_on or "" }}</td>
   </tr>
   {% endfor %}
 </table>
