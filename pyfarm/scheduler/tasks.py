@@ -599,7 +599,10 @@ def poll_agent(self, agent_id):
                          "offline", agent.hostname, agent.id)
             agent.state = AgentState.OFFLINE
             agent.last_polled = datetime.utcnow()
-            tasks_query = Task.query.filter(Task.agent == agent)
+            tasks_query = Task.query.filter(
+                Task.agent == agent,
+                or_(Task.state == None,
+                    Task.state == WorkState.RUNNING))
             jobs_to_check = set()
             for task in tasks_query:
                 task.state = None
