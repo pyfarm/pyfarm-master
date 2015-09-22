@@ -26,15 +26,16 @@ from sys import maxsize
 from functools import reduce
 from logging import DEBUG
 
-from sqlalchemy import event, distinct, or_
+from sqlalchemy import event, distinct, or_, and_
 from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState, _WorkState
+from pyfarm.core.enums import WorkState, _WorkState, AgentState
 from pyfarm.master.application import db
 from pyfarm.master.config import config
 from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
 from pyfarm.models.core.types import id_column, IDTypeWork
+from pyfarm.models.agent import Agent
 
 PREFER_RUNNING_JOBS = config.get("queue_prefer_running_jobs")
 USE_TOTAL_RAM = config.get("use_total_ram_for_scheduling")
@@ -185,6 +186,9 @@ class JobQueue(db.Model, UtilityMixins, ReprMixin):
                 db.session.query(distinct(Task.agent_id)).\
                     filter(Task.job.has(Job.queue == self),
                            Task.agent_id != None,
+                           Task.agent.has(
+                               and_(Agent.state != AgentState.OFFLINE,
+                                    Agent.state != AgentState.DISABLED)),
                            or_(Task.state == None,
                                Task.state == WorkState.RUNNING)).count()
 

@@ -411,6 +411,7 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         # Import here instead of at the top of the file to avoid a circular
         # import
         from pyfarm.scheduler.tasks import send_job_completion_mail
+        from pyfarm.models.agent import Agent
 
         num_active_tasks = db.session.query(Task).\
             filter(Task.job == self,
@@ -441,6 +442,8 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             num_running_tasks = db.session.query(Task).\
                 filter(Task.job == self,
                        Task.agent_id != None,
+                       Task.agent.has(and_(Agent.state != AgentState.OFFLINE,
+                                           Agent.state != AgentState.DISABLED)),
                        or_(
                             Task.state == WorkState.RUNNING,
                             Task.state == None)).count()
@@ -471,8 +474,10 @@ class Job(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
                            Task.agent_id != None,
                            or_(Task.state == None,
                                Task.state == WorkState.RUNNING),
-                           Task.agent.has(Agent.state != AgentState.OFFLINE))\
-                               .count()
+                           Task.agent.has(
+                               and_(Agent.state != AgentState.OFFLINE,
+                                    Agent.state != AgentState.DISABLED)))\
+                                        .count()
 
             return self.assigned_agents_count
 
