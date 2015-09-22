@@ -43,13 +43,6 @@
               <li class="{% block software_nb_class %}{% endblock %}"><a href="{{ url_for('software_index_ui')}}">Software</a></li>
               <li class="{% block statistics_nb_class %}{% endblock %}"><a href="{{ url_for('statistics_index_ui')}}">Statistics</a></li>
             </ul>
-            <ul class="nav navbar-nav navbar-right">
-              {% if current_user.is_anonymous() %}
-              <li><a href="/login">Login</a></li>
-              {% else %}
-              <li><a href="/logout">Logout</a></li>
-              {% endif %}
-            </ul>
           </div>
         </div>
       </nav>
