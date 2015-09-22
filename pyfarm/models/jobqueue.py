@@ -30,7 +30,7 @@ from sqlalchemy import event, distinct, or_, and_
 from sqlalchemy.schema import UniqueConstraint
 
 from pyfarm.core.logger import getLogger
-from pyfarm.core.enums import WorkState, _WorkState
+from pyfarm.core.enums import WorkState, _WorkState, AgentState
 from pyfarm.master.application import db
 from pyfarm.master.config import config
 from pyfarm.models.core.mixins import UtilityMixins, ReprMixin
