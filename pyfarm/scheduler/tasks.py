@@ -599,7 +599,19 @@ def poll_agent(self, agent_id):
                          "offline", agent.hostname, agent.id)
             agent.state = AgentState.OFFLINE
             agent.last_polled = datetime.utcnow()
+            tasks_query = Task.query.filter(
+                Task.agent == agent,
+                Task.state == WorkState.RUNNING)
+            jobs_to_check = set()
+            for task in tasks_query:
+                task.state = None
+                db.session.add(task)
+                jobs_to_check.add(task.job)
             db.session.add(agent)
+            db.session.commit()
+            for job in jobs_to_check:
+                job.update_state()
+                db.session.add(job)
             db.session.commit()
 
     else:
