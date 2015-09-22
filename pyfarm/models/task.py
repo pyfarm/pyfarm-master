@@ -156,6 +156,14 @@ class Task(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
             target.progress = 1.0
 
     @staticmethod
+    def update_agent_on_success(target, new_value, old_value, initiator):
+        if new_value == WorkState.DONE:
+            agent = target.agent
+            if agent:
+                agent.last_success_on = datetime.utcnow()
+                db.session.add(agent)
+
+    @staticmethod
     def reset_agent_if_failed_and_retry(
             target, new_value, old_value, initiator):
         # There's nothing else we should do here if
@@ -212,6 +220,7 @@ event.listen(Task.state, "set", Task.clear_error_state)
 event.listen(Task.state, "set", Task.set_times)
 event.listen(Task.state, "set", Task.update_failures)
 event.listen(Task.state, "set", Task.set_progress_on_success)
+event.listen(Task.state, "set", Task.update_agent_on_success)
 event.listen(Task.agent_id, "set", Task.increment_attempts)
 event.listen(Task.agent_id, "set", Task.log_assign_change)
 event.listen(Task.state, "set", Task.reset_agent_if_failed_and_retry,
