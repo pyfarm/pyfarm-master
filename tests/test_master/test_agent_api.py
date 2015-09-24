@@ -94,6 +94,8 @@ class TestAgentAPI(BaseTestCase):
                 "restart_requested": False,
                 "last_heard_from": last_heard_from,
                 "last_success_on": None,
+                "disks": [],
+                "gpus": [],
                 "tags": []})
 
     def test_create_agent(self):
@@ -226,6 +228,8 @@ class TestAgentAPI(BaseTestCase):
             "restart_requested": False,
             "last_heard_from": last_heard_from,
             "last_success_on": None,
+            "disks": [],
+            "gpus": [],
             "tags": []})
 
     def test_agent_delete(self):
