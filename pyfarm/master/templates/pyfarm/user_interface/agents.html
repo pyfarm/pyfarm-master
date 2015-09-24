@@ -187,12 +187,12 @@
   <tr>
     <td><input type="checkbox" name="jobid" value="{{ agent.id }}" title="Select agent" class="agent-selector"></td>
     <td>
-      <form style="display: inline;" role="form" method="POST" action="{{ url_for('delete_single_agent_ui', agent_id=agent.id) }}">
+      <form style="display: inline;" role="form" method="POST" action="{{ url_for('delete_single_agent_ui', agent_id=agent.id, next=url_for('agents_index_ui', **filters_and_order)) }}">
         <label for="delete-agent-{{agent.id}}-submit" class="clickable-icon" title="Delete agent"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></label>
         <input id="delete-agent-{{agent.id}}-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to delete this agent?');"/>
       </form>
       {% if not agent.is_offline() %}
-      <form style="display: inline;" role="form" method="POST" action="{{ url_for('restart_single_agent_ui', agent_id=agent.id) }}">
+      <form style="display: inline;" role="form" method="POST" action="{{ url_for('restart_single_agent_ui', agent_id=agent.id, next=url_for('agents_index_ui', **filters_and_order) ) }}">
         <label for="restart-agent-{{agent.id}}-submit" class="clickable-icon" title="Restart agent"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span></label>
         <input id="restart-agent-{{agent.id}}-submit" type="submit" class="hidden" onclick="return confirm('Are you sure you want to restart this agent?');"/>
       </form>
