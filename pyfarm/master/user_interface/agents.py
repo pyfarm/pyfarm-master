@@ -319,6 +319,27 @@ def delete_single_agent(agent_id):
 
     return redirect(url_for("agents_index_ui"), SEE_OTHER)
 
+def delete_multiple_agents():
+    agent_ids = request.form.getlist("agent_id")
+
+    for agent_id in agent_ids:
+        agent = Agent.query.filter_by(id=agent_id).first()
+        if not agent:
+            return (render_template(
+                        "pyfarm/error.html",
+                        error="Agent %s not found" % agent_id),
+                    NOT_FOUND)
+        db.session.delete(agent)
+
+    db.session.commit()
+
+    flash("Selected agents have been deleted")
+
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("agents_index_ui"), SEE_OTHER)
+
 def agent_add_software(agent_id):
     agent = Agent.query.filter_by(id=agent_id).first()
     if not agent:
