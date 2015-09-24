@@ -205,6 +205,12 @@ class UtilityMixins(object):
                 elif name == "tag_requirements":
                     out.append({"tag": relationship.tag.tag,
                                 "negate": relationship.negate})
+                elif name == "gpus":
+                    out.append({"fullname": relationship.fullname})
+                elif name == "disks":
+                    out.append({"mountpoint": relationship.mountpoint,
+                                "size": relationship.size,
+                                "free": relationship.free})
                 else:
                     raise NotImplementedError(
                         "don't know how to unpack relationships for `%s`" % name)
