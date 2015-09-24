@@ -716,22 +716,23 @@ def send_job_completion_mail(job_id, successful=True):
             job.url+= "jobs/%s" % job.id
 
             failed_tasks = Task.query.filter(Task.job == job,
-                                             Task.state == WorkState.FAILED)
-            failed_logs = []
+                                             Task.state == WorkState.FAILED).\
+                                                 order_by(desc(Task.frame))
+            failed_log_urls = []
             for task in failed_tasks:
                 last_log_assoc = TaskTaskLogAssociation.query.filter_by(
                     task=task).order_by(desc(
                         TaskTaskLogAssociation.attempt)).limit(1).first()
                 if last_log_assoc:
                     log = last_log_assoc.log
-                    log.url = BASE_URL
-                    if log.url[-1] != "/":
-                        log.url += "/"
-                    log.url += ("api/v1/jobs/%s/tasks/%s/attempts/%s/"
+                    log_url = BASE_URL
+                    if log_url[-1] != "/":
+                        log_url += "/"
+                    log_url += ("api/v1/jobs/%s/tasks/%s/attempts/%s/"
                                 "logs/%s/logfile" %
                                 (job.id, task.id, last_log_assoc.attempt,
                                  log.identifier))
-                    failed_logs.append(log)
+                    failed_log_urls.append(log_url)
 
             notified_users_query = JobNotifiedUser.query.filter_by(job=job)
             if successful:
@@ -770,7 +771,7 @@ def send_job_completion_mail(job_id, successful=True):
                     subject_template = DEFAULT_FAIL_SUBJECT
 
             message = MIMEText(
-                body_template.render(job=job, failed_logs=failed_logs))
+                body_template.render(job=job, failed_log_urls=failed_log_urls))
             message["Subject"] = subject_template.render(job=job)
             message["From"] = FROM_ADDRESS
 

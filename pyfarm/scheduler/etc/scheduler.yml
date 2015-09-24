@@ -190,10 +190,10 @@ failed_body:
   {{ job.output_link }}
   {% endif %}
 
-  {% if failed_logs %}
+  {% if failed_log_urls %}
   Log(s) for failed tasks:
-  {% for log in failed_logs %}
-  {{log.url}}
+  {% for url in failed_log_urls %}
+  {{url}}
   {% endfor%}
   {% endif %}
 
