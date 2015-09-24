@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
     from http.client import BAD_REQUEST, NOT_FOUND, SEE_OTHER
 
 from flask import render_template, request, url_for, redirect, flash
-from sqlalchemy import or_, desc
+from sqlalchemy import or_, desc, distinct
 
 from pyfarm.core.enums import WorkState, AgentState
 from pyfarm.scheduler.tasks import (
@@ -81,6 +81,12 @@ def agents():
             agents_query = agents_query.filter(
                 Agent.hostname.ilike("%%%s%%" % hostname))
 
+    if "v" in request.args:
+        versions = request.args.getlist("v")
+        if versions:
+            agents_query = agents_query.filter(Agent.version.in_(versions))
+            filters["v"] = versions
+
     order_dir = "asc"
     order_by = "hostname"
     if "order_by" in request.args:
@@ -122,6 +128,9 @@ def agents():
             num_pages = num_pages + 1
         all_pages = range_(0, num_pages)
 
+    available_versions = db.session.query(distinct(Agent.version)).all()
+    available_versions = set(x[0] for x in available_versions)
+
     filters_and_order = filters.copy()
     filters_and_order.update({"order_by": order_by, "order_dir": order_dir})
     filters_and_order_wo_pagination = filters_and_order.copy()
@@ -138,6 +147,7 @@ def agents():
                            filters_and_order_wo_pagination,
                            no_state_filters=no_state_filters,
                            filters_and_order=filters_and_order,
+                           versions=available_versions,
                            online_agents_count=online_agents_count,
                            offline_agents_count=offline_agents_count,
                            running_agents_count=running_agents_count,

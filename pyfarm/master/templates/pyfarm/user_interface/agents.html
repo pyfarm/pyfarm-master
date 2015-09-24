@@ -74,6 +74,27 @@
       </li>
     </ul>
   </div>
+  <div class="btn-group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="versions-dropdown-menu" aria-expanded="true">
+      Version <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-form" role="menu" aria-labelledby="versions-dropdown-menu">
+      {% for version in versions %}
+      <li>
+        <nobr>
+          <label class="checkbox">
+            {% if version in filters.v %}
+            <input type="checkbox" name="v" value="{{ version }}" checked/>
+            {% else %}
+            <input type="checkbox" name="v" value="{{ version }}"/>
+            {% endif %}
+            {{ version }}
+          </label>
+        </nobr>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
   <label for="per_page" title="Zero or negative values for no pagination">Per page</label>
   <input type="text" class="form-control" id="per_page" name="per_page" value="{{ filters.per_page }}" placeholder="Number" size="4" style="width: 5em;"/>
   <input type="submit" class="btn" value="Filter">
