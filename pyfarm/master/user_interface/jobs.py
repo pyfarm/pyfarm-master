@@ -350,7 +350,7 @@ def single_job(job_id):
 
     tasks_query = Task.query.filter(Task.job == job)
 
-    order_dir = "desc"
+    order_dir = "asc"
     order_by = "frame"
     if "order_by" in request.args:
         order_by = request.args.get("order_by")
