@@ -622,7 +622,8 @@ class SingleAgentAPI(MethodView):
         """
         agent = Agent.query.filter_by(id=agent_id).first()
         if agent is not None:
-            return jsonify(agent.to_dict(unpack_relationships=["tags"]))
+            return jsonify(agent.to_dict(
+                unpack_relationships=["tags", "gpus", "disks"]))
         else:
             return jsonify(error="Agent %s not found" % agent_id), NOT_FOUND
 
