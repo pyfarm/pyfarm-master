@@ -726,7 +726,7 @@ def send_job_completion_mail(job_id, successful=True):
                 if last_log_assoc:
                     log = last_log_assoc.log
                     log_url = BASE_URL
-                    if log_url[-1] != "/":
+                    if not log_url.endswith("/"):
                         log_url += "/"
                     log_url += ("api/v1/jobs/%s/tasks/%s/attempts/%s/"
                                 "logs/%s/logfile" %
