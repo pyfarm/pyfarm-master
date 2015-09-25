@@ -35,4 +35,16 @@ $(document).ready(function() {
             enable_form.submit();
         }
     });
+
+    $('#selected-delete').click(function() {
+        if(confirm('Are you sure you want to delete those agents?')) {
+            var delete_form = $("#delete_multiple_form");
+            delete_form.children("input[name='agent_id']").remove();
+           $("input.agent-selector:checked").each(function() {
+                var agent_input = $("<input type='hidden' name='agent_id' value='"+$(this).attr('value')+"'>");
+                delete_form.append(agent_input);
+            });
+            delete_form.submit();
+        }
+    });
 });
