@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
 
     pyfarm.models.core
+    pyfarm.models.statistics
 
 Submodules
 ----------
@@ -14,8 +15,10 @@ Submodules
 .. toctree::
 
    pyfarm.models.agent
+   pyfarm.models.disk
    pyfarm.models.gpu
    pyfarm.models.job
+   pyfarm.models.jobgroup
    pyfarm.models.jobqueue
    pyfarm.models.jobtype
    pyfarm.models.pathmap
