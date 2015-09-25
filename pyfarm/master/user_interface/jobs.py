@@ -348,7 +348,48 @@ def single_job(job_id):
     first_task = Task.query.filter_by(job=job).order_by("frame asc").first()
     last_task = Task.query.filter_by(job=job).order_by("frame desc").first()
 
-    tasks = job.tasks.order_by(Task.frame).order_by(Task.tile)
+    tasks_query = Task.query.filter(Task.job == job)
+
+    order_dir = "desc"
+    order_by = "frame"
+    if "order_by" in request.args:
+        order_by = request.args.get("order_by")
+    if order_by not in ["frame", "state", "runtime", "failures", "progress"]:
+        return (render_template(
+            "pyfarm/error.html",
+            error="Unknown order key %r. Options are 'frame', 'state', "
+                  "'runtime', 'progress', or 'failures''" % order_by),
+            BAD_REQUEST)
+    if "order_dir" in request.args:
+        order_dir = request.args.get("order_dir")
+        if order_dir not in ["asc", "desc"]:
+            return (render_template(
+            "pyfarm/error.html",
+            error="Unknown order direction %r. Options are 'asc' or 'desc'" %
+                  order_dir),
+            BAD_REQUEST)
+    if order_by == "frame" and order_dir == "desc":
+        tasks_query = tasks_query.order_by(desc(Task.frame)).\
+            order_by(desc(Task.tile))
+    elif order_by == "frame" and order_dir == "asc":
+        tasks_query = tasks_query.order_by(asc(Task.frame)).\
+            order_by(asc(Task.tile))
+    elif order_by == "state" and order_dir == "desc":
+        tasks_query = tasks_query.order_by(desc(Task.state))
+    elif order_by == "state" and order_dir == "asc":
+        tasks_query = tasks_query.order_by(asc(Task.state))
+    # Note: Those time operations do not seem to work in sqlite
+    elif order_by == "runtime" and order_dir == "asc":
+        tasks_query = tasks_query.order_by(asc(
+            func.coalesce(Task.time_finished, datetime.utcnow()) -
+            Task.time_started))
+    elif order_by == "runtime" and order_dir == "desc":
+        tasks_query = tasks_query.order_by(desc(
+            func.coalesce(Task.time_finished, datetime.utcnow()) -
+            Task.time_started))
+    else:
+        tasks_query = tasks_query.order_by("%s %s" % (order_by, order_dir))
+    tasks = tasks_query.all()
 
     jobqueues = JobQueue.query.all()
 
@@ -373,7 +414,8 @@ def single_job(job_id):
                            users=users_query,
                            latest_jobtype_version=latest_jobtype_version[0],
                            now=datetime.utcnow(),
-                           autodelete_time=autodelete_time)
+                           autodelete_time=autodelete_time,
+                           order_by=order_by, order_dir=order_dir)
 
 def delete_single_job(job_id):
     job = Job.query.filter_by(id=job_id).first()
