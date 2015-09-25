@@ -194,7 +194,10 @@ def restart_single_agent(agent_id):
 
     flash("Agent %s will be restarted" % agent.hostname)
 
-    return redirect(url_for("agents_index_ui"), SEE_OTHER)
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("agents_index_ui"), SEE_OTHER)
 
 def restart_multiple_agents():
     agent_ids = request.form.getlist("agent_id")
@@ -327,7 +330,10 @@ def delete_single_agent(agent_id):
 
     flash("Agent %s has been deleted" % agent.hostname)
 
-    return redirect(url_for("agents_index_ui"), SEE_OTHER)
+    if "next" in request.args:
+        return redirect(request.args.get("next"), SEE_OTHER)
+    else:
+        return redirect(url_for("agents_index_ui"), SEE_OTHER)
 
 def delete_multiple_agents():
     agent_ids = request.form.getlist("agent_id")
