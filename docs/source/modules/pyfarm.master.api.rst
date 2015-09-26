@@ -8,6 +8,7 @@ Submodules
 
    pyfarm.master.api.agent_updates
    pyfarm.master.api.agents
+   pyfarm.master.api.jobgroups
    pyfarm.master.api.jobqueues
    pyfarm.master.api.jobs
    pyfarm.master.api.jobtypes
