@@ -500,11 +500,55 @@
       <table class="table">
         <thead>
           <th></th>
-          <th>Frame</th>
+          <th>
+            <a href="{{ url_for('single_job_ui', job_id=job.id, order_by='state', order_dir='asc' if order_dir == 'desc' else 'desc') }}">
+              State
+              {% if order_by == 'state' and order_dir == 'desc' %}
+              <span class="glyphicon glyphicon-chevron-down"></span>
+              {% elif order_by == 'state' %}
+              <span class="glyphicon glyphicon-chevron-up"></span>
+              {% endif %}
+            </a> /
+            <a href="{{ url_for('single_job_ui', job_id=job.id, order_by='frame', order_dir='asc' if order_dir == 'desc' else 'desc') }}">
+              Frame
+              {% if order_by == 'frame' and order_dir == 'desc' %}
+              <span class="glyphicon glyphicon-chevron-down"></span>
+              {% elif order_by == 'frame' %}
+              <span class="glyphicon glyphicon-chevron-up"></span>
+              {% endif %}
+            </a>
+          </th>
           <th>Agent</th>
-          <th>Progress</th>
-          <th>Failures</th>
-          <th>Runtime</th>
+          <th>
+            <a href="{{ url_for('single_job_ui', job_id=job.id, order_by='progress', order_dir='asc' if order_dir == 'desc' else 'desc') }}">
+              Progress
+              {% if order_by == 'progress' and order_dir == 'desc' %}
+              <span class="glyphicon glyphicon-chevron-down"></span>
+              {% elif order_by == 'progress' %}
+              <span class="glyphicon glyphicon-chevron-up"></span>
+              {% endif %}
+            </a>
+          </th>
+          <th>
+            <a href="{{ url_for('single_job_ui', job_id=job.id, order_by='failures', order_dir='asc' if order_dir == 'desc' else 'desc') }}">
+              Failures
+              {% if order_by == 'failures' and order_dir == 'desc' %}
+              <span class="glyphicon glyphicon-chevron-down"></span>
+              {% elif order_by == 'failures' %}
+              <span class="glyphicon glyphicon-chevron-up"></span>
+              {% endif %}
+            </a>
+          </th>
+          <th>
+            <a href="{{ url_for('single_job_ui', job_id=job.id, order_by='runtime', order_dir='asc' if order_dir == 'desc' else 'desc') }}">
+              Runtime
+              {% if order_by == 'runtime' and order_dir == 'desc' %}
+              <span class="glyphicon glyphicon-chevron-down"></span>
+              {% elif order_by == 'runtime' %}
+              <span class="glyphicon glyphicon-chevron-up"></span>
+              {% endif %}
+            </a>
+          </th>
           <th>Last Error</th>
         </thead>
         <tbody>
