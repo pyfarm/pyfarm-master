@@ -40,6 +40,7 @@ from pyfarm.models.jobqueue import JobQueue
 from pyfarm.models.jobtype import JobType, JobTypeVersion
 from pyfarm.models.user import User
 from pyfarm.master.application import db
+from pyfarm.master.config import config
 
 logger = getLogger("ui.jobs")
 
@@ -157,8 +158,12 @@ def jobs():
         title = request.args.get("title")
         filters["title"] = title
         if title != "":
-            jobs_query = jobs_query.filter(
-                Job.title.op("~")("%%%s%%" % title))
+            if config.get("support_sql_regex"):
+                jobs_query = jobs_query.filter(
+                    Job.title.op("~")("%s" % title))
+            else:
+                jobs_query = jobs_query.filter(
+                    Job.title.ilike("%%%s%%" % title))
 
     filters["hidden_filter"] = ("hidden_filter" in request.args and
                                 request.args["hidden_filter"].lower() == "true")
