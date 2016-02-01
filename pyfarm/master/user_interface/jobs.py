@@ -158,7 +158,7 @@ def jobs():
         filters["title"] = title
         if title != "":
             jobs_query = jobs_query.filter(
-                Job.title.ilike("%%%s%%" % title))
+                Job.title.op("~")("%%%s%%" % title))
 
     filters["hidden_filter"] = ("hidden_filter" in request.args and
                                 request.args["hidden_filter"].lower() == "true")
