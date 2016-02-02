@@ -160,7 +160,7 @@ def jobs():
         if title != "":
             if config.get("support_sql_regex"):
                 jobs_query = jobs_query.filter(
-                    Job.title.op("~")("%s" % title))
+                    Job.title.op("~*")("%s" % title))
             else:
                 jobs_query = jobs_query.filter(
                     Job.title.ilike("%%%s%%" % title))
