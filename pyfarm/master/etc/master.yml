@@ -177,6 +177,13 @@ dev_db_create_all: false
 # like uwsgi this should be true.
 instance_application: false
 
+
+# When true, filters for job titles will support regular expressions with the
+# ~-operator. The used database backend needs to support this. Known to work
+# on reasonably recent versions of PostgreSQL.
+support_sql_regex: false
+
+
 ##
 ## BEGIN Queue defaults
 ##
