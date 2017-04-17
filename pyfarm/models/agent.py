@@ -157,6 +157,7 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         "cpus", "ram", "free_ram")
     REPR_CONVERT_COLUMN = {"remote_ip": repr_ip}
     URL_TEMPLATE = config.get("agent_api_url_template")
+    UI_URL_TEMPLATE = config.get("agent_ui_url_template")
 
     MIN_PORT = config.get("agent_min_port")
     MAX_PORT = config.get("agent_max_port")
@@ -497,6 +498,31 @@ class Agent(db.Model, ValidatePriorityMixin, ValidateWorkStateMixin,
         else:
             raise ValueError(
                 "Cannot construct an agent API url using mode %r "
+                "`use_address`" % self.use_address)
+
+    def ui_url(self):
+        """
+        Returns the base url for the user interface of this agent
+
+        :except ValueError:
+            Raised if this function is called while the agent's
+            :attr:`use_address` column is set to ``PASSIVE``
+        """
+        if self.use_address == UseAgentAddress.REMOTE:
+            return self.UI_URL_TEMPLATE.format(
+                host=self.remote_ip,
+                port=self.port
+            )
+
+        elif self.use_address == UseAgentAddress.HOSTNAME:
+            return self.UI_URL_TEMPLATE.format(
+                host=self.hostname,
+                port=self.port
+            )
+
+        else:
+            raise ValueError(
+                "Cannot construct an agent UI url using mode %r "
                 "`use_address`" % self.use_address)
 
     @validates("hostname")

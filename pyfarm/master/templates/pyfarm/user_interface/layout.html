@@ -62,7 +62,7 @@
     <script>
         var timezone = moment.tz(tzdetect.matches()[0]).zoneAbbr();
         $(".timestamp").each(function() {
-            var utc  = moment.utc($(this).text() + "Z", moment.ISO_8601);
+            var utc = moment.utc($(this).text() + "Z", moment.ISO_8601);
             if (utc.isValid()) {
                 var local = utc.local();
                 $(this).html(local.format("{{ timestamp_format }}") + " " + timezone);

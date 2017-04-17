@@ -1,0 +1,15 @@
+.log_container table {
+    width: 100%;
+}
+
+.log_container table tr td {
+    padding-right: 1em;
+    padding-left: 0.3em;
+    height: 1%;
+}
+
+.log_container table tr td.text {
+    font-family: "monospace";
+    color: #E4E4E4;
+    background-color: #333333;
+}

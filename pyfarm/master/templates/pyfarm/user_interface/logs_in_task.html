@@ -26,7 +26,7 @@
         {% endif %}
       </td>
       <td>
-        <a href="/api/v1/jobs/{{ task.job.id }}/tasks/{{ task.id }}/attempts/{{ attempt }}/logs/{{ log.log.identifier }}/logfile">{{ log.log.identifier }}</a>
+        <a href="/jobs/{{ task.job.id }}/tasks/{{ task.id }}/logs/{{ log.log.identifier }}">{{ log.log.identifier }}</a>
       </td>
       <td>
         {{ log.log.num_queued_tasks() }} /

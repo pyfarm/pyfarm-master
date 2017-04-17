@@ -157,7 +157,8 @@ def load_user_interface(app_instance):
         jobtypes, jobtype, remove_jobtype_software_requirement,
         add_jobtype_software_requirement, remove_jobtype, create_jobtype,
         update_jobtype_notification_templates)
-    from pyfarm.master.user_interface.logs_in_task import logs_in_task
+    from pyfarm.master.user_interface.logs_in_task import (
+        logs_in_task, single_tasklog)
     from pyfarm.master.user_interface.software import (
         software, software_item, update_version_rank, remove_software_version,
         add_software_version, add_software, remove_software,
@@ -314,6 +315,10 @@ def load_user_interface(app_instance):
 
     app_instance.add_url_rule("/jobs/<int:job_id>/tasks/<int:task_id>/logs/",
                               "logs_in_task_ui", logs_in_task, methods=("GET", ))
+    app_instance.add_url_rule("/jobs/<int:job_id>/tasks/<int:task_id>/logs/"
+                              "<string:log_id>",
+                              "single_tasklog_ui", single_tasklog,
+                              methods=("GET", ))
 
     app_instance.add_url_rule("/jobqueues/",
                               "jobqueues_index_ui", jobqueues, methods=("GET", ))

@@ -1,0 +1,26 @@
+{% extends "pyfarm/user_interface/layout.html" %}
+{% block title %}Tasklog {{ log.identifier }} {% endblock %}
+{% block jobs_nb_class %}active{% endblock %}
+{% block additional_styles %}
+<link href="{{ url_for('static', filename='css/tasklog.css') }}" rel="stylesheet">
+{% endblock %}
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/tasklog.js') }}" type="text/javascript"></script>
+{% endblock %}
+{% block content %}
+<h1>Task Log {{ log.identifier }} </h1>
+<h2>(Frame {{ task.frame }} from job <a href="{{ url_for('single_job_ui', job_id=task.job.id) }}">{{ task.job.title }}</a>, attempt {{ attempt }})</h2>
+
+<div id="log_container" class="well well-lg log_container">
+  <table>
+  </table>
+</div>
+
+<script>
+var job_id = {{ job.id }};
+var task_id = {{ task.id }};
+var attempt = {{ attempt }};
+var log_identifier = "{{ log.identifier }}";
+var timestamp_format = "{{ timestamp_format }}";
+</script>
+{% endblock %}

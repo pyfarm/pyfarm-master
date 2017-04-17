@@ -83,6 +83,8 @@ api_prefix: /api/v1
 # The URL template we use to communicate with the agent.
 agent_api_url_template: http://{host}:{port}/api/v1
 
+# The URL template we use to generate URLs to an agent's UI.
+agent_ui_url_template: http://{host}:{port}/
 
 # Enables or disable the login functionality.  This can be used when
 # debugging or doing development but should not be changed for
