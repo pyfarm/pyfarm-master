@@ -103,7 +103,7 @@ setup(
     url="https://github.com/pyfarm/pyfarm-master",
     license="Apache v2.0",
     author="Oliver Palmer",
-    author_email="development@pyfarm.net",
+    author_email="pyfarm@googlegroups.com",
     description="Sub-library which contains the code necessary to "
                 "communicate with the database via a REST api.",
     long_description=long_description,
